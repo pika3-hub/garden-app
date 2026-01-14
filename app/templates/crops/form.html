@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}{% if crop %}作物編集{% else %}作物登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <i class="bi bi-basket"></i>
+            {% if crop %}作物編集{% else %}作物登録{% endif %}
+        </h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('crops.list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 一覧に戻る
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{% if crop %}{{ url_for('crops.update', crop_id=crop.id) }}{% else %}{{ url_for('crops.create') }}{% endif %}" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">作物名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ crop.name if crop else '' }}" required>
+                        <div class="invalid-feedback">作物名を入力してください</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="crop_type" class="form-label">作物種類 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="crop_type" name="crop_type" value="{{ crop.crop_type if crop else '' }}" placeholder="例: トマト、なす" required>
+                        <div class="invalid-feedback">作物種類を入力してください</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="variety" class="form-label">品種</label>
+                        <input type="text" class="form-control" id="variety" name="variety" value="{{ crop.variety if crop else '' }}" placeholder="例: ミニトマト、千果">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="characteristics" class="form-label">特性</label>
+                        <textarea class="form-control" id="characteristics" name="characteristics" rows="3" placeholder="例: 耐病性、日当たりが良い場所を好む">{{ crop.characteristics if crop else '' }}</textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="planting_season" class="form-label">植え付け時期</label>
+                            <input type="text" class="form-control" id="planting_season" name="planting_season" value="{{ crop.planting_season if crop else '' }}" placeholder="例: 4月～5月">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="harvest_season" class="form-label">収穫時期</label>
+                            <input type="text" class="form-control" id="harvest_season" name="harvest_season" value="{{ crop.harvest_season if crop else '' }}" placeholder="例: 7月～9月">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">メモ</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="自由にメモを記入できます">{{ crop.notes if crop else '' }}</textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('crops.list') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> {% if crop %}更新{% else %}登録{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-lightbulb"></i> 入力のヒント</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>作物名</strong><br>
+                    <small>栽培する作物の名前を入力します（例: ミニトマト、丸なす）</small>
+                </p>
+                <p class="mb-2"><strong>作物種類</strong><br>
+                    <small>作物の大分類を入力します（例: トマト、なす、きゅうり）</small>
+                </p>
+                <p class="mb-2"><strong>品種</strong><br>
+                    <small>具体的な品種名があれば入力します（例: アイコ、千果）</small>
+                </p>
+                <p class="mb-0"><strong>時期</strong><br>
+                    <small>おおよその時期を自由形式で入力できます</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

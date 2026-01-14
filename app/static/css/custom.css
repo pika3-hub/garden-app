@@ -1,0 +1,90 @@
+/* カスタムスタイル */
+
+:root {
+    --primary-green: #198754;
+    --light-green: #d1e7dd;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* ナビゲーションバー */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.nav-link {
+    transition: opacity 0.3s;
+}
+
+.nav-link:hover {
+    opacity: 0.8;
+}
+
+/* カード */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* バッジ */
+.badge-status-active {
+    background-color: #198754;
+}
+
+.badge-status-harvested {
+    background-color: #ffc107;
+}
+
+.badge-status-removed {
+    background-color: #6c757d;
+}
+
+/* フォーム */
+.form-label {
+    font-weight: 500;
+}
+
+/* ボタン */
+.btn-group-action {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* テーブル */
+.table-hover tbody tr:hover {
+    background-color: var(--light-green);
+}
+
+/* ユーティリティ */
+.text-muted-light {
+    color: #6c757d !important;
+    font-size: 0.875rem;
+}
+
+.icon-large {
+    font-size: 3rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .btn-group-action {
+        flex-direction: column;
+    }
+
+    .btn-group-action .btn {
+        width: 100%;
+    }
+}

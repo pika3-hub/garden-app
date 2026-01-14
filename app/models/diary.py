@@ -1,0 +1,215 @@
+from app.database import get_db
+
+
+class DiaryEntry:
+    """日記エントリモデル"""
+
+    @staticmethod
+    def get_all(limit=None, offset=None):
+        """全日記を取得（ページネーション対応）"""
+        db = get_db()
+        query = 'SELECT * FROM diary_entries ORDER BY entry_date DESC, created_at DESC'
+        params = []
+
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+            if offset:
+                query += ' OFFSET ?'
+                params.append(offset)
+
+        entries = db.execute(query, params).fetchall()
+        return [dict(entry) for entry in entries]
+
+    @staticmethod
+    def get_by_id(diary_id):
+        """IDで日記を取得"""
+        db = get_db()
+        entry = db.execute(
+            'SELECT * FROM diary_entries WHERE id = ?',
+            (diary_id,)
+        ).fetchone()
+        return dict(entry) if entry else None
+
+    @staticmethod
+    def create(data):
+        """日記を作成"""
+        db = get_db()
+        cursor = db.execute(
+            '''INSERT INTO diary_entries (title, content, entry_date, weather, status)
+               VALUES (?, ?, ?, ?, ?)''',
+            (data['title'], data.get('content'), data['entry_date'],
+             data.get('weather'), data.get('status', 'published'))
+        )
+        db.commit()
+        return cursor.lastrowid
+
+    @staticmethod
+    def update(diary_id, data):
+        """日記を更新"""
+        db = get_db()
+        db.execute(
+            '''UPDATE diary_entries SET title = ?, content = ?, entry_date = ?,
+               weather = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+               WHERE id = ?''',
+            (data['title'], data.get('content'), data['entry_date'],
+             data.get('weather'), data.get('status', 'published'), diary_id)
+        )
+        db.commit()
+
+    @staticmethod
+    def delete(diary_id):
+        """日記を削除"""
+        db = get_db()
+        db.execute('DELETE FROM diary_entries WHERE id = ?', (diary_id,))
+        db.commit()
+
+    @staticmethod
+    def count():
+        """日記の総数を取得"""
+        db = get_db()
+        result = db.execute('SELECT COUNT(*) as count FROM diary_entries').fetchone()
+        return result['count'] if result else 0
+
+    @staticmethod
+    def search(keyword, date_from=None, date_to=None):
+        """日記を検索"""
+        db = get_db()
+        query = '''SELECT * FROM diary_entries WHERE 1=1'''
+        params = []
+
+        if keyword:
+            query += ' AND (title LIKE ? OR content LIKE ?)'
+            params.extend([f'%{keyword}%', f'%{keyword}%'])
+
+        if date_from:
+            query += ' AND entry_date >= ?'
+            params.append(date_from)
+
+        if date_to:
+            query += ' AND entry_date <= ?'
+            params.append(date_to)
+
+        query += ' ORDER BY entry_date DESC, created_at DESC'
+
+        entries = db.execute(query, params).fetchall()
+        return [dict(entry) for entry in entries]
+
+    @staticmethod
+    def get_recent(limit=5):
+        """最新の日記を取得"""
+        db = get_db()
+        entries = db.execute(
+            '''SELECT * FROM diary_entries
+               ORDER BY entry_date DESC, created_at DESC
+               LIMIT ?''',
+            (limit,)
+        ).fetchall()
+        return [dict(entry) for entry in entries]
+
+    @staticmethod
+    def get_relations(diary_id):
+        """日記に関連するデータを取得"""
+        db = get_db()
+
+        # 関連する作物を取得
+        crops = db.execute(
+            '''SELECT dr.*, c.name as crop_name, c.crop_type
+               FROM diary_relations dr
+               JOIN crops c ON dr.crop_id = c.id
+               WHERE dr.diary_id = ? AND dr.relation_type = 'crop' ''',
+            (diary_id,)
+        ).fetchall()
+
+        # 関連する場所を取得
+        locations = db.execute(
+            '''SELECT dr.*, l.name as location_name, l.location_type
+               FROM diary_relations dr
+               JOIN locations l ON dr.location_id = l.id
+               WHERE dr.diary_id = ? AND dr.relation_type = 'location' ''',
+            (diary_id,)
+        ).fetchall()
+
+        # 関連する植え付け場所を取得
+        location_crops = db.execute(
+            '''SELECT dr.*, c.name as crop_name, l.name as location_name,
+                      lc.planted_date, lc.status
+               FROM diary_relations dr
+               JOIN location_crops lc ON dr.location_crop_id = lc.id
+               JOIN crops c ON lc.crop_id = c.id
+               JOIN locations l ON lc.location_id = l.id
+               WHERE dr.diary_id = ? AND dr.relation_type = 'location_crop' ''',
+            (diary_id,)
+        ).fetchall()
+
+        return {
+            'crops': [dict(c) for c in crops],
+            'locations': [dict(l) for l in locations],
+            'location_crops': [dict(lc) for lc in location_crops]
+        }
+
+    @staticmethod
+    def save_relations(diary_id, relations):
+        """日記の関連を保存"""
+        db = get_db()
+
+        # 既存の関連を削除
+        db.execute('DELETE FROM diary_relations WHERE diary_id = ?', (diary_id,))
+
+        # 作物の関連を保存
+        for crop_id in relations.get('crop_ids', []):
+            db.execute(
+                '''INSERT INTO diary_relations (diary_id, relation_type, crop_id)
+                   VALUES (?, 'crop', ?)''',
+                (diary_id, crop_id)
+            )
+
+        # 場所の関連を保存
+        for location_id in relations.get('location_ids', []):
+            db.execute(
+                '''INSERT INTO diary_relations (diary_id, relation_type, location_id)
+                   VALUES (?, 'location', ?)''',
+                (diary_id, location_id)
+            )
+
+        # 植え付け場所の関連を保存
+        for location_crop_id in relations.get('location_crop_ids', []):
+            db.execute(
+                '''INSERT INTO diary_relations (diary_id, relation_type, location_crop_id)
+                   VALUES (?, 'location_crop', ?)''',
+                (diary_id, location_crop_id)
+            )
+
+        db.commit()
+
+    @staticmethod
+    def get_by_crop(crop_id):
+        """作物に関連する日記を取得"""
+        db = get_db()
+        entries = db.execute(
+            '''SELECT DISTINCT de.*
+               FROM diary_entries de
+               JOIN diary_relations dr ON de.id = dr.diary_id
+               WHERE dr.crop_id = ? OR dr.location_crop_id IN (
+                   SELECT id FROM location_crops WHERE crop_id = ?
+               )
+               ORDER BY de.entry_date DESC''',
+            (crop_id, crop_id)
+        ).fetchall()
+        return [dict(entry) for entry in entries]
+
+    @staticmethod
+    def get_by_location(location_id):
+        """場所に関連する日記を取得"""
+        db = get_db()
+        entries = db.execute(
+            '''SELECT DISTINCT de.*
+               FROM diary_entries de
+               JOIN diary_relations dr ON de.id = dr.diary_id
+               WHERE dr.location_id = ? OR dr.location_crop_id IN (
+                   SELECT id FROM location_crops WHERE location_id = ?
+               )
+               ORDER BY de.entry_date DESC''',
+            (location_id, location_id)
+        ).fetchall()
+        return [dict(entry) for entry in entries]

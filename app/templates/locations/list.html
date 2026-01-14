@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}場所一覧 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><i class="bi bi-geo-alt"></i> 場所一覧</h1>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('locations.new') }}" class="btn btn-info text-white">
+            <i class="bi bi-plus-circle"></i> 新規登録
+        </a>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form method="GET" action="{{ url_for('locations.list') }}" class="input-group">
+            <input type="text" name="keyword" class="form-control" placeholder="場所名、種類で検索" value="{{ keyword }}">
+            <button type="submit" class="btn btn-outline-secondary">
+                <i class="bi bi-search"></i> 検索
+            </button>
+            {% if keyword %}
+            <a href="{{ url_for('locations.list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> クリア
+            </a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% if locations %}
+<div class="row">
+    {% for location in locations %}
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="text-decoration-none">
+                        {{ location.name }}
+                    </a>
+                </h5>
+                <p class="card-text">
+                    <span class="badge bg-info">{{ location.location_type }}</span>
+                    {% if location.area_size %}
+                    <span class="badge bg-secondary">{{ location.area_size }}㎡</span>
+                    {% endif %}
+                </p>
+                {% if location.sun_exposure %}
+                <p class="card-text text-muted-light">
+                    <i class="bi bi-sun"></i> {{ location.sun_exposure }}
+                </p>
+                {% endif %}
+                <div class="btn-group-action">
+                    <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> 詳細
+                    </a>
+                    <a href="{{ url_for('locations.edit', location_id=location.id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> 編集
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    {% if keyword %}
+    検索条件に一致する場所が見つかりませんでした。
+    {% else %}
+    まだ場所が登録されていません。<a href="{{ url_for('locations.new') }}" class="alert-link">新規登録</a>から追加してください。
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/canvas.css') }}">
+{% endblock %}
+
+{% block content %}
+<input type="hidden" id="location-id" value="{{ location.id }}">
+
+<div class="canvas-editor">
+    <!-- ヘッダー -->
+    <div class="canvas-header">
+        <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </a>
+        <h4>{{ location.name }} - 見取り図編集</h4>
+        <div class="header-controls">
+            <button id="undo-btn" class="btn btn-outline-secondary" title="元に戻す (Ctrl+Z)" disabled>
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+            <button id="redo-btn" class="btn btn-outline-secondary" title="やり直し (Ctrl+Shift+Z)" disabled>
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <span id="zoom-indicator" class="ms-2 me-2">100%</span>
+            <button id="save-btn" class="btn btn-success">
+                <i class="bi bi-save"></i> 保存
+            </button>
+            <span id="save-indicator" class="ms-2"></span>
+        </div>
+    </div>
+
+    <!-- メインエリア -->
+    <div class="canvas-main">
+        <!-- ツールパレット -->
+        <div class="tool-palette">
+            <button class="tool-btn active" data-tool="select" title="選択 (S)">
+                <i class="bi bi-cursor"></i>
+            </button>
+            <button class="tool-btn" data-tool="rect" title="矩形 (R)">
+                <i class="bi bi-square"></i>
+            </button>
+            <button class="tool-btn" data-tool="circle" title="円 (C)">
+                <i class="bi bi-circle"></i>
+            </button>
+            <button class="tool-btn" data-tool="line" title="線 (L)">
+                <i class="bi bi-slash-lg"></i>
+            </button>
+            <button class="tool-btn" data-tool="text" title="テキスト (T)">
+                <i class="bi bi-fonts"></i>
+            </button>
+            <button class="tool-btn" data-tool="delete" title="削除 (D)">
+                <i class="bi bi-trash"></i>
+            </button>
+
+            <hr>
+
+            <!-- 色選択パネル -->
+            <div class="color-palette">
+                <label for="stroke-color">線色</label>
+                <input type="color" id="stroke-color" value="#4caf50">
+
+                <label for="fill-color">塗り</label>
+                <input type="color" id="fill-color" value="#e8f5e9" disabled>
+                <label class="fill-checkbox">
+                    <input type="checkbox" id="fill-enabled">
+                    塗りつぶし
+                </label>
+            </div>
+
+            <hr>
+
+            <!-- グリッド・スナップ -->
+            <div class="grid-controls">
+                <button id="grid-btn" class="tool-btn" title="グリッド表示">
+                    <i class="bi bi-grid-3x3"></i>
+                </button>
+                <button id="snap-btn" class="tool-btn" title="グリッドにスナップ">
+                    <i class="bi bi-magnet"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- キャンバスエリア -->
+        <div class="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <!-- 作物リスト -->
+        <div class="crop-sidebar">
+            <h6>栽培中の作物</h6>
+            <div class="crop-list">
+                {% for crop in crops %}
+                <div class="crop-item" draggable="true"
+                     data-crop-id="{{ crop.crop_id }}"
+                     data-location-crop-id="{{ crop.id }}"
+                     data-crop-name="{{ crop.crop_name }}"
+                     data-planted-date="{{ crop.planted_date or '' }}">
+                    <i class="bi bi-grip-vertical"></i>
+                    <div class="crop-item-content">
+                        <div class="crop-name">{{ crop.crop_name }}</div>
+                        {% if crop.planted_date %}
+                        <div class="crop-date">{{ crop.planted_date }}</div>
+                        {% endif %}
+                    </div>
+                    {% if crop.position_x and crop.position_y %}
+                    <span class="badge bg-success">配置済</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <p class="text-muted mt-3">
+                <small><i class="bi bi-info-circle"></i>
+                作物をキャンバスにドラッグして配置</small>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<script src="{{ url_for('static', filename='js/canvas-editor.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}{% if location %}場所編集{% else %}場所登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <i class="bi bi-geo-alt"></i>
+            {% if location %}場所編集{% else %}場所登録{% endif %}
+        </h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('locations.list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 一覧に戻る
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{% if location %}{{ url_for('locations.update', location_id=location.id) }}{% else %}{{ url_for('locations.create') }}{% endif %}" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">場所名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ location.name if location else '' }}" required>
+                        <div class="invalid-feedback">場所名を入力してください</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="location_type" class="form-label">場所種類 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="location_type" name="location_type" value="{{ location.location_type if location else '' }}" placeholder="例: 畑、プランター、鉢" required>
+                        <div class="invalid-feedback">場所種類を入力してください</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="area_size" class="form-label">面積（㎡）</label>
+                        <input type="number" step="0.01" class="form-control" id="area_size" name="area_size" value="{{ location.area_size if location else '' }}" placeholder="例: 5.5">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sun_exposure" class="form-label">日当たり</label>
+                        <select class="form-select" id="sun_exposure" name="sun_exposure">
+                            <option value="">選択してください</option>
+                            <option value="全日" {% if location and location.sun_exposure == '全日' %}selected{% endif %}>全日</option>
+                            <option value="半日" {% if location and location.sun_exposure == '半日' %}selected{% endif %}>半日</option>
+                            <option value="日陰" {% if location and location.sun_exposure == '日陰' %}selected{% endif %}>日陰</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">メモ</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="自由にメモを記入できます">{{ location.notes if location else '' }}</textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('locations.list') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-info text-white">
+                            <i class="bi bi-check-circle"></i> {% if location %}更新{% else %}登録{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-lightbulb"></i> 入力のヒント</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>場所名</strong><br>
+                    <small>場所を識別しやすい名前を入力します（例: 南側の畑、ベランダプランター1）</small>
+                </p>
+                <p class="mb-2"><strong>場所種類</strong><br>
+                    <small>場所の種類を入力します（例: 畑、プランター、鉢）</small>
+                </p>
+                <p class="mb-2"><strong>面積</strong><br>
+                    <small>おおよその面積を㎡で入力します</small>
+                </p>
+                <p class="mb-0"><strong>日当たり</strong><br>
+                    <small>日当たり条件を選択します（全日、半日、日陰）</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

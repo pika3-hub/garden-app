@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}管理日記一覧 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><i class="bi bi-journal-text"></i> 管理日記</h1>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('diary.new') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> 新規登録
+        </a>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <form method="GET" action="{{ url_for('diary.list') }}" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="keyword" class="form-control" placeholder="タイトル、内容で検索" value="{{ keyword }}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="date_from" class="form-control" placeholder="開始日" value="{{ date_from }}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="date_to" class="form-control" placeholder="終了日" value="{{ date_to }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="bi bi-search"></i> 検索
+                </button>
+                {% if keyword or date_from or date_to %}
+                <a href="{{ url_for('diary.list') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> クリア
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if entries %}
+<div class="row">
+    {% for entry in entries %}
+    <div class="col-md-12 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 text-center border-end">
+                        <div class="fs-4 fw-bold text-primary">{{ entry.entry_date }}</div>
+                        {% if entry.weather %}
+                        <span class="badge bg-info">{{ entry.weather }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <h5 class="card-title">
+                            <a href="{{ url_for('diary.detail', diary_id=entry.id) }}" class="text-decoration-none">
+                                {{ entry.title }}
+                            </a>
+                        </h5>
+                        {% if entry.content %}
+                        <p class="card-text text-muted-light">
+                            {{ entry.content[:150] }}{% if entry.content|length > 150 %}...{% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <a href="{{ url_for('diary.detail', diary_id=entry.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> 詳細
+                        </a>
+                        <a href="{{ url_for('diary.edit', diary_id=entry.id) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i> 編集
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    {% if keyword or date_from or date_to %}
+    検索条件に一致する日記が見つかりませんでした。
+    {% else %}
+    まだ日記が登録されていません。<a href="{{ url_for('diary.new') }}" class="alert-link">新規登録</a>から追加してください。
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

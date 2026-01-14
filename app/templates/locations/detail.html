@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}{{ location.name }} - 場所詳細{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-geo-alt"></i> {{ location.name }}</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('locations.list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 一覧に戻る
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本情報</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th style="width: 30%;">場所名</th>
+                        <td>{{ location.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>場所種類</th>
+                        <td><span class="badge bg-info">{{ location.location_type }}</span></td>
+                    </tr>
+                    {% if location.area_size %}
+                    <tr>
+                        <th>面積</th>
+                        <td>{{ location.area_size }}㎡</td>
+                    </tr>
+                    {% endif %}
+                    {% if location.sun_exposure %}
+                    <tr>
+                        <th>日当たり</th>
+                        <td>{{ location.sun_exposure }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if location.notes %}
+                    <tr>
+                        <th>メモ</th>
+                        <td>{{ location.notes }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+            <div class="card-footer text-muted-light">
+                登録日時: {{ location.created_at }}<br>
+                更新日時: {{ location.updated_at }}
+            </div>
+        </div>
+
+        <!-- 見取り図カード -->
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-map"></i> 見取り図</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if location.canvas_data %}
+                <p class="text-muted">見取り図が設定されています</p>
+                <a href="{{ url_for('locations.canvas', location_id=location.id) }}"
+                   class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> 見取り図を編集
+                </a>
+                {% else %}
+                <p class="text-muted">まだ見取り図が作成されていません</p>
+                <a href="{{ url_for('locations.canvas', location_id=location.id) }}"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-plus-circle"></i> 見取り図を作成
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="btn-group-action mb-4">
+            <a href="{{ url_for('locations.edit', location_id=location.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 編集
+            </a>
+            <form method="POST" action="{{ url_for('locations.delete', location_id=location.id) }}" class="d-inline" onsubmit="return confirmDelete('{{ location.name }}');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> 削除
+                </button>
+            </form>
+        </div>
+
+        <!-- 栽培中の作物 -->
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-basket"></i> 栽培中の作物</h5>
+            </div>
+            <div class="card-body">
+                {% if active_crops %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>作物名</th>
+                                <th>品種</th>
+                                <th>植え付け日</th>
+                                <th>株数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lc in active_crops %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('crops.detail', crop_id=lc.crop_id) }}">
+                                        {{ lc.crop_name }}
+                                    </a>
+                                </td>
+                                <td>{{ lc.variety or '-' }}</td>
+                                <td>{{ lc.planted_date or '-' }}</td>
+                                <td>{{ lc.quantity or '-' }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('locations.harvest', location_id=location.id, location_crop_id=lc.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success" title="収穫済みに変更">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('locations.remove_crop', location_id=location.id, location_crop_id=lc.id) }}" class="d-inline" onsubmit="return confirm('削除してもよろしいですか？');">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="削除">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    まだ作物が植えられていません。
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- 作物を植え付けるフォーム -->
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="bi bi-plus-circle"></i> 作物を植え付ける</h6>
+            </div>
+            <div class="card-body">
+                {% if all_crops %}
+                <form method="POST" action="{{ url_for('locations.plant', location_id=location.id) }}">
+                    <div class="mb-3">
+                        <label for="crop_id" class="form-label">作物 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="crop_id" name="crop_id" required>
+                            <option value="">選択してください</option>
+                            {% for crop in all_crops %}
+                            <option value="{{ crop.id }}">{{ crop.name }} ({{ crop.crop_type }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="planted_date" class="form-label">植え付け日</label>
+                        <input type="date" class="form-control" id="planted_date" name="planted_date">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">株数</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">メモ</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> 植え付ける
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    <small>作物が登録されていません。<br>
+                    <a href="{{ url_for('crops.new') }}">作物を登録</a>してください。</small>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if related_diaries %}
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="bi bi-journal-text"></i> 関連する日記</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for diary in related_diaries %}
+                    <li class="list-group-item">
+                        <a href="{{ url_for('diary.detail', diary_id=diary.id) }}">
+                            <i class="bi bi-journal"></i> {{ diary.title }}
+                        </a>
+                        <div class="text-muted small">
+                            {{ diary.entry_date }}
+                            {% if diary.weather %}
+                            <span class="badge bg-info">{{ diary.weather }}</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}{% if entry %}日記編集{% else %}日記登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <i class="bi bi-journal-text"></i>
+            {% if entry %}日記編集{% else %}日記登録{% endif %}
+        </h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('diary.list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 一覧に戻る
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{% if entry %}{{ url_for('diary.update', diary_id=entry.id) }}{% else %}{{ url_for('diary.create') }}{% endif %}" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="title" class="form-label">タイトル <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ entry.title if entry else '' }}" required>
+                            <div class="invalid-feedback">タイトルを入力してください</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="entry_date" class="form-label">日付 <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="entry_date" name="entry_date" value="{{ entry.entry_date if entry else '' }}" required>
+                            <div class="invalid-feedback">日付を入力してください</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="weather" class="form-label">天気</label>
+                        <select class="form-select" id="weather" name="weather">
+                            <option value="">-- 選択してください --</option>
+                            {% set weather_options = ['晴れ', '曇り', '雨', '雪', '晴れ時々曇り', '曇り時々雨'] %}
+                            {% for w in weather_options %}
+                            <option value="{{ w }}" {% if entry and entry.weather == w %}selected{% endif %}>{{ w }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="content" class="form-label">内容</label>
+                        <textarea class="form-control" id="content" name="content" rows="8" placeholder="今日の作業内容、観察したことなどを記録しましょう">{{ entry.content if entry else '' }}</textarea>
+                    </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-3"><i class="bi bi-link-45deg"></i> 関連付け</h5>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="crop_ids" class="form-label">作物</label>
+                            <select class="form-select" id="crop_ids" name="crop_ids" multiple size="5">
+                                {% for crop in crops %}
+                                <option value="{{ crop.id }}" {% if selected_relations and crop.id|string in selected_relations.crop_ids %}selected{% endif %}>
+                                    {{ crop.name }} ({{ crop.crop_type }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Ctrlキーで複数選択可</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="location_ids" class="form-label">場所</label>
+                            <select class="form-select" id="location_ids" name="location_ids" multiple size="5">
+                                {% for loc in locations %}
+                                <option value="{{ loc.id }}" {% if selected_relations and loc.id|string in selected_relations.location_ids %}selected{% endif %}>
+                                    {{ loc.name }} ({{ loc.location_type }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Ctrlキーで複数選択可</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="location_crop_ids" class="form-label">植え付け</label>
+                            <select class="form-select" id="location_crop_ids" name="location_crop_ids" multiple size="5">
+                                {% for lc in location_crops %}
+                                <option value="{{ lc.id }}" {% if selected_relations and lc.id|string in selected_relations.location_crop_ids %}selected{% endif %}>
+                                    {{ lc.crop_name }} @ {{ lc.location_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Ctrlキーで複数選択可</small>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('diary.list') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> {% if entry %}更新{% else %}登録{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-lightbulb"></i> 入力のヒント</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>タイトル</strong><br>
+                    <small>日記のタイトルを入力します（例: 苗の植え付け、追肥作業）</small>
+                </p>
+                <p class="mb-2"><strong>日付</strong><br>
+                    <small>作業を行った日付を選択します</small>
+                </p>
+                <p class="mb-2"><strong>天気</strong><br>
+                    <small>その日の天気を選択できます</small>
+                </p>
+                <p class="mb-2"><strong>内容</strong><br>
+                    <small>作業内容や観察記録を自由に記入できます</small>
+                </p>
+                <p class="mb-0"><strong>関連付け</strong><br>
+                    <small>関連する作物・場所・植え付けを選択できます。Ctrlキーを押しながらクリックで複数選択可能です</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
