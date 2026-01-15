@@ -1,112 +1,112 @@
-# CLAUDE.md - AI Assistant Guide for Garden Management App
+# CLAUDE.md - 家庭菜園管理アプリ AI アシスタントガイド
 
-This document provides comprehensive guidance for AI assistants (like Claude) working with this codebase. It covers architecture, conventions, workflows, and best practices.
+このドキュメントは、このコードベースで作業するAIアシスタント（Claudeなど）のための包括的なガイドです。アーキテクチャ、規約、ワークフロー、ベストプラクティスについて説明します。
 
-## Project Overview
+## プロジェクト概要
 
-**Name:** 家庭菜園管理アプリ (Home Garden Management App)
-**Type:** Flask-based Web Application
-**Language:** Python 3.12 with Japanese UI
-**Database:** SQLite
-**Purpose:** Manage home garden cultivation tracking with visual canvas layout, diary entries, and crop-location relationships
+**名称:** 家庭菜園管理アプリ
+**タイプ:** Flask ベースの Web アプリケーション
+**言語:** Python 3.12、日本語UI
+**データベース:** SQLite
+**目的:** ビジュアルキャンバスレイアウト、日記エントリ、作物と場所の関係を使用した家庭菜園の栽培管理
 
-### Core Features
-- **Crop Management:** CRUD operations for crop types, varieties, and characteristics
-- **Location Management:** CRUD for garden locations (gardens, planters) with image support
-- **Canvas Editor:** Visual garden layout designer using Fabric.js (drag-drop crops, shapes, text)
-- **Planting Tracking:** Link crops to locations with status tracking (active/harvested/removed)
-- **Diary System:** Cultivation diary with multi-entity relationships and image attachments
-- **Image Support:** Upload/manage images for crops, locations, and diary entries (max 16MB)
-- **Search & Filter:** Keyword search across entities, date-range filtering for diary
-- **Dashboard:** Statistics and recent activity overview
+### 主な機能
+- **作物管理:** 作物の種類、品種、特徴のCRUD操作
+- **場所管理:** 畑やプランターの場所のCRUD、画像サポート付き
+- **キャンバスエディター:** Fabric.jsを使用したビジュアル菜園レイアウトデザイナー（作物、図形、テキストのドラッグ&ドロップ）
+- **栽培記録:** 作物と場所をリンクし、ステータス追跡（栽培中/収穫済み/削除済み）
+- **日記システム:** 複数エンティティ間の関係と画像添付を持つ栽培日記
+- **画像サポート:** 作物、場所、日記エントリの画像アップロード・管理（最大16MB）
+- **検索とフィルター:** エンティティ全体でのキーワード検索、日記の日付範囲フィルタリング
+- **ダッシュボード:** 統計情報と最近のアクティビティ概要
 
 ---
 
-## Quick Reference
+## クイックリファレンス
 
-### Project Structure
+### プロジェクト構造
 ```
 garden-app/
-├── app/                      # Main application package
-│   ├── __init__.py          # Flask factory pattern
-│   ├── config.py            # Environment-based configuration
-│   ├── database.py          # SQLite connection management
-│   ├── schema.sql           # Initial database schema
-│   ├── models/              # Data models (static method pattern)
+├── app/                      # メインアプリケーションパッケージ
+│   ├── __init__.py          # Flaskファクトリパターン
+│   ├── config.py            # 環境ベース設定
+│   ├── database.py          # SQLite接続管理
+│   ├── schema.sql           # 初期データベーススキーマ
+│   ├── models/              # データモデル（静的メソッドパターン）
 │   │   ├── crop.py
 │   │   ├── location.py
-│   │   ├── location_crop.py # Many-to-many relationship
+│   │   ├── location_crop.py # 多対多関係
 │   │   └── diary.py
-│   ├── routes/              # Flask blueprints
+│   ├── routes/              # Flask ブループリント
 │   │   ├── crop_routes.py
 │   │   ├── location_routes.py
 │   │   └── diary_routes.py
-│   ├── utils/               # Utilities
-│   │   ├── upload.py        # Image upload helpers
-│   │   └── migration.py     # Migration utilities
-│   ├── migrations/          # Database migrations (incremental SQL)
-│   ├── templates/           # Jinja2 templates
-│   │   ├── base.html        # Base layout with navbar
-│   │   ├── index.html       # Dashboard
-│   │   ├── crops/           # Crop templates
-│   │   ├── locations/       # Location templates (+ canvas.html)
-│   │   └── diary/           # Diary templates
-│   └── static/              # Static assets
-│       ├── css/             # Bootstrap customization
-│       ├── js/              # Canvas editor, utilities
-│       └── uploads/         # User images (crops/, locations/, diary/)
-├── instance/                # Flask instance folder (garden.db)
-├── run.py                   # Application launcher
-├── test_data.py             # Test data seeding
-└── pyproject.toml           # Project metadata (uv package manager)
+│   ├── utils/               # ユーティリティ
+│   │   ├── upload.py        # 画像アップロードヘルパー
+│   │   └── migration.py     # マイグレーションユーティリティ
+│   ├── migrations/          # データベースマイグレーション（増分SQL）
+│   ├── templates/           # Jinja2 テンプレート
+│   │   ├── base.html        # ナビバー付きベースレイアウト
+│   │   ├── index.html       # ダッシュボード
+│   │   ├── crops/           # 作物テンプレート
+│   │   ├── locations/       # 場所テンプレート（+ canvas.html）
+│   │   └── diary/           # 日記テンプレート
+│   └── static/              # 静的アセット
+│       ├── css/             # Bootstrap カスタマイズ
+│       ├── js/              # キャンバスエディター、ユーティリティ
+│       └── uploads/         # ユーザー画像（crops/, locations/, diary/）
+├── instance/                # Flask インスタンスフォルダ（garden.db）
+├── run.py                   # アプリケーション起動スクリプト
+├── test_data.py             # テストデータ投入スクリプト
+└── pyproject.toml           # プロジェクトメタデータ（uvパッケージマネージャー）
 ```
 
-### Key Commands
+### 主要コマンド
 ```bash
-# Setup
-uv sync                           # Install dependencies
+# セットアップ
+uv sync                           # 依存関係をインストール
 
-# Database
+# データベース
 uv run python -c "from app import create_app; from app.database import init_db; app = create_app(); init_db(app)"
 
-# Run
-uv run python run.py              # Start dev server (localhost:5000)
+# 実行
+uv run python run.py              # 開発サーバー起動（localhost:5000）
 
-# Test data
-uv run python test_data.py        # Seed sample data
+# テストデータ
+uv run python test_data.py        # サンプルデータを投入
 ```
 
 ---
 
-## Architecture Patterns
+## アーキテクチャパターン
 
-### 1. Flask Application Factory Pattern
+### 1. Flask アプリケーションファクトリパターン
 
-**File:** `app/__init__.py`
+**ファイル:** `app/__init__.py`
 
 ```python
 def create_app(config_name='development'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
-    # Register blueprints
+    # ブループリントを登録
     from app.routes import crop_routes, location_routes, diary_routes
     app.register_blueprint(crop_routes.bp)
 
-    # Database teardown
+    # データベースクリーンアップ
     app.teardown_appcontext(close_db)
 
     return app
 ```
 
-**Key Points:**
-- Environment-based config selection (development/production/testing)
-- Blueprint registration for modular routes
-- Database connection cleanup via teardown
+**要点:**
+- 環境ベースの設定選択（development/production/testing）
+- モジュラールートのためのブループリント登録
+- teardownによるデータベース接続のクリーンアップ
 
-### 2. Static Method Model Pattern
+### 2. 静的メソッドモデルパターン
 
-**NO ORM - Direct SQL with static methods**
+**ORM不使用 - 静的メソッドによる直接SQL**
 
 ```python
 class Crop:
@@ -125,23 +125,23 @@ class Crop:
         return db.execute('SELECT last_insert_rowid()').fetchone()[0]
 ```
 
-**Common Methods:**
-- `get_all()` - Fetch all records
-- `get_by_id(id)` - Fetch single record
-- `create(data)` - INSERT, return ID
-- `update(id, data)` - UPDATE record
-- `delete(id)` - DELETE record
-- `count()` - Count total records
-- `search(keyword)` - LIKE query
+**共通メソッド:**
+- `get_all()` - 全レコード取得
+- `get_by_id(id)` - 単一レコード取得
+- `create(data)` - INSERT、IDを返す
+- `update(id, data)` - レコード更新
+- `delete(id)` - レコード削除
+- `count()` - 総レコード数
+- `search(keyword)` - LIKE クエリ
 
-**Database Access:**
-- Use `get_db()` for connection (Flask g context)
-- Row factory returns dict-like objects: `row['field_name']`
-- Always commit after mutations: `db.commit()`
+**データベースアクセス:**
+- 接続には`get_db()`を使用（Flask g コンテキスト）
+- Rowファクトリは辞書ライクなオブジェクトを返す: `row['field_name']`
+- 変更後は必ず`db.commit()`を実行
 
-### 3. RESTful Route Pattern
+### 3. RESTful ルートパターン
 
-**Structure:**
+**構造:**
 ```python
 bp = Blueprint('crops', __name__, url_prefix='/crops')
 
@@ -158,7 +158,7 @@ def new():
 @bp.route('/create', methods=['POST'])  # POST /crops/create
 def create():
     data = dict(request.form)
-    # Handle image upload
+    # 画像アップロード処理
     if 'image' in request.files:
         data['image_path'] = save_image(request.files['image'], 'crops')
     Crop.create(data)
@@ -180,7 +180,7 @@ def update(id):
     crop = Crop.get_by_id(id)
     data = dict(request.form)
 
-    # Handle image updates
+    # 画像更新処理
     if 'image' in request.files and request.files['image'].filename:
         if crop['image_path']:
             delete_image(crop['image_path'])
@@ -203,20 +203,20 @@ def delete(id):
     return redirect(url_for('crops.list'))
 ```
 
-**URL Conventions:**
-- Plural resource names: `/crops`, `/locations`, `/diary`
-- Nested actions: `/<id>/edit`, `/<id>/update`, `/<id>/delete`
-- Nested resources: `/locations/<id>/crops/<crop_id>/position`
+**URL規約:**
+- リソース名は複数形: `/crops`, `/locations`, `/diary`
+- ネストされたアクション: `/<id>/edit`, `/<id>/update`, `/<id>/delete`
+- ネストされたリソース: `/locations/<id>/crops/<crop_id>/position`
 
-### 4. Template Inheritance Pattern
+### 4. テンプレート継承パターン
 
-**Base Template:** `app/templates/base.html`
+**ベーステンプレート:** `app/templates/base.html`
 - Bootstrap 5.3.0 + Bootstrap Icons
-- Navbar with navigation links
-- Flash message display system
-- Block structure: `title`, `content`, `extra_css`, `extra_js`
+- ナビゲーションリンク付きナビバー
+- フラッシュメッセージ表示システム
+- ブロック構造: `title`, `content`, `extra_css`, `extra_js`
 
-**Child Templates:**
+**子テンプレート:**
 ```html
 {% extends "base.html" %}
 
@@ -225,7 +225,7 @@ def delete(id):
 {% block content %}
 <div class="container mt-4">
     <h1>作物一覧</h1>
-    <!-- Content here -->
+    <!-- コンテンツ -->
 </div>
 {% endblock %}
 
@@ -234,7 +234,7 @@ def delete(id):
 {% endblock %}
 ```
 
-**Form Pattern (Reusable Create/Edit):**
+**フォームパターン（作成/編集で再利用）:**
 ```html
 {% if crop %}
     <form action="{{ url_for('crops.update', id=crop.id) }}" method="post">
@@ -248,40 +248,40 @@ def delete(id):
 
 ---
 
-## Database Schema Reference
+## データベーススキーマリファレンス
 
-### Core Tables
+### 主要テーブル
 
-**crops** - Crop type definitions
+**crops** - 作物タイプ定義
 ```sql
 id INTEGER PRIMARY KEY
-name TEXT NOT NULL              -- 作物名 (e.g., "トマト")
-crop_type TEXT                  -- 種類 (e.g., "野菜", "果物")
-variety TEXT                    -- 品種 (e.g., "ミニトマト")
+name TEXT NOT NULL              -- 作物名（例: "トマト"）
+crop_type TEXT                  -- 種類（例: "野菜", "果物"）
+variety TEXT                    -- 品種（例: "ミニトマト"）
 characteristics TEXT            -- 特徴
 planting_season TEXT            -- 植え付け時期
 harvest_season TEXT             -- 収穫時期
 notes TEXT                      -- メモ
-image_path TEXT                 -- 画像パス (migration 003)
+image_path TEXT                 -- 画像パス（migration 003）
 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ```
 
-**locations** - Garden locations
+**locations** - 菜園の場所
 ```sql
 id INTEGER PRIMARY KEY
-name TEXT NOT NULL              -- 場所名 (e.g., "南側の畑")
-location_type TEXT              -- 種類 (e.g., "畑", "プランター")
-area_size REAL                  -- 面積 (㎡)
+name TEXT NOT NULL              -- 場所名（例: "南側の畑"）
+location_type TEXT              -- 種類（例: "畑", "プランター"）
+area_size REAL                  -- 面積（㎡）
 sun_exposure TEXT               -- 日当たり
 notes TEXT
-image_path TEXT                 -- 画像パス (migration 003)
-canvas_data TEXT                -- キャンバスJSON (migration 001)
+image_path TEXT                 -- 画像パス（migration 003）
+canvas_data TEXT                -- キャンバスJSON（migration 001）
 created_at TIMESTAMP
 updated_at TIMESTAMP
 ```
 
-**location_crops** - Planting records (many-to-many)
+**location_crops** - 栽培記録（多対多）
 ```sql
 id INTEGER PRIMARY KEY
 location_id INTEGER FK          -- 場所
@@ -290,13 +290,13 @@ planted_date DATE               -- 植え付け日
 quantity INTEGER                -- 数量
 status TEXT CHECK IN ('active', 'harvested', 'removed')  -- 状態
 notes TEXT
-position_x DECIMAL              -- キャンバス位置X (migration 001)
-position_y DECIMAL              -- キャンバス位置Y (migration 001)
+position_x DECIMAL              -- キャンバス位置X（migration 001）
+position_y DECIMAL              -- キャンバス位置Y（migration 001）
 created_at TIMESTAMP
 updated_at TIMESTAMP
 ```
 
-**diary_entries** - Cultivation diary (migration 002)
+**diary_entries** - 栽培日記（migration 002）
 ```sql
 id INTEGER PRIMARY KEY
 title TEXT NOT NULL
@@ -304,30 +304,30 @@ content TEXT
 entry_date DATE NOT NULL
 weather TEXT                    -- 天気
 status TEXT DEFAULT 'published'
-image_path TEXT                 -- 画像パス (migration 003)
+image_path TEXT                 -- 画像パス（migration 003）
 created_at TIMESTAMP
 updated_at TIMESTAMP
 ```
 
-**diary_relations** - Many-to-many diary relations (migration 002)
+**diary_relations** - 日記の多対多関係（migration 002）
 ```sql
 id INTEGER PRIMARY KEY
 diary_id INTEGER FK             -- 日記エントリ
 relation_type TEXT CHECK IN ('crop', 'location', 'location_crop')
-crop_id INTEGER FK              -- Optional: 関連する作物
-location_id INTEGER FK          -- Optional: 関連する場所
-location_crop_id INTEGER FK     -- Optional: 関連する栽培記録
+crop_id INTEGER FK              -- 任意: 関連する作物
+location_id INTEGER FK          -- 任意: 関連する場所
+location_crop_id INTEGER FK     -- 任意: 関連する栽培記録
 created_at TIMESTAMP
 ```
 
-### Indexes (Performance Optimization)
+### インデックス（パフォーマンス最適化）
 ```sql
--- Location crops
+-- 栽培記録
 CREATE INDEX idx_location_crops_location ON location_crops(location_id);
 CREATE INDEX idx_location_crops_crop ON location_crops(crop_id);
 CREATE INDEX idx_location_crops_status ON location_crops(status);
 
--- Diary
+-- 日記
 CREATE INDEX idx_diary_relations_diary ON diary_relations(diary_id);
 CREATE INDEX idx_diary_entries_date ON diary_entries(entry_date);
 CREATE INDEX idx_diary_relations_crop ON diary_relations(crop_id);
@@ -336,16 +336,16 @@ CREATE INDEX idx_diary_relations_location ON diary_relations(location_id);
 
 ---
 
-## Development Workflows
+## 開発ワークフロー
 
-### Adding a New Feature
+### 新機能の追加
 
-**1. Database Changes (if needed)**
+**1. データベース変更（必要な場合）**
 
-Create migration file: `app/migrations/004_feature_name.sql`
+マイグレーションファイルを作成: `app/migrations/004_feature_name.sql`
 
 ```sql
--- Always use IF NOT EXISTS for idempotency
+-- べき等性のため、常にIF NOT EXISTSを使用
 ALTER TABLE crops ADD COLUMN new_field TEXT IF NOT EXISTS;
 
 CREATE TABLE IF NOT EXISTS new_table (
@@ -357,14 +357,14 @@ CREATE TABLE IF NOT EXISTS new_table (
 CREATE INDEX IF NOT EXISTS idx_new_table_name ON new_table(name);
 ```
 
-**Migration Auto-Execution:**
-- Migrations run alphabetically on app startup
-- Errors logged but don't crash app (skip "already exists")
-- No manual execution needed
+**マイグレーションの自動実行:**
+- マイグレーションはアプリ起動時にアルファベット順に実行される
+- エラーはログに記録されるがアプリはクラッシュしない（"already exists"はスキップ）
+- 手動実行は不要
 
-**2. Model Updates**
+**2. モデル更新**
 
-Add methods to existing model or create new model:
+既存モデルにメソッドを追加するか、新しいモデルを作成:
 
 ```python
 # app/models/crop.py
@@ -379,9 +379,9 @@ class Crop:
         return [dict(row) for row in rows]
 ```
 
-**3. Route Implementation**
+**3. ルート実装**
 
-Add routes to appropriate blueprint:
+適切なブループリントにルートを追加:
 
 ```python
 # app/routes/crop_routes.py
@@ -391,9 +391,9 @@ def by_season(season):
     return render_template('crops/list.html', crops=crops, title=f'{season}の作物')
 ```
 
-**4. Template Updates**
+**4. テンプレート更新**
 
-Create or modify templates:
+テンプレートを作成または修正:
 
 ```html
 <!-- app/templates/crops/list.html -->
@@ -410,51 +410,51 @@ Create or modify templates:
 {% endblock %}
 ```
 
-**5. Testing**
+**5. テスト**
 
 ```bash
-# Restart app (migrations auto-run)
+# アプリを再起動（マイグレーションが自動実行される）
 uv run python run.py
 
-# Test in browser
-# Add test data if needed
+# ブラウザでテスト
+# 必要に応じてテストデータを追加
 uv run python test_data.py
 ```
 
-### Image Upload Workflow
+### 画像アップロードワークフロー
 
-**Integration Pattern:**
+**統合パターン:**
 
 ```python
 from app.utils.upload import save_image, delete_image, allowed_file
 
-# In route create/update
+# ルートのcreate/update内
 data = dict(request.form)
 
-# Handle new upload
+# 新規アップロード処理
 if 'image' in request.files and request.files['image'].filename:
     file = request.files['image']
     if allowed_file(file.filename):
-        image_path = save_image(file, 'crops')  # Returns: 'crops/uuid.jpg'
+        image_path = save_image(file, 'crops')  # 戻り値: 'crops/uuid.jpg'
         data['image_path'] = image_path
     else:
         flash('許可されていないファイル形式です', 'error')
         return redirect(...)
 
-# Handle deletion (on update)
+# 削除処理（更新時）
 if 'delete_image' in request.form and entity['image_path']:
     delete_image(entity['image_path'])
     data['image_path'] = None
 
-# Handle deletion (on entity delete)
+# 削除処理（エンティティ削除時）
 if entity['image_path']:
     delete_image(entity['image_path'])
 ```
 
-**Template Pattern:**
+**テンプレートパターン:**
 
 ```html
-<!-- Upload form -->
+<!-- アップロードフォーム -->
 <form method="post" enctype="multipart/form-data">
     <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp">
     {% if entity and entity.image_path %}
@@ -464,27 +464,27 @@ if entity['image_path']:
     {% endif %}
 </form>
 
-<!-- Display image -->
+<!-- 画像表示 -->
 {% if entity.image_path %}
 <img src="{{ url_for('static', filename='uploads/' + entity.image_path) }}"
      class="img-fluid" alt="{{ entity.name }}">
 {% endif %}
 ```
 
-**Key Files:**
-- `app/utils/upload.py` - Helper functions
-- `app/static/uploads/{crops,locations,diary}/` - Storage folders
+**重要なファイル:**
+- `app/utils/upload.py` - ヘルパー関数
+- `app/static/uploads/{crops,locations,diary}/` - 保存フォルダ
 - Config: `UPLOAD_FOLDER`, `MAX_CONTENT_LENGTH`, `ALLOWED_EXTENSIONS`
 
-### Canvas Editor Integration
+### キャンバスエディター統合
 
-**Canvas Data Flow:**
-1. User edits canvas in `locations/canvas.html`
-2. Auto-save (3s debounce) → POST `/locations/<id>/canvas/save`
-3. `Location.save_canvas_data()` stores JSON + updates location_crop positions
-4. Position updates via drag → POST `/locations/<id>/crops/<lc_id>/position`
+**キャンバスデータフロー:**
+1. ユーザーが`locations/canvas.html`でキャンバスを編集
+2. 自動保存（3秒デバウンス）→ POST `/locations/<id>/canvas/save`
+3. `Location.save_canvas_data()`がJSONを保存し、location_cropの位置を更新
+4. ドラッグによる位置更新 → POST `/locations/<id>/crops/<lc_id>/position`
 
-**Canvas JSON Structure:**
+**キャンバスJSON構造:**
 ```json
 {
   "version": "1.0",
@@ -510,32 +510,32 @@ if entity['image_path']:
 }
 ```
 
-**Adding Canvas Features:**
+**キャンバス機能の追加:**
 
 ```javascript
 // app/static/js/canvas-editor.js
 
 class CanvasEditor {
     addCustomTool() {
-        // 1. Add tool button to toolbar
+        // 1. ツールバーにツールボタンを追加
         const toolBtn = document.createElement('button');
         toolBtn.id = 'customTool';
         toolBtn.innerHTML = '<i class="bi-icon"></i>';
         document.querySelector('.tool-palette').appendChild(toolBtn);
 
-        // 2. Register keyboard shortcut
+        // 2. キーボードショートカットを登録
         this.addKeyboardShortcut('X', 'customTool');
 
-        // 3. Implement tool logic
+        // 3. ツールロジックを実装
         this.canvas.on('mouse:down', (e) => {
             if (this.activeTool !== 'customTool') return;
-            // Tool implementation
+            // ツール実装
         });
     }
 }
 ```
 
-**Crop Sidebar Pattern:**
+**作物サイドバーパターン:**
 ```html
 <!-- canvas.html -->
 <div class="crop-sidebar">
@@ -553,49 +553,49 @@ class CanvasEditor {
 
 ---
 
-## Code Conventions
+## コード規約
 
-### Python Style
-- **Naming:**
-  - Classes: `PascalCase` (Crop, Location, DiaryEntry)
-  - Functions/variables: `snake_case`
-  - Constants: `UPPER_SNAKE_CASE`
-- **Imports:** Group by stdlib → third-party → local
-- **Docstrings:** Not required (code is self-documenting)
-- **Type hints:** Not used (Flask context)
+### Pythonスタイル
+- **命名:**
+  - クラス: `PascalCase`（Crop, Location, DiaryEntry）
+  - 関数/変数: `snake_case`
+  - 定数: `UPPER_SNAKE_CASE`
+- **インポート:** stdlib → サードパーティ → ローカルの順にグループ化
+- **Docstring:** 不要（コードは自己文書化）
+- **型ヒント:** 使用しない（Flaskコンテキスト）
 
-### SQL Conventions
-- **Tables:** Lowercase plural (crops, locations, diary_entries)
-- **Columns:** Lowercase snake_case (crop_type, planted_date, image_path)
-- **Foreign keys:** Singular entity name + `_id` (crop_id, location_id)
-- **Timestamps:** Always include `created_at`, `updated_at` (TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
-- **Status fields:** Text enums ('active', 'harvested', 'removed')
+### SQL規約
+- **テーブル:** 小文字複数形（crops, locations, diary_entries）
+- **カラム:** 小文字スネークケース（crop_type, planted_date, image_path）
+- **外部キー:** 単数形のエンティティ名 + `_id`（crop_id, location_id）
+- **タイムスタンプ:** 常に`created_at`, `updated_at`を含める（TIMESTAMP DEFAULT CURRENT_TIMESTAMP）
+- **ステータスフィールド:** テキスト列挙型（'active', 'harvested', 'removed'）
 
-### Template Conventions
-- **Files:** Lowercase, organized by entity (crops/list.html, locations/detail.html)
-- **Shared forms:** `form.html` reused for create/edit with conditional logic
-- **CSS classes:** Bootstrap utilities + custom kebab-case (.crop-sidebar, .canvas-editor)
-- **Flash categories:** 'success', 'error', 'warning', 'info' (Bootstrap alert classes)
+### テンプレート規約
+- **ファイル:** 小文字、エンティティ別に整理（crops/list.html, locations/detail.html）
+- **共有フォーム:** `form.html`を条件ロジックで作成/編集に再利用
+- **CSSクラス:** Bootstrap ユーティリティ + カスタムケバブケース（.crop-sidebar, .canvas-editor）
+- **フラッシュカテゴリ:** 'success', 'error', 'warning', 'info'（Bootstrap alertクラス）
 
-### JavaScript Conventions
-- **Naming:** camelCase (variables, functions), PascalCase (classes)
-- **Organization:** Classes for complex features (CanvasEditor), utility functions for simple tasks
-- **Event delegation:** Prefer delegated listeners for dynamic content
-- **AJAX:** Use native fetch() for API calls
+### JavaScript規約
+- **命名:** camelCase（変数、関数）、PascalCase（クラス）
+- **構成:** 複雑な機能にはクラス（CanvasEditor）、シンプルなタスクにはユーティリティ関数
+- **イベント委譲:** 動的コンテンツには委譲リスナーを優先
+- **AJAX:** ネイティブのfetch()を使用
 
-### URL Routing Conventions
-- **Resources:** Plural names (`/crops`, `/locations`, `/diary`)
-- **Actions:** Verb-based suffixes (`/create`, `/update`, `/delete`, `/plant`, `/harvest`)
-- **IDs:** Integer parameters (`/<int:id>`, `/<int:crop_id>`)
-- **Nesting:** Logical hierarchy (`/locations/<id>/crops/<crop_id>/position`)
+### URLルーティング規約
+- **リソース:** 複数形の名前（`/crops`, `/locations`, `/diary`）
+- **アクション:** 動詞ベースのサフィックス（`/create`, `/update`, `/delete`, `/plant`, `/harvest`）
+- **ID:** 整数パラメータ（`/<int:id>`, `/<int:crop_id>`）
+- **ネスト:** 論理的な階層（`/locations/<id>/crops/<crop_id>/position`）
 
 ---
 
-## Common Tasks
+## よくあるタスク
 
-### Adding a New Entity Type
+### 新しいエンティティタイプの追加
 
-**1. Database Schema** (`app/schema.sql` or migration)
+**1. データベーススキーマ**（`app/schema.sql`またはマイグレーション）
 ```sql
 CREATE TABLE IF NOT EXISTS new_entities (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -608,7 +608,7 @@ CREATE TABLE IF NOT EXISTS new_entities (
 CREATE INDEX IF NOT EXISTS idx_new_entities_name ON new_entities(name);
 ```
 
-**2. Model** (`app/models/new_entity.py`)
+**2. モデル**（`app/models/new_entity.py`）
 ```python
 from app.database import get_db
 
@@ -650,7 +650,7 @@ class NewEntity:
         db.commit()
 ```
 
-**3. Routes** (`app/routes/new_entity_routes.py`)
+**3. ルート**（`app/routes/new_entity_routes.py`）
 ```python
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.new_entity import NewEntity
@@ -713,27 +713,27 @@ def delete(id):
     return redirect(url_for('new_entities.list'))
 ```
 
-**4. Register Blueprint** (`app/__init__.py`)
+**4. ブループリント登録**（`app/__init__.py`）
 ```python
 from app.routes import new_entity_routes
 app.register_blueprint(new_entity_routes.bp)
 ```
 
-**5. Create Templates** (`app/templates/new_entities/`)
-- `list.html` - Entity listing
-- `detail.html` - Single entity view
-- `form.html` - Create/edit form
+**5. テンプレート作成**（`app/templates/new_entities/`）
+- `list.html` - エンティティ一覧
+- `detail.html` - 単一エンティティビュー
+- `form.html` - 作成/編集フォーム
 
-**6. Create Upload Directory**
+**6. アップロードディレクトリ作成**
 ```bash
 mkdir -p app/static/uploads/new_entities
 touch app/static/uploads/new_entities/.gitkeep
 ```
 
-### Adding Search/Filter Functionality
+### 検索/フィルター機能の追加
 
 ```python
-# Model method
+# モデルメソッド
 @staticmethod
 def search(keyword=None, date_from=None, date_to=None):
     db = get_db()
@@ -756,7 +756,7 @@ def search(keyword=None, date_from=None, date_to=None):
     rows = db.execute(query, params).fetchall()
     return [dict(row) for row in rows]
 
-# Route usage
+# ルートでの使用
 @bp.route('/')
 def list():
     keyword = request.args.get('keyword', '')
@@ -768,12 +768,12 @@ def list():
                           keyword=keyword, date_from=date_from, date_to=date_to)
 ```
 
-### Adding Many-to-Many Relationships
+### 多対多関係の追加
 
-**Example: Linking diary entries to crops/locations**
+**例: 日記エントリと作物/場所のリンク**
 
 ```python
-# Model methods (DiaryEntry)
+# モデルメソッド（DiaryEntry）
 @staticmethod
 def get_relations(diary_id):
     db = get_db()
@@ -789,10 +789,10 @@ def get_relations(diary_id):
 @staticmethod
 def save_relations(diary_id, relations):
     db = get_db()
-    # Clear existing relations
+    # 既存の関係をクリア
     db.execute('DELETE FROM diary_relations WHERE diary_id = ?', (diary_id,))
 
-    # Insert new relations
+    # 新しい関係を挿入
     for rel in relations:
         db.execute('''
             INSERT INTO diary_relations (diary_id, relation_type, crop_id, location_id, location_crop_id)
@@ -801,13 +801,13 @@ def save_relations(diary_id, relations):
 
     db.commit()
 
-# Route usage
+# ルートでの使用
 @bp.route('/create', methods=['POST'])
 def create():
     data = dict(request.form)
     diary_id = DiaryEntry.create(data)
 
-    # Handle relations
+    # 関係を処理
     relations = []
     if 'crop_ids' in request.form:
         for crop_id in request.form.getlist('crop_ids'):
@@ -819,116 +819,116 @@ def create():
 
 ---
 
-## Troubleshooting
+## トラブルシューティング
 
-### Database Issues
+### データベースの問題
 
-**Database not initializing:**
+**データベースが初期化されない:**
 ```bash
-# Manual initialization
+# 手動初期化
 uv run python -c "from app import create_app; from app.database import init_db; app = create_app(); init_db(app)"
 ```
 
-**Migration errors:**
-- Check SQL syntax in migration files
-- Ensure migrations use `IF NOT EXISTS` for idempotency
-- Check migration numbering sequence (001, 002, 003...)
-- Look at logs in console during app startup
+**マイグレーションエラー:**
+- マイグレーションファイルのSQL構文を確認
+- マイグレーションが`IF NOT EXISTS`を使用してべき等であることを確認
+- マイグレーション番号のシーケンスを確認（001, 002, 003...）
+- アプリ起動時のコンソールログを確認
 
-**Locked database:**
+**データベースロック:**
 ```bash
-# SQLite locks when multiple processes access it
-# Kill other Python processes or restart
+# SQLiteは複数プロセスがアクセスするとロックされる
+# 他のPythonプロセスを終了するか再起動
 pkill -f "python run.py"
 ```
 
-### Image Upload Issues
+### 画像アップロードの問題
 
-**Images not saving:**
-- Check directory exists: `app/static/uploads/{folder}/`
-- Check file permissions
-- Verify `MAX_CONTENT_LENGTH` config (16MB default)
-- Check allowed extensions in `upload.py`
+**画像が保存されない:**
+- ディレクトリが存在するか確認: `app/static/uploads/{folder}/`
+- ファイルパーミッションを確認
+- `MAX_CONTENT_LENGTH`設定を確認（デフォルト16MB）
+- `upload.py`の許可拡張子を確認
 
-**Images not displaying:**
-- Verify path format: `folder/filename.ext` (no leading slash)
-- Check template uses: `url_for('static', filename='uploads/' + path)`
-- Verify file exists in filesystem
+**画像が表示されない:**
+- パス形式を確認: `folder/filename.ext`（先頭にスラッシュなし）
+- テンプレートで使用: `url_for('static', filename='uploads/' + path)`
+- ファイルがファイルシステムに存在するか確認
 
-### Canvas Issues
+### キャンバスの問題
 
-**Canvas not saving:**
-- Check browser console for JavaScript errors
-- Verify endpoint: POST `/locations/<id>/canvas/save`
-- Check JSON format validity
-- Ensure location_id exists in database
+**キャンバスが保存されない:**
+- ブラウザコンソールでJavaScriptエラーを確認
+- エンドポイントを確認: POST `/locations/<id>/canvas/save`
+- JSON形式の妥当性を確認
+- location_idがデータベースに存在することを確認
 
-**Crop positions not updating:**
-- Verify `position_x` and `position_y` columns exist (migration 001)
-- Check endpoint: POST `/locations/<id>/crops/<lc_id>/position`
-- Verify location_crop_id is valid
-
----
-
-## Best Practices for AI Assistants
-
-### When Making Changes
-
-1. **Read before modifying:** Always use Read tool to examine existing files before making changes
-2. **Follow existing patterns:** Match the style and structure of existing code
-3. **Maintain conventions:** Use established naming patterns and file organization
-4. **Test after changes:** Verify changes work before considering task complete
-5. **Keep it simple:** Don't over-engineer; match the current complexity level
-
-### Database Changes
-
-1. **Always create migrations:** Never modify `schema.sql` directly for new features
-2. **Use IF NOT EXISTS:** Make migrations idempotent
-3. **Number sequentially:** Use 3-digit prefixes (001, 002, 003...)
-4. **Add indexes:** For foreign keys and commonly queried fields
-5. **Update model methods:** Add corresponding Python methods for new fields/tables
-
-### Code Organization
-
-1. **One feature per file:** Keep routes/models focused on single entity
-2. **Reuse templates:** Use conditional logic in forms instead of separate files
-3. **Centralize utilities:** Put shared code in `app/utils/`
-4. **Follow blueprint pattern:** Register all routes via blueprints
-5. **Avoid duplication:** Extract common patterns into helper functions
-
-### UI/UX Considerations
-
-1. **Bootstrap first:** Use Bootstrap utilities before writing custom CSS
-2. **Flash messages:** Always provide user feedback for actions
-3. **Confirmation dialogs:** Use `confirmDelete()` from main.js for deletions
-4. **Responsive design:** Test on multiple screen sizes
-5. **Accessibility:** Include alt text for images, labels for inputs
-
-### Security Considerations
-
-1. **Validate file uploads:** Check extensions via `allowed_file()`
-2. **Sanitize input:** Use parameterized queries (already done with `?` placeholders)
-3. **Check permissions:** Verify entity exists before deletion/updates
-4. **Handle errors gracefully:** Use try/except for file operations
-5. **Don't expose internals:** Return appropriate error messages to users
+**作物の位置が更新されない:**
+- `position_x`と`position_y`カラムが存在することを確認（migration 001）
+- エンドポイントを確認: POST `/locations/<id>/crops/<lc_id>/position`
+- location_crop_idが有効であることを確認
 
 ---
 
-## Appendix: Full Model API Reference
+## AIアシスタントのベストプラクティス
 
-### Crop Model (`app/models/crop.py`)
+### 変更を行う際
+
+1. **修正前に読む:** 変更前に必ずReadツールを使用して既存ファイルを確認
+2. **既存パターンに従う:** 既存コードのスタイルと構造に合わせる
+3. **規約を維持:** 確立された命名パターンとファイル構成を使用
+4. **変更後にテスト:** タスクを完了と見なす前に変更が動作することを確認
+5. **シンプルに保つ:** 過度に設計しない。現在の複雑さレベルに合わせる
+
+### データベース変更
+
+1. **常にマイグレーションを作成:** 新機能のために`schema.sql`を直接変更しない
+2. **IF NOT EXISTSを使用:** マイグレーションをべき等にする
+3. **連番を付ける:** 3桁のプレフィックスを使用（001, 002, 003...）
+4. **インデックスを追加:** 外部キーと頻繁にクエリされるフィールドに
+5. **モデルメソッドを更新:** 新しいフィールド/テーブルに対応するPythonメソッドを追加
+
+### コード構成
+
+1. **ファイルごとに1機能:** ルート/モデルを単一エンティティに集中させる
+2. **テンプレートを再利用:** 別ファイルの代わりにフォームで条件ロジックを使用
+3. **ユーティリティを集中化:** 共有コードは`app/utils/`に配置
+4. **ブループリントパターンに従う:** すべてのルートをブループリント経由で登録
+5. **重複を避ける:** 共通パターンをヘルパー関数に抽出
+
+### UI/UX考慮事項
+
+1. **Bootstrapを優先:** カスタムCSSを書く前にBootstrapユーティリティを使用
+2. **フラッシュメッセージ:** アクションに対して常にユーザーフィードバックを提供
+3. **確認ダイアログ:** 削除にはmain.jsの`confirmDelete()`を使用
+4. **レスポンシブデザイン:** 複数の画面サイズでテスト
+5. **アクセシビリティ:** 画像にaltテキスト、入力にラベルを含める
+
+### セキュリティ考慮事項
+
+1. **ファイルアップロードを検証:** `allowed_file()`で拡張子をチェック
+2. **入力をサニタイズ:** パラメータ化クエリを使用（`?`プレースホルダーで既に実施済み）
+3. **権限をチェック:** 削除/更新前にエンティティが存在することを確認
+4. **エラーを優雅に処理:** ファイル操作にtry/exceptを使用
+5. **内部情報を公開しない:** ユーザーに適切なエラーメッセージを返す
+
+---
+
+## 付録: 完全なモデルAPIリファレンス
+
+### Cropモデル（`app/models/crop.py`）
 
 ```python
 Crop.get_all() → List[Dict]
 Crop.get_by_id(crop_id: int) → Dict | None
-Crop.create(data: Dict) → int  # Returns inserted ID
+Crop.create(data: Dict) → int  # 挿入されたIDを返す
 Crop.update(crop_id: int, data: Dict) → None
 Crop.delete(crop_id: int) → None
 Crop.count() → int
 Crop.search(keyword: str) → List[Dict]
 ```
 
-### Location Model (`app/models/location.py`)
+### Locationモデル（`app/models/location.py`）
 
 ```python
 Location.get_all() → List[Dict]
@@ -938,27 +938,27 @@ Location.update(location_id: int, data: Dict) → None
 Location.delete(location_id: int) → None
 Location.count() → int
 Location.search(keyword: str) → List[Dict]
-Location.get_canvas_data(location_id: int) → str | None  # JSON string
+Location.get_canvas_data(location_id: int) → str | None  # JSON文字列
 Location.save_canvas_data(location_id: int, canvas_dict: Dict) → None
 ```
 
-### LocationCrop Model (`app/models/location_crop.py`)
+### LocationCropモデル（`app/models/location_crop.py`）
 
 ```python
 LocationCrop.get_by_location(location_id: int, status: str = 'active') → List[Dict]
 LocationCrop.get_by_crop(crop_id: int, status: str = 'active') → List[Dict]
 LocationCrop.get_by_id(location_crop_id: int) → Dict | None
-LocationCrop.plant(data: Dict) → int  # Creates planting record
-LocationCrop.harvest(location_crop_id: int) → None  # Sets status='harvested'
-LocationCrop.remove(location_crop_id: int) → None  # Sets status='removed'
+LocationCrop.plant(data: Dict) → int  # 栽培記録を作成
+LocationCrop.harvest(location_crop_id: int) → None  # statusを'harvested'に設定
+LocationCrop.remove(location_crop_id: int) → None  # statusを'removed'に設定
 LocationCrop.count_active() → int
-LocationCrop.get_all_active() → List[Dict]  # All active plantings with details
+LocationCrop.get_all_active() → List[Dict]  # 詳細を含むすべての栽培中の記録
 LocationCrop.update_position(location_crop_id: int, x: float, y: float) → None
 LocationCrop.get_crops_with_position(location_id: int) → List[Dict]
 LocationCrop.clear_positions_except(location_id: int, location_crop_ids: List[int]) → None
 ```
 
-### DiaryEntry Model (`app/models/diary.py`)
+### DiaryEntryモデル（`app/models/diary.py`）
 
 ```python
 DiaryEntry.get_all(limit: int = None, offset: int = 0) → List[Dict]
@@ -977,9 +977,9 @@ DiaryEntry.get_by_location(location_id: int) → List[Dict]
 
 ---
 
-## Additional Resources
+## 追加リソース
 
-### Configuration Reference (`app/config.py`)
+### 設定リファレンス（`app/config.py`）
 
 ```python
 class DevelopmentConfig(Config):
@@ -992,55 +992,55 @@ class DevelopmentConfig(Config):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 ```
 
-### Canvas Editor Keyboard Shortcuts
+### キャンバスエディターのキーボードショートカット
 
-- `S` - Select tool
-- `R` - Rectangle tool
-- `C` - Circle tool
-- `L` - Line tool
-- `T` - Text tool
-- `D` - Delete selected objects
-- `Ctrl+Z` / `Cmd+Z` - Undo
-- `Ctrl+Shift+Z` / `Cmd+Shift+Z` - Redo
-- `Delete` / `Backspace` - Delete selected
+- `S` - 選択ツール
+- `R` - 矩形ツール
+- `C` - 円ツール
+- `L` - 線ツール
+- `T` - テキストツール
+- `D` - 選択したオブジェクトを削除
+- `Ctrl+Z` / `Cmd+Z` - 元に戻す
+- `Ctrl+Shift+Z` / `Cmd+Shift+Z` - やり直す
+- `Delete` / `Backspace` - 選択を削除
 
-### Fabric.js Integration Points
+### Fabric.js統合ポイント
 
-**Key Methods in CanvasEditor:**
+**CanvasEditorの主要メソッド:**
 ```javascript
-constructor(canvasElementId, locationId)  // Initialize canvas
-loadCanvas()                              // Load canvas data from server
-saveCanvas()                              // Debounced auto-save (3 seconds)
-addCropToCanvas(cropData)                 // Add crop icon to canvas
-updateCropPosition(locationCropId, x, y)  // Sync position to server
-addToHistory()                            // Save state for undo/redo
-undo() / redo()                           // History navigation
-enableDrawingMode(tool)                   // Activate drawing tool
+constructor(canvasElementId, locationId)  // キャンバスを初期化
+loadCanvas()                              // サーバーからキャンバスデータを読み込み
+saveCanvas()                              // デバウンスされた自動保存（3秒）
+addCropToCanvas(cropData)                 // キャンバスに作物アイコンを追加
+updateCropPosition(locationCropId, x, y)  // サーバーに位置を同期
+addToHistory()                            // 元に戻す/やり直し用に状態を保存
+undo() / redo()                           // 履歴ナビゲーション
+enableDrawingMode(tool)                   // 描画ツールをアクティブ化
 ```
 
 ---
 
-## Quick Decision Tree
+## クイック決定ツリー
 
-**Need to add a field to existing entity?**
-→ Create migration, update model method, update form template
+**既存エンティティにフィールドを追加する必要がある？**
+→ マイグレーションを作成、モデルメソッドを更新、フォームテンプレートを更新
 
-**Need to add a new page?**
-→ Add route function, create template extending base.html
+**新しいページを追加する必要がある？**
+→ ルート関数を追加、base.htmlを継承するテンプレートを作成
 
-**Need to track relationships between entities?**
-→ Create junction table (like diary_relations), add model methods for get/save
+**エンティティ間の関係を追跡する必要がある？**
+→ ジャンクションテーブル（diary_relationsのような）を作成、get/saveのモデルメソッドを追加
 
-**Need to add image upload?**
-→ Use `save_image()` in route, add `enctype="multipart/form-data"` to form
+**画像アップロードを追加する必要がある？**
+→ ルートで`save_image()`を使用、フォームに`enctype="multipart/form-data"`を追加
 
-**Need to add search?**
-→ Add search method to model with LIKE queries, add search form to list template
+**検索を追加する必要がある？**
+→ LIKEクエリを使用したsearchメソッドをモデルに追加、リストテンプレートに検索フォームを追加
 
-**Canvas feature request?**
-→ Modify canvas-editor.js, test in locations/canvas.html
+**キャンバス機能のリクエスト？**
+→ canvas-editor.jsを修正、locations/canvas.htmlでテスト
 
-**Need API endpoint?**
-→ Add JSON response route, test with fetch() from JavaScript
+**APIエンドポイントが必要？**
+→ JSONレスポンスルートを追加、JavaScriptからfetch()でテスト
 
-This document should be updated as the codebase evolves to reflect new patterns and conventions.
+このドキュメントは、コードベースが進化するにつれて、新しいパターンと規約を反映するように更新する必要があります。
