@@ -29,3 +29,7 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+
+# Uploaded files (keep .gitkeep)
+app/static/uploads/**/*
+!app/static/uploads/**/.gitkeep

@@ -121,9 +121,29 @@ class LocationCrop:
         """栽培中の作物数を取得"""
         db = get_db()
         result = db.execute(
-            "SELECT COUNT(*) as count FROM location_crops WHERE status = 'active'"
+            '''SELECT COUNT(*) as count
+               FROM location_crops lc
+               JOIN crops c ON lc.crop_id = c.id
+               JOIN locations l ON lc.location_id = l.id
+               WHERE lc.status = 'active' '''
         ).fetchone()
         return result['count'] if result else 0
+
+    @staticmethod
+    def get_all_active():
+        """全ての栽培中の作物を取得（作物・場所情報付き）"""
+        db = get_db()
+        crops = db.execute(
+            '''SELECT lc.*,
+                      c.name as crop_name, c.crop_type, c.variety,
+                      l.name as location_name, l.location_type
+               FROM location_crops lc
+               JOIN crops c ON lc.crop_id = c.id
+               JOIN locations l ON lc.location_id = l.id
+               WHERE lc.status = 'active'
+               ORDER BY lc.planted_date DESC'''
+        ).fetchall()
+        return [dict(crop) for crop in crops]
 
     @staticmethod
     def update_position(location_crop_id, position_x, position_y):

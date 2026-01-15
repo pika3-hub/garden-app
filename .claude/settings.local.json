@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv init:*)",
+      "Bash(uv add:*)",
+      "Bash(curl:*)",
+      "Bash(uv run python:*)",
+      "Bash(cat:*)",
+      "Bash(python:*)",
+      "Bash(timeout:*)",
+      "Bash(uv venv:*)",
+      "Bash(uv sync:*)",
+      "Bash(gh auth status:*)",
+      "Bash(dir:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

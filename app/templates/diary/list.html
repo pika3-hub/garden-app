@@ -52,6 +52,9 @@
                         {% if entry.weather %}
                         <span class="badge bg-info">{{ entry.weather }}</span>
                         {% endif %}
+                        {% if entry.image_path %}
+                        <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}" class="img-thumbnail mt-2" alt="{{ entry.title }}" style="max-height: 80px;">
+                        {% endif %}
                     </div>
                     <div class="col-md-8">
                         <h5 class="card-title">

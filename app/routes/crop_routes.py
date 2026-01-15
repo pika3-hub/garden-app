@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.crop import Crop
 from app.models.location_crop import LocationCrop
 from app.models.diary import DiaryEntry
+from app.utils.upload import save_image, delete_image
 
 bp = Blueprint('crops', __name__, url_prefix='/crops')
 
@@ -63,6 +64,12 @@ def create():
         flash('作物名と作物種類は必須です', 'danger')
         return redirect(url_for('crops.new'))
 
+    # 画像アップロード処理
+    if 'image' in request.files:
+        image = request.files['image']
+        image_path = save_image(image, 'crops')
+        data['image_path'] = image_path
+
     try:
         crop_id = Crop.create(data)
         flash(f'作物「{data["name"]}」を登録しました', 'success')
@@ -97,13 +104,31 @@ def update(crop_id):
         'characteristics': request.form.get('characteristics'),
         'planting_season': request.form.get('planting_season'),
         'harvest_season': request.form.get('harvest_season'),
-        'notes': request.form.get('notes')
+        'notes': request.form.get('notes'),
+        'image_path': crop.get('image_path')  # 既存の画像パスを保持
     }
 
     # バリデーション
     if not data['name'] or not data['crop_type']:
         flash('作物名と作物種類は必須です', 'danger')
         return redirect(url_for('crops.edit', crop_id=crop_id))
+
+    # 画像アップロード処理
+    if 'image' in request.files:
+        image = request.files['image']
+        if image and image.filename:
+            # 古い画像を削除
+            if crop.get('image_path'):
+                delete_image(crop['image_path'])
+            # 新しい画像を保存
+            image_path = save_image(image, 'crops')
+            data['image_path'] = image_path
+
+    # 画像削除チェック
+    if request.form.get('delete_image') == '1':
+        if crop.get('image_path'):
+            delete_image(crop['image_path'])
+        data['image_path'] = None
 
     try:
         Crop.update(crop_id, data)
@@ -123,6 +148,9 @@ def delete(crop_id):
         return redirect(url_for('crops.list'))
 
     try:
+        # 画像を削除
+        if crop.get('image_path'):
+            delete_image(crop['image_path'])
         Crop.delete(crop_id)
         flash(f'作物「{crop["name"]}」を削除しました', 'success')
     except Exception as e:

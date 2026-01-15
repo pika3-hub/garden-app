@@ -29,11 +29,11 @@ class Crop:
         db = get_db()
         cursor = db.execute(
             '''INSERT INTO crops (name, crop_type, variety, characteristics,
-               planting_season, harvest_season, notes)
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
+               planting_season, harvest_season, notes, image_path)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['name'], data['crop_type'], data.get('variety'),
              data.get('characteristics'), data.get('planting_season'),
-             data.get('harvest_season'), data.get('notes'))
+             data.get('harvest_season'), data.get('notes'), data.get('image_path'))
         )
         db.commit()
         return cursor.lastrowid
@@ -45,11 +45,11 @@ class Crop:
         db.execute(
             '''UPDATE crops SET name = ?, crop_type = ?, variety = ?,
                characteristics = ?, planting_season = ?, harvest_season = ?,
-               notes = ?, updated_at = CURRENT_TIMESTAMP
+               notes = ?, image_path = ?, updated_at = CURRENT_TIMESTAMP
                WHERE id = ?''',
             (data['name'], data['crop_type'], data.get('variety'),
              data.get('characteristics'), data.get('planting_season'),
-             data.get('harvest_season'), data.get('notes'), crop_id)
+             data.get('harvest_season'), data.get('notes'), data.get('image_path'), crop_id)
         )
         db.commit()
 
