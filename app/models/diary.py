@@ -36,10 +36,10 @@ class DiaryEntry:
         """日記を作成"""
         db = get_db()
         cursor = db.execute(
-            '''INSERT INTO diary_entries (title, content, entry_date, weather, status)
-               VALUES (?, ?, ?, ?, ?)''',
+            '''INSERT INTO diary_entries (title, content, entry_date, weather, status, image_path)
+               VALUES (?, ?, ?, ?, ?, ?)''',
             (data['title'], data.get('content'), data['entry_date'],
-             data.get('weather'), data.get('status', 'published'))
+             data.get('weather'), data.get('status', 'published'), data.get('image_path'))
         )
         db.commit()
         return cursor.lastrowid
@@ -50,10 +50,10 @@ class DiaryEntry:
         db = get_db()
         db.execute(
             '''UPDATE diary_entries SET title = ?, content = ?, entry_date = ?,
-               weather = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+               weather = ?, status = ?, image_path = ?, updated_at = CURRENT_TIMESTAMP
                WHERE id = ?''',
             (data['title'], data.get('content'), data['entry_date'],
-             data.get('weather'), data.get('status', 'published'), diary_id)
+             data.get('weather'), data.get('status', 'published'), data.get('image_path'), diary_id)
         )
         db.commit()
 

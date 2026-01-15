@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}栽培中の作物一覧 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><i class="bi bi-flower1"></i> 栽培中の作物一覧</h1>
+    </div>
+    <div class="col-md-6 text-end">
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </button>
+    </div>
+</div>
+
+{% if crops %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>作物名</th>
+                        <th>品種</th>
+                        <th>場所</th>
+                        <th>植え付け日</th>
+                        <th>株数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for crop in crops %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}">
+                                <i class="bi bi-basket-fill text-success"></i> {{ crop.crop_name }}
+                            </a>
+                            <span class="badge bg-success">{{ crop.crop_type }}</span>
+                        </td>
+                        <td>{{ crop.variety or '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('locations.detail', location_id=crop.location_id) }}">
+                                <i class="bi bi-geo-alt-fill text-info"></i> {{ crop.location_name }}
+                            </a>
+                            <span class="badge bg-info">{{ crop.location_type }}</span>
+                        </td>
+                        <td>{{ crop.planted_date or '-' }}</td>
+                        <td>{{ crop.quantity or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer text-muted">
+        合計: {{ crops|length }} 件
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    現在栽培中の作物はありません。<a href="{{ url_for('locations.list') }}" class="alert-link">場所</a>から作物を植え付けてください。
+</div>
+{% endif %}
+{% endblock %}

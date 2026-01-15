@@ -11,9 +11,9 @@
         </h1>
     </div>
     <div class="col-md-4 text-end">
-        <a href="{{ url_for('crops.list') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> 一覧に戻る
-        </a>
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </button>
     </div>
 </div>
 
@@ -21,7 +21,7 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-body">
-                <form method="POST" action="{% if crop %}{{ url_for('crops.update', crop_id=crop.id) }}{% else %}{{ url_for('crops.create') }}{% endif %}" class="needs-validation" novalidate>
+                <form method="POST" action="{% if crop %}{{ url_for('crops.update', crop_id=crop.id) }}{% else %}{{ url_for('crops.create') }}{% endif %}" class="needs-validation" enctype="multipart/form-data" novalidate>
                     <div class="mb-3">
                         <label for="name" class="form-label">作物名 <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="name" name="name" value="{{ crop.name if crop else '' }}" required>
@@ -59,6 +59,21 @@
                     <div class="mb-3">
                         <label for="notes" class="form-label">メモ</label>
                         <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="自由にメモを記入できます">{{ crop.notes if crop else '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image" class="form-label">画像</label>
+                        {% if crop and crop.image_path %}
+                        <div class="mb-2">
+                            <img src="{{ url_for('static', filename='uploads/' + crop.image_path) }}" alt="現在の画像" class="img-thumbnail" style="max-height: 150px;">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="delete_image" name="delete_image" value="1">
+                                <label class="form-check-label" for="delete_image">画像を削除する</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <small class="text-muted">対応形式: PNG, JPG, JPEG, GIF, WebP（最大16MB）</small>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">

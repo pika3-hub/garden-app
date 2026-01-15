@@ -8,9 +8,9 @@
         <h1><i class="bi bi-basket"></i> {{ crop.name }}</h1>
     </div>
     <div class="col-md-4 text-end">
-        <a href="{{ url_for('crops.list') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> 一覧に戻る
-        </a>
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </button>
     </div>
 </div>
 
@@ -21,6 +21,11 @@
                 <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本情報</h5>
             </div>
             <div class="card-body">
+                {% if crop.image_path %}
+                <div class="text-center mb-3">
+                    <img src="{{ url_for('static', filename='uploads/' + crop.image_path) }}" alt="{{ crop.name }}" class="img-fluid rounded" style="max-height: 300px;">
+                </div>
+                {% endif %}
                 <table class="table table-borderless">
                     <tr>
                         <th style="width: 30%;">作物名</th>

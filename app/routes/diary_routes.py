@@ -3,6 +3,7 @@ from app.models.diary import DiaryEntry
 from app.models.crop import Crop
 from app.models.location import Location
 from app.models.location_crop import LocationCrop
+from app.utils.upload import save_image, delete_image
 
 bp = Blueprint('diary', __name__, url_prefix='/diary')
 
@@ -78,6 +79,12 @@ def create():
         flash('タイトルと日付は必須です', 'danger')
         return redirect(url_for('diary.new'))
 
+    # 画像アップロード処理
+    if 'image' in request.files:
+        image = request.files['image']
+        image_path = save_image(image, 'diary')
+        data['image_path'] = image_path
+
     try:
         diary_id = DiaryEntry.create(data)
 
@@ -138,13 +145,31 @@ def update(diary_id):
         'content': request.form.get('content'),
         'entry_date': request.form.get('entry_date'),
         'weather': request.form.get('weather'),
-        'status': request.form.get('status', 'published')
+        'status': request.form.get('status', 'published'),
+        'image_path': entry.get('image_path')  # 既存の画像パスを保持
     }
 
     # バリデーション
     if not data['title'] or not data['entry_date']:
         flash('タイトルと日付は必須です', 'danger')
         return redirect(url_for('diary.edit', diary_id=diary_id))
+
+    # 画像アップロード処理
+    if 'image' in request.files:
+        image = request.files['image']
+        if image and image.filename:
+            # 古い画像を削除
+            if entry.get('image_path'):
+                delete_image(entry['image_path'])
+            # 新しい画像を保存
+            image_path = save_image(image, 'diary')
+            data['image_path'] = image_path
+
+    # 画像削除チェック
+    if request.form.get('delete_image') == '1':
+        if entry.get('image_path'):
+            delete_image(entry['image_path'])
+        data['image_path'] = None
 
     try:
         DiaryEntry.update(diary_id, data)
@@ -173,6 +198,9 @@ def delete(diary_id):
         return redirect(url_for('diary.list'))
 
     try:
+        # 画像を削除
+        if entry.get('image_path'):
+            delete_image(entry['image_path'])
         DiaryEntry.delete(diary_id)
         flash(f'日記「{entry["title"]}」を削除しました', 'success')
     except Exception as e:

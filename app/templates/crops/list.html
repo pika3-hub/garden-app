@@ -35,6 +35,9 @@
     {% for crop in crops %}
     <div class="col-md-6 col-lg-4 mb-3">
         <div class="card h-100">
+            {% if crop.image_path %}
+            <img src="{{ url_for('static', filename='uploads/' + crop.image_path) }}" class="card-img-top" alt="{{ crop.name }}" style="height: 150px; object-fit: cover;">
+            {% endif %}
             <div class="card-body">
                 <h5 class="card-title">
                     <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="text-decoration-none">

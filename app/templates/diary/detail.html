@@ -8,9 +8,9 @@
         <h1><i class="bi bi-journal-text"></i> {{ entry.title }}</h1>
     </div>
     <div class="col-md-4 text-end">
-        <a href="{{ url_for('diary.list') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> 一覧に戻る
-        </a>
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </button>
     </div>
 </div>
 
@@ -25,6 +25,11 @@
                 </h5>
             </div>
             <div class="card-body">
+                {% if entry.image_path %}
+                <div class="text-center mb-3">
+                    <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}" alt="{{ entry.title }}" class="img-fluid rounded" style="max-height: 400px;">
+                </div>
+                {% endif %}
                 {% if entry.content %}
                 <div class="diary-content" style="white-space: pre-wrap;">{{ entry.content }}</div>
                 {% else %}

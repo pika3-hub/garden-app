@@ -3,6 +3,7 @@ from app.models.location import Location
 from app.models.location_crop import LocationCrop
 from app.models.crop import Crop
 from app.models.diary import DiaryEntry
+from app.utils.upload import save_image, delete_image
 
 bp = Blueprint('locations', __name__, url_prefix='/locations')
 
@@ -16,6 +17,13 @@ def list():
     else:
         locations = Location.get_all()
     return render_template('locations/list.html', locations=locations, keyword=keyword)
+
+
+@bp.route('/active-crops')
+def active_crops():
+    """栽培中の作物一覧"""
+    crops = LocationCrop.get_all_active()
+    return render_template('locations/active_crops.html', crops=crops)
 
 
 @bp.route('/<int:location_id>')
@@ -64,6 +72,12 @@ def create():
         flash('場所名と場所種類は必須です', 'danger')
         return redirect(url_for('locations.new'))
 
+    # 画像アップロード処理
+    if 'image' in request.files:
+        image = request.files['image']
+        image_path = save_image(image, 'locations')
+        data['image_path'] = image_path
+
     try:
         location_id = Location.create(data)
         flash(f'場所「{data["name"]}」を登録しました', 'success')
@@ -96,13 +110,31 @@ def update(location_id):
         'location_type': request.form.get('location_type'),
         'area_size': request.form.get('area_size'),
         'sun_exposure': request.form.get('sun_exposure'),
-        'notes': request.form.get('notes')
+        'notes': request.form.get('notes'),
+        'image_path': location.get('image_path')  # 既存の画像パスを保持
     }
 
     # バリデーション
     if not data['name'] or not data['location_type']:
         flash('場所名と場所種類は必須です', 'danger')
         return redirect(url_for('locations.edit', location_id=location_id))
+
+    # 画像アップロード処理
+    if 'image' in request.files:
+        image = request.files['image']
+        if image and image.filename:
+            # 古い画像を削除
+            if location.get('image_path'):
+                delete_image(location['image_path'])
+            # 新しい画像を保存
+            image_path = save_image(image, 'locations')
+            data['image_path'] = image_path
+
+    # 画像削除チェック
+    if request.form.get('delete_image') == '1':
+        if location.get('image_path'):
+            delete_image(location['image_path'])
+        data['image_path'] = None
 
     try:
         Location.update(location_id, data)
@@ -122,6 +154,9 @@ def delete(location_id):
         return redirect(url_for('locations.list'))
 
     try:
+        # 画像を削除
+        if location.get('image_path'):
+            delete_image(location['image_path'])
         Location.delete(location_id)
         flash(f'場所「{location["name"]}」を削除しました', 'success')
     except Exception as e:

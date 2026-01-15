@@ -29,10 +29,10 @@ class Location:
         """場所を作成"""
         db = get_db()
         cursor = db.execute(
-            '''INSERT INTO locations (name, location_type, area_size, sun_exposure, notes)
-               VALUES (?, ?, ?, ?, ?)''',
+            '''INSERT INTO locations (name, location_type, area_size, sun_exposure, notes, image_path)
+               VALUES (?, ?, ?, ?, ?, ?)''',
             (data['name'], data['location_type'], data.get('area_size'),
-             data.get('sun_exposure'), data.get('notes'))
+             data.get('sun_exposure'), data.get('notes'), data.get('image_path'))
         )
         db.commit()
         return cursor.lastrowid
@@ -43,10 +43,10 @@ class Location:
         db = get_db()
         db.execute(
             '''UPDATE locations SET name = ?, location_type = ?, area_size = ?,
-               sun_exposure = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+               sun_exposure = ?, notes = ?, image_path = ?, updated_at = CURRENT_TIMESTAMP
                WHERE id = ?''',
             (data['name'], data['location_type'], data.get('area_size'),
-             data.get('sun_exposure'), data.get('notes'), location_id)
+             data.get('sun_exposure'), data.get('notes'), data.get('image_path'), location_id)
         )
         db.commit()
 
