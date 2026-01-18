@@ -1,4 +1,5 @@
 from app.database import get_db
+from app.utils.timezone import get_jst_now
 
 
 class DiaryEntry:
@@ -35,11 +36,13 @@ class DiaryEntry:
     def create(data):
         """日記を作成"""
         db = get_db()
+        now = get_jst_now()
         cursor = db.execute(
-            '''INSERT INTO diary_entries (title, content, entry_date, weather, status, image_path)
-               VALUES (?, ?, ?, ?, ?, ?)''',
+            '''INSERT INTO diary_entries (title, content, entry_date, weather, status, image_path, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['title'], data.get('content'), data['entry_date'],
-             data.get('weather'), data.get('status', 'published'), data.get('image_path'))
+             data.get('weather'), data.get('status', 'published'), data.get('image_path'),
+             now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -50,10 +53,11 @@ class DiaryEntry:
         db = get_db()
         db.execute(
             '''UPDATE diary_entries SET title = ?, content = ?, entry_date = ?,
-               weather = ?, status = ?, image_path = ?, updated_at = CURRENT_TIMESTAMP
+               weather = ?, status = ?, image_path = ?, updated_at = ?
                WHERE id = ?''',
             (data['title'], data.get('content'), data['entry_date'],
-             data.get('weather'), data.get('status', 'published'), data.get('image_path'), diary_id)
+             data.get('weather'), data.get('status', 'published'), data.get('image_path'),
+             get_jst_now(), diary_id)
         )
         db.commit()
 

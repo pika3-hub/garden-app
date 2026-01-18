@@ -1,4 +1,5 @@
 from app.database import get_db
+from app.utils.timezone import get_jst_now
 
 
 class Crop:
@@ -27,13 +28,15 @@ class Crop:
     def create(data):
         """作物を作成"""
         db = get_db()
+        now = get_jst_now()
         cursor = db.execute(
             '''INSERT INTO crops (name, crop_type, variety, characteristics,
-               planting_season, harvest_season, notes, image_path)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+               planting_season, harvest_season, notes, image_path, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['name'], data['crop_type'], data.get('variety'),
              data.get('characteristics'), data.get('planting_season'),
-             data.get('harvest_season'), data.get('notes'), data.get('image_path'))
+             data.get('harvest_season'), data.get('notes'), data.get('image_path'),
+             now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -45,11 +48,12 @@ class Crop:
         db.execute(
             '''UPDATE crops SET name = ?, crop_type = ?, variety = ?,
                characteristics = ?, planting_season = ?, harvest_season = ?,
-               notes = ?, image_path = ?, updated_at = CURRENT_TIMESTAMP
+               notes = ?, image_path = ?, updated_at = ?
                WHERE id = ?''',
             (data['name'], data['crop_type'], data.get('variety'),
              data.get('characteristics'), data.get('planting_season'),
-             data.get('harvest_season'), data.get('notes'), data.get('image_path'), crop_id)
+             data.get('harvest_season'), data.get('notes'), data.get('image_path'),
+             get_jst_now(), crop_id)
         )
         db.commit()
 

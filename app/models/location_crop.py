@@ -1,4 +1,5 @@
 from app.database import get_db
+from app.utils.timezone import get_jst_now
 
 
 class LocationCrop:
@@ -64,11 +65,12 @@ class LocationCrop:
     def plant(data):
         """作物を場所に植え付け"""
         db = get_db()
+        now = get_jst_now()
         cursor = db.execute(
-            '''INSERT INTO location_crops (location_id, crop_id, planted_date, quantity, notes, status)
-               VALUES (?, ?, ?, ?, ?, 'active')''',
+            '''INSERT INTO location_crops (location_id, crop_id, planted_date, quantity, notes, status, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, 'active', ?, ?)''',
             (data['location_id'], data['crop_id'], data.get('planted_date'),
-             data.get('quantity'), data.get('notes'))
+             data.get('quantity'), data.get('notes'), now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -80,10 +82,11 @@ class LocationCrop:
         db.execute(
             '''UPDATE location_crops
                SET planted_date = ?, quantity = ?, notes = ?, status = ?,
-                   updated_at = CURRENT_TIMESTAMP
+                   updated_at = ?
                WHERE id = ?''',
             (data.get('planted_date'), data.get('quantity'),
-             data.get('notes'), data.get('status', 'active'), location_crop_id)
+             data.get('notes'), data.get('status', 'active'),
+             get_jst_now(), location_crop_id)
         )
         db.commit()
 
@@ -92,9 +95,9 @@ class LocationCrop:
         """収穫済みに変更"""
         db = get_db()
         db.execute(
-            '''UPDATE location_crops SET status = 'harvested', updated_at = CURRENT_TIMESTAMP
+            '''UPDATE location_crops SET status = 'harvested', updated_at = ?
                WHERE id = ?''',
-            (location_crop_id,)
+            (get_jst_now(), location_crop_id)
         )
         db.commit()
 
@@ -103,9 +106,9 @@ class LocationCrop:
         """削除（取り除く）"""
         db = get_db()
         db.execute(
-            '''UPDATE location_crops SET status = 'removed', updated_at = CURRENT_TIMESTAMP
+            '''UPDATE location_crops SET status = 'removed', updated_at = ?
                WHERE id = ?''',
-            (location_crop_id,)
+            (get_jst_now(), location_crop_id)
         )
         db.commit()
 
@@ -151,8 +154,8 @@ class LocationCrop:
         db = get_db()
         db.execute(
             '''UPDATE location_crops SET position_x = ?, position_y = ?,
-               updated_at = CURRENT_TIMESTAMP WHERE id = ?''',
-            (position_x, position_y, location_crop_id)
+               updated_at = ? WHERE id = ?''',
+            (position_x, position_y, get_jst_now(), location_crop_id)
         )
         db.commit()
 
@@ -160,21 +163,22 @@ class LocationCrop:
     def clear_positions_except(location_id, location_crop_ids):
         """指定されたID以外の作物の位置情報をクリア"""
         db = get_db()
+        now = get_jst_now()
         if location_crop_ids:
             placeholders = ','.join('?' * len(location_crop_ids))
             db.execute(
                 f'''UPDATE location_crops SET position_x = NULL, position_y = NULL,
-                   updated_at = CURRENT_TIMESTAMP
+                   updated_at = ?
                    WHERE location_id = ? AND status = 'active' AND id NOT IN ({placeholders})''',
-                [location_id] + list(location_crop_ids)
+                [now, location_id] + list(location_crop_ids)
             )
         else:
             # リストが空の場合、この場所の全ての作物の位置をクリア
             db.execute(
                 '''UPDATE location_crops SET position_x = NULL, position_y = NULL,
-                   updated_at = CURRENT_TIMESTAMP
+                   updated_at = ?
                    WHERE location_id = ? AND status = 'active' ''',
-                (location_id,)
+                (now, location_id)
             )
         db.commit()
 

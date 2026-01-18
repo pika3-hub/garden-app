@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS crops (
     planting_season VARCHAR(50),
     harvest_season VARCHAR(50),
     notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
+    updated_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
 );
 
 -- 場所テーブル
@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS locations (
     area_size DECIMAL(10, 2),
     sun_exposure VARCHAR(50),
     notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
+    updated_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
 );
 
 -- 場所-作物関連テーブル
@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS location_crops (
     quantity INTEGER,
     status VARCHAR(50) DEFAULT 'active',
     notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
+    updated_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
     FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE,
     FOREIGN KEY (crop_id) REFERENCES crops(id) ON DELETE CASCADE
 );

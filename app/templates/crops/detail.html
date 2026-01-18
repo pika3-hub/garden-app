@@ -8,9 +8,9 @@
         <h1><i class="bi bi-basket"></i> {{ crop.name }}</h1>
     </div>
     <div class="col-md-4 text-end">
-        <button onclick="history.back()" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> 戻る
-        </button>
+        <a href="{{ url_for('crops.list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-list"></i> 一覧に戻る
+        </a>
     </div>
 </div>
 

@@ -1,5 +1,6 @@
 import json
 from app.database import get_db
+from app.utils.timezone import get_jst_now
 
 
 class Location:
@@ -28,11 +29,13 @@ class Location:
     def create(data):
         """場所を作成"""
         db = get_db()
+        now = get_jst_now()
         cursor = db.execute(
-            '''INSERT INTO locations (name, location_type, area_size, sun_exposure, notes, image_path)
-               VALUES (?, ?, ?, ?, ?, ?)''',
+            '''INSERT INTO locations (name, location_type, area_size, sun_exposure, notes, image_path, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['name'], data['location_type'], data.get('area_size'),
-             data.get('sun_exposure'), data.get('notes'), data.get('image_path'))
+             data.get('sun_exposure'), data.get('notes'), data.get('image_path'),
+             now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -43,10 +46,11 @@ class Location:
         db = get_db()
         db.execute(
             '''UPDATE locations SET name = ?, location_type = ?, area_size = ?,
-               sun_exposure = ?, notes = ?, image_path = ?, updated_at = CURRENT_TIMESTAMP
+               sun_exposure = ?, notes = ?, image_path = ?, updated_at = ?
                WHERE id = ?''',
             (data['name'], data['location_type'], data.get('area_size'),
-             data.get('sun_exposure'), data.get('notes'), data.get('image_path'), location_id)
+             data.get('sun_exposure'), data.get('notes'), data.get('image_path'),
+             get_jst_now(), location_id)
         )
         db.commit()
 
@@ -100,9 +104,9 @@ class Location:
         db = get_db()
         canvas_json = json.dumps(canvas_dict, ensure_ascii=False)
         db.execute(
-            '''UPDATE locations SET canvas_data = ?, updated_at = CURRENT_TIMESTAMP
+            '''UPDATE locations SET canvas_data = ?, updated_at = ?
                WHERE id = ?''',
-            (canvas_json, location_id)
+            (canvas_json, get_jst_now(), location_id)
         )
         db.commit()
 

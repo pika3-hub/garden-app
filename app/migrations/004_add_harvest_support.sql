@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS harvests (
     unit VARCHAR(20),
     notes TEXT,
     image_path VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
+    updated_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
     FOREIGN KEY (location_crop_id) REFERENCES location_crops(id) ON DELETE CASCADE
 );
 

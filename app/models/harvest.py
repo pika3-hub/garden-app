@@ -1,5 +1,6 @@
 from app.database import get_db
 from datetime import datetime
+from app.utils.timezone import get_jst_now
 
 
 class Harvest:
@@ -128,13 +129,15 @@ class Harvest:
     def create(data):
         """収穫記録を作成"""
         db = get_db()
+        now = get_jst_now()
         cursor = db.execute(
             '''INSERT INTO harvests
-               (location_crop_id, harvest_date, quantity, unit, notes, image_path)
-               VALUES (?, ?, ?, ?, ?, ?)''',
+               (location_crop_id, harvest_date, quantity, unit, notes, image_path, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['location_crop_id'], data['harvest_date'],
              data.get('quantity'), data.get('unit'),
-             data.get('notes'), data.get('image_path'))
+             data.get('notes'), data.get('image_path'),
+             now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -146,10 +149,11 @@ class Harvest:
         db.execute(
             '''UPDATE harvests SET
                harvest_date = ?, quantity = ?, unit = ?,
-               notes = ?, image_path = ?, updated_at = CURRENT_TIMESTAMP
+               notes = ?, image_path = ?, updated_at = ?
                WHERE id = ?''',
             (data['harvest_date'], data.get('quantity'), data.get('unit'),
-             data.get('notes'), data.get('image_path'), harvest_id)
+             data.get('notes'), data.get('image_path'),
+             get_jst_now(), harvest_id)
         )
         db.commit()
 
