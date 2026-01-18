@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS diary_entries (
     entry_date DATE NOT NULL,
     weather VARCHAR(50),
     status VARCHAR(20) DEFAULT 'published',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
+    updated_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
 );
 
 -- 日記の関連テーブル（作物・場所・植え付け場所との多対多関連）
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS diary_relations (
     crop_id INTEGER,
     location_id INTEGER,
     location_crop_id INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
     FOREIGN KEY (diary_id) REFERENCES diary_entries(id) ON DELETE CASCADE,
     FOREIGN KEY (crop_id) REFERENCES crops(id) ON DELETE CASCADE,
     FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE,
