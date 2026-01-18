@@ -3,6 +3,7 @@ from app.models.location import Location
 from app.models.location_crop import LocationCrop
 from app.models.crop import Crop
 from app.models.diary import DiaryEntry
+from app.models.harvest import Harvest
 from app.utils.upload import save_image, delete_image
 
 bp = Blueprint('locations', __name__, url_prefix='/locations')
@@ -36,6 +37,10 @@ def detail(location_id):
 
     # 栽培中の作物を取得
     active_crops = LocationCrop.get_by_location(location_id, status='active')
+
+    # 各栽培記録に収穫履歴を追加
+    for crop in active_crops:
+        crop['harvests'] = Harvest.get_by_location_crop(crop['id'])
 
     # 植え付け用の作物リストを取得
     all_crops = Crop.get_all()
@@ -196,12 +201,12 @@ def plant(location_id):
     return redirect(url_for('locations.detail', location_id=location_id))
 
 
-@bp.route('/<int:location_id>/harvest/<int:location_crop_id>', methods=['POST'])
-def harvest(location_id, location_crop_id):
-    """作物を収穫済みに変更"""
+@bp.route('/<int:location_id>/complete-harvest/<int:location_crop_id>', methods=['POST'])
+def complete_harvest(location_id, location_crop_id):
+    """栽培終了（収穫済みステータスに変更）"""
     try:
         LocationCrop.harvest(location_crop_id)
-        flash('収穫済みに変更しました', 'success')
+        flash('栽培を終了しました', 'success')
     except Exception as e:
         flash(f'エラーが発生しました: {str(e)}', 'danger')
 

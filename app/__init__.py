@@ -14,10 +14,11 @@ def create_app(config_name='default'):
     init_db(app)
 
     # ブループリント登録
-    from app.routes import crop_routes, location_routes, diary_routes
+    from app.routes import crop_routes, location_routes, diary_routes, harvest_routes
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(location_routes.bp)
     app.register_blueprint(diary_routes.bp)
+    app.register_blueprint(harvest_routes.bp)
 
     # ホームページルート
     @app.route('/')

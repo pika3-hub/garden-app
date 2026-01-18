@@ -12,7 +12,11 @@
       "Bash(uv sync:*)",
       "Bash(gh auth status:*)",
       "Bash(dir:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(cmd /c \"gh auth status 2>&1\")",
+      "Bash(powershell -Command:*)"
     ]
   }
 }

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}{% if harvest %}収穫記録編集{% else %}収穫を記録{% endif %} - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <i class="bi bi-basket"></i>
+            {% if harvest %}収穫記録編集{% else %}収穫を記録{% endif %}
+        </h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{% if harvest %}{{ url_for('harvests.update', harvest_id=harvest.id) }}{% else %}{{ url_for('harvests.create') }}{% endif %}" class="needs-validation" enctype="multipart/form-data" novalidate>
+                    <input type="hidden" name="location_crop_id" value="{{ location_crop.id }}">
+
+                    <!-- 作物・場所情報（表示のみ） -->
+                    <div class="alert alert-info alert-permanent mb-4">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong><i class="bi bi-flower1"></i> 作物:</strong>
+                                {{ location_crop.crop_name }}
+                            </div>
+                            <div class="col-md-4">
+                                <strong><i class="bi bi-geo-alt"></i> 場所:</strong>
+                                {{ location_crop.location_name }}
+                            </div>
+                            <div class="col-md-4">
+                                <strong><i class="bi bi-calendar-event"></i> 植え付け日:</strong>
+                                {{ location_crop.planted_date or '未設定' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="harvest_date" class="form-label">収穫日 <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="harvest_date" name="harvest_date"
+                                   value="{{ harvest.harvest_date if harvest else today }}" required>
+                            <div class="invalid-feedback">収穫日を入力してください</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">植え付けからの日数</label>
+                            <div class="form-control-plaintext" id="days_from_planting">
+                                {% if location_crop.planted_date %}
+                                <span class="badge bg-secondary" id="days_badge">計算中...</span>
+                                {% else %}
+                                <span class="text-muted">植え付け日が未設定です</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="quantity" class="form-label">収穫量</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity"
+                                   value="{{ harvest.quantity if harvest and harvest.quantity else '' }}"
+                                   step="0.01" min="0" placeholder="例: 2.5">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="unit" class="form-label">単位</label>
+                            <input type="text" class="form-control" id="unit" name="unit"
+                                   value="{{ harvest.unit if harvest else '' }}"
+                                   placeholder="例: kg, 個, 枚, 本, 束">
+                            <small class="text-muted">よく使う単位: kg, g, 個, 本, 枚, 束, 房, パック</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">メモ</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"
+                                  placeholder="収穫時の気づきや感想など">{{ harvest.notes if harvest else '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image" class="form-label">画像</label>
+                        {% if harvest and harvest.image_path %}
+                        <div class="mb-2">
+                            <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}" alt="現在の画像" class="img-thumbnail" style="max-height: 150px;">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="delete_image" name="delete_image" value="1">
+                                <label class="form-check-label" for="delete_image">画像を削除する</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <small class="text-muted">対応形式: PNG, JPG, JPEG, GIF, WebP（最大16MB）</small>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <button onclick="history.back()" type="button" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> キャンセル
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> {% if harvest %}更新{% else %}登録{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="bi bi-lightbulb"></i> 入力のヒント</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>収穫日</strong><br>
+                    <small>実際に収穫した日付を選択します</small>
+                </p>
+                <p class="mb-2"><strong>収穫量</strong><br>
+                    <small>収穫した量を数値で入力します。小数も可能です</small>
+                </p>
+                <p class="mb-2"><strong>単位</strong><br>
+                    <small>重量（kg, g）、個数（個, 本）など自由に入力できます</small>
+                </p>
+                <p class="mb-2"><strong>メモ</strong><br>
+                    <small>収穫時の気づき、品質、サイズなどを記録できます</small>
+                </p>
+                <p class="mb-0"><strong>画像</strong><br>
+                    <small>収穫した作物の写真を添付できます</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const plantedDate = '{{ location_crop.planted_date or "" }}';
+    const harvestDateInput = document.getElementById('harvest_date');
+    const daysBadge = document.getElementById('days_badge');
+
+    function calculateDays() {
+        if (!plantedDate || !harvestDateInput.value) return;
+
+        const planted = new Date(plantedDate);
+        const harvested = new Date(harvestDateInput.value);
+        const diffTime = harvested - planted;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        if (daysBadge) {
+            if (diffDays >= 0) {
+                daysBadge.textContent = diffDays + '日目';
+                daysBadge.className = 'badge bg-success';
+            } else {
+                daysBadge.textContent = '植え付け前の日付です';
+                daysBadge.className = 'badge bg-warning text-dark';
+            }
+        }
+    }
+
+    if (plantedDate) {
+        calculateDays();
+        harvestDateInput.addEventListener('change', calculateDays);
+    }
+});
+</script>
+{% endblock %}
