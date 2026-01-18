@@ -124,8 +124,11 @@
                                 <td>{{ lc.planted_date or '-' }}</td>
                                 <td>{{ lc.quantity or '-' }}</td>
                                 <td>
-                                    <form method="POST" action="{{ url_for('locations.harvest', location_id=location.id, location_crop_id=lc.id) }}" class="d-inline">
-                                        <button type="submit" class="btn btn-sm btn-success" title="収穫済みに変更">
+                                    <a href="{{ url_for('harvests.new', location_crop_id=lc.id) }}" class="btn btn-sm btn-success" title="収穫を記録">
+                                        <i class="bi bi-basket"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('locations.complete_harvest', location_id=location.id, location_crop_id=lc.id) }}" class="d-inline" onsubmit="return confirm('この作物の栽培を終了しますか？');">
+                                        <button type="submit" class="btn btn-sm btn-warning" title="栽培終了">
                                             <i class="bi bi-check-circle"></i>
                                         </button>
                                     </form>
@@ -136,6 +139,23 @@
                                     </form>
                                 </td>
                             </tr>
+                            <!-- 収穫履歴 -->
+                            {% if lc.harvests %}
+                            <tr class="table-light">
+                                <td colspan="5" class="ps-4">
+                                    <small class="text-muted">
+                                        <i class="bi bi-basket"></i> 収穫履歴:
+                                    </small>
+                                    {% for h in lc.harvests %}
+                                    <a href="{{ url_for('harvests.detail', harvest_id=h.id) }}" class="badge bg-success me-1 text-decoration-none">
+                                        {{ h.harvest_date }}
+                                        {% if h.quantity %}({{ h.quantity }}{{ h.unit or '' }}){% endif %}
+                                        {% if h.days_from_planting is not none %}<small class="text-white-50">{{ h.days_from_planting }}日目</small>{% endif %}
+                                    </a>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}収穫記録詳細 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <i class="bi bi-basket"></i>
+            収穫記録詳細
+        </h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('harvests.list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-list"></i> 一覧に戻る
+        </a>
+        <a href="{{ url_for('harvests.edit', harvest_id=harvest.id) }}" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> 編集
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-flower1"></i> {{ harvest.crop_name }}
+                    <span class="text-white-50">@ {{ harvest.location_name }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <h6 class="text-muted">収穫日</h6>
+                        <p class="h5">{{ harvest.harvest_date }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted">収穫量</h6>
+                        <p class="h5">
+                            {% if harvest.quantity %}
+                            {{ harvest.quantity }} {{ harvest.unit or '' }}
+                            {% else %}
+                            <span class="text-muted">未記録</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted">植え付けからの日数</h6>
+                        <p class="h5">
+                            {% if harvest.days_from_planting is not none %}
+                            <span class="badge bg-success">{{ harvest.days_from_planting }}日目</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">植え付け日</h6>
+                        <p>{{ harvest.planted_date or '未設定' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">場所</h6>
+                        <p>
+                            <a href="{{ url_for('locations.detail', location_id=harvest.location_id) }}">
+                                <i class="bi bi-geo-alt"></i> {{ harvest.location_name }}
+                            </a>
+                        </p>
+                    </div>
+                </div>
+
+                {% if harvest.notes %}
+                <div class="mb-4">
+                    <h6 class="text-muted">メモ</h6>
+                    <p class="card-text">{{ harvest.notes }}</p>
+                </div>
+                {% endif %}
+
+                {% if harvest.image_path %}
+                <div class="mb-4">
+                    <h6 class="text-muted">画像</h6>
+                    <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"
+                         alt="収穫画像" class="img-fluid rounded" style="max-height: 400px;">
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <div class="row text-muted small">
+                    <div class="col-md-6">
+                        <i class="bi bi-clock"></i> 作成: {{ harvest.created_at }}
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <i class="bi bi-clock-history"></i> 更新: {{ harvest.updated_at }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-gear"></i> 操作</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('harvests.edit', harvest_id=harvest.id) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> 編集する
+                    </a>
+                    <a href="{{ url_for('locations.detail', location_id=harvest.location_id) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-geo-alt"></i> 場所を見る
+                    </a>
+                    <form method="POST" action="{{ url_for('harvests.delete', harvest_id=harvest.id) }}" onsubmit="return confirm('この収穫記録を削除しますか？');">
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="bi bi-trash"></i> 削除する
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

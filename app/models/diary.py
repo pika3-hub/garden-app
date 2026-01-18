@@ -142,10 +142,24 @@ class DiaryEntry:
             (diary_id,)
         ).fetchall()
 
+        # 関連する収穫記録を取得
+        harvests = db.execute(
+            '''SELECT dr.*, h.harvest_date, h.quantity, h.unit,
+                      c.name as crop_name, l.name as location_name
+               FROM diary_relations dr
+               JOIN harvests h ON dr.harvest_id = h.id
+               JOIN location_crops lc ON h.location_crop_id = lc.id
+               JOIN crops c ON lc.crop_id = c.id
+               JOIN locations l ON lc.location_id = l.id
+               WHERE dr.diary_id = ? AND dr.relation_type = 'harvest' ''',
+            (diary_id,)
+        ).fetchall()
+
         return {
             'crops': [dict(c) for c in crops],
             'locations': [dict(l) for l in locations],
-            'location_crops': [dict(lc) for lc in location_crops]
+            'location_crops': [dict(lc) for lc in location_crops],
+            'harvests': [dict(h) for h in harvests]
         }
 
     @staticmethod
@@ -178,6 +192,14 @@ class DiaryEntry:
                 '''INSERT INTO diary_relations (diary_id, relation_type, location_crop_id)
                    VALUES (?, 'location_crop', ?)''',
                 (diary_id, location_crop_id)
+            )
+
+        # 収穫記録の関連を保存
+        for harvest_id in relations.get('harvest_ids', []):
+            db.execute(
+                '''INSERT INTO diary_relations (diary_id, relation_type, harvest_id)
+                   VALUES (?, 'harvest', ?)''',
+                (diary_id, harvest_id)
             )
 
         db.commit()

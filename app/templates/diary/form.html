@@ -70,7 +70,7 @@
                     <h5 class="mb-3"><i class="bi bi-link-45deg"></i> 関連付け</h5>
 
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="crop_ids" class="form-label">作物</label>
                             <select class="form-select" id="crop_ids" name="crop_ids" multiple size="5">
                                 {% for crop in crops %}
@@ -81,7 +81,7 @@
                             </select>
                             <small class="text-muted">Ctrlキーで複数選択可</small>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="location_ids" class="form-label">場所</label>
                             <select class="form-select" id="location_ids" name="location_ids" multiple size="5">
                                 {% for loc in locations %}
@@ -92,12 +92,23 @@
                             </select>
                             <small class="text-muted">Ctrlキーで複数選択可</small>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="location_crop_ids" class="form-label">植え付け</label>
                             <select class="form-select" id="location_crop_ids" name="location_crop_ids" multiple size="5">
                                 {% for lc in location_crops %}
                                 <option value="{{ lc.id }}" {% if selected_relations and lc.id|string in selected_relations.location_crop_ids %}selected{% endif %}>
                                     {{ lc.crop_name }} @ {{ lc.location_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Ctrlキーで複数選択可</small>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="harvest_ids" class="form-label">収穫</label>
+                            <select class="form-select" id="harvest_ids" name="harvest_ids" multiple size="5">
+                                {% for h in harvests %}
+                                <option value="{{ h.id }}" {% if selected_relations and h.id|string in selected_relations.harvest_ids %}selected{% endif %}>
+                                    {{ h.crop_name }} {{ h.harvest_date }}
                                 </option>
                                 {% endfor %}
                             </select>

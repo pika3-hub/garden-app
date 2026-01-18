@@ -3,6 +3,7 @@ from app.models.diary import DiaryEntry
 from app.models.crop import Crop
 from app.models.location import Location
 from app.models.location_crop import LocationCrop
+from app.models.harvest import Harvest
 from app.utils.upload import save_image, delete_image
 
 bp = Blueprint('diary', __name__, url_prefix='/diary')
@@ -53,6 +54,8 @@ def new():
     locations = Location.get_all()
     # 栽培中の植え付け場所を取得
     location_crops = _get_active_location_crops()
+    # 収穫記録を取得
+    harvests = Harvest.get_all()
 
     return render_template('diary/form.html',
                           entry=None,
@@ -60,6 +63,7 @@ def new():
                           crops=crops,
                           locations=locations,
                           location_crops=location_crops,
+                          harvests=harvests,
                           selected_relations=None)
 
 
@@ -92,7 +96,8 @@ def create():
         relations = {
             'crop_ids': request.form.getlist('crop_ids'),
             'location_ids': request.form.getlist('location_ids'),
-            'location_crop_ids': request.form.getlist('location_crop_ids')
+            'location_crop_ids': request.form.getlist('location_crop_ids'),
+            'harvest_ids': request.form.getlist('harvest_ids')
         }
         DiaryEntry.save_relations(diary_id, relations)
 
@@ -114,13 +119,15 @@ def edit(diary_id):
     crops = Crop.get_all()
     locations = Location.get_all()
     location_crops = _get_active_location_crops()
+    harvests = Harvest.get_all()
     relations = DiaryEntry.get_relations(diary_id)
 
     # 選択済みのIDを抽出
     selected_relations = {
         'crop_ids': [str(r['crop_id']) for r in relations['crops']],
         'location_ids': [str(r['location_id']) for r in relations['locations']],
-        'location_crop_ids': [str(r['location_crop_id']) for r in relations['location_crops']]
+        'location_crop_ids': [str(r['location_crop_id']) for r in relations['location_crops']],
+        'harvest_ids': [str(r['harvest_id']) for r in relations['harvests']]
     }
 
     return render_template('diary/form.html',
@@ -129,6 +136,7 @@ def edit(diary_id):
                           crops=crops,
                           locations=locations,
                           location_crops=location_crops,
+                          harvests=harvests,
                           selected_relations=selected_relations)
 
 
@@ -178,7 +186,8 @@ def update(diary_id):
         relations = {
             'crop_ids': request.form.getlist('crop_ids'),
             'location_ids': request.form.getlist('location_ids'),
-            'location_crop_ids': request.form.getlist('location_crop_ids')
+            'location_crop_ids': request.form.getlist('location_crop_ids'),
+            'harvest_ids': request.form.getlist('harvest_ids')
         }
         DiaryEntry.save_relations(diary_id, relations)
 

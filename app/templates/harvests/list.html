@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}収穫記録一覧 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-basket"></i> 収穫記録一覧</h1>
+    </div>
+</div>
+
+<!-- 検索・フィルター -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('harvests.list') }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="keyword" class="form-label">キーワード</label>
+                <input type="text" class="form-control" id="keyword" name="keyword" value="{{ keyword }}" placeholder="作物名、場所名、メモ">
+            </div>
+            <div class="col-md-2">
+                <label for="date_from" class="form-label">収穫日（開始）</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
+            </div>
+            <div class="col-md-2">
+                <label for="date_to" class="form-label">収穫日（終了）</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
+            </div>
+            <div class="col-md-2">
+                <label for="location_id" class="form-label">場所</label>
+                <select class="form-select" id="location_id" name="location_id">
+                    <option value="">すべて</option>
+                    {% for loc in locations %}
+                    <option value="{{ loc.id }}" {% if selected_location_id == loc.id|string %}selected{% endif %}>{{ loc.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="crop_id" class="form-label">作物</label>
+                <select class="form-select" id="crop_id" name="crop_id">
+                    <option value="">すべて</option>
+                    {% for crop in crops %}
+                    <option value="{{ crop.id }}" {% if selected_crop_id == crop.id|string %}selected{% endif %}>{{ crop.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 収穫記録一覧 -->
+{% if harvests %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>収穫日</th>
+                <th>作物</th>
+                <th>場所</th>
+                <th>収穫量</th>
+                <th>日数</th>
+                <th>メモ</th>
+                <th class="text-end">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for harvest in harvests %}
+            <tr>
+                <td>{{ harvest.harvest_date }}</td>
+                <td>
+                    <i class="bi bi-flower1 text-success"></i>
+                    {{ harvest.crop_name }}
+                </td>
+                <td>
+                    <i class="bi bi-geo-alt text-primary"></i>
+                    {{ harvest.location_name }}
+                </td>
+                <td>
+                    {% if harvest.quantity %}
+                    {{ harvest.quantity }} {{ harvest.unit or '' }}
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if harvest.days_from_planting is not none %}
+                    {{ harvest.days_from_planting }}日
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if harvest.notes %}
+                    <span class="text-truncate d-inline-block" style="max-width: 150px;" title="{{ harvest.notes }}">
+                        {{ harvest.notes }}
+                    </span>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="btn btn-sm btn-outline-primary" title="詳細">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="{{ url_for('harvests.edit', harvest_id=harvest.id) }}" class="btn btn-sm btn-outline-secondary" title="編集">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="POST" action="{{ url_for('harvests.delete', harvest_id=harvest.id) }}" class="d-inline" onsubmit="return confirm('この収穫記録を削除しますか？');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="削除">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<p class="text-muted">{{ harvests|length }}件の収穫記録</p>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    {% if keyword or date_from or date_to or selected_location_id or selected_crop_id %}
+    検索条件に一致する収穫記録がありません。
+    {% else %}
+    収穫記録はまだありません。場所詳細ページから収穫を記録できます。
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
