@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-12">
+    <div class="col-12" style="min-height: 100px;">
         <h1 class="mb-4">
-            <i class="bi bi-house-door"></i> ダッシュボード
+            <!-- <i class="bi bi-house-door"></i> ダッシュボード -->
         </h1>
     </div>
 </div>
@@ -14,9 +14,9 @@
 <div class="row g-4 mb-4">
     <!-- 作物カード -->
     <div class="col-md-3">
-        <div class="card text-center h-100">
+        <div class="card text-center h-100 dashboard-card-with-bg card-bg-crop">
             <div class="card-body">
-                <i class="bi bi-basket text-success icon-large"></i>
+                <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img-xl" style="width: 3rem; height: 3rem;">
                 <h2 class="mt-3">{{ stats.crop_count }}</h2>
                 <h5 class="card-title">作物</h5>
                 <p class="card-text text-muted">
@@ -31,9 +31,9 @@
 
     <!-- 場所カード -->
     <div class="col-md-3">
-        <div class="card text-center h-100">
+        <div class="card text-center h-100 dashboard-card-with-bg card-bg-location">
             <div class="card-body">
-                <i class="bi bi-geo-alt text-info icon-large"></i>
+                <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img-xl" style="width: 3rem; height: 3rem;">
                 <h2 class="mt-3">{{ stats.location_count }}</h2>
                 <h5 class="card-title">場所</h5>
                 <p class="card-text text-muted">
@@ -48,9 +48,9 @@
 
     <!-- 栽培中カード -->
     <div class="col-md-3">
-        <div class="card text-center h-100">
+        <div class="card text-center h-100 dashboard-card-with-bg card-bg-location-crop">
             <div class="card-body">
-                <i class="bi bi-flower1 text-warning icon-large"></i>
+                <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img-xl" style="width: 3rem; height: 3rem;">
                 <h2 class="mt-3">{{ stats.active_crop_count }}</h2>
                 <h5 class="card-title">栽培中</h5>
                 <p class="card-text text-muted">
@@ -65,9 +65,9 @@
 
     <!-- 日記カード -->
     <div class="col-md-3">
-        <div class="card text-center h-100">
+        <div class="card text-center h-100 dashboard-card-with-bg card-bg-diary">
             <div class="card-body">
-                <i class="bi bi-journal-text text-primary icon-large"></i>
+                <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img-xl" style="width: 3rem; height: 3rem;">
                 <h2 class="mt-3">{{ stats.diary_count }}</h2>
                 <h5 class="card-title">日記</h5>
                 <p class="card-text text-muted">
@@ -83,15 +83,15 @@
 
 <div class="row g-4">
     <div class="col-md-4">
-        <div class="card h-100">
+        <div class="card h-100 dashboard-card-with-bg card-bg-crop">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0">
-                    <i class="bi bi-basket"></i> 最近登録した作物
+                    <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img" style="filter: brightness(0) invert(1);"> 最近登録した作物
                 </h5>
             </div>
             <div class="card-body">
                 {% if recent_crops %}
-                <div class="list-group list-group-flush">
+                <div class="list-group list-group-flush list-group-transparent">
                     {% for crop in recent_crops %}
                     <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
@@ -115,15 +115,15 @@
     </div>
 
     <div class="col-md-4">
-        <div class="card h-100">
+        <div class="card h-100 dashboard-card-with-bg card-bg-location">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
-                    <i class="bi bi-geo-alt"></i> 最近登録した場所
+                    <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img" style="filter: brightness(0) invert(1);"> 最近登録した場所
                 </h5>
             </div>
             <div class="card-body">
                 {% if recent_locations %}
-                <div class="list-group list-group-flush">
+                <div class="list-group list-group-flush list-group-transparent">
                     {% for location in recent_locations %}
                     <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
@@ -147,15 +147,15 @@
     </div>
 
     <div class="col-md-4">
-        <div class="card h-100">
+        <div class="card h-100 dashboard-card-with-bg card-bg-diary">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
-                    <i class="bi bi-journal-text"></i> 最新の日記
+                    <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img" style="filter: brightness(0) invert(1);"> 最新の日記
                 </h5>
             </div>
             <div class="card-body">
                 {% if recent_diaries %}
-                <div class="list-group list-group-flush">
+                <div class="list-group list-group-flush list-group-transparent">
                     {% for diary in recent_diaries %}
                     <a href="{{ url_for('diary.detail', diary_id=diary.id) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">

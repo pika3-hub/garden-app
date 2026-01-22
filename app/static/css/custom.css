@@ -39,6 +39,10 @@ main {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.card-diary {
+    min-height: 150px;
+}
+
 /* バッジ */
 .badge-status-active {
     background-color: #198754;
@@ -87,4 +91,182 @@ main {
     .btn-group-action .btn {
         width: 100%;
     }
+}
+
+/* ===============================================
+   画像素材スタイル
+   =============================================== */
+
+.page-with-sky {
+  position: relative;
+  z-index: 0;
+  margin-top: 0 !important;
+}
+
+.page-with-sky::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 200px;
+
+  background-image: url("../images/1_sky_clouds.png");
+  background-repeat: repeat-x;     /* 横方向のみ繰り返し */
+  background-position: top center;
+  background-size: auto 200px;     /* 高さを固定して自然に */
+
+  z-index: -1;                     /* コンテンツの背面 */
+
+  opacity: 0.5;               /* 透明度調整 */
+}
+
+/* 背景画像（詳細画面、編集画面、登録画面用） */
+.page-bg-image {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 450px;
+    height: 450px;
+    opacity: 0.15;
+    z-index: -1;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    pointer-events: none;
+}
+
+.page-bg-crop {
+    background-image: url('../images/bg_crop.png');
+}
+
+.page-bg-location {
+    background-image: url('../images/bg_location.png');
+}
+
+.page-bg-location-crop {
+    background-image: url('../images/bg_location_crop.png');
+}
+
+.page-bg-diary {
+    background-image: url('../images/bg_diary.png');
+}
+
+.page-bg-harvest {
+    background-image: url('../images/bg_harvest.png');
+}
+
+/* カード画像（ダッシュボードのカード用。中央に表示） */
+.dashboard-card-with-bg::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    transform: translate(-50%, -50%);
+    opacity: 0.12;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* カード画像（一覧画面のカード用。右下に表示） */
+.card-with-bg {
+    position: relative;
+    overflow: hidden;
+}
+
+.card-with-bg::before {
+    content: '';
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 100px;
+    height: 100px;
+    opacity: 0.12;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.card-bg-crop::before {
+    background-image: url('../images/card_crop.png');
+}
+
+.card-bg-location::before {
+    background-image: url('../images/card_location.png');
+}
+
+.card-bg-location-crop::before {
+    background-image: url('../images/card_location_crop.png');
+}
+
+.card-bg-diary::before {
+    background-image: url('../images/card_diary.png');
+}
+
+.card-bg-harvest::before {
+    background-image: url('../images/card_harvest.png');
+}
+
+/* カード内のコンテンツを前面に */
+.card-with-bg .card-body,
+.card-with-bg .card-header,
+.card-with-bg .card-footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* アイコン画像 */
+.icon-img {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    display: inline-block;
+}
+
+.icon-img-sm {
+    width: 0.875em;
+    height: 0.875em;
+}
+
+.icon-img-lg {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-img-xl {
+    width: 2em;
+    height: 2em;
+}
+
+/* ナビゲーション用アイコン調整 */
+.nav-link .icon-img {
+    filter: brightness(0) invert(1);
+    margin-right: 0.25rem;
+}
+
+/* レスポンシブ対応（背景画像） */
+@media (max-width: 576px) {
+    .page-bg-image {
+        width: 120px;
+        height: 120px;
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .card-with-bg::before {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+.list-group-transparent .list-group-item {
+    background-color: transparent;
 }

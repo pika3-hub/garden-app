@@ -5,9 +5,9 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-6">
-        <h1><i class="bi bi-journal-text"></i> 管理日記</h1>
+        <h1><img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg"> 管理日記</h1>
     </div>
-    <div class="col-md-6 text-end">
+    <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('diary.new') }}" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> 新規登録
         </a>
@@ -44,13 +44,29 @@
 <div class="row">
     {% for entry in entries %}
     <div class="col-md-12 mb-3">
-        <div class="card">
+        <div class="card card-with-bg card-bg-diary card-diary">
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-2 text-center border-end">
                         <div class="fs-4 fw-bold text-primary">{{ entry.entry_date }}</div>
                         {% if entry.weather %}
-                        <span class="badge bg-info">{{ entry.weather }}</span>
+                            {% set weather_icons = {
+                                '晴れ': 'weather_sunny.png',
+                                '曇り': 'weather_cloudy.png',
+                                '雨': 'weather_rain.png',
+                                '雪': 'weather_snow.png',
+                                '晴れ時々曇り': 'weather_sun_cloud.png',
+                                '曇り時々雨': 'weather_cloud_rain.png'
+                            } %}
+                            <span class="badge bg-light text-dark d-inline-flex align-items-center">
+                                <img src="{{ url_for('static',
+                                    filename='images/' ~ weather_icons.get(entry.weather, 'unknown.png')) }}"
+                                    alt="{{ entry.weather }}"
+                                    width="20"
+                                    class="me-1">
+                                {{ entry.weather }}
+                            </span>
+                        <!-- <span class="badge bg-info">{{ entry.weather }}</span> -->
                         {% endif %}
                         {% if entry.image_path %}
                         <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}" class="img-thumbnail mt-2" alt="{{ entry.title }}" style="max-height: 80px;">

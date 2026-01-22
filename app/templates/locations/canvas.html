@@ -7,7 +7,7 @@
 {% block content %}
 <input type="hidden" id="location-id" value="{{ location.id }}">
 
-<div class="canvas-editor">
+<div class="canvas-editor" style="margin-top: 30px;">
     <!-- ヘッダー -->
     <div class="canvas-header">
         <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="btn btn-secondary">
