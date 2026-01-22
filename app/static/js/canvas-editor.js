@@ -6,7 +6,7 @@ class CanvasEditor {
     constructor(canvasElementId, locationId) {
         this.canvas = new fabric.Canvas(canvasElementId, {
             width: 800,
-            height: 600,
+            height: 800,
             backgroundColor: '#ffffff'
         });
         this.locationId = locationId;

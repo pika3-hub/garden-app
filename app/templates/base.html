@@ -17,11 +17,12 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    {% block body_bg %}{% endblock %}
     <!-- ナビゲーションバー -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-success">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="bi bi-flower1"></i> 家庭菜園管理
+                <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img icon-img-lg" style="filter: brightness(0) invert(1);"> 家庭菜園管理
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -35,22 +36,22 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and request.endpoint.startswith('crops.') %}active{% endif %}" href="{{ url_for('crops.list') }}">
-                            <i class="bi bi-basket"></i> 作物
+                            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img"> 作物
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and request.endpoint.startswith('locations.') %}active{% endif %}" href="{{ url_for('locations.list') }}">
-                            <i class="bi bi-geo-alt"></i> 場所
+                            <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img"> 場所
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and request.endpoint.startswith('diary.') %}active{% endif %}" href="{{ url_for('diary.list') }}">
-                            <i class="bi bi-journal-text"></i> 日記
+                            <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img"> 日記
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and request.endpoint.startswith('harvests.') %}active{% endif %}" href="{{ url_for('harvests.list') }}">
-                            <i class="bi bi-basket2"></i> 収穫
+                            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img"> 収穫
                         </a>
                     </li>
                 </ul>
@@ -59,7 +60,7 @@
     </nav>
 
     <!-- メインコンテンツ -->
-    <main class="container my-4">
+    <main class="container my-4 page-with-sky">
         <!-- フラッシュメッセージ -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}

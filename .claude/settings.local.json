@@ -16,7 +16,9 @@
       "Bash(git push:*)",
       "Bash(gh pr create:*)",
       "Bash(cmd /c \"gh auth status 2>&1\")",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(cd:*)",
+      "Bash(find:*)"
     ]
   }
 }

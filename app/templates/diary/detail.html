@@ -2,12 +2,14 @@
 
 {% block title %}{{ entry.title }} - 管理日記{% endblock %}
 
+{% block body_bg %}<div class="page-bg-image page-bg-diary"></div>{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <h1><i class="bi bi-journal-text"></i> {{ entry.title }}</h1>
+        <h1><img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg"> {{ entry.title }}</h1>
     </div>
-    <div class="col-md-4 text-end">
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('diary.list') }}" class="btn btn-outline-secondary">
             <i class="bi bi-list"></i> 一覧に戻る
         </a>
@@ -17,10 +19,35 @@
 <div class="row">
     <div class="col-md-8">
         <div class="card mb-3">
-            <div class="card-header bg-primary text-white">
+            <!-- <div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="bi bi-calendar-date"></i> {{ entry.entry_date }}
                     {% if entry.weather %}
                     <span class="badge bg-light text-dark ms-2">{{ entry.weather }}</span>
+                    {% endif %}
+                </h5>
+            </div> -->
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar-date"></i> {{ entry.entry_date }}
+
+                    {% if entry.weather %}
+                        {% set weather_icons = {
+                            '晴れ': 'weather_sunny.png',
+                            '曇り': 'weather_cloudy.png',
+                            '雨': 'weather_rain.png',
+                            '雪': 'weather_snow.png',
+                            '晴れ時々曇り': 'weather_sun_cloud.png',
+                            '曇り時々雨': 'weather_cloud_rain.png'
+                        } %}
+
+                        <span class="badge bg-light text-dark ms-2 d-inline-flex align-items-center">
+                            <img src="{{ url_for('static',
+                                filename='images/' ~ weather_icons.get(entry.weather, 'unknown.png')) }}"
+                                alt="{{ entry.weather }}"
+                                width="20"
+                                class="me-1">
+                            {{ entry.weather }}
+                        </span>
                     {% endif %}
                 </h5>
             </div>

@@ -2,15 +2,17 @@
 
 {% block title %}{% if entry %}日記編集{% else %}日記登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
 
+{% block body_bg %}<div class="page-bg-image page-bg-diary"></div>{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
         <h1>
-            <i class="bi bi-journal-text"></i>
+            <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg">
             {% if entry %}日記編集{% else %}日記登録{% endif %}
         </h1>
     </div>
-    <div class="col-md-4 text-end">
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
         <button onclick="history.back()" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> 戻る
         </button>
@@ -35,7 +37,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
+                    <!-- <div class="mb-3">
                         <label for="weather" class="form-label">天気</label>
                         <select class="form-select" id="weather" name="weather">
                             <option value="">-- 選択してください --</option>
@@ -44,7 +46,75 @@
                             <option value="{{ w }}" {% if entry and entry.weather == w %}selected{% endif %}>{{ w }}</option>
                             {% endfor %}
                         </select>
+                    </div> -->
+
+                    <div class="mb-3">
+                        <label class="form-label">天気</label>
+
+                        <input type="hidden" name="weather" id="weather"
+                            value="{{ entry.weather if entry else '' }}">
+
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start"
+                                    type="button" data-bs-toggle="dropdown" id="weatherButton">
+                                {% if entry and entry.weather %}
+                                    {% set weather_icons = {
+                                        '晴れ': 'weather_sunny.png',
+                                        '曇り': 'weather_cloudy.png',
+                                        '雨': 'weather_rain.png',
+                                        '雪': 'weather_snow.png',
+                                        '晴れ時々曇り': 'weather_sun_cloud.png',
+                                        '曇り時々雨': 'weather_cloud_rain.png'
+                                    } %}
+                                    <img src="{{ url_for('static', filename='images/' ~ weather_icons.get(entry.weather, 'unknown.png')) }}"
+                                         alt="{{ entry.weather }}"
+                                         width="24" class="me-2">
+                                    {{ entry.weather }}
+                                {% else %}
+                                    -- 選択してください --
+                                {% endif %}
+                            </button>
+
+                            <ul class="dropdown-menu w-100">
+                                {% set weather_options = [
+                                    ('晴れ', 'weather_sunny.png'),
+                                    ('曇り', 'weather_cloudy.png'),
+                                    ('雨', 'weather_rain.png'),
+                                    ('雪', 'weather_snow.png'),
+                                    ('晴れ時々曇り', 'weather_sun_cloud.png'),
+                                    ('曇り時々雨', 'weather_cloud_rain.png')
+                                ] %}
+                                {% for label, icon in weather_options %}
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center"
+                                    href="#"
+                                    data-value="{{ label }}"
+                                    data-icon="{{ icon }}">
+                                        <img src="{{ url_for('static', filename='images/' ~ icon) }}"
+                                            width="24" class="me-2">
+                                        {{ label }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+<script>
+document.querySelectorAll('.dropdown-item').forEach(item => {
+    item.addEventListener('click', e => {
+        e.preventDefault();
+
+        const value = item.dataset.value;
+        const icon = item.dataset.icon;
+
+        document.getElementById('weather').value = value;
+
+        document.getElementById('weatherButton').innerHTML =
+            `<img src="/static/images/${icon}" width="24" class="me-2">${value}`;
+    });
+});
+</script>
                     </div>
+
 
                     <div class="mb-3">
                         <label for="content" class="form-label">内容</label>
