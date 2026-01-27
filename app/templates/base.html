@@ -45,6 +45,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'locations.active_crops' %}active{% endif %}" href="{{ url_for('locations.active_crops') }}">
+                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img"> 栽培中
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and request.endpoint.startswith('diary.') %}active{% endif %}" href="{{ url_for('diary.list') }}">
                             <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img"> 日記
                         </a>

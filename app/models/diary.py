@@ -118,7 +118,7 @@ class DiaryEntry:
 
         # 関連する作物を取得
         crops = db.execute(
-            '''SELECT dr.*, c.name as crop_name, c.crop_type
+            '''SELECT dr.*, c.name as crop_name, c.crop_type, c.variety
                FROM diary_relations dr
                JOIN crops c ON dr.crop_id = c.id
                WHERE dr.diary_id = ? AND dr.relation_type = 'crop' ''',

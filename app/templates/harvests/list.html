@@ -39,7 +39,7 @@
                 <select class="form-select" id="crop_id" name="crop_id">
                     <option value="">すべて</option>
                     {% for crop in crops %}
-                    <option value="{{ crop.id }}" {% if selected_crop_id == crop.id|string %}selected{% endif %}>{{ crop.name }}</option>
+                    <option value="{{ crop.id }}" {% if selected_crop_id == crop.id|string %}selected{% endif %}>{{ crop.name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -73,7 +73,7 @@
                 <td>{{ harvest.harvest_date }}</td>
                 <td>
                     <i class="bi bi-flower1 text-success"></i>
-                    {{ harvest.crop_name }}
+                    {{ harvest.crop_name }}{% if harvest.variety %}（{{ harvest.variety }}）{% endif %}
                 </td>
                 <td>
                     <i class="bi bi-geo-alt text-primary"></i>

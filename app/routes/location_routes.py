@@ -1,3 +1,4 @@
+from datetime import date
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app.models.location import Location
 from app.models.location_crop import LocationCrop
@@ -48,11 +49,14 @@ def detail(location_id):
     # 関連する日記を取得
     related_diaries = DiaryEntry.get_by_location(location_id)
 
+    today = date.today().isoformat()
+
     return render_template('locations/detail.html',
                           location=location,
                           active_crops=active_crops,
                           all_crops=all_crops,
-                          related_diaries=related_diaries)
+                          related_diaries=related_diaries,
+                          today=today)
 
 
 @bp.route('/new')

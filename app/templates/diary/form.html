@@ -32,7 +32,7 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="entry_date" class="form-label">日付 <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="entry_date" name="entry_date" value="{{ entry.entry_date if entry else '' }}" required>
+                            <input type="date" class="form-control" id="entry_date" name="entry_date" value="{{ entry.entry_date if entry else today }}" required>
                             <div class="invalid-feedback">日付を入力してください</div>
                         </div>
                     </div>
@@ -145,7 +145,7 @@ document.querySelectorAll('.dropdown-item').forEach(item => {
                             <select class="form-select" id="crop_ids" name="crop_ids" multiple size="5">
                                 {% for crop in crops %}
                                 <option value="{{ crop.id }}" {% if selected_relations and crop.id|string in selected_relations.crop_ids %}selected{% endif %}>
-                                    {{ crop.name }} ({{ crop.crop_type }})
+                                    {{ crop.name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %} ({{ crop.crop_type }})
                                 </option>
                                 {% endfor %}
                             </select>
