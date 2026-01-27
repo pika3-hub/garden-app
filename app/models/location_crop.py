@@ -52,7 +52,7 @@ class LocationCrop:
         """IDで場所-作物関連を取得"""
         db = get_db()
         location_crop = db.execute(
-            '''SELECT lc.*, c.name as crop_name, l.name as location_name
+            '''SELECT lc.*, c.name as crop_name, c.variety, l.name as location_name
                FROM location_crops lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id

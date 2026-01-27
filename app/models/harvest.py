@@ -11,7 +11,7 @@ class Harvest:
         """全収穫記録を取得（ページネーション対応）"""
         db = get_db()
         query = '''
-            SELECT h.*, c.name as crop_name, l.name as location_name,
+            SELECT h.*, c.name as crop_name, c.variety, l.name as location_name,
                    lc.planted_date
             FROM harvests h
             JOIN location_crops lc ON h.location_crop_id = lc.id
@@ -43,7 +43,7 @@ class Harvest:
         """IDで収穫記録を取得"""
         db = get_db()
         harvest = db.execute(
-            '''SELECT h.*, c.name as crop_name, l.name as location_name,
+            '''SELECT h.*, c.name as crop_name, c.variety, l.name as location_name,
                       lc.planted_date, lc.location_id
                FROM harvests h
                JOIN location_crops lc ON h.location_crop_id = lc.id
@@ -201,7 +201,7 @@ class Harvest:
         """収穫記録を検索"""
         db = get_db()
         query = '''
-            SELECT h.*, c.name as crop_name, l.name as location_name,
+            SELECT h.*, c.name as crop_name, c.variety, l.name as location_name,
                    lc.planted_date
             FROM harvests h
             JOIN location_crops lc ON h.location_crop_id = lc.id

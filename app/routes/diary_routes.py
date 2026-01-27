@@ -1,3 +1,4 @@
+from datetime import date
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.diary import DiaryEntry
 from app.models.crop import Crop
@@ -57,6 +58,8 @@ def new():
     # 収穫記録を取得
     harvests = Harvest.get_all()
 
+    today = date.today().isoformat()
+
     return render_template('diary/form.html',
                           entry=None,
                           action='create',
@@ -64,7 +67,8 @@ def new():
                           locations=locations,
                           location_crops=location_crops,
                           harvests=harvests,
-                          selected_relations=None)
+                          selected_relations=None,
+                          today=today)
 
 
 @bp.route('/create', methods=['POST'])

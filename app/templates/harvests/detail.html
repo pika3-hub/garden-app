@@ -27,7 +27,7 @@
         <div class="card">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0">
-                    <i class="bi bi-flower1"></i> {{ harvest.crop_name }}
+                    <i class="bi bi-flower1"></i> {{ harvest.crop_name }}{% if harvest.variety %}（{{ harvest.variety }}）{% endif %}
                     <span class="text-white-50">@ {{ harvest.location_name }}</span>
                 </h5>
             </div>

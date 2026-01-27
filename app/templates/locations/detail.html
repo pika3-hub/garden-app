@@ -185,14 +185,14 @@
                         <select class="form-select" id="crop_id" name="crop_id" required>
                             <option value="">選択してください</option>
                             {% for crop in all_crops %}
-                            <option value="{{ crop.id }}">{{ crop.name }} ({{ crop.crop_type }})</option>
+                            <option value="{{ crop.id }}">{{ crop.name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %}</option>
                             {% endfor %}
                         </select>
                     </div>
 
                     <div class="mb-3">
                         <label for="planted_date" class="form-label">植え付け日</label>
-                        <input type="date" class="form-control" id="planted_date" name="planted_date">
+                        <input type="date" class="form-control" id="planted_date" name="planted_date" value="{{ today }}">
                     </div>
 
                     <div class="mb-3">

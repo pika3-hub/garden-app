@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <strong><i class="bi bi-flower1"></i> 作物:</strong>
-                                {{ location_crop.crop_name }}
+                                {{ location_crop.crop_name }}{% if location_crop.variety %}（{{ location_crop.variety }}）{% endif %}
                             </div>
                             <div class="col-md-4">
                                 <strong><i class="bi bi-geo-alt"></i> 場所:</strong>
