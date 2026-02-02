@@ -176,7 +176,7 @@ class Harvest:
         """最新の収穫記録を取得"""
         db = get_db()
         harvests = db.execute(
-            '''SELECT h.*, c.name as crop_name, l.name as location_name,
+            '''SELECT h.*, c.name as crop_name, c.variety, l.name as location_name,
                       lc.planted_date
                FROM harvests h
                JOIN location_crops lc ON h.location_crop_id = lc.id

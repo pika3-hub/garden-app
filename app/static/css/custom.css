@@ -270,3 +270,37 @@ main {
 .list-group-transparent .list-group-item {
     background-color: transparent;
 }
+
+/* 天気背景画像（日記詳細のcard-body用） */
+.card-body-weather {
+    position: relative;
+    overflow: hidden;
+    min-height: 400px;
+}
+
+.card-body-weather::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.15;
+    background-size: cover;
+    background-repeat: repeat-x;
+    background-position: bottom left;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.card-body-weather > * {
+    position: relative;
+    z-index: 1;
+}
+
+.weather-bg-sunny::before { background-image: url('../images/bg_sunny.png'); }
+.weather-bg-cloudy::before { background-image: url('../images/bg_cloudy.png'); }
+.weather-bg-rain::before { background-image: url('../images/bg_rain.png'); }
+.weather-bg-snow::before { background-image: url('../images/bg_snow.png'); }
+.weather-bg-sun-cloud::before { background-image: url('../images/bg_sun_cloud.png'); }
+.weather-bg-cloud-rain::before { background-image: url('../images/bg_cloud_rain.png'); }
