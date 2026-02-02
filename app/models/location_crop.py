@@ -196,3 +196,20 @@ class LocationCrop:
             (location_id,)
         ).fetchall()
         return [dict(crop) for crop in crops]
+
+    @staticmethod
+    def get_recent(limit=5):
+        """最近植え付けた作物を取得（作物・場所情報付き）"""
+        db = get_db()
+        crops = db.execute(
+            '''SELECT lc.*,
+                      c.name as crop_name, c.crop_type, c.variety,
+                      l.name as location_name, l.location_type
+               FROM location_crops lc
+               JOIN crops c ON lc.crop_id = c.id
+               JOIN locations l ON lc.location_id = l.id
+               ORDER BY lc.planted_date DESC, lc.created_at DESC
+               LIMIT ?''',
+            (limit,)
+        ).fetchall()
+        return [dict(crop) for crop in crops]

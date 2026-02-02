@@ -27,24 +27,26 @@ def create_app(config_name='default'):
         from app.models.location import Location
         from app.models.location_crop import LocationCrop
         from app.models.diary import DiaryEntry
+        from app.models.harvest import Harvest
 
         # 統計情報を取得
         stats = {
             'crop_count': Crop.count(),
             'location_count': Location.count(),
             'active_crop_count': LocationCrop.count_active(),
-            'diary_count': DiaryEntry.count()
+            'diary_count': DiaryEntry.count(),
+            'harvest_count': Harvest.count()
         }
 
-        # 最近登録した作物と場所を取得
-        recent_crops = Crop.get_all()[:5]  # 最新5件
-        recent_locations = Location.get_all()[:5]  # 最新5件
-        recent_diaries = DiaryEntry.get_recent(5)  # 最新5件
+        # 最新データを取得
+        recent_diaries = DiaryEntry.get_recent(5)
+        recent_plantings = LocationCrop.get_recent(5)
+        recent_harvests = Harvest.get_recent(5)
 
         return render_template('index.html',
                              stats=stats,
-                             recent_crops=recent_crops,
-                             recent_locations=recent_locations,
-                             recent_diaries=recent_diaries)
+                             recent_diaries=recent_diaries,
+                             recent_plantings=recent_plantings,
+                             recent_harvests=recent_harvests)
 
     return app
