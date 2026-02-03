@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}カレンダー - 家庭菜園管理アプリ{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calendar.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">
+        <i class="bi bi-calendar3"></i> カレンダー
+    </h1>
+
+    <!-- ナビゲーション -->
+    <div class="calendar-nav">
+        <a id="prevMonthLink" href="{{ url_for('calendar.index', year=prev_year, month=prev_month) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-chevron-left"></i> 前月
+        </a>
+        <h2 class="calendar-title">{{ year }}年 {{ month }}月</h2>
+        <a id="nextMonthLink" href="{{ url_for('calendar.index', year=next_year, month=next_month) }}" class="btn btn-outline-secondary">
+            次月 <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+
+    <!-- 凡例 -->
+    <div class="calendar-legend">
+        <div class="legend-item">
+            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="作物">
+            <span>作物</span>
+        </div>
+        <div class="legend-item">
+            <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="場所">
+            <span>場所</span>
+        </div>
+        <div class="legend-item">
+            <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="日記">
+            <span>日記</span>
+        </div>
+        <div class="legend-item">
+            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培中">
+            <span>栽培中</span>
+        </div>
+        <div class="legend-item">
+            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="収穫">
+            <span>収穫</span>
+        </div>
+    </div>
+
+    <!-- カレンダーテーブル -->
+    <table class="calendar-table">
+        <thead>
+            <tr class="calendar-header">
+                <th class="weekday-sun">日</th>
+                <th>月</th>
+                <th>火</th>
+                <th>水</th>
+                <th>木</th>
+                <th>金</th>
+                <th class="weekday-sat">土</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for week in calendar_weeks %}
+            <tr>
+                {% for day in week %}
+                {% if day is none %}
+                <td class="calendar-cell empty"></td>
+                {% else %}
+                {% set date_str = day.strftime('%Y-%m-%d') %}
+                {% set day_data = month_data.get(date_str, {}) %}
+                {% set is_today = day == today %}
+                {% set weekday = day.weekday() %}
+                <td class="calendar-cell {% if is_today %}today{% endif %}">
+                    <!-- 日付番号 -->
+                    <div class="day-number {% if weekday == 6 %}weekday-sun{% elif weekday == 5 %}weekday-sat{% endif %}">
+                        {{ day.day }}
+                    </div>
+
+                    <!-- アイコン -->
+                    <div class="day-icons">
+                        {# 作物アイコン #}
+                        {% for crop in day_data.get('crops', []) %}
+                        <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="calendar-icon"
+                           data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="作物: {{ crop.name }}{% if crop.variety %}({{ crop.variety }}){% endif %}">
+                            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="作物">
+                        </a>
+                        {% endfor %}
+
+                        {# 場所アイコン #}
+                        {% for location in day_data.get('locations', []) %}
+                        <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="calendar-icon"
+                           data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="場所: {{ location.name }}">
+                            <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="場所">
+                        </a>
+                        {% endfor %}
+
+                        {# 日記アイコン #}
+                        {% for diary in day_data.get('diaries', []) %}
+                        <a href="{{ url_for('diary.detail', diary_id=diary.id) }}" class="calendar-icon"
+                           data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="日記: {{ diary.title }}">
+                            <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="日記">
+                        </a>
+                        {% endfor %}
+
+                        {# 栽培中アイコン #}
+                        {% for lc in day_data.get('location_crops', []) %}
+                        <a href="{{ url_for('locations.detail', location_id=lc.location_id) }}" class="calendar-icon"
+                           data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="植付: {{ lc.crop_name }}{% if lc.variety %}({{ lc.variety }}){% endif %} @ {{ lc.location_name }}">
+                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培中">
+                        </a>
+                        {% endfor %}
+
+                        {# 収穫アイコン #}
+                        {% for harvest in day_data.get('harvests', []) %}
+                        <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="calendar-icon"
+                           data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="収穫: {{ harvest.crop_name }}{% if harvest.variety %}({{ harvest.variety }}){% endif %}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">
+                            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="収穫">
+                        </a>
+                        {% endfor %}
+                    </div>
+                </td>
+                {% endif %}
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- キーボード操作ヒント -->
+    <div class="text-muted text-center mt-3">
+        <small><i class="bi bi-keyboard"></i> キーボードの ← → で月を移動できます</small>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+{% endblock %}

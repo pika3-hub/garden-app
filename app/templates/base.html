@@ -59,6 +59,11 @@
                             <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img"> 収穫
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('calendar.') %}active{% endif %}" href="{{ url_for('calendar.index') }}">
+                            <i class="bi bi-calendar3"></i> カレンダー
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
