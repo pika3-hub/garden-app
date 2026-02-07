@@ -157,6 +157,14 @@ main {
     background-image: url('../images/bg_harvest.png');
 }
 
+.page-bg-calendar {
+    background-image: url('../images/bg_calendar.png');
+}
+
+.page-bg-tasklist {
+    background-image: url('../images/bg_tasklist.png');
+}
+
 /* カード画像（ダッシュボードのカード用。中央に表示） */
 .dashboard-card-with-bg::before {
     content: '';
