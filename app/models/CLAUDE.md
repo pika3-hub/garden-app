@@ -15,6 +15,8 @@
 | diary_locations | 日記×場所（多対多） | diary_id, location_id |
 | diary_location_crops | 日記×栽培記録（多対多） | diary_id, location_crop_id |
 | diary_harvests | 日記×収穫（多対多） | diary_id, harvest_id |
+| tasks | タスク | id |
+| task_relations | タスク×関連エンティティ（多対多） | id |
 
 ### 主要テーブル詳細
 
@@ -69,6 +71,28 @@
 | unit | TEXT | 単位 |
 | notes | TEXT | メモ |
 | image_path | TEXT | 画像パス |
+| created_at | DATETIME | 作成日時 |
+
+#### tasks
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| title | VARCHAR(200) | タイトル（必須） |
+| description | TEXT | 説明 |
+| due_date | DATE | 期限日 |
+| status | VARCHAR(20) | ステータス（pending/in_progress/completed） |
+| created_at | DATETIME | 作成日時 |
+| updated_at | DATETIME | 更新日時 |
+
+#### task_relations
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| task_id | INTEGER | タスクID（FK） |
+| relation_type | VARCHAR(20) | 関連タイプ（crop/location/location_crop） |
+| crop_id | INTEGER | 作物ID（FK、任意） |
+| location_id | INTEGER | 場所ID（FK、任意） |
+| location_crop_id | INTEGER | 栽培記録ID（FK、任意） |
 | created_at | DATETIME | 作成日時 |
 
 ## 日付カラムの注意点
