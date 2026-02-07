@@ -21,7 +21,8 @@
 - **画像サポート:** 作物、場所、日記、収穫記録の画像アップロード・管理（最大16MB）
 - **検索とフィルター:** エンティティ全体でのキーワード検索、日記・収穫記録の日付範囲フィルタリング
 - **ダッシュボード:** 統計情報と最近のアクティビティ概要
-- **カレンダービュー:** 月別カレンダーで作物・場所・日記・植え付け・収穫をアイコン表示、詳細ページへのリンク
+- **カレンダービュー:** 月別カレンダーで作物・場所・日記・植え付け・収穫・タスクをアイコン表示、詳細ページへのリンク
+- **タスク管理:** 栽培作業タスクのCRUD、ステータス管理（未着手/進行中/完了）、期限日設定、作物・場所・栽培記録との関連付け
 
 ---
 
@@ -41,13 +42,15 @@ garden-app/
 │   │   ├── location_crop.py # 多対多関係
 │   │   ├── diary.py
 │   │   ├── harvest.py       # 収穫記録モデル
-│   │   └── calendar.py      # カレンダーデータ取得モデル
+│   │   ├── calendar.py      # カレンダーデータ取得モデル
+│   │   └── task.py          # タスクモデル
 │   ├── routes/              # Flask ブループリント
 │   │   ├── crop_routes.py
 │   │   ├── location_routes.py
 │   │   ├── diary_routes.py
 │   │   ├── harvest_routes.py
-│   │   └── calendar_routes.py
+│   │   ├── calendar_routes.py
+│   │   └── task_routes.py
 │   ├── utils/               # ユーティリティ
 │   │   ├── upload.py        # 画像アップロードヘルパー
 │   │   └── migration.py     # マイグレーションユーティリティ
@@ -59,7 +62,8 @@ garden-app/
 │   │   ├── locations/       # 場所テンプレート（+ canvas.html）
 │   │   ├── diary/           # 日記テンプレート
 │   │   ├── harvests/        # 収穫記録テンプレート
-│   │   └── calendar/        # カレンダーテンプレート
+│   │   ├── calendar/        # カレンダーテンプレート
+│   │   └── tasks/           # タスクテンプレート
 │   └── static/              # 静的アセット
 │       ├── css/             # Bootstrap カスタマイズ
 │       ├── js/              # キャンバスエディター、ユーティリティ
@@ -97,6 +101,7 @@ uv run python run.py
 | 場所 | locations | /locations/ | /locations/{id} | /locations/new | /locations/{id}/edit |
 | 日記 | diary | /diary/ | /diary/{id} | /diary/new | /diary/{id}/edit |
 | 収穫 | harvests | /harvests/ | /harvests/{id} | /harvests/new | /harvests/{id}/edit |
+| タスク | tasks | /tasks/ | /tasks/{id} | /tasks/new | /tasks/{id}/edit |
 | カレンダー | calendar | /calendar/ | - | - | - |
 
 例: `url_for('diary.detail', diary_id=1)` → `/diary/1`
