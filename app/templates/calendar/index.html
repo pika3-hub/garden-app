@@ -6,10 +6,12 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/calendar.css') }}">
 {% endblock %}
 
+{% block body_bg %}<div class="page-bg-image page-bg-calendar"></div>{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <h1 class="mb-4">
-        <i class="bi bi-calendar3"></i> カレンダー
+        <img src="{{ url_for('static', filename='images/icon_calendar.png') }}" alt="" class="icon-img icon-img-lg"> カレンダー
     </h1>
 
     <!-- ナビゲーション -->

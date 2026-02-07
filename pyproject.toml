@@ -3,8 +3,8 @@ name = "garden-manager"
 version = "0.1.0"
 description = "家庭菜園管理Webアプリケーション"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "==3.12.*"
 dependencies = [
-    "flask>=3.1.2",
-    "python-dotenv>=1.2.1",
+    "flask==3.1.2",
+    "python-dotenv==1.2.1",
 ]
