@@ -67,6 +67,11 @@
                             <img src="{{ url_for('static', filename='images/icon_calendar.png') }}" alt="" class="icon-img"> カレンダー
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('tasks.') %}active{% endif %}" href="{{ url_for('tasks.list') }}">
+                            <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img"> タスク
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

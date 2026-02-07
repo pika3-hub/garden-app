@@ -223,6 +223,10 @@ main {
     background-image: url('../images/card_harvest.png');
 }
 
+.card-bg-tasklist::before {
+    background-image: url('../images/card_tasklist.png');
+}
+
 /* カード内のコンテンツを前面に */
 .card-with-bg .card-body,
 .card-with-bg .card-header,

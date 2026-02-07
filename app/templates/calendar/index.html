@@ -47,6 +47,10 @@
             <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="収穫">
             <span>収穫</span>
         </div>
+        <div class="legend-item">
+            <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="タスク">
+            <span>タスク</span>
+        </div>
     </div>
 
     <!-- カレンダーテーブル -->
@@ -123,6 +127,15 @@
                            data-bs-toggle="tooltip" data-bs-placement="top"
                            title="収穫: {{ harvest.crop_name }}{% if harvest.variety %}({{ harvest.variety }}){% endif %}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">
                             <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="収穫">
+                        </a>
+                        {% endfor %}
+
+                        {# タスクアイコン #}
+                        {% for task in day_data.get('tasks', []) %}
+                        <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="calendar-icon"
+                           data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="タスク: {{ task.title }}">
+                            <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="タスク">
                         </a>
                         {% endfor %}
                     </div>
