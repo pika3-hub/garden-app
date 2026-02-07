@@ -42,7 +42,7 @@ class Calendar:
         for crop in crops:
             date_str = crop['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
             result[date_str]['crops'].append({
                 'id': crop['id'],
                 'name': crop['name'],
@@ -60,7 +60,7 @@ class Calendar:
         for location in locations:
             date_str = location['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
             result[date_str]['locations'].append({
                 'id': location['id'],
                 'name': location['name']
@@ -77,7 +77,7 @@ class Calendar:
         for diary in diaries:
             date_str = diary['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
             result[date_str]['diaries'].append({
                 'id': diary['id'],
                 'title': diary['title']
@@ -97,7 +97,7 @@ class Calendar:
         for lc in location_crops:
             date_str = lc['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
             result[date_str]['location_crops'].append({
                 'id': lc['id'],
                 'location_id': lc['location_id'],
@@ -120,13 +120,31 @@ class Calendar:
         for harvest in harvests:
             date_str = harvest['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
             result[date_str]['harvests'].append({
                 'id': harvest['id'],
                 'crop_name': harvest['crop_name'],
                 'variety': harvest['variety'],
                 'quantity': harvest['quantity'],
                 'unit': harvest['unit']
+            })
+
+        # タスクを取得 (due_dateで取得)
+        tasks = db.execute(
+            '''SELECT id, title, status, DATE(due_date) as date
+               FROM tasks
+               WHERE DATE(due_date) BETWEEN ? AND ?
+               ORDER BY due_date''',
+            (start_date, end_date)
+        ).fetchall()
+        for task in tasks:
+            date_str = task['date']
+            if date_str not in result:
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
+            result[date_str]['tasks'].append({
+                'id': task['id'],
+                'title': task['title'],
+                'status': task['status']
             })
 
         return result

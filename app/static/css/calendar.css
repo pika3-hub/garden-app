@@ -97,8 +97,8 @@
 }
 
 .calendar-icon img {
-    width: 20px;
-    height: 20px;
+    width: 50px;
+    height: 50px;
 }
 
 /* 凡例 */
@@ -120,8 +120,8 @@
 }
 
 .legend-item img {
-    width: 20px;
-    height: 20px;
+    width: 50px;
+    height: 50px;
 }
 
 /* ナビゲーションボタン */
@@ -145,8 +145,8 @@
     }
 
     .calendar-icon img {
-        width: 16px;
-        height: 16px;
+        width: 40px;
+        height: 40px;
     }
 
     .day-number {
@@ -165,8 +165,8 @@
     }
 
     .calendar-icon img {
-        width: 14px;
-        height: 14px;
+        width: 35px;
+        height: 35px;
     }
 
     .day-number {
@@ -197,7 +197,7 @@
     }
 
     .legend-item img {
-        width: 16px;
-        height: 16px;
+        width: 40px;
+        height: 40px;
     }
 }

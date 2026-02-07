@@ -14,12 +14,13 @@ def create_app(config_name='default'):
     init_db(app)
 
     # ブループリント登録
-    from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes
+    from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes, task_routes
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(location_routes.bp)
     app.register_blueprint(diary_routes.bp)
     app.register_blueprint(harvest_routes.bp)
     app.register_blueprint(calendar_routes.bp)
+    app.register_blueprint(task_routes.bp)
 
     # ホームページルート
     @app.route('/')
@@ -29,6 +30,7 @@ def create_app(config_name='default'):
         from app.models.location_crop import LocationCrop
         from app.models.diary import DiaryEntry
         from app.models.harvest import Harvest
+        from app.models.task import Task
 
         # 統計情報を取得
         stats = {
@@ -36,18 +38,22 @@ def create_app(config_name='default'):
             'location_count': Location.count(),
             'active_crop_count': LocationCrop.count_active(),
             'diary_count': DiaryEntry.count(),
-            'harvest_count': Harvest.count()
+            'harvest_count': Harvest.count(),
+            'pending_task_count': Task.count(Task.STATUS_PENDING) + Task.count(Task.STATUS_IN_PROGRESS)
         }
 
         # 最新データを取得
         recent_diaries = DiaryEntry.get_recent(5)
         recent_plantings = LocationCrop.get_recent(5)
         recent_harvests = Harvest.get_recent(5)
+        pending_tasks = Task.get_pending(5)
 
         return render_template('index.html',
                              stats=stats,
                              recent_diaries=recent_diaries,
                              recent_plantings=recent_plantings,
-                             recent_harvests=recent_harvests)
+                             recent_harvests=recent_harvests,
+                             pending_tasks=pending_tasks,
+                             Task=Task)
 
     return app
