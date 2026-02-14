@@ -209,6 +209,42 @@ class DiaryEntry:
         db.commit()
 
     @staticmethod
+    def get_adjacent(diary_id):
+        """現在の日記の前後の日記を取得"""
+        db = get_db()
+        entry = db.execute(
+            'SELECT id, entry_date, created_at FROM diary_entries WHERE id = ?',
+            (diary_id,)
+        ).fetchone()
+        if not entry:
+            return None, None
+
+        # 前の日記（より古い日付方向）
+        prev_entry = db.execute(
+            '''SELECT id, title, entry_date FROM diary_entries
+               WHERE (entry_date < :date)
+                  OR (entry_date = :date AND created_at < :created_at)
+                  OR (entry_date = :date AND created_at = :created_at AND id < :id)
+               ORDER BY entry_date DESC, created_at DESC, id DESC
+               LIMIT 1''',
+            {'date': entry['entry_date'], 'created_at': entry['created_at'], 'id': entry['id']}
+        ).fetchone()
+
+        # 次の日記（より新しい日付方向）
+        next_entry = db.execute(
+            '''SELECT id, title, entry_date FROM diary_entries
+               WHERE (entry_date > :date)
+                  OR (entry_date = :date AND created_at > :created_at)
+                  OR (entry_date = :date AND created_at = :created_at AND id > :id)
+               ORDER BY entry_date ASC, created_at ASC, id ASC
+               LIMIT 1''',
+            {'date': entry['entry_date'], 'created_at': entry['created_at'], 'id': entry['id']}
+        ).fetchone()
+
+        return (dict(prev_entry) if prev_entry else None,
+                dict(next_entry) if next_entry else None)
+
+    @staticmethod
     def get_by_crop(crop_id):
         """作物に関連する日記を取得"""
         db = get_db()

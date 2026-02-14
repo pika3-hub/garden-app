@@ -77,11 +77,17 @@
                 {% set day_data = month_data.get(date_str, {}) %}
                 {% set is_today = day == today %}
                 {% set weekday = day.weekday() %}
-                <td class="calendar-cell {% if is_today %}today{% endif %}">
+                <td class="calendar-cell {% if is_today %}today{% endif %} {% if day_data %}has-data{% endif %}"
+                    data-date="{{ date_str }}">
                     <!-- 日付番号 -->
                     <div class="day-number {% if weekday == 6 %}weekday-sun{% elif weekday == 5 %}weekday-sat{% endif %}">
                         {{ day.day }}
                     </div>
+
+                    <!-- モバイル用ドットインジケーター -->
+                    {% if day_data %}
+                    <div class="mobile-dot"></div>
+                    {% endif %}
 
                     <!-- アイコン -->
                     <div class="day-icons">
@@ -146,6 +152,49 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- モバイル用日付詳細モーダル -->
+    <div class="modal fade" id="dayDetailModal" tabindex="-1" aria-labelledby="dayDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dayDetailModalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- モーダル内凡例 -->
+                    <div class="modal-legend">
+                        <div class="legend-item">
+                            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="作物">
+                            <span>作物</span>
+                        </div>
+                        <div class="legend-item">
+                            <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="場所">
+                            <span>場所</span>
+                        </div>
+                        <div class="legend-item">
+                            <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="日記">
+                            <span>日記</span>
+                        </div>
+                        <div class="legend-item">
+                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培中">
+                            <span>栽培中</span>
+                        </div>
+                        <div class="legend-item">
+                            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="収穫">
+                            <span>収穫</span>
+                        </div>
+                        <div class="legend-item">
+                            <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="タスク">
+                            <span>タスク</span>
+                        </div>
+                    </div>
+                    <!-- アイコン表示エリア -->
+                    <div id="dayDetailIcons"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- キーボード操作ヒント -->
     <div class="text-muted text-center mt-3">

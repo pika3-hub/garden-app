@@ -42,10 +42,13 @@ def detail(diary_id):
         return redirect(url_for('diary.list'))
 
     relations = DiaryEntry.get_relations(diary_id)
+    prev_entry, next_entry = DiaryEntry.get_adjacent(diary_id)
 
     return render_template('diary/detail.html',
                           entry=entry,
-                          relations=relations)
+                          relations=relations,
+                          prev_entry=prev_entry,
+                          next_entry=next_entry)
 
 
 @bp.route('/new')
