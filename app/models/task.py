@@ -32,7 +32,13 @@ class Task:
         if not include_completed:
             query += " WHERE status != 'completed'"
 
-        query += ' ORDER BY due_date ASC NULLS LAST, created_at DESC'
+        query += ''' ORDER BY CASE status
+                        WHEN 'in_progress' THEN 1
+                        WHEN 'pending' THEN 2
+                        WHEN 'completed' THEN 3
+                     END,
+                     CASE WHEN status != 'completed' THEN due_date END ASC NULLS LAST,
+                     CASE WHEN status = 'completed' THEN due_date END DESC NULLS LAST'''
 
         if limit:
             query += ' LIMIT ?'
@@ -124,7 +130,13 @@ class Task:
             query += ' AND due_date <= ?'
             params.append(date_to)
 
-        query += ' ORDER BY due_date ASC NULLS LAST, created_at DESC'
+        query += ''' ORDER BY CASE status
+                        WHEN 'in_progress' THEN 1
+                        WHEN 'pending' THEN 2
+                        WHEN 'completed' THEN 3
+                     END,
+                     CASE WHEN status != 'completed' THEN due_date END ASC NULLS LAST,
+                     CASE WHEN status = 'completed' THEN due_date END DESC NULLS LAST'''
 
         tasks = db.execute(query, params).fetchall()
         return [dict(task) for task in tasks]
@@ -136,7 +148,11 @@ class Task:
         tasks = db.execute(
             '''SELECT * FROM tasks
                WHERE status != 'completed'
-               ORDER BY due_date ASC NULLS LAST, created_at DESC
+               ORDER BY CASE status
+                           WHEN 'in_progress' THEN 1
+                           WHEN 'pending' THEN 2
+                           WHEN 'completed' THEN 3
+                        END, due_date ASC NULLS LAST
                LIMIT ?''',
             (limit,)
         ).fetchall()
