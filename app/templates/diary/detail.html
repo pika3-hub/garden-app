@@ -18,6 +18,27 @@
 
 <div class="row">
     <div class="col-md-8">
+        <!-- 前後の日記ナビゲーション -->
+        <nav class="d-flex justify-content-between align-items-start mb-3" aria-label="日記ナビゲーション">
+            {% if prev_entry %}
+            <a href="{{ url_for('diary.detail', diary_id=prev_entry.id) }}" class="btn btn-outline-secondary text-start">
+                <i class="bi bi-chevron-left"></i> 前の日記
+                <small class="d-block text-muted">{{ prev_entry.entry_date }} {{ prev_entry.title }}</small>
+            </a>
+            {% else %}
+            <div></div>
+            {% endif %}
+
+            {% if next_entry %}
+            <a href="{{ url_for('diary.detail', diary_id=next_entry.id) }}" class="btn btn-outline-secondary text-end">
+                次の日記 <i class="bi bi-chevron-right"></i>
+                <small class="d-block text-muted">{{ next_entry.entry_date }} {{ next_entry.title }}</small>
+            </a>
+            {% else %}
+            <div></div>
+            {% endif %}
+        </nav>
+
         <div class="card mb-3">
             <!-- <div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="bi bi-calendar-date"></i> {{ entry.entry_date }}
