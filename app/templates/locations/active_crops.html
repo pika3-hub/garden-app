@@ -17,47 +17,44 @@
 </div>
 
 {% if crops %}
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>作物名</th>
-                        <th>品種</th>
-                        <th>場所</th>
-                        <th>植え付け日</th>
-                        <th>株数</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for crop in crops %}
-                    <tr>
-                        <td>
-                            <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}">
-                                <i class="bi bi-basket-fill text-success"></i> {{ crop.crop_name }}
-                            </a>
-                            <span class="badge bg-success">{{ crop.crop_type }}</span>
-                        </td>
-                        <td>{{ crop.variety or '-' }}</td>
-                        <td>
-                            <a href="{{ url_for('locations.detail', location_id=crop.location_id) }}">
-                                <i class="bi bi-geo-alt-fill text-info"></i> {{ crop.location_name }}
-                            </a>
-                            <span class="badge bg-info">{{ crop.location_type }}</span>
-                        </td>
-                        <td>{{ crop.planted_date or '-' }}</td>
-                        <td>{{ crop.quantity or '-' }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="row">
+    {% for crop in crops %}
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100 card-with-bg card-bg-location-crop">
+            <div class="card-body">
+                <p class="card-text mb-1">
+                    <span class="badge bg-success">{{ crop.crop_type }}</span>
+                    {% if crop.variety %}
+                    <span class="badge bg-secondary">{{ crop.variety }}</span>
+                    {% endif %}
+                </p>
+                <h5 class="card-title">
+                    <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}" class="text-decoration-none">
+                        {{ crop.crop_name }}
+                    </a>
+                </h5>
+                <p class="card-text mb-1">
+                    <i class="bi bi-geo-alt-fill text-info"></i>
+                    <a href="{{ url_for('locations.detail', location_id=crop.location_id) }}" class="text-decoration-none">
+                        {{ crop.location_name }}
+                    </a>
+                    <span class="badge bg-info">{{ crop.location_type }}</span>
+                </p>
+                {% if crop.planted_date %}
+                <p class="card-text mb-1">
+                    <i class="bi bi-calendar-event"></i> {{ crop.planted_date }}
+                </p>
+                {% endif %}
+                {% if crop.quantity %}
+                <p class="card-text mb-1">株数: {{ crop.quantity }}</p>
+                {% endif %}
+            </div>
         </div>
     </div>
-    <div class="card-footer text-muted">
-        合計: {{ crops|length }} 件
-    </div>
+    {% endfor %}
 </div>
+
+<p class="text-muted">合計: {{ crops|length }} 件</p>
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>

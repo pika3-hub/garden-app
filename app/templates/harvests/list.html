@@ -54,71 +54,51 @@
 
 <!-- 収穫記録一覧 -->
 {% if harvests %}
-<div class="table-responsive">
-    <table class="table table-hover">
-        <thead class="table-light">
-            <tr>
-                <th>収穫日</th>
-                <th>作物</th>
-                <th>場所</th>
-                <th>収穫量</th>
-                <th>日数</th>
-                <th>メモ</th>
-                <th class="text-end">操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for harvest in harvests %}
-            <tr>
-                <td>{{ harvest.harvest_date }}</td>
-                <td>
-                    <i class="bi bi-flower1 text-success"></i>
-                    {{ harvest.crop_name }}{% if harvest.variety %}（{{ harvest.variety }}）{% endif %}
-                </td>
-                <td>
-                    <i class="bi bi-geo-alt text-primary"></i>
-                    {{ harvest.location_name }}
-                </td>
-                <td>
-                    {% if harvest.quantity %}
-                    {{ harvest.quantity }} {{ harvest.unit or '' }}
-                    {% else %}
-                    <span class="text-muted">-</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if harvest.days_from_planting is not none %}
-                    {{ harvest.days_from_planting }}日
-                    {% else %}
-                    <span class="text-muted">-</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if harvest.notes %}
-                    <span class="text-truncate d-inline-block" style="max-width: 150px;" title="{{ harvest.notes }}">
-                        {{ harvest.notes }}
-                    </span>
-                    {% else %}
-                    <span class="text-muted">-</span>
-                    {% endif %}
-                </td>
-                <td class="text-end">
-                    <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="btn btn-sm btn-outline-primary" title="詳細">
-                        <i class="bi bi-eye"></i>
+<div class="row">
+    {% for harvest in harvests %}
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100 card-with-bg card-bg-harvest">
+            <div class="card-body">
+                <div class="fw-bold text-primary mb-1">{{ harvest.harvest_date }}</div>
+                <h5 class="card-title">
+                    <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="text-decoration-none">
+                        <i class="bi bi-flower1 text-success"></i>
+                        {{ harvest.crop_name }}{% if harvest.variety %}（{{ harvest.variety }}）{% endif %}
                     </a>
-                    <a href="{{ url_for('harvests.edit', harvest_id=harvest.id) }}" class="btn btn-sm btn-outline-secondary" title="編集">
-                        <i class="bi bi-pencil"></i>
+                </h5>
+                <p class="card-text mb-1">
+                    <small class="text-muted"><i class="bi bi-geo-alt text-primary"></i> {{ harvest.location_name }}</small>
+                </p>
+                {% if harvest.quantity %}
+                <p class="card-text mb-1">収穫量: {{ harvest.quantity }} {{ harvest.unit or '' }}</p>
+                {% endif %}
+                {% if harvest.days_from_planting is not none %}
+                <p class="card-text mb-1">植え付けから: {{ harvest.days_from_planting }}日</p>
+                {% endif %}
+                {% if harvest.notes %}
+                <p class="card-text text-muted-light">
+                    {{ harvest.notes[:80] }}{% if harvest.notes|length > 80 %}...{% endif %}
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="btn-group-action">
+                    <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> 詳細
+                    </a>
+                    <a href="{{ url_for('harvests.edit', harvest_id=harvest.id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> 編集
                     </a>
                     <form method="POST" action="{{ url_for('harvests.delete', harvest_id=harvest.id) }}" class="d-inline" onsubmit="return confirm('この収穫記録を削除しますか？');">
-                        <button type="submit" class="btn btn-sm btn-outline-danger" title="削除">
-                            <i class="bi bi-trash"></i>
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> 削除
                         </button>
                     </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 
 <p class="text-muted">{{ harvests|length }}件の収穫記録</p>
