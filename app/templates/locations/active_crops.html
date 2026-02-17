@@ -49,6 +49,30 @@
                 <p class="card-text mb-1">株数: {{ crop.quantity }}</p>
                 {% endif %}
             </div>
+            <div class="card-footer bg-transparent">
+                <div class="btn-group-action">
+                    <a href="{{ url_for('harvests.new', location_crop_id=crop.id) }}"
+                       class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-basket"></i> 収穫を記録
+                    </a>
+                    <form method="POST"
+                          action="{{ url_for('locations.complete_harvest', location_id=crop.location_id, location_crop_id=crop.id) }}"
+                          class="d-inline"
+                          onsubmit="return confirm('この作物の栽培を終了しますか？');">
+                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-check-circle"></i> 栽培終了
+                        </button>
+                    </form>
+                    <form method="POST"
+                          action="{{ url_for('locations.remove_crop', location_id=crop.location_id, location_crop_id=crop.id) }}"
+                          class="d-inline"
+                          onsubmit="return confirm('削除してもよろしいですか？');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-x-circle"></i> 削除
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
     {% endfor %}
