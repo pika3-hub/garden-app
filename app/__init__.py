@@ -14,13 +14,14 @@ def create_app(config_name='default'):
     init_db(app)
 
     # ブループリント登録
-    from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes, task_routes
+    from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes, task_routes, growth_record_routes
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(location_routes.bp)
     app.register_blueprint(diary_routes.bp)
     app.register_blueprint(harvest_routes.bp)
     app.register_blueprint(calendar_routes.bp)
     app.register_blueprint(task_routes.bp)
+    app.register_blueprint(growth_record_routes.bp)
 
     # ホームページルート
     @app.route('/')
@@ -31,6 +32,7 @@ def create_app(config_name='default'):
         from app.models.diary import DiaryEntry
         from app.models.harvest import Harvest
         from app.models.task import Task
+        from app.models.growth_record import GrowthRecord
 
         # 統計情報を取得
         stats = {
@@ -47,6 +49,7 @@ def create_app(config_name='default'):
         recent_plantings = LocationCrop.get_recent(5)
         recent_harvests = Harvest.get_recent(5)
         pending_tasks = Task.get_pending(5)
+        recent_growth_records = GrowthRecord.get_recent(5)
 
         return render_template('index.html',
                              stats=stats,
@@ -54,6 +57,7 @@ def create_app(config_name='default'):
                              recent_plantings=recent_plantings,
                              recent_harvests=recent_harvests,
                              pending_tasks=pending_tasks,
+                             recent_growth_records=recent_growth_records,
                              Task=Task)
 
     return app

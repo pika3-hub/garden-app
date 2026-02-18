@@ -46,23 +46,6 @@
         </div>
     </div>
 
-    <!-- 日記カード -->
-    <div class="col-12 col-lg">
-        <div class="card text-center h-100 dashboard-card-with-bg card-bg-diary">
-            <div class="card-body">
-                <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img-xl" style="width: 3rem; height: 3rem;">
-                <h2 class="mt-3">{{ stats.diary_count }}</h2>
-                <h5 class="card-title">日記</h5>
-                <p class="card-text text-muted">
-                    記録した日記数
-                </p>
-                <a href="{{ url_for('diary.list') }}" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-list-ul"></i> 一覧
-                </a>
-            </div>
-        </div>
-    </div>
-
     <!-- 栽培中カード -->
     <div class="col-12 col-lg">
         <div class="card text-center h-100 dashboard-card-with-bg card-bg-location-crop">
@@ -73,7 +56,7 @@
                 <p class="card-text text-muted">
                     現在育てている作物数
                 </p>
-                <a href="{{ url_for('locations.active_crops') }}" class="btn btn-outline-warning btn-sm">
+                <a href="{{ url_for('plantings.index') }}" class="btn btn-outline-warning btn-sm">
                     <i class="bi bi-list-ul"></i> 一覧
                 </a>
             </div>
@@ -91,6 +74,23 @@
                     収穫した作物数
                 </p>
                 <a href="{{ url_for('harvests.list') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-list-ul"></i> 一覧
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日記カード -->
+    <div class="col-12 col-lg">
+        <div class="card text-center h-100 dashboard-card-with-bg card-bg-diary">
+            <div class="card-body">
+                <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img-xl" style="width: 3rem; height: 3rem;">
+                <h2 class="mt-3">{{ stats.diary_count }}</h2>
+                <h5 class="card-title">日記</h5>
+                <p class="card-text text-muted">
+                    記録した日記数
+                </p>
+                <a href="{{ url_for('diary.list') }}" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-list-ul"></i> 一覧
                 </a>
             </div>
@@ -116,8 +116,105 @@
 </div>
 
 <div class="row g-4">
-    <!-- 最新の日記 -->
+    <!-- 最近植え付けた作物 -->
     <div class="col-md-4">
+        <div class="card h-100 dashboard-card-with-bg card-bg-location-crop">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img"> 最近植え付けた作物
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_plantings %}
+                <div class="list-group list-group-flush list-group-transparent">
+                    {% for planting in recent_plantings %}
+                    <a href="{{ url_for('plantings.detail', location_crop_id=planting.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ planting.crop_name }}{% if planting.variety %}({{ planting.variety }}){% endif %}</h6>
+                            <small class="text-muted">{{ planting.planted_date }}</small>
+                        </div>
+                        <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ planting.location_name }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    まだ植え付け記録がありません。<br>
+                    <a href="{{ url_for('locations.list') }}">場所から植え付け</a>してください。
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 最新の栽培記録（個別記録） -->
+    <div class="col-md-4">
+        <div class="card h-100 dashboard-card-with-bg card-bg-location-crop">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-journal-text"></i> 最新の栽培記録
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_growth_records %}
+                <div class="list-group list-group-flush list-group-transparent">
+                    {% for record in recent_growth_records %}
+                    <a href="{{ url_for('plantings.record_detail', record_id=record.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ record.crop_name }}{% if record.variety %}({{ record.variety }}){% endif %}</h6>
+                            <small class="text-muted">{{ record.recorded_at }}</small>
+                        </div>
+                        <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ record.location_name }}</small>
+                        {% if record.notes %}
+                        <p class="mb-0 mt-1 small text-truncate">{{ record.notes }}</p>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    まだ栽培記録がありません。
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近収穫した作物 -->
+    <div class="col-md-4">
+        <div class="card h-100 dashboard-card-with-bg card-bg-harvest">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img" style="filter: brightness(0) invert(1);"> 最近収穫した作物
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_harvests %}
+                <div class="list-group list-group-flush list-group-transparent">
+                    {% for harvest in recent_harvests %}
+                    <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ harvest.crop_name }}{% if harvest.variety %}({{ harvest.variety }}){% endif %}</h6>
+                            <small class="text-muted">{{ harvest.harvest_date }}</small>
+                        </div>
+                        <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ harvest.location_name }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    まだ収穫記録がありません。<br>
+                    <a href="{{ url_for('harvests.list') }}">収穫を記録</a>してください。
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <!-- 最新の日記 -->
+    <div class="col-md-6">
         <div class="card h-100 dashboard-card-with-bg card-bg-diary">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
@@ -161,72 +258,8 @@
         </div>
     </div>
 
-    <!-- 最近植え付けた作物 -->
-    <div class="col-md-4">
-        <div class="card h-100 dashboard-card-with-bg card-bg-location-crop">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">
-                    <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img"> 最近植え付けた作物
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if recent_plantings %}
-                <div class="list-group list-group-flush list-group-transparent">
-                    {% for planting in recent_plantings %}
-                    <a href="{{ url_for('locations.detail', location_id=planting.location_id) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ planting.crop_name }}{% if planting.variety %}({{ planting.variety }}){% endif %}</h6>
-                            <small class="text-muted">{{ planting.planted_date }}</small>
-                        </div>
-                        <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ planting.location_name }}</small>
-                    </a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-muted text-center mb-0">
-                    まだ植え付け記録がありません。<br>
-                    <a href="{{ url_for('locations.list') }}">場所から植え付け</a>してください。
-                </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- 最近収穫した作物 -->
-    <div class="col-md-4">
-        <div class="card h-100 dashboard-card-with-bg card-bg-harvest">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0">
-                    <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img" style="filter: brightness(0) invert(1);"> 最近収穫した作物
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if recent_harvests %}
-                <div class="list-group list-group-flush list-group-transparent">
-                    {% for harvest in recent_harvests %}
-                    <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ harvest.crop_name }}{% if harvest.variety %}({{ harvest.variety }}){% endif %}</h6>
-                            <small class="text-muted">{{ harvest.harvest_date }}</small>
-                        </div>
-                        <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ harvest.location_name }}</small>
-                    </a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-muted text-center mb-0">
-                    まだ収穫記録がありません。<br>
-                    <a href="{{ url_for('harvests.list') }}">収穫を記録</a>してください。
-                </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4 mt-2">
     <!-- 未完了タスク -->
-    <div class="col-md-12">
+    <div class="col-md-6">
         <div class="card h-100 dashboard-card-with-bg card-bg-tasklist">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0">
@@ -235,21 +268,19 @@
             </div>
             <div class="card-body">
                 {% if pending_tasks %}
-                <div class="row">
+                <div class="list-group list-group-flush list-group-transparent">
                     {% for task in pending_tasks %}
-                    <div class="col-md-4 mb-2">
-                        <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">
-                                    <span class="badge {{ Task.get_status_badge(task.status) }} me-1">{{ Task.get_status_label(task.status) }}</span>
-                                    {{ task.title }}
-                                </h6>
-                            </div>
-                            {% if task.due_date %}
-                            <small class="text-muted"><i class="bi bi-calendar-event"></i> 期限: {{ task.due_date }}</small>
-                            {% endif %}
-                        </a>
-                    </div>
+                    <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <span class="badge {{ Task.get_status_badge(task.status) }} me-1">{{ Task.get_status_label(task.status) }}</span>
+                                {{ task.title }}
+                            </h6>
+                        </div>
+                        {% if task.due_date %}
+                        <small class="text-muted"><i class="bi bi-calendar-event"></i> 期限: {{ task.due_date }}</small>
+                        {% endif %}
+                    </a>
                     {% endfor %}
                 </div>
                 {% else %}

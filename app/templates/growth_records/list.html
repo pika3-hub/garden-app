@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}栽培記録 - {{ location_crop.crop_name }} - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><i class="bi bi-journal-text text-info"></i> 栽培記録</h1>
+    </div>
+    <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('growth_records.new', location_crop_id=location_crop.id) }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 新規記録
+        </a>
+        <button onclick="history.back()" class="btn btn-outline-secondary ms-2">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </button>
+    </div>
+</div>
+
+<!-- 対象の栽培情報 -->
+<div class="alert alert-info alert-permanent mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <strong><i class="bi bi-flower1"></i> 作物:</strong>
+            {{ location_crop.crop_name }}{% if location_crop.variety %}（{{ location_crop.variety }}）{% endif %}
+        </div>
+        <div class="col-md-4">
+            <strong><i class="bi bi-geo-alt"></i> 場所:</strong>
+            {{ location_crop.location_name }}
+        </div>
+        <div class="col-md-4">
+            <strong><i class="bi bi-calendar-event"></i> 植え付け日:</strong>
+            {{ location_crop.planted_date or '未設定' }}
+        </div>
+    </div>
+</div>
+
+<!-- 栽培記録一覧 -->
+{% if records %}
+<div class="row">
+    {% for record in records %}
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100">
+            {% if record.image_path %}
+            <img src="{{ url_for('static', filename='uploads/' + record.image_path) }}" class="card-img-top" alt="栽培記録画像" style="height: 150px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body">
+                <div class="fw-bold text-primary mb-1">{{ record.recorded_at }}</div>
+                {% if record.notes %}
+                <p class="card-text text-muted-light">
+                    {{ record.notes[:80] }}{% if record.notes|length > 80 %}...{% endif %}
+                </p>
+                {% else %}
+                <p class="card-text text-muted"><small>メモなし</small></p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="btn-group-action">
+                    <a href="{{ url_for('growth_records.detail', record_id=record.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> 詳細
+                    </a>
+                    <a href="{{ url_for('growth_records.edit', record_id=record.id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> 編集
+                    </a>
+                    <form method="POST" action="{{ url_for('growth_records.delete', record_id=record.id) }}" class="d-inline" onsubmit="return confirm('この栽培記録を削除しますか？');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> 削除
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<p class="text-muted">{{ records|length }}件の栽培記録</p>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    栽培記録はまだありません。「新規記録」ボタンから記録を追加できます。
+</div>
+{% endif %}
+{% endblock %}

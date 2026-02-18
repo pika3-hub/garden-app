@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}栽培記録詳細 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <i class="bi bi-journal-text text-info"></i>
+            栽培記録詳細
+        </h1>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('plantings.detail', location_crop_id=record.location_crop_id) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-list"></i> 一覧に戻る
+        </a>
+        <a href="{{ url_for('plantings.edit', record_id=record.id) }}" class="btn btn-primary ms-2">
+            <i class="bi bi-pencil"></i> 編集
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-flower1"></i> {{ record.crop_name }}{% if record.variety %}（{{ record.variety }}）{% endif %}
+                    <span class="text-white-50">@ {{ record.location_name }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">記録日</h6>
+                        <p class="h5">{{ record.recorded_at }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">植え付け日</h6>
+                        <p>{{ record.planted_date or '未設定' }}</p>
+                    </div>
+                </div>
+
+                {% if record.notes %}
+                <div class="mb-4">
+                    <h6 class="text-muted">メモ</h6>
+                    <p class="card-text" style="white-space: pre-wrap;">{{ record.notes }}</p>
+                </div>
+                {% endif %}
+
+                {% if record.image_path %}
+                <div class="mb-4">
+                    <h6 class="text-muted">画像</h6>
+                    <img src="{{ url_for('static', filename='uploads/' + record.image_path) }}"
+                         alt="栽培記録画像" class="img-fluid rounded" style="max-height: 400px;">
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <div class="row text-muted small">
+                    <div class="col-md-6">
+                        <i class="bi bi-clock"></i> 作成: {{ record.created_at }}
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <i class="bi bi-clock-history"></i> 更新: {{ record.updated_at }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-gear"></i> 操作</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('plantings.edit', record_id=record.id) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> 編集する
+                    </a>
+                    <a href="{{ url_for('locations.detail', location_id=record.location_id) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-geo-alt"></i> 場所を見る
+                    </a>
+                    <form method="POST" action="{{ url_for('plantings.delete', record_id=record.id) }}" onsubmit="return confirm('この栽培記録を削除しますか？');">
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="bi bi-trash"></i> 削除する
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

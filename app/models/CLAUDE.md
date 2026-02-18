@@ -17,6 +17,7 @@
 | diary_harvests | 日記×収穫（多対多） | diary_id, harvest_id |
 | tasks | タスク | id |
 | task_relations | タスク×関連エンティティ（多対多） | id |
+| growth_records | 栽培観察記録（栽培記録に紐づく） | id |
 
 ### 主要テーブル詳細
 
@@ -94,6 +95,17 @@
 | location_id | INTEGER | 場所ID（FK、任意） |
 | location_crop_id | INTEGER | 栽培記録ID（FK、任意） |
 | created_at | DATETIME | 作成日時 |
+
+#### growth_records
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| location_crop_id | INTEGER | 栽培記録ID（FK → location_crops） |
+| recorded_at | DATE | 記録日（必須） |
+| notes | TEXT | メモ |
+| image_path | VARCHAR(255) | 画像パス |
+| created_at | TIMESTAMP | 作成日時 |
+| updated_at | TIMESTAMP | 更新日時 |
 
 ## 日付カラムの注意点
 
