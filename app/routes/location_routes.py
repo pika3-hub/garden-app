@@ -21,13 +21,6 @@ def list():
     return render_template('locations/list.html', locations=locations, keyword=keyword)
 
 
-@bp.route('/active-crops')
-def active_crops():
-    """栽培中の作物一覧"""
-    crops = LocationCrop.get_all_active()
-    return render_template('locations/active_crops.html', crops=crops)
-
-
 @bp.route('/<int:location_id>')
 def detail(location_id):
     """場所詳細"""

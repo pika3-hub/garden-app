@@ -15,7 +15,7 @@
 - **作物管理:** 作物の種類、品種、特徴のCRUD操作
 - **場所管理:** 畑やプランターの場所のCRUD、画像サポート付き
 - **キャンバスエディター:** Fabric.jsを使用したビジュアル菜園レイアウトデザイナー（作物、図形、テキストのドラッグ&ドロップ）
-- **栽培記録:** 作物と場所をリンクし、ステータス追跡（栽培中/収穫済み/削除済み）
+- **栽培記録:** 作物と場所をリンクし、ステータス追跡（栽培中/栽培終了/削除済み）、タブフィルター付き一覧（`/plantings/`）、栽培観察記録の登録・管理
 - **収穫記録:** 複数回の収穫を記録、収穫量・単位・メモ・画像対応、植え付けからの日数自動計算
 - **日記システム:** 複数エンティティ（作物、場所、植え付け、収穫）との関連付けと画像添付を持つ栽培日記
 - **画像サポート:** 作物、場所、日記、収穫記録の画像アップロード・管理（最大16MB）
@@ -43,14 +43,16 @@ garden-app/
 │   │   ├── diary.py
 │   │   ├── harvest.py       # 収穫記録モデル
 │   │   ├── calendar.py      # カレンダーデータ取得モデル
-│   │   └── task.py          # タスクモデル
+│   │   ├── task.py          # タスクモデル
+│   │   └── growth_record.py # 栽培記録（観察記録）モデル
 │   ├── routes/              # Flask ブループリント
 │   │   ├── crop_routes.py
 │   │   ├── location_routes.py
 │   │   ├── diary_routes.py
 │   │   ├── harvest_routes.py
 │   │   ├── calendar_routes.py
-│   │   └── task_routes.py
+│   │   ├── task_routes.py
+│   │   └── growth_record_routes.py  # Blueprint名: plantings
 │   ├── utils/               # ユーティリティ
 │   │   ├── upload.py        # 画像アップロードヘルパー
 │   │   └── migration.py     # マイグレーションユーティリティ
@@ -62,6 +64,8 @@ garden-app/
 │   │   ├── locations/       # 場所テンプレート（+ canvas.html）
 │   │   ├── diary/           # 日記テンプレート
 │   │   ├── harvests/        # 収穫記録テンプレート
+│   │   ├── plantings/       # 栽培記録テンプレート（list/detail/record_detail/form）
+│   │   ├── growth_records/  # 栽培記録（観察記録）テンプレート
 │   │   ├── calendar/        # カレンダーテンプレート
 │   │   └── tasks/           # タスクテンプレート
 │   └── static/              # 静的アセット
@@ -101,8 +105,12 @@ uv run python run.py
 | 場所 | locations | /locations/ | /locations/{id} | /locations/new | /locations/{id}/edit |
 | 日記 | diary | /diary/ | /diary/{id} | /diary/new | /diary/{id}/edit |
 | 収穫 | harvests | /harvests/ | /harvests/{id} | /harvests/new | /harvests/{id}/edit |
+| 栽培 | plantings | /plantings/?status= | /plantings/{id} | - | - |
 | タスク | tasks | /tasks/ | /tasks/{id} | /tasks/new | /tasks/{id}/edit |
 | カレンダー | calendar | /calendar/ | - | - | - |
+
+栽培（plantings）は `?status=active|harvested|all` でタブフィルター。
+栽培記録の個別操作: `/plantings/new/{lc_id}`, `/plantings/record/{id}`, `/plantings/record/{id}/edit`
 
 例: `url_for('diary.detail', diary_id=1)` → `/diary/1`
 

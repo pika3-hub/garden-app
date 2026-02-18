@@ -134,18 +134,44 @@ class LocationCrop:
 
     @staticmethod
     def get_all_active():
-        """全ての栽培中の作物を取得（作物・場所情報付き）"""
+        """全ての栽培中の作物を取得（作物・場所情報付き、栽培記録の件数・最新画像含む）"""
+        return LocationCrop.get_all_with_stats(status='active')
+
+    @staticmethod
+    def get_all_with_stats(status=None):
+        """全ての作物を取得（作物・場所情報付き、栽培記録の件数・最新画像含む）。statusで絞り込み可能"""
         db = get_db()
-        crops = db.execute(
-            '''SELECT lc.*,
+        query = '''SELECT lc.*,
                       c.name as crop_name, c.crop_type, c.variety,
-                      l.name as location_name, l.location_type
+                      l.name as location_name, l.location_type,
+                      COALESCE(gr_stats.record_count, 0) as growth_record_count,
+                      gr_img.image_path as latest_growth_image
                FROM location_crops lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
-               WHERE lc.status = 'active'
-               ORDER BY lc.planted_date DESC'''
-        ).fetchall()
+               LEFT JOIN (
+                   SELECT location_crop_id, COUNT(*) as record_count
+                   FROM growth_records
+                   GROUP BY location_crop_id
+               ) gr_stats ON gr_stats.location_crop_id = lc.id
+               LEFT JOIN (
+                   SELECT gr1.location_crop_id, gr1.image_path
+                   FROM growth_records gr1
+                   INNER JOIN (
+                       SELECT location_crop_id, MAX(recorded_at) as max_date
+                       FROM growth_records
+                       WHERE image_path IS NOT NULL AND image_path != ''
+                       GROUP BY location_crop_id
+                   ) gr2 ON gr1.location_crop_id = gr2.location_crop_id
+                        AND gr1.recorded_at = gr2.max_date
+                   WHERE gr1.image_path IS NOT NULL AND gr1.image_path != ''
+               ) gr_img ON gr_img.location_crop_id = lc.id'''
+        params = []
+        if status:
+            query += ' WHERE lc.status = ?'
+            params.append(status)
+        query += ' ORDER BY lc.planted_date DESC'
+        crops = db.execute(query, params).fetchall()
         return [dict(crop) for crop in crops]
 
     @staticmethod
