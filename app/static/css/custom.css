@@ -1,314 +1,577 @@
-/* カスタムスタイル */
+/* ═══════════════════════════════════════════════════════════
+   家庭菜園管理 — 田園詩 (Pastoral Poetry) Theme
+   Warm organic palette · Japanese serif typography
+   Forest green · Terracotta · Warm cream
+   ═══════════════════════════════════════════════════════════ */
 
+/* フォントは base.html の <link> タグで読み込み済み */
+
+/* ── Core Palette ────────────────────────────────────────── */
 :root {
-    --primary-green: #198754;
-    --light-green: #d1e7dd;
+  --cream:           #F7F3EA;
+  --parchment:       #EDE8D8;
+
+  --forest:          #2B4738;
+  --forest-hover:    #3B6050;
+  --forest-light:    #557A63;
+
+  --sage:            #7A9E7E;
+  --sage-light:      #B5D4B8;
+
+  --terracotta:      #B85438;
+  --terracotta-light:#CF7055;
+
+  --amber:           #C08A2A;
+  --teal:            #3A7A8A;
+  --cobalt:          #3A5A8A;
+
+  --ink:             #29271F;
+  --ink-soft:        #5A5548;
+  --ink-muted:       #8A8478;
+
+  --surface:         #FEFBF5;
+  --surface-elevated:#FFFFFF;
+  --border:          #D5CCBA;
+  --border-light:    #E5DDD0;
+
+  /* Bootstrap integration */
+  --bs-body-bg:           var(--cream);
+  --bs-body-color:        var(--ink);
+  --bs-border-color:      var(--border);
+  --bs-link-color:        var(--forest-hover);
+  --bs-link-hover-color:  var(--forest);
+
+  /* Shadows (warm-tinted) */
+  --shadow-xs:  0 1px 3px rgba(43, 71, 56, 0.06);
+  --shadow-md:  0 4px 18px rgba(43, 71, 56, 0.13);
+
+  /* Typography */
+  --font-serif:  'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  --font-accent: 'Libre Baskerville', Georgia, serif;
 }
+
+/* ── Base ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 15px; }
 
 body {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+  font-family: var(--font-serif);
+  background-color: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.75;
 }
 
-main {
-    flex: 1;
+/* Subtle paper grain texture */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 9998;
 }
 
-/* ナビゲーションバー */
-.navbar-brand {
-    font-weight: bold;
-    font-size: 1.25rem;
+main { flex: 1; }
+
+/* ── Typography ──────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: var(--forest);
+  letter-spacing: 0.025em;
 }
 
-.nav-link {
-    transition: opacity 0.3s;
+h1 { font-size: 1.7rem; }
+h2 { font-size: 1.4rem; }
+h5 { font-size: 1rem; }
+
+a {
+  color: var(--bs-link-color);
+  transition: color 0.2s;
+}
+a:hover { color: var(--bs-link-hover-color); }
+
+small, .small { font-size: 0.84em; }
+
+/* ── Navbar ──────────────────────────────────────────────── */
+.garden-navbar {
+  background-color: var(--forest) !important;
+  border-bottom: 3px solid var(--terracotta);
+  padding: 0.55rem 0;
+  box-shadow: 0 2px 14px rgba(43, 71, 56, 0.28);
 }
 
-.nav-link:hover {
-    opacity: 0.8;
+.garden-navbar .navbar-brand {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #F0EBE0 !important;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0;
+  transition: opacity 0.2s;
+}
+.garden-navbar .navbar-brand:hover { opacity: 0.82; }
+
+.garden-navbar .nav-link {
+  color: rgba(240, 235, 224, 0.82) !important;
+  font-size: 0.86rem;
+  font-family: var(--font-serif);
+  padding: 0.45rem 0.65rem;
+  border-radius: 5px;
+  transition: color 0.2s, background-color 0.2s;
+  position: relative;
+}
+.garden-navbar .nav-link:hover {
+  color: #F0EBE0 !important;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.garden-navbar .nav-link.active {
+  color: #F0EBE0 !important;
+  background-color: rgba(255, 255, 255, 0.13);
+}
+.garden-navbar .nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 2px;
+  background-color: var(--terracotta-light);
+  border-radius: 2px;
 }
 
-/* カード */
+.garden-navbar .navbar-toggler {
+  border-color: rgba(240, 235, 224, 0.35);
+  padding: 0.3rem 0.55rem;
+}
+.garden-navbar .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28240,235,224,0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* ── Dashboard Header ─────────────────────────────────────── */
+.dashboard-header {
+  padding: 1.25rem 0 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.dashboard-title {
+  font-family: var(--font-accent);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--forest);
+  letter-spacing: 0.06em;
+  margin: 0;
+  line-height: 1.2;
+}
+.dashboard-subtitle {
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  margin: 0.2rem 0 0;
+  font-style: italic;
+}
+
+/* ── Stat Cards (Dashboard) ──────────────────────────────── */
+.stat-num {
+  font-family: var(--font-accent);
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--forest);
+  line-height: 1;
+  display: block;
+  margin: 0.6rem 0 0.3rem;
+}
+
+.stat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  opacity: 0.75;
+}
+
+.dashboard-card-with-bg.card-bg-crop       { border-top: 3px solid var(--sage); }
+.dashboard-card-with-bg.card-bg-location   { border-top: 3px solid var(--teal); }
+.dashboard-card-with-bg.card-bg-location-crop { border-top: 3px solid var(--amber); }
+.dashboard-card-with-bg.card-bg-harvest    { border-top: 3px solid var(--terracotta); }
+.dashboard-card-with-bg.card-bg-diary      { border-top: 3px solid var(--cobalt); }
+.dashboard-card-with-bg.card-bg-tasklist   { border-top: 3px solid var(--ink-muted); }
+
+/* ── Cards ───────────────────────────────────────────────── */
 .card {
-    transition: transform 0.2s, box-shadow 0.2s;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-xs);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
-
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--sage-light);
 }
 
-/* バッジ */
-.badge-status-active {
-    background-color: #198754;
+.card-header {
+  border-bottom: 1px solid var(--border);
+  border-radius: 9px 9px 0 0 !important;
+  font-weight: 700;
+  font-family: var(--font-serif);
+  padding: 0.7rem 1rem;
 }
 
-.badge-status-harvested {
-    background-color: #ffc107;
+/* Card header color overrides */
+.card-header.bg-success  { background-color: var(--forest)    !important; color: #F0EBE0; border-bottom-color: rgba(255,255,255,0.12); }
+.card-header.bg-info     { background-color: var(--teal)      !important; color: #F0EBE0; border-bottom-color: rgba(255,255,255,0.12); }
+.card-header.bg-warning  { background-color: var(--amber)     !important; color: #F0EBE0; border-bottom-color: rgba(255,255,255,0.12); }
+.card-header.bg-danger   { background-color: var(--terracotta)!important; color: #F0EBE0; border-bottom-color: rgba(255,255,255,0.12); }
+.card-header.bg-primary  { background-color: var(--cobalt)   !important; color: #F0EBE0; border-bottom-color: rgba(255,255,255,0.12); }
+.card-header.bg-secondary{ background-color: var(--ink-muted) !important; color: #F0EBE0; border-bottom-color: rgba(255,255,255,0.12); }
+.card-header .text-dark  { color: #F0EBE0 !important; }
+
+.card-footer {
+  background-color: rgba(237, 232, 216, 0.45);
+  border-top: 1px solid var(--border-light);
+  border-radius: 0 0 9px 9px !important;
 }
 
-.badge-status-removed {
-    background-color: #6c757d;
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-serif);
+  border-radius: 6px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
-/* フォーム */
+/* Success / Forest */
+.btn-success                { background-color: var(--forest);     border-color: var(--forest);     color: #F0EBE0; }
+.btn-success:hover          { background-color: var(--forest-hover);border-color: var(--forest-hover);color: #F0EBE0; }
+.btn-outline-success        { border-color: var(--forest);          color: var(--forest); }
+.btn-outline-success:hover  { background-color: var(--forest);      border-color: var(--forest);     color: #F0EBE0; }
+
+/* Info / Teal */
+.btn-info                   { background-color: var(--teal);        border-color: var(--teal);        color: #F0EBE0; }
+.btn-info:hover             { background-color: #2F6A7A;            border-color: #2F6A7A;            color: #F0EBE0; }
+.btn-outline-info           { border-color: var(--teal);            color: var(--teal); }
+.btn-outline-info:hover     { background-color: var(--teal);        border-color: var(--teal);        color: #F0EBE0; }
+
+/* Warning / Amber */
+.btn-warning                { background-color: var(--amber);       border-color: var(--amber);       color: #F0EBE0; }
+.btn-warning:hover          { background-color: #A87820;            border-color: #A87820;            color: #F0EBE0; }
+.btn-outline-warning        { border-color: var(--amber);           color: var(--amber); }
+.btn-outline-warning:hover  { background-color: var(--amber);       border-color: var(--amber);       color: #F0EBE0; }
+
+/* Danger / Terracotta */
+.btn-danger                 { background-color: var(--terracotta);  border-color: var(--terracotta);  color: #F0EBE0; }
+.btn-danger:hover           { background-color: #9E4428;            border-color: #9E4428;            color: #F0EBE0; }
+.btn-outline-danger         { border-color: var(--terracotta);      color: var(--terracotta); }
+.btn-outline-danger:hover   { background-color: var(--terracotta);  border-color: var(--terracotta);  color: #F0EBE0; }
+
+/* Primary / Cobalt */
+.btn-primary                { background-color: var(--cobalt);      border-color: var(--cobalt);      color: #F0EBE0; }
+.btn-primary:hover          { background-color: #2A4A7A;            border-color: #2A4A7A;            color: #F0EBE0; }
+.btn-outline-primary        { border-color: var(--cobalt);          color: var(--cobalt); }
+.btn-outline-primary:hover  { background-color: var(--cobalt);      border-color: var(--cobalt);      color: #F0EBE0; }
+
+/* Secondary / Ink */
+.btn-secondary              { background-color: var(--ink-muted);   border-color: var(--ink-muted);   color: #F0EBE0; }
+.btn-secondary:hover        { background-color: #7A7068;            border-color: #7A7068;            color: #F0EBE0; }
+.btn-outline-secondary      { border-color: var(--ink-muted);       color: var(--ink-muted); }
+.btn-outline-secondary:hover{ background-color: var(--ink-muted);   border-color: var(--ink-muted);   color: #F0EBE0; }
+
+/* ── Badges ──────────────────────────────────────────────── */
+.badge {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  padding: 0.3em 0.65em;
+  border-radius: 4px;
+  font-size: 0.76em;
+  letter-spacing: 0.02em;
+}
+.badge.bg-success   { background-color: var(--forest)     !important; }
+.badge.bg-info      { background-color: var(--teal)       !important; }
+.badge.bg-warning   { background-color: var(--amber)      !important; color: #F0EBE0 !important; }
+.badge.bg-danger    { background-color: var(--terracotta)  !important; }
+.badge.bg-primary   { background-color: var(--cobalt)     !important; }
+.badge.bg-secondary { background-color: var(--ink-muted)  !important; }
+
+.badge-status-active   { background-color: var(--forest);    color: #F0EBE0; }
+.badge-status-harvested{ background-color: var(--amber);     color: #F0EBE0; }
+.badge-status-removed  { background-color: var(--ink-muted); color: #F0EBE0; }
+
+/* ── Nav Tabs ────────────────────────────────────────────── */
+.nav-tabs {
+  border-bottom: 2px solid var(--border);
+  gap: 0.2rem;
+}
+.nav-tabs .nav-link {
+  font-family: var(--font-serif);
+  color: var(--ink-muted);
+  border: 1px solid transparent;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 0.5rem 1rem;
+  border-radius: 7px 7px 0 0;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+.nav-tabs .nav-link:hover {
+  color: var(--forest);
+  background-color: var(--parchment);
+  border-color: var(--border-light) var(--border-light) transparent;
+}
+.nav-tabs .nav-link.active {
+  color: var(--forest);
+  background-color: var(--surface);
+  border-color: var(--border) var(--border) var(--surface);
+  border-bottom: 2px solid var(--terracotta);
+  font-weight: 700;
+}
+
+/* ── Forms ───────────────────────────────────────────────── */
 .form-label {
-    font-weight: 500;
+  font-weight: 500;
+  font-family: var(--font-serif);
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+.form-control, .form-select, .form-check-input {
+  font-family: var(--font-serif);
+  border-color: var(--border);
+  background-color: var(--surface);
+  color: var(--ink);
+  border-radius: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--forest);
+  box-shadow: 0 0 0 0.2rem rgba(43, 71, 56, 0.12);
+  background-color: var(--surface-elevated);
+}
+.form-control::placeholder { color: var(--ink-muted); opacity: 0.7; }
+.input-group-text {
+  background-color: var(--parchment);
+  border-color: var(--border);
+  color: var(--ink-soft);
+  font-family: var(--font-serif);
 }
 
-/* ボタン */
-.btn-group-action {
-    display: flex;
-    gap: 0.5rem;
+/* ── Alerts ──────────────────────────────────────────────── */
+.alert {
+  font-family: var(--font-serif);
+  border-radius: 8px;
+  border-width: 1px;
+  font-size: 0.9rem;
 }
+.alert-success  { background-color: rgba(43, 71, 56, 0.07);  border-color: var(--sage);        color: var(--forest); }
+.alert-info     { background-color: rgba(58, 122, 138, 0.07);border-color: var(--teal);         color: #2A5A6A; }
+.alert-warning  { background-color: rgba(192, 138, 42, 0.09);border-color: var(--amber);        color: #7A5A15; }
+.alert-danger   { background-color: rgba(184, 84, 56, 0.07); border-color: var(--terracotta);  color: var(--terracotta); }
+.alert-link     { font-weight: 700; }
 
-/* テーブル */
-.table-hover tbody tr:hover {
-    background-color: var(--light-green);
+/* ── List Groups ─────────────────────────────────────────── */
+.list-group-item {
+  font-family: var(--font-serif);
+  border-color: var(--border-light);
+  color: var(--ink);
+  background-color: transparent;
+  transition: background-color 0.18s;
+  font-size: 0.9rem;
 }
+.list-group-item-action:hover {
+  background-color: var(--parchment);
+  color: var(--forest);
+}
+.list-group-transparent .list-group-item { background-color: transparent; }
 
-/* ユーティリティ */
+/* ── Tables ──────────────────────────────────────────────── */
+.table {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  --bs-table-bg: var(--surface);
+  --bs-table-border-color: var(--border-light);
+}
+.table thead th {
+  font-weight: 700;
+  color: var(--forest);
+  background-color: var(--parchment);
+  border-bottom: 2px solid var(--border);
+}
+.table-hover tbody tr:hover { background-color: var(--parchment); }
+
+/* ── Footer ──────────────────────────────────────────────── */
+footer {
+  background-color: var(--forest) !important;
+  border-top: 3px solid var(--terracotta);
+  padding: 1.1rem 0;
+}
+footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
+
+/* ── Utilities ───────────────────────────────────────────── */
+.text-muted {
+  color: var(--ink-muted) !important;
+}
 .text-muted-light {
-    color: #6c757d !important;
-    font-size: 0.875rem;
+  color: var(--ink-muted) !important;
+  font-size: 0.875rem;
+}
+.icon-large { font-size: 3rem; }
+
+.btn-group-action {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.icon-large {
-    font-size: 3rem;
-}
-
-/* レスポンシブ対応 */
 @media (max-width: 768px) {
-    .btn-group-action {
-        flex-direction: column;
-    }
-
-    .btn-group-action .btn {
-        width: 100%;
-    }
+  .btn-group-action          { flex-direction: column; }
+  .btn-group-action .btn     { width: 100%; }
 }
 
-/* ===============================================
-   画像素材スタイル
-   =============================================== */
+/* ══════════════════════════════════════════════════════════
+   IMAGE BACKGROUND SYSTEM
+   ══════════════════════════════════════════════════════════ */
 
+/* Sky clouds banner */
 .page-with-sky {
   position: relative;
   z-index: 0;
   margin-top: 0 !important;
 }
-
 .page-with-sky::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-
+  top: 0; left: 0;
   width: 100%;
   height: 200px;
-
   background-image: url("../images/1_sky_clouds.png");
-  background-repeat: repeat-x;     /* 横方向のみ繰り返し */
+  background-repeat: repeat-x;
   background-position: top center;
-  background-size: auto 200px;     /* 高さを固定して自然に */
-
-  z-index: -1;                     /* コンテンツの背面 */
-
-  opacity: 0.5;               /* 透明度調整 */
+  background-size: auto 200px;
+  z-index: -1;
+  opacity: 0.3;
 }
 
-/* 背景画像（詳細画面、編集画面、登録画面用） */
+/* Page background watermark (detail/form pages) */
 .page-bg-image {
-    position: fixed;
-    bottom: 40px;
-    right: 40px;
-    width: 450px;
-    height: 450px;
-    opacity: 0.15;
-    z-index: -1;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    pointer-events: none;
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  width: 380px;
+  height: 380px;
+  opacity: 0.09;
+  z-index: -1;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
 }
+.page-bg-crop           { background-image: url('../images/bg_crop.png'); }
+.page-bg-location       { background-image: url('../images/bg_location.png'); }
+.page-bg-location-crop  { background-image: url('../images/bg_location_crop.png'); }
+.page-bg-diary          { background-image: url('../images/bg_diary.png'); }
+.page-bg-harvest        { background-image: url('../images/bg_harvest.png'); }
+.page-bg-calendar       { background-image: url('../images/bg_calendar.png'); }
+.page-bg-tasklist       { background-image: url('../images/bg_tasklist.png'); }
 
-.page-bg-crop {
-    background-image: url('../images/bg_crop.png');
+/* Dashboard card background (centered) */
+.dashboard-card-with-bg {
+  position: relative;
+  overflow: hidden;
 }
-
-.page-bg-location {
-    background-image: url('../images/bg_location.png');
-}
-
-.page-bg-location-crop {
-    background-image: url('../images/bg_location_crop.png');
-}
-
-.page-bg-diary {
-    background-image: url('../images/bg_diary.png');
-}
-
-.page-bg-harvest {
-    background-image: url('../images/bg_harvest.png');
-}
-
-.page-bg-calendar {
-    background-image: url('../images/bg_calendar.png');
-}
-
-.page-bg-tasklist {
-    background-image: url('../images/bg_tasklist.png');
-}
-
-/* カード画像（ダッシュボードのカード用。中央に表示） */
 .dashboard-card-with-bg::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 200px;
-    height: 200px;
-    transform: translate(-50%, -50%);
-    opacity: 0.12;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    pointer-events: none;
-    z-index: 0;
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 170px; height: 170px;
+  transform: translate(-50%, -50%);
+  opacity: 0.08;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* カード画像（一覧画面のカード用。右下に表示） */
+/* List card background (bottom-right) */
 .card-with-bg {
-    position: relative;
-    overflow: hidden;
+  position: relative;
+  overflow: hidden;
 }
-
 .card-with-bg::before {
-    content: '';
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    width: 100px;
-    height: 100px;
-    opacity: 0.12;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    pointer-events: none;
-    z-index: 0;
+  content: '';
+  position: absolute;
+  bottom: 10px; right: 10px;
+  width: 85px; height: 85px;
+  opacity: 0.08;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+  z-index: 0;
 }
+.card-bg-crop::before          { background-image: url('../images/card_crop.png'); }
+.card-bg-location::before      { background-image: url('../images/card_location.png'); }
+.card-bg-location-crop::before { background-image: url('../images/card_location_crop.png'); }
+.card-bg-diary::before         { background-image: url('../images/card_diary.png'); }
+.card-bg-harvest::before       { background-image: url('../images/card_harvest.png'); }
+.card-bg-tasklist::before      { background-image: url('../images/card_tasklist.png'); }
 
-.card-bg-crop::before {
-    background-image: url('../images/card_crop.png');
-}
-
-.card-bg-location::before {
-    background-image: url('../images/card_location.png');
-}
-
-.card-bg-location-crop::before {
-    background-image: url('../images/card_location_crop.png');
-}
-
-.card-bg-diary::before {
-    background-image: url('../images/card_diary.png');
-}
-
-.card-bg-harvest::before {
-    background-image: url('../images/card_harvest.png');
-}
-
-.card-bg-tasklist::before {
-    background-image: url('../images/card_tasklist.png');
-}
-
-/* カード内のコンテンツを前面に */
+/* Bring card content above background image */
 .card-with-bg .card-body,
 .card-with-bg .card-header,
-.card-with-bg .card-footer {
-    position: relative;
-    z-index: 1;
+.card-with-bg .card-footer,
+.dashboard-card-with-bg .card-body,
+.dashboard-card-with-bg .card-header,
+.dashboard-card-with-bg .card-footer {
+  position: relative;
+  z-index: 1;
 }
 
-/* アイコン画像 */
-.icon-img {
-    width: 1em;
-    height: 1em;
-    vertical-align: -0.125em;
-    display: inline-block;
+/* Icon images */
+.icon-img    { width: 1em;     height: 1em;     vertical-align: -0.125em; display: inline-block; }
+.icon-img-sm { width: 0.875em; height: 0.875em; }
+.icon-img-lg { width: 1.5em;   height: 1.5em; }
+.icon-img-xl { width: 2em;     height: 2em; }
+
+/* Navbar icons → warm cream */
+.nav-link .icon-img,
+.navbar-brand-icon {
+  filter: brightness(0) invert(0.92);
+  margin-right: 0.25rem;
 }
 
-.icon-img-sm {
-    width: 0.875em;
-    height: 0.875em;
-}
-
-.icon-img-lg {
-    width: 1.5em;
-    height: 1.5em;
-}
-
-.icon-img-xl {
-    width: 2em;
-    height: 2em;
-}
-
-/* ナビゲーション用アイコン調整 */
-.nav-link .icon-img {
-    filter: brightness(0) invert(1);
-    margin-right: 0.25rem;
-}
-
-/* レスポンシブ対応（背景画像） */
+/* Responsive (background images) */
 @media (max-width: 576px) {
-    .page-bg-image {
-        width: 120px;
-        height: 120px;
-        bottom: 10px;
-        right: 10px;
-    }
-
-    .card-with-bg::before {
-        width: 60px;
-        height: 60px;
-    }
+  .page-bg-image     { width: 100px; height: 100px; bottom: 10px; right: 10px; }
+  .card-with-bg::before { width: 55px; height: 55px; }
 }
 
-.list-group-transparent .list-group-item {
-    background-color: transparent;
-}
-
-/* 天気背景画像（日記詳細のcard-body用） */
+/* ── Weather card backgrounds ────────────────────────────── */
 .card-body-weather {
-    position: relative;
-    overflow: hidden;
-    min-height: 400px;
+  position: relative;
+  overflow: hidden;
+  min-height: 400px;
 }
-
 .card-body-weather::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0.15;
-    background-size: cover;
-    background-repeat: repeat-x;
-    background-position: bottom left;
-    pointer-events: none;
-    z-index: 0;
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  opacity: 0.11;
+  background-size: cover;
+  background-repeat: repeat-x;
+  background-position: bottom left;
+  pointer-events: none;
+  z-index: 0;
 }
+.card-body-weather > * { position: relative; z-index: 1; }
 
-.card-body-weather > * {
-    position: relative;
-    z-index: 1;
-}
-
-.weather-bg-sunny::before { background-image: url('../images/bg_sunny.png'); }
-.weather-bg-cloudy::before { background-image: url('../images/bg_cloudy.png'); }
-.weather-bg-rain::before { background-image: url('../images/bg_rain.png'); }
-.weather-bg-snow::before { background-image: url('../images/bg_snow.png'); }
-.weather-bg-sun-cloud::before { background-image: url('../images/bg_sun_cloud.png'); }
+.weather-bg-sunny::before      { background-image: url('../images/bg_sunny.png'); }
+.weather-bg-cloudy::before     { background-image: url('../images/bg_cloudy.png'); }
+.weather-bg-rain::before       { background-image: url('../images/bg_rain.png'); }
+.weather-bg-snow::before       { background-image: url('../images/bg_snow.png'); }
+.weather-bg-sun-cloud::before  { background-image: url('../images/bg_sun_cloud.png'); }
 .weather-bg-cloud-rain::before { background-image: url('../images/bg_cloud_rain.png'); }

@@ -1,4 +1,4 @@
-/* カレンダービュー専用スタイル */
+/* カレンダービュー専用スタイル — 田園詩テーマ */
 
 /* カレンダーテーブル */
 .calendar-table {
@@ -9,7 +9,7 @@
 
 .calendar-table th,
 .calendar-table td {
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border);
     padding: 0.25rem;
     vertical-align: top;
 }
@@ -17,42 +17,43 @@
 /* 曜日ヘッダー */
 .calendar-header th {
     text-align: center;
-    font-weight: bold;
+    font-weight: 700;
     padding: 0.5rem;
-    background-color: #f8f9fa;
+    background-color: var(--parchment);
+    font-family: var(--font-serif);
 }
 
 /* 曜日色 */
 .weekday-sun {
-    color: #dc3545;
+    color: var(--terracotta);
 }
 
 .weekday-sat {
-    color: #0d6efd;
+    color: var(--cobalt);
 }
 
 /* セルの高さ */
 .calendar-cell {
     height: 100px;
-    background-color: #fff;
+    background-color: var(--surface);
     transition: background-color 0.2s;
     position: relative;
     overflow: hidden;
 }
 
 .calendar-cell:hover {
-    background-color: #f8f9fa;
+    background-color: var(--parchment);
 }
 
 /* 空のセル（前月・翌月） */
 .calendar-cell.empty {
-    background-color: #f8f9fa;
+    background-color: var(--parchment);
 }
 
 /* 今日のセル */
 .calendar-cell.today {
-    border: 2px solid #198754;
-    background-color: rgba(25, 135, 84, 0.05);
+    border: 2px solid var(--forest);
+    background-color: rgba(43, 71, 56, 0.05);
 }
 
 /* 日付番号（背景として中央に大きく薄く表示） */
@@ -62,16 +63,17 @@
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 2.5rem;
-    font-weight: bold;
-    opacity: 0.15;
+    font-weight: 700;
+    font-family: var(--font-accent);
+    opacity: 0.12;
     z-index: 0;
     pointer-events: none;
     line-height: 1;
 }
 
 .calendar-cell.today .day-number {
-    opacity: 0.2;
-    color: #198754;
+    opacity: 0.18;
+    color: var(--forest);
 }
 
 /* アイコンコンテナ */
@@ -107,8 +109,9 @@
     flex-wrap: wrap;
     gap: 1rem;
     padding: 0.75rem;
-    background-color: #f8f9fa;
-    border-radius: 0.375rem;
+    background-color: var(--parchment);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     margin-bottom: 1rem;
 }
 
@@ -117,6 +120,7 @@
     align-items: center;
     gap: 0.25rem;
     font-size: 0.875rem;
+    font-family: var(--font-serif);
 }
 
 .legend-item img {
@@ -124,7 +128,7 @@
     height: 50px;
 }
 
-/* ナビゲーションボタン */
+/* ナビゲーション */
 .calendar-nav {
     display: flex;
     align-items: center;
@@ -134,7 +138,9 @@
 
 .calendar-title {
     font-size: 1.5rem;
-    font-weight: bold;
+    font-weight: 700;
+    font-family: var(--font-serif);
+    color: var(--forest);
     margin: 0;
 }
 
@@ -149,8 +155,9 @@
     flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.5rem;
-    background-color: #f8f9fa;
-    border-radius: 0.375rem;
+    background-color: var(--parchment);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     margin-bottom: 1rem;
 }
 
@@ -226,7 +233,7 @@
         display: block;
         width: 8px;
         height: 8px;
-        background-color: #198754;
+        background-color: var(--forest);
         border-radius: 50%;
         position: absolute;
         bottom: 4px;
@@ -239,4 +246,39 @@
     .calendar-cell.has-data {
         cursor: pointer;
     }
+}
+
+/* ── Bootstrap ツールチップ — テーマ統一 ──────────────────── */
+.tooltip .tooltip-inner {
+    font-family: var(--font-serif);
+    font-size: 0.82rem;
+    background-color: var(--forest);
+    color: #F0EBE0;
+    border-radius: 5px;
+    padding: 0.3rem 0.65rem;
+    max-width: 220px;
+}
+
+/* 上向き矢印 */
+.tooltip.bs-tooltip-top .tooltip-arrow::before,
+.tooltip.bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before {
+    border-top-color: var(--forest);
+}
+
+/* 下向き矢印 */
+.tooltip.bs-tooltip-bottom .tooltip-arrow::before,
+.tooltip.bs-tooltip-auto[data-popper-placement^=bottom] .tooltip-arrow::before {
+    border-bottom-color: var(--forest);
+}
+
+/* 左向き矢印 */
+.tooltip.bs-tooltip-start .tooltip-arrow::before,
+.tooltip.bs-tooltip-auto[data-popper-placement^=left] .tooltip-arrow::before {
+    border-left-color: var(--forest);
+}
+
+/* 右向き矢印 */
+.tooltip.bs-tooltip-end .tooltip-arrow::before,
+.tooltip.bs-tooltip-auto[data-popper-placement^=right] .tooltip-arrow::before {
+    border-right-color: var(--forest);
 }

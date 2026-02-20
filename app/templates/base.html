@@ -14,6 +14,11 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
+    <!-- Google Fonts: Noto Serif JP + Libre Baskerville -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Noto+Serif+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
 
@@ -22,53 +27,60 @@
 <body>
     {% block body_bg %}{% endblock %}
     <!-- ナビゲーションバー -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+    <nav class="navbar navbar-expand-lg navbar-dark garden-navbar">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img icon-img-lg" style="filter: brightness(0) invert(1);"> 家庭菜園管理
+                <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img icon-img-lg navbar-brand-icon"> 家庭菜園管理
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="ナビゲーションを開く">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>
                             <i class="bi bi-house-door"></i> ホーム
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('crops.') %}active{% endif %}" href="{{ url_for('crops.list') }}">
+                        {% set is_crops = request.endpoint and request.endpoint.startswith('crops.') %}
+                        <a class="nav-link {% if is_crops %}active{% endif %}" href="{{ url_for('crops.list') }}" {% if is_crops %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img"> 作物
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('locations.') %}active{% endif %}" href="{{ url_for('locations.list') }}">
+                        {% set is_locations = request.endpoint and request.endpoint.startswith('locations.') %}
+                        <a class="nav-link {% if is_locations %}active{% endif %}" href="{{ url_for('locations.list') }}" {% if is_locations %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img"> 場所
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('plantings.') %}active{% endif %}" href="{{ url_for('plantings.index') }}">
+                        {% set is_plantings = request.endpoint and request.endpoint.startswith('plantings.') %}
+                        <a class="nav-link {% if is_plantings %}active{% endif %}" href="{{ url_for('plantings.index') }}" {% if is_plantings %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img"> 栽培
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('harvests.') %}active{% endif %}" href="{{ url_for('harvests.list') }}">
+                        {% set is_harvests = request.endpoint and request.endpoint.startswith('harvests.') %}
+                        <a class="nav-link {% if is_harvests %}active{% endif %}" href="{{ url_for('harvests.list') }}" {% if is_harvests %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img"> 収穫
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('diary.') %}active{% endif %}" href="{{ url_for('diary.list') }}">
+                        {% set is_diary = request.endpoint and request.endpoint.startswith('diary.') %}
+                        <a class="nav-link {% if is_diary %}active{% endif %}" href="{{ url_for('diary.list') }}" {% if is_diary %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img"> 日記
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('tasks.') %}active{% endif %}" href="{{ url_for('tasks.list') }}">
+                        {% set is_tasks = request.endpoint and request.endpoint.startswith('tasks.') %}
+                        <a class="nav-link {% if is_tasks %}active{% endif %}" href="{{ url_for('tasks.list') }}" {% if is_tasks %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img"> タスク
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('calendar.') %}active{% endif %}" href="{{ url_for('calendar.index') }}">
+                        {% set is_calendar = request.endpoint and request.endpoint.startswith('calendar.') %}
+                        <a class="nav-link {% if is_calendar %}active{% endif %}" href="{{ url_for('calendar.index') }}" {% if is_calendar %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_calendar.png') }}" alt="" class="icon-img"> カレンダー
                         </a>
                     </li>
@@ -95,10 +107,10 @@
     </main>
 
     <!-- フッター -->
-    <footer class="bg-light text-center py-3 mt-5">
+    <footer class="text-center mt-5">
         <div class="container">
             <p class="text-muted mb-0">
-                <small>&copy; 2024 家庭菜園管理アプリ</small>
+                <small>&copy; 2026 家庭菜園管理アプリ</small>
             </p>
         </div>
     </footer>
