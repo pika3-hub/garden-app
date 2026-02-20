@@ -247,3 +247,38 @@
         cursor: pointer;
     }
 }
+
+/* ── Bootstrap ツールチップ — テーマ統一 ──────────────────── */
+.tooltip .tooltip-inner {
+    font-family: var(--font-serif);
+    font-size: 0.82rem;
+    background-color: var(--forest);
+    color: #F0EBE0;
+    border-radius: 5px;
+    padding: 0.3rem 0.65rem;
+    max-width: 220px;
+}
+
+/* 上向き矢印 */
+.tooltip.bs-tooltip-top .tooltip-arrow::before,
+.tooltip.bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before {
+    border-top-color: var(--forest);
+}
+
+/* 下向き矢印 */
+.tooltip.bs-tooltip-bottom .tooltip-arrow::before,
+.tooltip.bs-tooltip-auto[data-popper-placement^=bottom] .tooltip-arrow::before {
+    border-bottom-color: var(--forest);
+}
+
+/* 左向き矢印 */
+.tooltip.bs-tooltip-start .tooltip-arrow::before,
+.tooltip.bs-tooltip-auto[data-popper-placement^=left] .tooltip-arrow::before {
+    border-left-color: var(--forest);
+}
+
+/* 右向き矢印 */
+.tooltip.bs-tooltip-end .tooltip-arrow::before,
+.tooltip.bs-tooltip-auto[data-popper-placement^=right] .tooltip-arrow::before {
+    border-right-color: var(--forest);
+}
