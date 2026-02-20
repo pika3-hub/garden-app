@@ -1,5 +1,5 @@
 /**
- * Canvas Editor Styles
+ * Canvas Editor Styles — 田園詩テーマ
  */
 
 .canvas-editor {
@@ -13,14 +13,16 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
-    background-color: #f8f9fa;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--parchment);
 }
 
 .canvas-header h4 {
     margin: 0;
     flex: 1;
     text-align: center;
+    font-family: var(--font-serif);
+    color: var(--forest);
 }
 
 .header-controls {
@@ -32,8 +34,10 @@
 #zoom-indicator {
     font-size: 0.875rem;
     font-weight: 500;
+    font-family: var(--font-serif);
     min-width: 50px;
     text-align: center;
+    color: var(--ink-soft);
 }
 
 .canvas-main {
@@ -46,43 +50,45 @@
 .tool-palette {
     width: 120px;
     padding: 1rem;
-    border-right: 1px solid #dee2e6;
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    background-color: #f8f9fa;
+    background-color: var(--parchment);
     overflow-y: auto;
 }
 
 .tool-palette hr {
     width: 100%;
     margin: 0.5rem 0;
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid var(--border);
 }
 
 .tool-btn {
     width: 48px;
     height: 48px;
-    border: 1px solid #dee2e6;
-    background: white;
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
+    color: var(--ink-soft);
 }
 
 .tool-btn:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
+    background: var(--parchment);
+    border-color: var(--sage);
+    color: var(--forest);
 }
 
 .tool-btn.active {
-    background: #0d6efd;
-    color: white;
-    border-color: #0d6efd;
+    background: var(--forest);
+    color: #F0EBE0;
+    border-color: var(--forest);
 }
 
 .tool-btn i {
@@ -97,28 +103,29 @@
     align-items: center;
     padding: 2rem;
     overflow: auto;
-    background-color: #f5f5f5;
+    background-color: var(--cream);
 }
 
 #canvas {
-    border: 2px solid #dee2e6;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background-color: white;
+    border: 2px solid var(--border);
+    box-shadow: 0 2px 8px rgba(43, 71, 56, 0.1);
+    background-color: var(--surface-elevated);
 }
 
 /* 作物サイドバー */
 .crop-sidebar {
     width: 250px;
     padding: 1rem;
-    border-left: 1px solid #dee2e6;
+    border-left: 1px solid var(--border);
     overflow-y: auto;
-    background-color: #f8f9fa;
+    background-color: var(--parchment);
 }
 
 .crop-sidebar h6 {
-    font-weight: bold;
+    font-weight: 700;
+    font-family: var(--font-serif);
     margin-bottom: 1rem;
-    color: #495057;
+    color: var(--ink-soft);
 }
 
 .crop-list {
@@ -129,24 +136,24 @@
 
 .crop-item {
     padding: 0.75rem;
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
     cursor: move;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
 }
 
 .crop-item:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
+    background: var(--parchment);
+    border-color: var(--sage-light);
     transform: translateX(-2px);
 }
 
 .crop-item i {
-    color: #adb5bd;
+    color: var(--ink-muted);
 }
 
 .crop-item .badge {
@@ -163,18 +170,20 @@
 
 .crop-name {
     font-weight: 500;
-    color: #212529;
+    font-family: var(--font-serif);
+    color: var(--ink);
 }
 
 .crop-date {
     font-size: 0.75rem;
-    color: #6c757d;
+    color: var(--ink-muted);
 }
 
 /* 保存インジケーター */
 #save-indicator {
     font-size: 0.875rem;
     font-weight: 500;
+    font-family: var(--font-serif);
 }
 
 /* レスポンシブ対応 */
@@ -193,7 +202,7 @@
         flex-direction: row;
         justify-content: center;
         border-right: none;
-        border-bottom: 1px solid #dee2e6;
+        border-bottom: 1px solid var(--border);
     }
 
     .canvas-container {
@@ -209,7 +218,7 @@
     .crop-sidebar {
         width: 100%;
         border-left: none;
-        border-top: 1px solid #dee2e6;
+        border-top: 1px solid var(--border);
         max-height: 200px;
     }
 
@@ -231,22 +240,23 @@
     flex-direction: column;
     gap: 0.5rem;
     padding: 0.5rem;
-    background: white;
-    border-radius: 4px;
-    border: 1px solid #dee2e6;
+    background: var(--surface);
+    border-radius: 6px;
+    border: 1px solid var(--border);
 }
 
 .color-palette label {
     font-size: 0.75rem;
     font-weight: 500;
+    font-family: var(--font-serif);
     margin-bottom: 0.25rem;
-    color: #495057;
+    color: var(--ink-soft);
 }
 
 .color-palette input[type="color"] {
     width: 100%;
     height: 32px;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border);
     border-radius: 4px;
     cursor: pointer;
 }
@@ -256,6 +266,7 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.75rem;
+    font-family: var(--font-serif);
     margin-top: 0.25rem;
 }
 
@@ -281,14 +292,14 @@
 }
 
 .crop-sidebar::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--parchment);
 }
 
 .crop-sidebar::-webkit-scrollbar-thumb {
-    background: #adb5bd;
+    background: var(--border);
     border-radius: 4px;
 }
 
 .crop-sidebar::-webkit-scrollbar-thumb:hover {
-    background: #6c757d;
+    background: var(--ink-muted);
 }
