@@ -65,7 +65,6 @@ garden-app/
 │   │   ├── diary/           # 日記テンプレート
 │   │   ├── harvests/        # 収穫記録テンプレート
 │   │   ├── plantings/       # 栽培記録テンプレート（list/detail/record_detail/form）
-│   │   ├── growth_records/  # 栽培記録（観察記録）テンプレート
 │   │   ├── calendar/        # カレンダーテンプレート
 │   │   └── tasks/           # タスクテンプレート
 │   └── static/              # 静的アセット
@@ -105,21 +104,43 @@ uv run python run.py
 | 場所 | locations | /locations/ | /locations/{id} | /locations/new | /locations/{id}/edit |
 | 日記 | diary | /diary/ | /diary/{id} | /diary/new | /diary/{id}/edit |
 | 収穫 | harvests | /harvests/ | /harvests/{id} | /harvests/new | /harvests/{id}/edit |
-| 栽培 | plantings | /plantings/?status= | /plantings/{id} | - | - |
+| 栽培 | plantings | /plantings/?status= | /plantings/{lc_id} | - | - |
 | タスク | tasks | /tasks/ | /tasks/{id} | /tasks/new | /tasks/{id}/edit |
 | カレンダー | calendar | /calendar/ | - | - | - |
 
 栽培（plantings）は `?status=active|harvested|all` でタブフィルター。
-栽培記録の個別操作: `/plantings/new/{lc_id}`, `/plantings/record/{id}`, `/plantings/record/{id}/edit`
 
-例: `url_for('diary.detail', diary_id=1)` → `/diary/1`
+**`plantings` Blueprint のエンドポイント一覧（`growth_record_routes.py`）:**
+
+> ⚠️ ルートファイル名は `growth_record_routes.py` だが Blueprint名は `plantings`。
+> `url_for` では必ず `plantings.xxx` を使うこと（`growth_records.xxx` は存在しない）。
+
+| エンドポイント | URL | 説明 |
+|--------------|-----|------|
+| `plantings.index` | `/plantings/` | 栽培記録一覧（location_cropsのリスト） |
+| `plantings.detail` | `/plantings/<location_crop_id>` | 栽培詳細＋観察記録一覧 |
+| `plantings.new` | `/plantings/new/<location_crop_id>` | 観察記録登録フォーム |
+| `plantings.record_detail` | `/plantings/record/<record_id>` | 観察記録個別詳細 |
+| `plantings.edit` | `/plantings/record/<record_id>/edit` | 観察記録編集フォーム |
+| `plantings.delete` | POST `/plantings/record/<record_id>/delete` | 観察記録削除 |
+
+`url_for` 例:
+- `url_for('plantings.index')` → `/plantings/`
+- `url_for('plantings.detail', location_crop_id=1)` → `/plantings/1`
+- `url_for('plantings.record_detail', record_id=1)` → `/plantings/record/1`
+- `url_for('plantings.edit', record_id=1)` → `/plantings/record/1/edit`
+- `url_for('diary.detail', diary_id=1)` → `/diary/1`
 
 ### 新機能追加チェックリスト
 
 1. **モデル作成**: `app/models/{feature}.py` - 静的メソッドパターン、`get_db()`使用
-2. **ルート作成**: `app/routes/{feature}_routes.py` - Blueprint名は `{feature}`
+2. **ルート作成**: `app/routes/{feature}_routes.py` - Blueprint名は原則 `{feature}`
+   - 例外: `growth_record_routes.py` の Blueprint名は `plantings`（歴史的経緯）
 3. **Blueprint登録**: `app/__init__.py` の `create_app()` 内に追加
-4. **テンプレート**: `app/templates/{feature}/` フォルダ作成
+4. **テンプレート**: `app/templates/{feature}/` フォルダ作成（Blueprint名に合わせる）
 5. **CSS（任意）**: `app/static/css/{feature}.css`
 6. **JS（任意）**: `app/static/js/{feature}.js`
 7. **ナビ追加**: `app/templates/base.html` のナビゲーションに追加
+
+> ⚠️ `url_for` のエンドポイント名はルートファイル名でなく **Blueprint名** に依存する。
+> 実装前に `app/routes/{feature}_routes.py` の `bp = Blueprint('xxx', ...)` を必ず確認すること。

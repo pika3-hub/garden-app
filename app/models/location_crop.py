@@ -145,7 +145,8 @@ class LocationCrop:
                       c.name as crop_name, c.crop_type, c.variety,
                       l.name as location_name, l.location_type,
                       COALESCE(gr_stats.record_count, 0) as growth_record_count,
-                      gr_img.image_path as latest_growth_image
+                      gr_img.image_path as latest_growth_image,
+                      gr_img.latest_growth_image_date
                FROM location_crops lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
@@ -155,7 +156,7 @@ class LocationCrop:
                    GROUP BY location_crop_id
                ) gr_stats ON gr_stats.location_crop_id = lc.id
                LEFT JOIN (
-                   SELECT gr1.location_crop_id, gr1.image_path
+                   SELECT gr1.location_crop_id, gr1.image_path, gr1.recorded_at as latest_growth_image_date
                    FROM growth_records gr1
                    INNER JOIN (
                        SELECT location_crop_id, MAX(recorded_at) as max_date

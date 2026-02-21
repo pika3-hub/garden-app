@@ -10,13 +10,6 @@
         <h1>
             <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img icon-img-lg">
             栽培記録詳細
-            {% if location_crop.status == 'active' %}
-            <span class="badge bg-success fs-6"><i class="bi bi-flower1"></i> 栽培中</span>
-            {% elif location_crop.status == 'harvested' %}
-            <span class="badge bg-secondary fs-6"><i class="bi bi-check-circle"></i> 栽培終了</span>
-            {% elif location_crop.status == 'removed' %}
-            <span class="badge bg-danger fs-6"><i class="bi bi-x-circle"></i> 削除済み</span>
-            {% endif %}
         </h1>
     </div>
     <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
@@ -30,11 +23,18 @@
 <div class="row mb-4">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-info text-white d-flex align-items-center justify-content-between">
                 <h5 class="mb-0">
                     <i class="bi bi-flower1"></i> {{ location_crop.crop_name }}{% if location_crop.variety %}（{{ location_crop.variety }}）{% endif %}
                     <span class="text-white-50">@ {{ location_crop.location_name }}</span>
                 </h5>
+                {% if location_crop.status == 'active' %}
+                <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
+                {% elif location_crop.status == 'harvested' %}
+                <span class="badge bg-secondary"><i class="bi bi-check-circle"></i> 栽培終了</span>
+                {% elif location_crop.status == 'removed' %}
+                <span class="badge bg-danger"><i class="bi bi-x-circle"></i> 削除済み</span>
+                {% endif %}
             </div>
             <div class="card-body">
                 <div class="row mb-4">
@@ -117,7 +117,10 @@
     <div class="col-md-6 col-lg-4 mb-3">
         <div class="card h-100">
             {% if record.image_path %}
-            <img src="{{ url_for('static', filename='uploads/' + record.image_path) }}" class="card-img-top" alt="栽培記録画像" style="height: 150px; object-fit: cover;">
+            <div class="card-img-wrapper">
+                <img src="{{ url_for('static', filename='uploads/' + record.image_path) }}" class="card-img-top" alt="栽培記録画像" style="height: 150px; object-fit: cover;">
+                <span class="card-img-date-overlay">{{ record.recorded_at }}</span>
+            </div>
             {% endif %}
             <div class="card-body">
                 <div class="fw-bold text-primary mb-1">{{ record.recorded_at }}</div>
