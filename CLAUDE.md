@@ -104,25 +104,29 @@ uv run python run.py
 | 場所 | locations | /locations/ | /locations/{id} | /locations/new | /locations/{id}/edit |
 | 日記 | diary | /diary/ | /diary/{id} | /diary/new | /diary/{id}/edit |
 | 収穫 | harvests | /harvests/ | /harvests/{id} | /harvests/new | /harvests/{id}/edit |
-| 栽培 | plantings | /plantings/?status= | /plantings/{lc_id} | - | - |
+| 植え付け | plantings | /plantings/?status= | /plantings/{lc_id} | - | - |
 | タスク | tasks | /tasks/ | /tasks/{id} | /tasks/new | /tasks/{id}/edit |
 | カレンダー | calendar | /calendar/ | - | - | - |
 
-栽培（plantings）は `?status=active|harvested|all` でタブフィルター。
+植え付け（plantings）は `?status=active|harvested|all` でタブフィルター。
 
 **`plantings` Blueprint のエンドポイント一覧（`growth_record_routes.py`）:**
 
 > ⚠️ ルートファイル名は `growth_record_routes.py` だが Blueprint名は `plantings`。
 > `url_for` では必ず `plantings.xxx` を使うこと（`growth_records.xxx` は存在しない）。
 
-| エンドポイント | URL | 説明 |
-|--------------|-----|------|
-| `plantings.index` | `/plantings/` | 栽培記録一覧（location_cropsのリスト） |
-| `plantings.detail` | `/plantings/<location_crop_id>` | 栽培詳細＋観察記録一覧 |
-| `plantings.new` | `/plantings/new/<location_crop_id>` | 観察記録登録フォーム |
-| `plantings.record_detail` | `/plantings/record/<record_id>` | 観察記録個別詳細 |
-| `plantings.edit` | `/plantings/record/<record_id>/edit` | 観察記録編集フォーム |
-| `plantings.delete` | POST `/plantings/record/<record_id>/delete` | 観察記録削除 |
+画面上の用語は URL パスで統一する:
+- `/plantings/` 直下 → **「植え付け一覧」「植え付け詳細」**
+- `/plantings/record` 直下 → **「栽培記録詳細」「栽培記録編集」**
+
+| エンドポイント | URL | 画面名 |
+|--------------|-----|-------|
+| `plantings.index` | `/plantings/` | 植え付け一覧 |
+| `plantings.detail` | `/plantings/<location_crop_id>` | 植え付け詳細（栽培記録一覧を含む） |
+| `plantings.new` | `/plantings/new/<location_crop_id>` | 栽培記録登録 |
+| `plantings.record_detail` | `/plantings/record/<record_id>` | 栽培記録詳細 |
+| `plantings.edit` | `/plantings/record/<record_id>/edit` | 栽培記録編集 |
+| `plantings.delete` | POST `/plantings/record/<record_id>/delete` | 栽培記録削除 |
 
 `url_for` 例:
 - `url_for('plantings.index')` → `/plantings/`
