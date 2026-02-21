@@ -99,7 +99,7 @@ class Location:
     @staticmethod
     def save_canvas_data(location_id, canvas_dict):
         """キャンバスデータをJSON形式で保存"""
-        from app.models.location_crop import LocationCrop
+        from app.models.planting import Planting
 
         db = get_db()
         canvas_json = json.dumps(canvas_dict, ensure_ascii=False)
@@ -118,4 +118,4 @@ class Location:
                     location_crop_ids.add(int(obj['locationCropId']))
 
         # キャンバス上にない作物の位置情報をクリア
-        LocationCrop.clear_positions_except(location_id, location_crop_ids)
+        Planting.clear_positions_except(location_id, location_crop_ids)

@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.diary import DiaryEntry
 from app.models.crop import Crop
 from app.models.location import Location
-from app.models.location_crop import LocationCrop
+from app.models.planting import Planting
 from app.models.harvest import Harvest
 from app.utils.upload import save_image, delete_image
 

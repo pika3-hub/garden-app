@@ -92,12 +92,12 @@ garden-app/
 │   ├── models/              # データモデル
 │   │   ├── crop.py         # 作物モデル
 │   │   ├── location.py     # 場所モデル
-│   │   ├── location_crop.py # 作物紐付けモデル
+│   │   ├── planting.py      # 植え付けモデル（旧 location_crop）
 │   │   ├── diary.py        # 日記モデル
 │   │   ├── harvest.py      # 収穫記録モデル
 │   │   ├── calendar.py     # カレンダーモデル
 │   │   ├── task.py         # タスクモデル
-│   │   └── growth_record.py # 栽培観察記録モデル
+│   │   └── planting_record.py # 栽培記録モデル
 │   ├── routes/             # ルーティング（Blueprint）
 │   │   ├── crop_routes.py          # Blueprint: crops
 │   │   ├── location_routes.py      # Blueprint: locations
@@ -105,13 +105,13 @@ garden-app/
 │   │   ├── harvest_routes.py       # Blueprint: harvests
 │   │   ├── calendar_routes.py      # Blueprint: calendar
 │   │   ├── task_routes.py          # Blueprint: tasks
-│   │   └── growth_record_routes.py # Blueprint: plantings
+│   │   └── planting_routes.py      # Blueprint: plantings
 │   ├── templates/          # HTMLテンプレート
 │   │   ├── crops/         # 作物関連
 │   │   ├── locations/     # 場所関連（見取り図含む）
 │   │   ├── diary/         # 日記関連
 │   │   ├── harvests/      # 収穫記録関連
-│   │   ├── plantings/     # 栽培記録・観察記録関連
+│   │   ├── plantings/     # 植え付け・栽培記録関連
 │   │   ├── calendar/      # カレンダー関連
 │   │   ├── tasks/         # タスク関連
 │   │   └── base.html      # ベーステンプレート

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.harvest import Harvest
-from app.models.location_crop import LocationCrop
+from app.models.planting import Planting
 from app.models.location import Location
 from app.models.crop import Crop
 from app.utils.upload import save_image, delete_image
@@ -57,7 +57,7 @@ def detail(harvest_id):
 @bp.route('/new/<int:location_crop_id>')
 def new(location_crop_id):
     """収穫記録登録フォーム"""
-    location_crop = LocationCrop.get_by_id(location_crop_id)
+    location_crop = Planting.get_by_id(location_crop_id)
     if not location_crop:
         flash('栽培記録が見つかりません', 'danger')
         return redirect(url_for('locations.list'))
@@ -76,7 +76,7 @@ def create():
     """収穫記録作成"""
     location_crop_id = request.form.get('location_crop_id')
 
-    location_crop = LocationCrop.get_by_id(location_crop_id)
+    location_crop = Planting.get_by_id(location_crop_id)
     if not location_crop:
         flash('栽培記録が見つかりません', 'danger')
         return redirect(url_for('locations.list'))
@@ -126,7 +126,7 @@ def edit(harvest_id):
         flash('収穫記録が見つかりません', 'danger')
         return redirect(url_for('harvests.list'))
 
-    location_crop = LocationCrop.get_by_id(harvest['location_crop_id'])
+    location_crop = Planting.get_by_id(harvest['location_crop_id'])
 
     return render_template('harvests/form.html',
                           harvest=harvest,

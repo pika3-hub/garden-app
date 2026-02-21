@@ -39,12 +39,12 @@ garden-app/
 │   ├── models/              # データモデル（静的メソッドパターン）
 │   │   ├── crop.py
 │   │   ├── location.py
-│   │   ├── location_crop.py # 多対多関係
+│   │   ├── planting.py      # 植え付けモデル（location_crops テーブル）
 │   │   ├── diary.py
 │   │   ├── harvest.py       # 収穫記録モデル
 │   │   ├── calendar.py      # カレンダーデータ取得モデル
 │   │   ├── task.py          # タスクモデル
-│   │   └── growth_record.py # 栽培記録（観察記録）モデル
+│   │   └── planting_record.py # 栽培記録モデル（growth_records テーブル）
 │   ├── routes/              # Flask ブループリント
 │   │   ├── crop_routes.py
 │   │   ├── location_routes.py
@@ -52,7 +52,7 @@ garden-app/
 │   │   ├── harvest_routes.py
 │   │   ├── calendar_routes.py
 │   │   ├── task_routes.py
-│   │   └── growth_record_routes.py  # Blueprint名: plantings
+│   │   └── planting_routes.py       # Blueprint名: plantings
 │   ├── utils/               # ユーティリティ
 │   │   ├── upload.py        # 画像アップロードヘルパー
 │   │   └── migration.py     # マイグレーションユーティリティ
@@ -112,7 +112,7 @@ uv run python run.py
 
 **`plantings` Blueprint のエンドポイント一覧（`growth_record_routes.py`）:**
 
-> ⚠️ ルートファイル名は `growth_record_routes.py` だが Blueprint名は `plantings`。
+> ⚠️ ルートファイル名は `planting_routes.py`、Blueprint名は `plantings`。
 > `url_for` では必ず `plantings.xxx` を使うこと（`growth_records.xxx` は存在しない）。
 
 画面上の用語は URL パスで統一する:
