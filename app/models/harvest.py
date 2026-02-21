@@ -14,7 +14,7 @@ class Harvest:
             SELECT h.*, c.name as crop_name, c.variety, l.name as location_name,
                    lc.planted_date
             FROM harvests h
-            JOIN location_crops lc ON h.location_crop_id = lc.id
+            JOIN plantings lc ON h.location_crop_id = lc.id
             JOIN crops c ON lc.crop_id = c.id
             JOIN locations l ON lc.location_id = l.id
             ORDER BY h.harvest_date DESC, h.created_at DESC
@@ -46,7 +46,7 @@ class Harvest:
             '''SELECT h.*, c.name as crop_name, c.variety, l.name as location_name,
                       lc.planted_date, lc.location_id
                FROM harvests h
-               JOIN location_crops lc ON h.location_crop_id = lc.id
+               JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE h.id = ?''',
@@ -67,7 +67,7 @@ class Harvest:
         harvests = db.execute(
             '''SELECT h.*, lc.planted_date
                FROM harvests h
-               JOIN location_crops lc ON h.location_crop_id = lc.id
+               JOIN plantings lc ON h.location_crop_id = lc.id
                WHERE h.location_crop_id = ?
                ORDER BY h.harvest_date DESC''',
             (location_crop_id,)
@@ -88,7 +88,7 @@ class Harvest:
         harvests = db.execute(
             '''SELECT h.*, c.name as crop_name, lc.planted_date
                FROM harvests h
-               JOIN location_crops lc ON h.location_crop_id = lc.id
+               JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                WHERE lc.location_id = ?
                ORDER BY h.harvest_date DESC''',
@@ -110,7 +110,7 @@ class Harvest:
         harvests = db.execute(
             '''SELECT h.*, l.name as location_name, lc.planted_date
                FROM harvests h
-               JOIN location_crops lc ON h.location_crop_id = lc.id
+               JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN locations l ON lc.location_id = l.id
                WHERE lc.crop_id = ?
                ORDER BY h.harvest_date DESC''',
@@ -179,7 +179,7 @@ class Harvest:
             '''SELECT h.*, c.name as crop_name, c.variety, l.name as location_name,
                       lc.planted_date
                FROM harvests h
-               JOIN location_crops lc ON h.location_crop_id = lc.id
+               JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                ORDER BY h.harvest_date DESC, h.created_at DESC
@@ -204,7 +204,7 @@ class Harvest:
             SELECT h.*, c.name as crop_name, c.variety, l.name as location_name,
                    lc.planted_date
             FROM harvests h
-            JOIN location_crops lc ON h.location_crop_id = lc.id
+            JOIN plantings lc ON h.location_crop_id = lc.id
             JOIN crops c ON lc.crop_id = c.id
             JOIN locations l ON lc.location_id = l.id
             WHERE 1=1

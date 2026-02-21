@@ -42,7 +42,7 @@ class Calendar:
         for crop in crops:
             date_str = crop['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
             result[date_str]['crops'].append({
                 'id': crop['id'],
                 'name': crop['name'],
@@ -60,7 +60,7 @@ class Calendar:
         for location in locations:
             date_str = location['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
             result[date_str]['locations'].append({
                 'id': location['id'],
                 'name': location['name']
@@ -77,7 +77,7 @@ class Calendar:
         for diary in diaries:
             date_str = diary['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
             result[date_str]['diaries'].append({
                 'id': diary['id'],
                 'title': diary['title']
@@ -87,7 +87,7 @@ class Calendar:
         location_crops = db.execute(
             '''SELECT lc.id, lc.location_id, DATE(lc.planted_date) as date,
                       c.name as crop_name, c.variety, l.name as location_name
-               FROM location_crops lc
+               FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE DATE(lc.planted_date) BETWEEN ? AND ?
@@ -97,7 +97,7 @@ class Calendar:
         for lc in location_crops:
             date_str = lc['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
             result[date_str]['location_crops'].append({
                 'id': lc['id'],
                 'location_id': lc['location_id'],
@@ -111,7 +111,7 @@ class Calendar:
             '''SELECT h.id, h.quantity, h.unit, DATE(h.harvest_date) as date,
                       c.name as crop_name, c.variety
                FROM harvests h
-               JOIN location_crops lc ON h.location_crop_id = lc.id
+               JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                WHERE DATE(h.harvest_date) BETWEEN ? AND ?
                ORDER BY h.harvest_date''',
@@ -120,7 +120,7 @@ class Calendar:
         for harvest in harvests:
             date_str = harvest['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
             result[date_str]['harvests'].append({
                 'id': harvest['id'],
                 'crop_name': harvest['crop_name'],
@@ -140,11 +140,39 @@ class Calendar:
         for task in tasks:
             date_str = task['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': []}
+                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
             result[date_str]['tasks'].append({
                 'id': task['id'],
                 'title': task['title'],
                 'status': task['status']
+            })
+
+        # 栽培記録を取得 (recorded_atで取得)
+        growth_records = db.execute(
+            '''SELECT gr.id, gr.location_crop_id, DATE(gr.recorded_at) as date,
+                      c.name as crop_name, c.variety, l.name as location_name
+               FROM planting_records gr
+               JOIN plantings lc ON gr.location_crop_id = lc.id
+               JOIN crops c ON lc.crop_id = c.id
+               JOIN locations l ON lc.location_id = l.id
+               WHERE DATE(gr.recorded_at) BETWEEN ? AND ?
+               ORDER BY gr.recorded_at''',
+            (start_date, end_date)
+        ).fetchall()
+        for gr in growth_records:
+            date_str = gr['date']
+            if date_str not in result:
+                result[date_str] = {
+                    'crops': [], 'locations': [], 'diaries': [],
+                    'location_crops': [], 'harvests': [], 'tasks': [],
+                    'growth_records': []
+                }
+            result[date_str]['growth_records'].append({
+                'id': gr['id'],
+                'location_crop_id': gr['location_crop_id'],
+                'crop_name': gr['crop_name'],
+                'variety': gr['variety'],
+                'location_name': gr['location_name']
             })
 
         return result

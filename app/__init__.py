@@ -14,31 +14,31 @@ def create_app(config_name='default'):
     init_db(app)
 
     # ブループリント登録
-    from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes, task_routes, growth_record_routes
+    from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes, task_routes, planting_routes
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(location_routes.bp)
     app.register_blueprint(diary_routes.bp)
     app.register_blueprint(harvest_routes.bp)
     app.register_blueprint(calendar_routes.bp)
     app.register_blueprint(task_routes.bp)
-    app.register_blueprint(growth_record_routes.bp)
+    app.register_blueprint(planting_routes.bp)
 
     # ホームページルート
     @app.route('/')
     def index():
         from app.models.crop import Crop
         from app.models.location import Location
-        from app.models.location_crop import LocationCrop
+        from app.models.planting import Planting
         from app.models.diary import DiaryEntry
         from app.models.harvest import Harvest
         from app.models.task import Task
-        from app.models.growth_record import GrowthRecord
+        from app.models.planting_record import PlantingRecord
 
         # 統計情報を取得
         stats = {
             'crop_count': Crop.count(),
             'location_count': Location.count(),
-            'active_crop_count': LocationCrop.count_active(),
+            'active_crop_count': Planting.count_active(),
             'diary_count': DiaryEntry.count(),
             'harvest_count': Harvest.count(),
             'pending_task_count': Task.count(Task.STATUS_PENDING) + Task.count(Task.STATUS_IN_PROGRESS)
@@ -46,10 +46,10 @@ def create_app(config_name='default'):
 
         # 最新データを取得
         recent_diaries = DiaryEntry.get_recent(5)
-        recent_plantings = LocationCrop.get_recent(5)
+        recent_plantings = Planting.get_recent(5)
         recent_harvests = Harvest.get_recent(5)
         pending_tasks = Task.get_pending(5)
-        recent_growth_records = GrowthRecord.get_recent(5)
+        recent_growth_records = PlantingRecord.get_recent(5)
 
         return render_template('index.html',
                              stats=stats,

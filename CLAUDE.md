@@ -39,12 +39,12 @@ garden-app/
 │   ├── models/              # データモデル（静的メソッドパターン）
 │   │   ├── crop.py
 │   │   ├── location.py
-│   │   ├── location_crop.py # 多対多関係
+│   │   ├── planting.py      # 植え付けモデル（plantings テーブル）
 │   │   ├── diary.py
 │   │   ├── harvest.py       # 収穫記録モデル
 │   │   ├── calendar.py      # カレンダーデータ取得モデル
 │   │   ├── task.py          # タスクモデル
-│   │   └── growth_record.py # 栽培記録（観察記録）モデル
+│   │   └── planting_record.py # 栽培記録モデル（planting_records テーブル）
 │   ├── routes/              # Flask ブループリント
 │   │   ├── crop_routes.py
 │   │   ├── location_routes.py
@@ -52,7 +52,7 @@ garden-app/
 │   │   ├── harvest_routes.py
 │   │   ├── calendar_routes.py
 │   │   ├── task_routes.py
-│   │   └── growth_record_routes.py  # Blueprint名: plantings
+│   │   └── planting_routes.py       # Blueprint名: plantings
 │   ├── utils/               # ユーティリティ
 │   │   ├── upload.py        # 画像アップロードヘルパー
 │   │   └── migration.py     # マイグレーションユーティリティ
@@ -65,7 +65,6 @@ garden-app/
 │   │   ├── diary/           # 日記テンプレート
 │   │   ├── harvests/        # 収穫記録テンプレート
 │   │   ├── plantings/       # 栽培記録テンプレート（list/detail/record_detail/form）
-│   │   ├── growth_records/  # 栽培記録（観察記録）テンプレート
 │   │   ├── calendar/        # カレンダーテンプレート
 │   │   └── tasks/           # タスクテンプレート
 │   └── static/              # 静的アセット
@@ -105,21 +104,38 @@ uv run python run.py
 | 場所 | locations | /locations/ | /locations/{id} | /locations/new | /locations/{id}/edit |
 | 日記 | diary | /diary/ | /diary/{id} | /diary/new | /diary/{id}/edit |
 | 収穫 | harvests | /harvests/ | /harvests/{id} | /harvests/new | /harvests/{id}/edit |
-| 栽培 | plantings | /plantings/?status= | /plantings/{id} | - | - |
+| 植え付け | plantings | /plantings/?status= | /plantings/{lc_id} | - | - |
 | タスク | tasks | /tasks/ | /tasks/{id} | /tasks/new | /tasks/{id}/edit |
 | カレンダー | calendar | /calendar/ | - | - | - |
 
-栽培（plantings）は `?status=active|harvested|all` でタブフィルター。
-栽培記録の個別操作: `/plantings/new/{lc_id}`, `/plantings/record/{id}`, `/plantings/record/{id}/edit`
+植え付け（plantings）は `?status=active|harvested|all` でタブフィルター。
 
-例: `url_for('diary.detail', diary_id=1)` → `/diary/1`
+画面上の用語は URL パスで統一する:
+- `/plantings/` 直下 → **「植え付け一覧」「植え付け詳細」**
+- `/plantings/record` 直下 → **「栽培記録詳細」「栽培記録編集」**
+
+| エンドポイント | URL | 画面名 |
+|--------------|-----|-------|
+| `plantings.index` | `/plantings/` | 植え付け一覧 |
+| `plantings.detail` | `/plantings/<location_crop_id>` | 植え付け詳細（栽培記録一覧を含む） |
+| `plantings.new` | `/plantings/new/<location_crop_id>` | 栽培記録登録 |
+| `plantings.record_detail` | `/plantings/record/<record_id>` | 栽培記録詳細 |
+| `plantings.edit` | `/plantings/record/<record_id>/edit` | 栽培記録編集 |
+| `plantings.delete` | POST `/plantings/record/<record_id>/delete` | 栽培記録削除 |
+
+`url_for` 例:
+- `url_for('plantings.index')` → `/plantings/`
+- `url_for('plantings.detail', location_crop_id=1)` → `/plantings/1`
+- `url_for('plantings.record_detail', record_id=1)` → `/plantings/record/1`
+- `url_for('plantings.edit', record_id=1)` → `/plantings/record/1/edit`
+- `url_for('diary.detail', diary_id=1)` → `/diary/1`
 
 ### 新機能追加チェックリスト
 
 1. **モデル作成**: `app/models/{feature}.py` - 静的メソッドパターン、`get_db()`使用
 2. **ルート作成**: `app/routes/{feature}_routes.py` - Blueprint名は `{feature}`
 3. **Blueprint登録**: `app/__init__.py` の `create_app()` 内に追加
-4. **テンプレート**: `app/templates/{feature}/` フォルダ作成
+4. **テンプレート**: `app/templates/{feature}/` フォルダ作成（Blueprint名に合わせる）
 5. **CSS（任意）**: `app/static/css/{feature}.css`
 6. **JS（任意）**: `app/static/js/{feature}.js`
 7. **ナビ追加**: `app/templates/base.html` のナビゲーションに追加

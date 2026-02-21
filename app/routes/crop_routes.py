@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.crop import Crop
-from app.models.location_crop import LocationCrop
+from app.models.planting import Planting
 from app.models.diary import DiaryEntry
 from app.utils.upload import save_image, delete_image
 
@@ -27,9 +27,9 @@ def detail(crop_id):
         return redirect(url_for('crops.list'))
 
     # 栽培中の場所を取得
-    active_locations = LocationCrop.get_by_crop(crop_id, status='active')
+    active_locations = Planting.get_by_crop(crop_id, status='active')
     # 収穫済みの場所を取得
-    harvested_locations = LocationCrop.get_by_crop(crop_id, status='harvested')
+    harvested_locations = Planting.get_by_crop(crop_id, status='harvested')
     # 関連する日記を取得
     related_diaries = DiaryEntry.get_by_crop(crop_id)
 

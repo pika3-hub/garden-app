@@ -1,7 +1,7 @@
 from datetime import date
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app.models.location import Location
-from app.models.location_crop import LocationCrop
+from app.models.planting import Planting
 from app.models.crop import Crop
 from app.models.diary import DiaryEntry
 from app.models.harvest import Harvest
@@ -30,7 +30,7 @@ def detail(location_id):
         return redirect(url_for('locations.list'))
 
     # 栽培中の作物を取得
-    active_crops = LocationCrop.get_by_location(location_id, status='active')
+    active_crops = Planting.get_by_location(location_id, status='active')
 
     # 各栽培記録に収穫履歴を追加
     for crop in active_crops:
@@ -189,7 +189,7 @@ def plant(location_id):
         return redirect(url_for('locations.detail', location_id=location_id))
 
     try:
-        LocationCrop.plant(data)
+        Planting.plant(data)
         crop = Crop.get_by_id(data['crop_id'])
         flash(f'「{crop["name"]}」を植え付けました', 'success')
     except Exception as e:
@@ -202,7 +202,7 @@ def plant(location_id):
 def complete_harvest(location_id, location_crop_id):
     """栽培終了（収穫済みステータスに変更）"""
     try:
-        LocationCrop.harvest(location_crop_id)
+        Planting.harvest(location_crop_id)
         flash('栽培を終了しました', 'success')
     except Exception as e:
         flash(f'エラーが発生しました: {str(e)}', 'danger')
@@ -214,7 +214,7 @@ def complete_harvest(location_id, location_crop_id):
 def remove_crop(location_id, location_crop_id):
     """作物を削除（取り除く）"""
     try:
-        LocationCrop.delete(location_crop_id)
+        Planting.delete(location_crop_id)
         flash('作物を削除しました', 'success')
     except Exception as e:
         flash(f'エラーが発生しました: {str(e)}', 'danger')
@@ -230,7 +230,7 @@ def canvas(location_id):
         flash('場所が見つかりません', 'danger')
         return redirect(url_for('locations.list'))
 
-    crops = LocationCrop.get_crops_with_position(location_id)
+    crops = Planting.get_crops_with_position(location_id)
     return render_template('locations/canvas.html',
                           location=location,
                           crops=crops)
@@ -262,7 +262,7 @@ def update_crop_position(location_id, location_crop_id):
     """作物位置更新API"""
     try:
         data = request.get_json()
-        LocationCrop.update_position(location_crop_id, data['x'], data['y'])
+        Planting.update_position(location_crop_id, data['x'], data['y'])
         return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400

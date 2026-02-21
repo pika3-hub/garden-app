@@ -6,7 +6,7 @@
 
 - **作物管理**: トマト、なすなどの作物情報を登録・管理（CRUD完備）
 - **場所管理**: 畑、プランターなどの栽培場所を管理（CRUD完備）
-- **作物紐付け**: どの場所でどの作物を育てているかを記録
+- **植え付け管理**: どの場所でどの作物を育てているかを記録・管理（植え付け一覧・植え付け詳細）
 - **見取り図エディタ**: キャンバス上で畑のレイアウトを視覚的に描画・管理
   - 図形描画（矩形、円、線）
   - テキスト追加
@@ -27,8 +27,8 @@
   - 最大16MBまでのファイルをアップロード可能
   - 一覧画面でサムネイル表示、詳細画面で大きく表示
   - 画像の差し替え・削除が可能
-- **栽培中の作物一覧**: 現在栽培中のすべての作物を一覧表示
-  - 作物名、品種、場所、植え付け日を表示
+- **植え付け一覧**: 現在の植え付け状況をステータス別（栽培中/栽培終了/すべて）に一覧表示
+  - 作物名、品種、場所、植え付け日、最新観察記録の画像と日付を表示
   - ダッシュボードからワンクリックでアクセス
 - **収穫記録機能**: 収穫イベントの詳細な記録・管理
   - 同一作物を複数回収穫記録可能
@@ -88,50 +88,54 @@ uv run python run.py
 
 ```
 garden-app/
-├── app/                     # アプリケーションパッケージ
-│   ├── models/             # データモデル
-│   │   ├── crop.py        # 作物モデル
-│   │   ├── location.py    # 場所モデル
-│   │   ├── location_crop.py # 作物紐付けモデル
-│   │   ├── diary.py       # 日記モデル
-│   │   ├── harvest.py     # 収穫記録モデル
-│   │   ├── calendar.py    # カレンダーモデル
-│   │   └── task.py        # タスクモデル
-│   ├── routes/            # ルーティング
-│   │   ├── crop_routes.py
-│   │   ├── location_routes.py
-│   │   ├── diary_routes.py
-│   │   ├── harvest_routes.py
-│   │   ├── calendar_routes.py
-│   │   └── task_routes.py
-│   ├── templates/         # HTMLテンプレート
-│   │   ├── crops/        # 作物関連
-│   │   ├── locations/    # 場所関連（見取り図含む）
-│   │   ├── diary/        # 日記関連
-│   │   ├── harvests/     # 収穫記録関連
-│   │   ├── calendar/     # カレンダー関連
-│   │   ├── tasks/        # タスク関連
-│   │   └── base.html     # ベーステンプレート
-│   ├── static/           # 静的ファイル
-│   │   ├── js/
-│   │   │   ├── main.js
-│   │   │   └── canvas-editor.js  # キャンバスエディタ
-│   │   └── uploads/      # アップロード画像保存先
-│   │       ├── crops/    # 作物画像
+├── app/                      # アプリケーションパッケージ
+│   ├── models/              # データモデル
+│   │   ├── crop.py         # 作物モデル
+│   │   ├── location.py     # 場所モデル
+│   │   ├── planting.py      # 植え付けモデル（plantings テーブル）
+│   │   ├── diary.py        # 日記モデル
+│   │   ├── harvest.py      # 収穫記録モデル
+│   │   ├── calendar.py     # カレンダーモデル
+│   │   ├── task.py         # タスクモデル
+│   │   └── planting_record.py # 栽培記録モデル
+│   ├── routes/             # ルーティング（Blueprint）
+│   │   ├── crop_routes.py          # Blueprint: crops
+│   │   ├── location_routes.py      # Blueprint: locations
+│   │   ├── diary_routes.py         # Blueprint: diary
+│   │   ├── harvest_routes.py       # Blueprint: harvests
+│   │   ├── calendar_routes.py      # Blueprint: calendar
+│   │   ├── task_routes.py          # Blueprint: tasks
+│   │   └── planting_routes.py      # Blueprint: plantings
+│   ├── templates/          # HTMLテンプレート
+│   │   ├── crops/         # 作物関連
+│   │   ├── locations/     # 場所関連（見取り図含む）
+│   │   ├── diary/         # 日記関連
+│   │   ├── harvests/      # 収穫記録関連
+│   │   ├── plantings/     # 植え付け・栽培記録関連
+│   │   ├── calendar/      # カレンダー関連
+│   │   ├── tasks/         # タスク関連
+│   │   └── base.html      # ベーステンプレート
+│   ├── static/            # 静的ファイル
+│   │   ├── css/           # スタイルシート
+│   │   ├── js/            # JavaScript
+│   │   ├── images/        # UIアイコン・背景画像
+│   │   └── uploads/       # アップロード画像保存先
+│   │       ├── crops/     # 作物画像
 │   │       ├── locations/ # 場所画像
-│   │       ├── diary/    # 日記画像
-│   │       └── harvests/ # 収穫記録画像
-│   ├── migrations/       # データベースマイグレーション
-│   ├── utils/           # ユーティリティ
-│   │   └── upload.py    # 画像アップロードヘルパー
-│   ├── schema.sql       # データベーススキーマ
-│   ├── database.py      # データベース接続管理
-│   └── config.py        # 設定
-├── instance/            # インスタンス固有ファイル(DB等)
-├── run.py              # アプリケーション起動スクリプト
-├── main.py             # アプリケーションエントリポイント
-├── test_data.py        # テストデータ投入スクリプト
-└── pyproject.toml      # プロジェクト設定
+│   │       ├── diary/     # 日記画像
+│   │       ├── harvests/  # 収穫記録画像
+│   │       └── growth_records/ # 栽培観察記録画像
+│   ├── migrations/        # データベースマイグレーション（増分SQL）
+│   ├── utils/             # ユーティリティ
+│   │   ├── upload.py      # 画像アップロードヘルパー
+│   │   └── migration.py   # マイグレーション実行ユーティリティ
+│   ├── schema.sql         # データベーススキーマ
+│   ├── database.py        # データベース接続管理
+│   └── config.py          # 設定
+├── instance/              # インスタンス固有ファイル（garden.db）
+├── run.py                 # アプリケーション起動スクリプト
+├── test_data.py           # テストデータ投入スクリプト
+└── pyproject.toml         # プロジェクト設定（uv）
 ```
 
 ## 開発状況
@@ -139,7 +143,7 @@ garden-app/
 - [x] プロジェクト基盤構築
 - [x] データベース設計
 - [x] 作物管理機能（CRUD完全実装）
-- [x] 場所管理機能（CRUD + 作物紐付け）
+- [x] 場所管理機能（CRUD + 植え付け管理）
 - [x] 見取り図キャンバス描画機能（Fabric.js実装）
   - [x] 図形描画（矩形、円、線）
   - [x] テキスト追加
@@ -154,7 +158,7 @@ garden-app/
 - [x] ダッシュボード（統計情報 + 最新日記表示）
 - [x] データベースマイグレーション機能
 - [x] 画像添付機能（作物・場所・日記・収穫記録）
-- [x] 栽培中の作物一覧ページ
+- [x] 植え付け一覧・詳細ページ（栽培記録付き）
 - [x] 収穫記録機能（CRUD + 日記関連付け + 検索）
 - [x] カレンダービュー（月別表示 + アイコン表示 + キーボード操作）
 - [x] タスク管理機能（CRUD + ステータス管理 + カレンダー連携）

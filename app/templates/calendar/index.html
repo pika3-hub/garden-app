@@ -51,6 +51,10 @@
             <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="タスク">
             <span>タスク</span>
         </div>
+        <div class="legend-item">
+            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培記録">
+            <span>栽培記録</span>
+        </div>
     </div>
 
     <!-- カレンダーテーブル -->
@@ -144,6 +148,15 @@
                             <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="タスク">
                         </a>
                         {% endfor %}
+
+                        {# 栽培記録アイコン #}
+                        {% for gr in day_data.get('growth_records', []) %}
+                        <a href="{{ url_for('plantings.record_detail', record_id=gr.id) }}" class="calendar-icon"
+                           data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="栽培記録: {{ gr.crop_name }}{% if gr.variety %}({{ gr.variety }}){% endif %} @ {{ gr.location_name }}">
+                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培記録">
+                        </a>
+                        {% endfor %}
                     </div>
                 </td>
                 {% endif %}
@@ -187,6 +200,10 @@
                         <div class="legend-item">
                             <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="タスク">
                             <span>タスク</span>
+                        </div>
+                        <div class="legend-item">
+                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培記録">
+                            <span>栽培記録</span>
                         </div>
                     </div>
                     <!-- アイコン表示エリア -->

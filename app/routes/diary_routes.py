@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.diary import DiaryEntry
 from app.models.crop import Crop
 from app.models.location import Location
-from app.models.location_crop import LocationCrop
+from app.models.planting import Planting
 from app.models.harvest import Harvest
 from app.utils.upload import save_image, delete_image
 
@@ -232,7 +232,7 @@ def _get_active_location_crops():
     location_crops = db.execute(
         '''SELECT lc.id, lc.planted_date,
                   c.name as crop_name, l.name as location_name
-           FROM location_crops lc
+           FROM plantings lc
            JOIN crops c ON lc.crop_id = c.id
            JOIN locations l ON lc.location_id = l.id
            WHERE lc.status = 'active'

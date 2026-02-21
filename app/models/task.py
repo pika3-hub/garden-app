@@ -186,7 +186,7 @@ class Task:
             '''SELECT tr.*, c.name as crop_name, l.name as location_name,
                       lc.planted_date, lc.status
                FROM task_relations tr
-               JOIN location_crops lc ON tr.location_crop_id = lc.id
+               JOIN plantings lc ON tr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE tr.task_id = ? AND tr.relation_type = 'location_crop' ''',

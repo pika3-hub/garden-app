@@ -139,7 +139,7 @@ class DiaryEntry:
             '''SELECT dr.*, c.name as crop_name, l.name as location_name,
                       lc.planted_date, lc.status
                FROM diary_relations dr
-               JOIN location_crops lc ON dr.location_crop_id = lc.id
+               JOIN plantings lc ON dr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE dr.diary_id = ? AND dr.relation_type = 'location_crop' ''',
@@ -152,7 +152,7 @@ class DiaryEntry:
                       c.name as crop_name, l.name as location_name
                FROM diary_relations dr
                JOIN harvests h ON dr.harvest_id = h.id
-               JOIN location_crops lc ON h.location_crop_id = lc.id
+               JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE dr.diary_id = ? AND dr.relation_type = 'harvest' ''',
@@ -253,7 +253,7 @@ class DiaryEntry:
                FROM diary_entries de
                JOIN diary_relations dr ON de.id = dr.diary_id
                WHERE dr.crop_id = ? OR dr.location_crop_id IN (
-                   SELECT id FROM location_crops WHERE crop_id = ?
+                   SELECT id FROM plantings WHERE crop_id = ?
                )
                ORDER BY de.entry_date DESC''',
             (crop_id, crop_id)
@@ -269,7 +269,7 @@ class DiaryEntry:
                FROM diary_entries de
                JOIN diary_relations dr ON de.id = dr.diary_id
                WHERE dr.location_id = ? OR dr.location_crop_id IN (
-                   SELECT id FROM location_crops WHERE location_id = ?
+                   SELECT id FROM plantings WHERE location_id = ?
                )
                ORDER BY de.entry_date DESC''',
             (location_id, location_id)
