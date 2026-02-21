@@ -11,7 +11,7 @@ class Planting:
         db = get_db()
         query = '''
             SELECT lc.*, c.name as crop_name, c.crop_type, c.variety
-            FROM location_crops lc
+            FROM plantings lc
             JOIN crops c ON lc.crop_id = c.id
             WHERE lc.location_id = ?
         '''
@@ -32,7 +32,7 @@ class Planting:
         db = get_db()
         query = '''
             SELECT lc.*, l.name as location_name, l.location_type
-            FROM location_crops lc
+            FROM plantings lc
             JOIN locations l ON lc.location_id = l.id
             WHERE lc.crop_id = ?
         '''
@@ -53,7 +53,7 @@ class Planting:
         db = get_db()
         location_crop = db.execute(
             '''SELECT lc.*, c.name as crop_name, c.variety, l.name as location_name
-               FROM location_crops lc
+               FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE lc.id = ?''',
@@ -67,7 +67,7 @@ class Planting:
         db = get_db()
         now = get_jst_now()
         cursor = db.execute(
-            '''INSERT INTO location_crops (location_id, crop_id, planted_date, quantity, notes, status, created_at, updated_at)
+            '''INSERT INTO plantings (location_id, crop_id, planted_date, quantity, notes, status, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, 'active', ?, ?)''',
             (data['location_id'], data['crop_id'], data.get('planted_date'),
              data.get('quantity'), data.get('notes'), now, now)
@@ -80,7 +80,7 @@ class Planting:
         """場所-作物関連を更新"""
         db = get_db()
         db.execute(
-            '''UPDATE location_crops
+            '''UPDATE plantings
                SET planted_date = ?, quantity = ?, notes = ?, status = ?,
                    updated_at = ?
                WHERE id = ?''',
@@ -95,7 +95,7 @@ class Planting:
         """収穫済みに変更"""
         db = get_db()
         db.execute(
-            '''UPDATE location_crops SET status = 'harvested', updated_at = ?
+            '''UPDATE plantings SET status = 'harvested', updated_at = ?
                WHERE id = ?''',
             (get_jst_now(), location_crop_id)
         )
@@ -106,7 +106,7 @@ class Planting:
         """削除（取り除く）"""
         db = get_db()
         db.execute(
-            '''UPDATE location_crops SET status = 'removed', updated_at = ?
+            '''UPDATE plantings SET status = 'removed', updated_at = ?
                WHERE id = ?''',
             (get_jst_now(), location_crop_id)
         )
@@ -116,7 +116,7 @@ class Planting:
     def delete(location_crop_id):
         """場所-作物関連を削除"""
         db = get_db()
-        db.execute('DELETE FROM location_crops WHERE id = ?', (location_crop_id,))
+        db.execute('DELETE FROM plantings WHERE id = ?', (location_crop_id,))
         db.commit()
 
     @staticmethod
@@ -125,7 +125,7 @@ class Planting:
         db = get_db()
         result = db.execute(
             '''SELECT COUNT(*) as count
-               FROM location_crops lc
+               FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE lc.status = 'active' '''
@@ -147,20 +147,20 @@ class Planting:
                       COALESCE(gr_stats.record_count, 0) as growth_record_count,
                       gr_img.image_path as latest_growth_image,
                       gr_img.latest_growth_image_date
-               FROM location_crops lc
+               FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                LEFT JOIN (
                    SELECT location_crop_id, COUNT(*) as record_count
-                   FROM growth_records
+                   FROM planting_records
                    GROUP BY location_crop_id
                ) gr_stats ON gr_stats.location_crop_id = lc.id
                LEFT JOIN (
                    SELECT gr1.location_crop_id, gr1.image_path, gr1.recorded_at as latest_growth_image_date
-                   FROM growth_records gr1
+                   FROM planting_records gr1
                    INNER JOIN (
                        SELECT location_crop_id, MAX(recorded_at) as max_date
-                       FROM growth_records
+                       FROM planting_records
                        WHERE image_path IS NOT NULL AND image_path != ''
                        GROUP BY location_crop_id
                    ) gr2 ON gr1.location_crop_id = gr2.location_crop_id
@@ -180,7 +180,7 @@ class Planting:
         """作物の配置位置を更新"""
         db = get_db()
         db.execute(
-            '''UPDATE location_crops SET position_x = ?, position_y = ?,
+            '''UPDATE plantings SET position_x = ?, position_y = ?,
                updated_at = ? WHERE id = ?''',
             (position_x, position_y, get_jst_now(), location_crop_id)
         )
@@ -194,7 +194,7 @@ class Planting:
         if location_crop_ids:
             placeholders = ','.join('?' * len(location_crop_ids))
             db.execute(
-                f'''UPDATE location_crops SET position_x = NULL, position_y = NULL,
+                f'''UPDATE plantings SET position_x = NULL, position_y = NULL,
                    updated_at = ?
                    WHERE location_id = ? AND status = 'active' AND id NOT IN ({placeholders})''',
                 [now, location_id] + list(location_crop_ids)
@@ -202,7 +202,7 @@ class Planting:
         else:
             # リストが空の場合、この場所の全ての作物の位置をクリア
             db.execute(
-                '''UPDATE location_crops SET position_x = NULL, position_y = NULL,
+                '''UPDATE plantings SET position_x = NULL, position_y = NULL,
                    updated_at = ?
                    WHERE location_id = ? AND status = 'active' ''',
                 (now, location_id)
@@ -216,7 +216,7 @@ class Planting:
         crops = db.execute(
             '''SELECT lc.*, c.name as crop_name, c.crop_type,
                lc.position_x, lc.position_y
-               FROM location_crops lc
+               FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                WHERE lc.location_id = ? AND lc.status = 'active'
                ORDER BY lc.planted_date DESC''',
@@ -232,7 +232,7 @@ class Planting:
             '''SELECT lc.*,
                       c.name as crop_name, c.crop_type, c.variety,
                       l.name as location_name, l.location_type
-               FROM location_crops lc
+               FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                ORDER BY lc.planted_date DESC, lc.created_at DESC

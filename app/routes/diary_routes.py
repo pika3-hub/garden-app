@@ -232,7 +232,7 @@ def _get_active_location_crops():
     location_crops = db.execute(
         '''SELECT lc.id, lc.planted_date,
                   c.name as crop_name, l.name as location_name
-           FROM location_crops lc
+           FROM plantings lc
            JOIN crops c ON lc.crop_id = c.id
            JOIN locations l ON lc.location_id = l.id
            WHERE lc.status = 'active'

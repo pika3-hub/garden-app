@@ -8,16 +8,16 @@
 |---------|------|--------|
 | crops | 作物マスタ | id |
 | locations | 場所マスタ | id |
-| location_crops | 栽培記録（作物×場所） | id |
+| plantings | 植え付け記録（作物×場所） | id |
 | diary_entries | 日記 | id |
 | harvests | 収穫記録 | id |
 | diary_crops | 日記×作物（多対多） | diary_id, crop_id |
 | diary_locations | 日記×場所（多対多） | diary_id, location_id |
-| diary_location_crops | 日記×栽培記録（多対多） | diary_id, location_crop_id |
+| diary_location_crops | 日記×植え付け記録（多対多） | diary_id, location_crop_id |
 | diary_harvests | 日記×収穫（多対多） | diary_id, harvest_id |
 | tasks | タスク | id |
 | task_relations | タスク×関連エンティティ（多対多） | id |
-| growth_records | 栽培観察記録（栽培記録に紐づく） | id |
+| planting_records | 栽培観察記録（植え付けに紐づく） | id |
 
 ### 主要テーブル詳細
 
@@ -41,14 +41,16 @@
 | canvas_data | TEXT | キャンバスJSON |
 | created_at | DATETIME | 作成日時 |
 
-#### location_crops
+#### plantings
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | INTEGER | 主キー |
 | location_id | INTEGER | 場所ID（FK） |
 | crop_id | INTEGER | 作物ID（FK） |
 | planted_date | DATE | 植え付け日 |
-| status | TEXT | 状態（growing/harvested/removed） |
+| status | TEXT | 状態（active/harvested/removed） |
+| position_x | DECIMAL | キャンバスX座標 |
+| position_y | DECIMAL | キャンバスY座標 |
 | created_at | DATETIME | 作成日時 |
 
 #### diary_entries
@@ -96,11 +98,11 @@
 | location_crop_id | INTEGER | 栽培記録ID（FK、任意） |
 | created_at | DATETIME | 作成日時 |
 
-#### growth_records
+#### planting_records
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | INTEGER | 主キー |
-| location_crop_id | INTEGER | 栽培記録ID（FK → location_crops） |
+| location_crop_id | INTEGER | 植え付けID（FK → plantings） |
 | recorded_at | DATE | 記録日（必須） |
 | notes | TEXT | メモ |
 | image_path | VARCHAR(255) | 画像パス |

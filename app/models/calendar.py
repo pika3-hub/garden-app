@@ -87,7 +87,7 @@ class Calendar:
         location_crops = db.execute(
             '''SELECT lc.id, lc.location_id, DATE(lc.planted_date) as date,
                       c.name as crop_name, c.variety, l.name as location_name
-               FROM location_crops lc
+               FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE DATE(lc.planted_date) BETWEEN ? AND ?
@@ -111,7 +111,7 @@ class Calendar:
             '''SELECT h.id, h.quantity, h.unit, DATE(h.harvest_date) as date,
                       c.name as crop_name, c.variety
                FROM harvests h
-               JOIN location_crops lc ON h.location_crop_id = lc.id
+               JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                WHERE DATE(h.harvest_date) BETWEEN ? AND ?
                ORDER BY h.harvest_date''',
@@ -151,8 +151,8 @@ class Calendar:
         growth_records = db.execute(
             '''SELECT gr.id, gr.location_crop_id, DATE(gr.recorded_at) as date,
                       c.name as crop_name, c.variety, l.name as location_name
-               FROM growth_records gr
-               JOIN location_crops lc ON gr.location_crop_id = lc.id
+               FROM planting_records gr
+               JOIN plantings lc ON gr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE DATE(gr.recorded_at) BETWEEN ? AND ?

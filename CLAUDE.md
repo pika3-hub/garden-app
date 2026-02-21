@@ -39,12 +39,12 @@ garden-app/
 │   ├── models/              # データモデル（静的メソッドパターン）
 │   │   ├── crop.py
 │   │   ├── location.py
-│   │   ├── planting.py      # 植え付けモデル（location_crops テーブル）
+│   │   ├── planting.py      # 植え付けモデル（plantings テーブル）
 │   │   ├── diary.py
 │   │   ├── harvest.py       # 収穫記録モデル
 │   │   ├── calendar.py      # カレンダーデータ取得モデル
 │   │   ├── task.py          # タスクモデル
-│   │   └── planting_record.py # 栽培記録モデル（growth_records テーブル）
+│   │   └── planting_record.py # 栽培記録モデル（planting_records テーブル）
 │   ├── routes/              # Flask ブループリント
 │   │   ├── crop_routes.py
 │   │   ├── location_routes.py

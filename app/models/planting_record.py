@@ -12,8 +12,8 @@ class PlantingRecord:
         records = db.execute(
             '''SELECT gr.*, c.name as crop_name, c.variety, l.name as location_name,
                       lc.location_id, lc.crop_id, lc.planted_date
-               FROM growth_records gr
-               JOIN location_crops lc ON gr.location_crop_id = lc.id
+               FROM planting_records gr
+               JOIN plantings lc ON gr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE gr.location_crop_id = ?
@@ -29,8 +29,8 @@ class PlantingRecord:
         records = db.execute(
             '''SELECT gr.*, c.name as crop_name, c.variety, l.name as location_name,
                       lc.location_id, lc.crop_id, lc.planted_date
-               FROM growth_records gr
-               JOIN location_crops lc ON gr.location_crop_id = lc.id
+               FROM planting_records gr
+               JOIN plantings lc ON gr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                ORDER BY gr.recorded_at DESC, gr.created_at DESC
@@ -46,8 +46,8 @@ class PlantingRecord:
         record = db.execute(
             '''SELECT gr.*, c.name as crop_name, c.variety, l.name as location_name,
                       lc.location_id, lc.crop_id, lc.planted_date
-               FROM growth_records gr
-               JOIN location_crops lc ON gr.location_crop_id = lc.id
+               FROM planting_records gr
+               JOIN plantings lc ON gr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE gr.id = ?''',
@@ -61,7 +61,7 @@ class PlantingRecord:
         db = get_db()
         now = get_jst_now()
         cursor = db.execute(
-            '''INSERT INTO growth_records
+            '''INSERT INTO planting_records
                (location_crop_id, recorded_at, notes, image_path, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?)''',
             (data['location_crop_id'], data['recorded_at'],
@@ -76,7 +76,7 @@ class PlantingRecord:
         """栽培記録を更新"""
         db = get_db()
         db.execute(
-            '''UPDATE growth_records SET
+            '''UPDATE planting_records SET
                recorded_at = ?, notes = ?, image_path = ?, updated_at = ?
                WHERE id = ?''',
             (data['recorded_at'], data.get('notes'), data.get('image_path'),
@@ -88,5 +88,5 @@ class PlantingRecord:
     def delete(record_id):
         """栽培記録を削除"""
         db = get_db()
-        db.execute('DELETE FROM growth_records WHERE id = ?', (record_id,))
+        db.execute('DELETE FROM planting_records WHERE id = ?', (record_id,))
         db.commit()

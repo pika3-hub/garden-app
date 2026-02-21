@@ -92,7 +92,7 @@ garden-app/
 │   ├── models/              # データモデル
 │   │   ├── crop.py         # 作物モデル
 │   │   ├── location.py     # 場所モデル
-│   │   ├── planting.py      # 植え付けモデル（旧 location_crop）
+│   │   ├── planting.py      # 植え付けモデル（plantings テーブル）
 │   │   ├── diary.py        # 日記モデル
 │   │   ├── harvest.py      # 収穫記録モデル
 │   │   ├── calendar.py     # カレンダーモデル
