@@ -110,11 +110,6 @@ uv run python run.py
 
 植え付け（plantings）は `?status=active|harvested|all` でタブフィルター。
 
-**`plantings` Blueprint のエンドポイント一覧（`growth_record_routes.py`）:**
-
-> ⚠️ ルートファイル名は `planting_routes.py`、Blueprint名は `plantings`。
-> `url_for` では必ず `plantings.xxx` を使うこと（`growth_records.xxx` は存在しない）。
-
 画面上の用語は URL パスで統一する:
 - `/plantings/` 直下 → **「植え付け一覧」「植え付け詳細」**
 - `/plantings/record` 直下 → **「栽培記録詳細」「栽培記録編集」**
@@ -138,13 +133,9 @@ uv run python run.py
 ### 新機能追加チェックリスト
 
 1. **モデル作成**: `app/models/{feature}.py` - 静的メソッドパターン、`get_db()`使用
-2. **ルート作成**: `app/routes/{feature}_routes.py` - Blueprint名は原則 `{feature}`
-   - 例外: `growth_record_routes.py` の Blueprint名は `plantings`（歴史的経緯）
+2. **ルート作成**: `app/routes/{feature}_routes.py` - Blueprint名は `{feature}`
 3. **Blueprint登録**: `app/__init__.py` の `create_app()` 内に追加
 4. **テンプレート**: `app/templates/{feature}/` フォルダ作成（Blueprint名に合わせる）
 5. **CSS（任意）**: `app/static/css/{feature}.css`
 6. **JS（任意）**: `app/static/js/{feature}.js`
 7. **ナビ追加**: `app/templates/base.html` のナビゲーションに追加
-
-> ⚠️ `url_for` のエンドポイント名はルートファイル名でなく **Blueprint名** に依存する。
-> 実装前に `app/routes/{feature}_routes.py` の `bp = Blueprint('xxx', ...)` を必ず確認すること。
