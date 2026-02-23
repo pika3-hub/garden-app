@@ -45,8 +45,10 @@
         <div class="card h-100 card-with-bg card-bg-location-crop">
             {% if crop.latest_growth_image %}
             <div class="card-img-wrapper">
-                <img src="{{ url_for('static', filename='uploads/' + crop.latest_growth_image) }}"
-                     class="card-img-top" alt="{{ crop.crop_name }}" style="height: 150px; object-fit: cover;">
+                <img src="{{ url_for('static', filename='uploads/' + (crop.latest_growth_image | thumb_path)) }}"
+                     class="card-img-top" alt="{{ crop.crop_name }}" style="height: 150px; object-fit: cover;"
+                     loading="lazy"
+                     onerror="this.src='{{ url_for('static', filename='uploads/' + crop.latest_growth_image) }}'">
                 {% if crop.latest_growth_image_date %}
                 <span class="card-img-date-overlay">{{ crop.latest_growth_image_date }}</span>
                 {% endif %}

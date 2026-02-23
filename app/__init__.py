@@ -1,6 +1,21 @@
+import os
 from flask import Flask, render_template
 from app.config import config
 from app.database import init_db
+
+
+def _thumb_path_filter(image_path):
+    """一覧用サムネイルのパスを返す
+    例: 'crops/abc.png' → 'crops/thumbs/abc.jpg'
+    """
+    if not image_path:
+        return image_path
+    parts = image_path.split('/', 1)
+    if len(parts) != 2:
+        return image_path
+    folder, filename = parts
+    basename = os.path.splitext(filename)[0]
+    return f"{folder}/thumbs/{basename}.jpg"
 
 
 def create_app(config_name='default'):
@@ -12,6 +27,9 @@ def create_app(config_name='default'):
 
     # データベース初期化
     init_db(app)
+
+    # Jinja2 フィルター登録
+    app.jinja_env.filters['thumb_path'] = _thumb_path_filter
 
     # ブループリント登録
     from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes, task_routes, planting_routes
