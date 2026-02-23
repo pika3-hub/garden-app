@@ -46,7 +46,10 @@
     <div class="col-md-6 col-lg-4 mb-3">
         <div class="card h-100 card-with-bg card-bg-diary">
             {% if entry.image_path %}
-            <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}" class="card-img-top" alt="{{ entry.title }}" style="height: 150px; object-fit: cover;">
+            <img src="{{ url_for('static', filename='uploads/' + (entry.image_path | thumb_path)) }}"
+                 class="card-img-top" alt="{{ entry.title }}" style="height: 150px; object-fit: cover;"
+                 loading="lazy"
+                 onerror="this.src='{{ url_for('static', filename='uploads/' + entry.image_path) }}'">
             {% endif %}
             <div class="card-body">
                 {% set weather_icons = {

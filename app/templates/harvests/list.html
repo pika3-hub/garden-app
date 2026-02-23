@@ -59,7 +59,10 @@
     <div class="col-md-6 col-lg-4 mb-3">
         <div class="card h-100 card-with-bg card-bg-harvest">
             {% if harvest.image_path %}
-            <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}" class="card-img-top" alt="{{ harvest.crop_name }}" style="height: 150px; object-fit: cover;">
+            <img src="{{ url_for('static', filename='uploads/' + (harvest.image_path | thumb_path)) }}"
+                 class="card-img-top" alt="{{ harvest.crop_name }}" style="height: 150px; object-fit: cover;"
+                 loading="lazy"
+                 onerror="this.src='{{ url_for('static', filename='uploads/' + harvest.image_path) }}'">
             {% endif %}
             <div class="card-body">
                 <div class="fw-bold text-primary mb-1">{{ harvest.harvest_date }}</div>
