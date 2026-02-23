@@ -136,7 +136,7 @@ class DiaryEntry:
 
         # 関連する植え付け場所を取得
         location_crops = db.execute(
-            '''SELECT dr.*, c.name as crop_name, l.name as location_name,
+            '''SELECT dr.*, c.name as crop_name, c.variety, l.name as location_name,
                       lc.planted_date, lc.status
                FROM diary_relations dr
                JOIN plantings lc ON dr.location_crop_id = lc.id

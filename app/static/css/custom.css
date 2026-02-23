@@ -229,6 +229,21 @@ small, .small { font-size: 0.84em; }
 .card-header.bg-primary  { background-color: var(--cobalt)   !important; color: #F0EBE0; border-bottom-color: rgba(255,255,255,0.12); }
 .card-header.bg-secondary{ background-color: var(--ink-muted) !important; color: #F0EBE0; border-bottom-color: rgba(255,255,255,0.12); }
 .card-header .text-dark  { color: #F0EBE0 !important; }
+.card-header .badge.bg-light { color: var(--ink) !important; }
+
+/* Headings inside colored card-headers: override global h* color */
+.card-header.bg-success  h1, .card-header.bg-success  h2, .card-header.bg-success  h3,
+.card-header.bg-success  h4, .card-header.bg-success  h5, .card-header.bg-success  h6,
+.card-header.bg-info     h1, .card-header.bg-info     h2, .card-header.bg-info     h3,
+.card-header.bg-info     h4, .card-header.bg-info     h5, .card-header.bg-info     h6,
+.card-header.bg-warning  h1, .card-header.bg-warning  h2, .card-header.bg-warning  h3,
+.card-header.bg-warning  h4, .card-header.bg-warning  h5, .card-header.bg-warning  h6,
+.card-header.bg-danger   h1, .card-header.bg-danger   h2, .card-header.bg-danger   h3,
+.card-header.bg-danger   h4, .card-header.bg-danger   h5, .card-header.bg-danger   h6,
+.card-header.bg-primary  h1, .card-header.bg-primary  h2, .card-header.bg-primary  h3,
+.card-header.bg-primary  h4, .card-header.bg-primary  h5, .card-header.bg-primary  h6,
+.card-header.bg-secondary h1, .card-header.bg-secondary h2, .card-header.bg-secondary h3,
+.card-header.bg-secondary h4, .card-header.bg-secondary h5, .card-header.bg-secondary h6 { color: #F0EBE0; }
 
 .card-footer {
   background-color: rgba(237, 232, 216, 0.45);
