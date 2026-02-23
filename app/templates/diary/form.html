@@ -167,7 +167,7 @@ document.querySelectorAll('.dropdown-item').forEach(item => {
                             <select class="form-select" id="location_crop_ids" name="location_crop_ids" multiple size="5">
                                 {% for lc in location_crops %}
                                 <option value="{{ lc.id }}" {% if selected_relations and lc.id|string in selected_relations.location_crop_ids %}selected{% endif %}>
-                                    {{ lc.crop_name }} @ {{ lc.location_name }}
+                                    {{ lc.crop_name }}{% if lc.variety %}（{{ lc.variety }}）{% endif %} @ {{ lc.location_name }}
                                 </option>
                                 {% endfor %}
                             </select>

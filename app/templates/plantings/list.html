@@ -70,7 +70,7 @@
                 </p>
                 <h5 class="card-title">
                     <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}" class="text-decoration-none">
-                        {{ crop.crop_name }}
+                        {{ crop.crop_name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %}
                     </a>
                 </h5>
                 <p class="card-text mb-1">

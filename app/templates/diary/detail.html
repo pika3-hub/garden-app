@@ -162,7 +162,7 @@
                     {% for lc in relations.location_crops %}
                     <li class="list-group-item">
                         <div>
-                            <i class="bi bi-flower1 text-warning"></i> {{ lc.crop_name }}
+                            <i class="bi bi-flower1 text-warning"></i> {{ lc.crop_name }}{% if lc.variety %}（{{ lc.variety }}）{% endif %}
                             <small class="text-muted">@ {{ lc.location_name }}</small>
                         </div>
                         <small class="text-muted">
