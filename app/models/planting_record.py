@@ -1,9 +1,23 @@
+from datetime import datetime
+
 from app.database import get_db
 from app.utils.timezone import get_jst_now
 
 
 class PlantingRecord:
     """栽培記録モデル"""
+
+    @staticmethod
+    def _calculate_days(planted_date, target_date):
+        """植え付け日から対象日までの日数を計算"""
+        if not planted_date or not target_date:
+            return None
+        try:
+            planted = datetime.strptime(str(planted_date)[:10], '%Y-%m-%d')
+            target = datetime.strptime(str(target_date)[:10], '%Y-%m-%d')
+            return (target - planted).days
+        except (ValueError, TypeError):
+            return None
 
     @staticmethod
     def get_by_location_crop(location_crop_id):
@@ -20,7 +34,14 @@ class PlantingRecord:
                ORDER BY gr.recorded_at DESC, gr.created_at DESC''',
             (location_crop_id,)
         ).fetchall()
-        return [dict(r) for r in records]
+        result = []
+        for r in records:
+            record_dict = dict(r)
+            record_dict['days_from_planting'] = PlantingRecord._calculate_days(
+                record_dict.get('planted_date'), record_dict.get('recorded_at')
+            )
+            result.append(record_dict)
+        return result
 
     @staticmethod
     def get_recent(limit=5):
@@ -53,7 +74,13 @@ class PlantingRecord:
                WHERE gr.id = ?''',
             (record_id,)
         ).fetchone()
-        return dict(record) if record else None
+        if record:
+            record_dict = dict(record)
+            record_dict['days_from_planting'] = PlantingRecord._calculate_days(
+                record_dict.get('planted_date'), record_dict.get('recorded_at')
+            )
+            return record_dict
+        return None
 
     @staticmethod
     def create(data):

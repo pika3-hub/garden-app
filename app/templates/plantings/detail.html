@@ -51,6 +51,14 @@
                         <p class="h5">{{ records|length }}件</p>
                     </div>
                 </div>
+                {% if location_crop.status == 'active' and location_crop.days_from_planting is not none %}
+                <div class="row mb-2">
+                    <div class="col-md-4">
+                        <h6 class="text-muted">栽培日数</h6>
+                        <p class="h5"><span class="badge bg-success">{{ location_crop.days_from_planting }}日目</span></p>
+                    </div>
+                </div>
+                {% endif %}
                 <div class="row">
                     <div class="col-md-6">
                         <h6 class="text-muted">作物種類・品種</h6>
@@ -124,6 +132,9 @@
             {% endif %}
             <div class="card-body">
                 <div class="fw-bold text-primary mb-1">{{ record.recorded_at }}</div>
+                {% if record.days_from_planting is not none %}
+                <p class="card-text mb-1">植え付けからの日数: <span class="badge bg-success">{{ record.days_from_planting }}日目</span></p>
+                {% endif %}
                 {% if record.notes %}
                 <p class="card-text text-muted-light">
                     {{ record.notes[:80] }}{% if record.notes|length > 80 %}...{% endif %}

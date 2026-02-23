@@ -81,15 +81,13 @@
                     <span class="badge bg-info">{{ crop.location_type }}</span>
                 </p>
                 {% if crop.planted_date %}
-                <p class="card-text mb-1">
-                    <i class="bi bi-calendar-event"></i> {{ crop.planted_date }}
-                </p>
+                <p class="card-text mb-1">植え付け日: {{ crop.planted_date }}</p>
+                {% endif %}
+                {% if crop.status == 'active' and crop.days_from_planting is not none %}
+                <p class="card-text mb-1">栽培日数: <span class="badge bg-success">{{ crop.days_from_planting }}日目</span></p>
                 {% endif %}
                 {% if crop.growth_record_count > 0 %}
-                <p class="card-text mb-1">
-                    <i class="bi bi-journal-text text-info"></i>
-                    <span class="badge bg-info">{{ crop.growth_record_count }}件の記録</span>
-                </p>
+                <p class="card-text mb-1">栽培記録: {{ crop.growth_record_count }}件</p>
                 {% endif %}
                 {% if crop.quantity %}
                 <p class="card-text mb-1">株数: {{ crop.quantity }}</p>

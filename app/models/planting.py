@@ -1,9 +1,23 @@
+from datetime import datetime
+
 from app.database import get_db
 from app.utils.timezone import get_jst_now
 
 
 class Planting:
     """場所-作物関連モデル"""
+
+    @staticmethod
+    def _calculate_days(planted_date, target_date):
+        """植え付け日から対象日までの日数を計算"""
+        if not planted_date or not target_date:
+            return None
+        try:
+            planted = datetime.strptime(str(planted_date)[:10], '%Y-%m-%d')
+            target = datetime.strptime(str(target_date)[:10], '%Y-%m-%d')
+            return (target - planted).days
+        except (ValueError, TypeError):
+            return None
 
     @staticmethod
     def get_by_location(location_id, status='active'):
@@ -59,7 +73,17 @@ class Planting:
                WHERE lc.id = ?''',
             (location_crop_id,)
         ).fetchone()
-        return dict(location_crop) if location_crop else None
+        if location_crop:
+            result = dict(location_crop)
+            if result.get('status') == 'active':
+                today = get_jst_now()[:10]
+                result['days_from_planting'] = Planting._calculate_days(
+                    result.get('planted_date'), today
+                )
+            else:
+                result['days_from_planting'] = None
+            return result
+        return None
 
     @staticmethod
     def plant(data):
@@ -173,7 +197,18 @@ class Planting:
             params.append(status)
         query += ' ORDER BY lc.planted_date DESC'
         crops = db.execute(query, params).fetchall()
-        return [dict(crop) for crop in crops]
+        today = get_jst_now()[:10]
+        result = []
+        for crop in crops:
+            crop_dict = dict(crop)
+            if crop_dict.get('status') == 'active':
+                crop_dict['days_from_planting'] = Planting._calculate_days(
+                    crop_dict.get('planted_date'), today
+                )
+            else:
+                crop_dict['days_from_planting'] = None
+            result.append(crop_dict)
+        return result
 
     @staticmethod
     def update_position(location_crop_id, position_x, position_y):
