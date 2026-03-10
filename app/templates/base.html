@@ -45,43 +45,43 @@
                     <li class="nav-item">
                         {% set is_crops = request.endpoint and request.endpoint.startswith('crops.') %}
                         <a class="nav-link {% if is_crops %}active{% endif %}" href="{{ url_for('crops.list') }}" {% if is_crops %}aria-current="page"{% endif %}>
-                            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img"> 作物
+                            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img icon-img-lg"> 作物
                         </a>
                     </li>
                     <li class="nav-item">
                         {% set is_locations = request.endpoint and request.endpoint.startswith('locations.') %}
                         <a class="nav-link {% if is_locations %}active{% endif %}" href="{{ url_for('locations.list') }}" {% if is_locations %}aria-current="page"{% endif %}>
-                            <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img"> 場所
+                            <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img icon-img-lg"> 場所
                         </a>
                     </li>
                     <li class="nav-item">
                         {% set is_plantings = request.endpoint and request.endpoint.startswith('plantings.') %}
                         <a class="nav-link {% if is_plantings %}active{% endif %}" href="{{ url_for('plantings.index') }}" {% if is_plantings %}aria-current="page"{% endif %}>
-                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img"> 植え付け
+                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img icon-img-lg"> 植え付け
                         </a>
                     </li>
                     <li class="nav-item">
                         {% set is_harvests = request.endpoint and request.endpoint.startswith('harvests.') %}
                         <a class="nav-link {% if is_harvests %}active{% endif %}" href="{{ url_for('harvests.list') }}" {% if is_harvests %}aria-current="page"{% endif %}>
-                            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img"> 収穫
+                            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img icon-img-lg"> 収穫
                         </a>
                     </li>
                     <li class="nav-item">
                         {% set is_diary = request.endpoint and request.endpoint.startswith('diary.') %}
                         <a class="nav-link {% if is_diary %}active{% endif %}" href="{{ url_for('diary.list') }}" {% if is_diary %}aria-current="page"{% endif %}>
-                            <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img"> 日記
+                            <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg"> 日記
                         </a>
                     </li>
                     <li class="nav-item">
                         {% set is_tasks = request.endpoint and request.endpoint.startswith('tasks.') %}
                         <a class="nav-link {% if is_tasks %}active{% endif %}" href="{{ url_for('tasks.list') }}" {% if is_tasks %}aria-current="page"{% endif %}>
-                            <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img"> タスク
+                            <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img icon-img-lg"> タスク
                         </a>
                     </li>
                     <li class="nav-item">
                         {% set is_calendar = request.endpoint and request.endpoint.startswith('calendar.') %}
                         <a class="nav-link {% if is_calendar %}active{% endif %}" href="{{ url_for('calendar.index') }}" {% if is_calendar %}aria-current="page"{% endif %}>
-                            <img src="{{ url_for('static', filename='images/icon_calendar.png') }}" alt="" class="icon-img"> カレンダー
+                            <img src="{{ url_for('static', filename='images/icon_calendar.png') }}" alt="" class="icon-img icon-img-lg"> カレンダー
                         </a>
                     </li>
                 </ul>
