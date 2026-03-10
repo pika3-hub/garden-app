@@ -2,6 +2,38 @@
 
 {% block title %}{% if crop %}作物編集{% else %}作物登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
 
+{% block extra_css %}
+<style>
+.crop-icon-circle-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #4CAF50;
+}
+.crop-icon-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px dashed #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+.icon-picker-item {
+  transition: border-color 0.15s;
+}
+.icon-picker-item:hover {
+  border-color: #aaa !important;
+}
+.icon-picker-item.selected {
+  border-color: var(--icon-color, #4CAF50) !important;
+  box-shadow: 0 0 0 2px var(--icon-color, #4CAF50);
+}
+</style>
+{% endblock %}
+
 {% block body_bg %}<div class="page-bg-image page-bg-crop"></div>{% endblock %}
 
 {% block content %}
@@ -64,6 +96,47 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">アイコン</label>
+                        <input type="hidden" name="icon_path" id="selectedIcon" value="{{ crop.icon_path if crop else '' }}">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div id="iconPreview">
+                                {% if crop and crop.icon_path %}
+                                <img src="{{ url_for('static', filename='images/crop_icons/' ~ crop.icon_path) }}"
+                                     class="crop-icon-circle-preview"
+                                     style="border-color: {{ crop.image_color or '#4CAF50' }};">
+                                {% else %}
+                                <div class="crop-icon-placeholder"><i class="bi bi-image text-muted"></i></div>
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearIconBtn">
+                                <i class="bi bi-x-circle"></i> 選択解除
+                            </button>
+                        </div>
+                        <div class="border rounded p-2" style="max-height: 300px; overflow-y: auto;">
+                            <div class="d-flex flex-wrap gap-1" id="iconGrid">
+                                {% for icon in crop_icon_list %}
+                                <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon) }}"
+                                     class="icon-picker-item {% if crop and crop.icon_path == icon %}selected{% endif %}"
+                                     data-icon="{{ icon }}"
+                                     title="{{ icon }}"
+                                     width="48" height="48"
+                                     style="cursor: pointer; border-radius: 50%; object-fit: cover; border: 3px solid transparent;">
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <small class="text-muted">アイコンをクリックして選択</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image_color" class="form-label">イメージカラー</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="color" class="form-control form-control-color" id="image_color" name="image_color"
+                                   value="{{ crop.image_color if crop and crop.image_color else '#4CAF50' }}" style="width: 60px;">
+                            <small class="text-muted">アイコンのボーダー色として使用されます</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="image" class="form-label">画像</label>
                         {% if crop and crop.image_path %}
                         <div class="mb-2">
@@ -113,4 +186,61 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  const selectedIconInput = document.getElementById('selectedIcon');
+  const colorInput = document.getElementById('image_color');
+  const iconPreview = document.getElementById('iconPreview');
+  const iconGrid = document.getElementById('iconGrid');
+  const clearBtn = document.getElementById('clearIconBtn');
+  const iconBaseUrl = "{{ url_for('static', filename='images/crop_icons/') }}";
+
+  function getColor() {
+    return colorInput ? colorInput.value : '#4CAF50';
+  }
+
+  function updatePreview(iconName) {
+    if (iconName) {
+      iconPreview.innerHTML = `<img src="${iconBaseUrl}${iconName}"
+        class="crop-icon-circle-preview" style="border-color: ${getColor()};">`;
+    } else {
+      iconPreview.innerHTML = '<div class="crop-icon-placeholder"><i class="bi bi-image text-muted"></i></div>';
+    }
+  }
+
+  function updateSelectedStyle() {
+    const color = getColor();
+    document.querySelectorAll('#iconGrid .icon-picker-item').forEach(img => {
+      img.style.setProperty('--icon-color', color);
+    });
+    const previewImg = iconPreview.querySelector('img');
+    if (previewImg) previewImg.style.borderColor = color;
+  }
+
+  iconGrid.addEventListener('click', function(e) {
+    const item = e.target.closest('.icon-picker-item');
+    if (!item) return;
+    const icon = item.dataset.icon;
+    document.querySelectorAll('#iconGrid .icon-picker-item').forEach(i => i.classList.remove('selected'));
+    item.classList.add('selected');
+    selectedIconInput.value = icon;
+    updatePreview(icon);
+  });
+
+  if (colorInput) {
+    colorInput.addEventListener('input', updateSelectedStyle);
+  }
+
+  clearBtn.addEventListener('click', function() {
+    document.querySelectorAll('#iconGrid .icon-picker-item').forEach(i => i.classList.remove('selected'));
+    selectedIconInput.value = '';
+    updatePreview('');
+  });
+
+  updateSelectedStyle();
+})();
+</script>
 {% endblock %}

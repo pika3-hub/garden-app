@@ -31,11 +31,13 @@ class Crop:
         now = get_jst_now()
         cursor = db.execute(
             '''INSERT INTO crops (name, crop_type, variety, characteristics,
-               planting_season, harvest_season, notes, image_path, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+               planting_season, harvest_season, notes, image_path, icon_path, image_color,
+               created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['name'], data['crop_type'], data.get('variety'),
              data.get('characteristics'), data.get('planting_season'),
              data.get('harvest_season'), data.get('notes'), data.get('image_path'),
+             data.get('icon_path'), data.get('image_color', '#4CAF50'),
              now, now)
         )
         db.commit()
@@ -48,11 +50,12 @@ class Crop:
         db.execute(
             '''UPDATE crops SET name = ?, crop_type = ?, variety = ?,
                characteristics = ?, planting_season = ?, harvest_season = ?,
-               notes = ?, image_path = ?, updated_at = ?
+               notes = ?, image_path = ?, icon_path = ?, image_color = ?, updated_at = ?
                WHERE id = ?''',
             (data['name'], data['crop_type'], data.get('variety'),
              data.get('characteristics'), data.get('planting_season'),
              data.get('harvest_season'), data.get('notes'), data.get('image_path'),
+             data.get('icon_path'), data.get('image_color', '#4CAF50'),
              get_jst_now(), crop_id)
         )
         db.commit()

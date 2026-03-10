@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from app.models.crop import Crop
 from app.models.planting import Planting
 from app.models.diary import DiaryEntry
@@ -40,10 +41,16 @@ def detail(crop_id):
                           related_diaries=related_diaries)
 
 
+def _get_crop_icon_list():
+    icon_dir = os.path.join(current_app.static_folder, 'images', 'crop_icons')
+    return sorted(os.listdir(icon_dir))
+
+
 @bp.route('/new')
 def new():
     """作物登録フォーム"""
-    return render_template('crops/form.html', crop=None, action='create')
+    return render_template('crops/form.html', crop=None, action='create',
+                           crop_icon_list=_get_crop_icon_list())
 
 
 @bp.route('/create', methods=['POST'])
@@ -56,7 +63,9 @@ def create():
         'characteristics': request.form.get('characteristics'),
         'planting_season': request.form.get('planting_season'),
         'harvest_season': request.form.get('harvest_season'),
-        'notes': request.form.get('notes')
+        'notes': request.form.get('notes'),
+        'icon_path': request.form.get('icon_path') or None,
+        'image_color': request.form.get('image_color') or '#4CAF50',
     }
 
     # バリデーション
@@ -86,7 +95,8 @@ def edit(crop_id):
     if not crop:
         flash('作物が見つかりません', 'danger')
         return redirect(url_for('crops.list'))
-    return render_template('crops/form.html', crop=crop, action='update')
+    return render_template('crops/form.html', crop=crop, action='update',
+                           crop_icon_list=_get_crop_icon_list())
 
 
 @bp.route('/<int:crop_id>/update', methods=['POST'])
@@ -105,7 +115,9 @@ def update(crop_id):
         'planting_season': request.form.get('planting_season'),
         'harvest_season': request.form.get('harvest_season'),
         'notes': request.form.get('notes'),
-        'image_path': crop.get('image_path')  # 既存の画像パスを保持
+        'image_path': crop.get('image_path'),  # 既存の画像パスを保持
+        'icon_path': request.form.get('icon_path') or None,
+        'image_color': request.form.get('image_color') or '#4CAF50',
     }
 
     # バリデーション
