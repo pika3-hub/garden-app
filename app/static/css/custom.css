@@ -548,13 +548,12 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 /* Icon images */
 .icon-img    { width: 1em;     height: 1em;     vertical-align: -0.125em; display: inline-block; }
 .icon-img-sm { width: 0.875em; height: 0.875em; }
-.icon-img-lg { width: 1.5em;   height: 1.5em; }
+.icon-img-lg { width: 1.5em;   height: 1.5em;     vertical-align: -0.300em; }
 .icon-img-xl { width: 2em;     height: 2em; }
 
 /* Navbar icons → warm cream */
 .nav-link .icon-img,
 .navbar-brand-icon {
-  filter: brightness(0) invert(0.92);
   margin-right: 0.25rem;
 }
 

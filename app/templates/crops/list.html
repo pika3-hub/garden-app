@@ -2,6 +2,18 @@
 
 {% block title %}作物一覧 - 家庭菜園管理アプリ{% endblock %}
 
+{% block extra_css %}
+<style>
+.crop-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #4CAF50;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-6">
@@ -41,8 +53,14 @@
                  loading="lazy"
                  onerror="this.src='{{ url_for('static', filename='uploads/' + crop.image_path) }}'">
             {% endif %}
-            <div class="card-body">
-                <h5 class="card-title">
+            <div class="card-body position-relative">
+                {% if crop.icon_path %}
+                <img src="{{ url_for('static', filename='images/crop_icons/' ~ crop.icon_path) }}"
+                     class="crop-icon-circle position-absolute"
+                     style="border-color: {{ crop.image_color or '#4CAF50' }}; top: 0.75rem; right: 0.75rem;"
+                     alt="{{ crop.name }}">
+                {% endif %}
+                <h5 class="card-title" style="{% if crop.icon_path %}padding-right: 68px;{% endif %}">
                     <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="text-decoration-none">
                         {{ crop.name }}
                     </a>

@@ -1,0 +1,2 @@
+ALTER TABLE crops ADD COLUMN icon_path TEXT;
+ALTER TABLE crops ADD COLUMN image_color TEXT DEFAULT '#4CAF50';
