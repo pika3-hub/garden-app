@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.planting_record import PlantingRecord
 from app.models.planting import Planting
+from app.models.crop import Crop
+from app.models.location import Location
 from app.utils.upload import save_image, delete_image
 from datetime import date
 
@@ -173,3 +175,102 @@ def delete(record_id):
     if location_crop_id:
         return redirect(url_for('plantings.detail', location_crop_id=location_crop_id))
     return redirect(url_for('plantings.index'))
+
+
+@bp.route('/plant/new')
+def plant_new():
+    """植え付け登録フォーム"""
+    crops = Crop.get_all()
+    locations = Location.get_all()
+    today = date.today().isoformat()
+    return render_template('plantings/planting_form.html',
+                           planting=None,
+                           crops=crops,
+                           locations=locations,
+                           today=today)
+
+
+@bp.route('/plant/create', methods=['POST'])
+def plant_create():
+    """植え付け登録処理"""
+    location_id = request.form.get('location_id')
+    crop_id = request.form.get('crop_id')
+
+    if not location_id or not crop_id:
+        flash('場所と作物は必須です', 'danger')
+        return redirect(url_for('plantings.plant_new'))
+
+    data = {
+        'location_id': location_id,
+        'crop_id': crop_id,
+        'planted_date': request.form.get('planted_date') or None,
+        'quantity': request.form.get('quantity') or None,
+        'notes': request.form.get('notes') or None,
+    }
+
+    try:
+        new_id = Planting.plant(data)
+        flash('植え付けを登録しました', 'success')
+        return redirect(url_for('plantings.detail', location_crop_id=new_id))
+    except Exception as e:
+        flash(f'エラーが発生しました: {str(e)}', 'danger')
+        return redirect(url_for('plantings.plant_new'))
+
+
+@bp.route('/<int:location_crop_id>/edit')
+def planting_edit(location_crop_id):
+    """植え付け編集フォーム"""
+    planting = Planting.get_by_id(location_crop_id)
+    if not planting:
+        flash('植え付け情報が見つかりません', 'danger')
+        return redirect(url_for('plantings.index'))
+
+    crops = Crop.get_all()
+    locations = Location.get_all()
+    earliest_child_date = Planting.get_earliest_child_date(location_crop_id)
+
+    return render_template('plantings/planting_form.html',
+                           planting=planting,
+                           crops=crops,
+                           locations=locations,
+                           earliest_child_date=earliest_child_date,
+                           today=None)
+
+
+@bp.route('/<int:location_crop_id>/update', methods=['POST'])
+def planting_update(location_crop_id):
+    """植え付け更新処理"""
+    planting = Planting.get_by_id(location_crop_id)
+    if not planting:
+        flash('植え付け情報が見つかりません', 'danger')
+        return redirect(url_for('plantings.index'))
+
+    location_id = request.form.get('location_id')
+    crop_id = request.form.get('crop_id')
+
+    if not location_id or not crop_id:
+        flash('場所と作物は必須です', 'danger')
+        return redirect(url_for('plantings.planting_edit', location_crop_id=location_crop_id))
+
+    planted_date = request.form.get('planted_date') or None
+    if planted_date:
+        earliest = Planting.get_earliest_child_date(location_crop_id)
+        if earliest and planted_date > earliest[:10]:
+            flash(f'植え付け日は栽培記録・収穫記録の日付（{earliest[:10]}）より前の日付にしてください', 'danger')
+            return redirect(url_for('plantings.planting_edit', location_crop_id=location_crop_id))
+
+    data = {
+        'location_id': location_id,
+        'crop_id': crop_id,
+        'planted_date': planted_date,
+        'quantity': request.form.get('quantity') or None,
+        'notes': request.form.get('notes') or None,
+    }
+
+    try:
+        Planting.update_all(location_crop_id, data)
+        flash('植え付けを更新しました', 'success')
+        return redirect(url_for('plantings.detail', location_crop_id=location_crop_id))
+    except Exception as e:
+        flash(f'エラーが発生しました: {str(e)}', 'danger')
+        return redirect(url_for('plantings.planting_edit', location_crop_id=location_crop_id))

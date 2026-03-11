@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{% if planting %}植え付け編集{% else %}植え付け登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
+
+{% block body_bg %}<div class="page-bg-image page-bg-location-crop"></div>{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img icon-img-lg">
+            {% if planting %}植え付け編集{% else %}植え付け登録{% endif %}
+        </h1>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST"
+                      action="{% if planting %}{{ url_for('plantings.planting_update', location_crop_id=planting.id) }}{% else %}{{ url_for('plantings.plant_create') }}{% endif %}"
+                      class="needs-validation" novalidate>
+
+                    {% if planting %}
+                    <div class="mb-3">
+                        <label class="form-label">現在のステータス</label>
+                        <div>
+                            {% if planting.status == 'active' %}
+                            <span class="badge bg-success fs-6"><i class="bi bi-flower1"></i> 栽培中</span>
+                            {% elif planting.status == 'harvested' %}
+                            <span class="badge bg-secondary fs-6"><i class="bi bi-check-circle"></i> 栽培終了</span>
+                            {% elif planting.status == 'removed' %}
+                            <span class="badge bg-danger fs-6"><i class="bi bi-x-circle"></i> 削除済み</span>
+                            {% endif %}
+                            <small class="text-muted ms-2">※ステータスはここでは変更できません</small>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="location_id" class="form-label">場所 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="location_id" name="location_id" required>
+                                <option value="">場所を選択してください</option>
+                                {% for loc in locations %}
+                                <option value="{{ loc.id }}"
+                                    {% if planting and planting.location_id == loc.id %}selected
+                                    {% endif %}>
+                                    {{ loc.name }} ({{ loc.location_type }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">場所を選択してください</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="crop_id" class="form-label">作物 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="crop_id" name="crop_id" required>
+                                <option value="">作物を選択してください</option>
+                                {% for crop in crops %}
+                                <option value="{{ crop.id }}"
+                                    {% if planting and planting.crop_id == crop.id %}selected
+                                    {% endif %}>
+                                    {{ crop.name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %} ({{ crop.crop_type }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">作物を選択してください</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="planted_date" class="form-label">植え付け日</label>
+                        <input type="date" class="form-control" id="planted_date" name="planted_date"
+                               value="{{ planting.planted_date if planting and planting.planted_date else (today or '') }}">
+                        {% if planting and earliest_child_date %}
+                        <small class="text-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            栽培記録・収穫記録の最も古い日付（{{ earliest_child_date[:10] }}）より前の日付にしてください
+                        </small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">株数</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1"
+                               value="{{ planting.quantity if planting and planting.quantity else '' }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">メモ</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="4"
+                                  placeholder="植え付けに関するメモを記入してください">{{ planting.notes if planting and planting.notes else '' }}</textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('plantings.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> {% if planting %}更新{% else %}登録{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-lightbulb"></i> 入力のヒント</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>場所</strong><br>
+                    <small>作物を植え付けた場所（畑やプランターなど）を選択します</small>
+                </p>
+                <p class="mb-2"><strong>作物</strong><br>
+                    <small>植え付けた作物を選択します</small>
+                </p>
+                <p class="mb-2"><strong>植え付け日</strong><br>
+                    <small>実際に植え付けた日付を入力します</small>
+                </p>
+                <p class="mb-2"><strong>株数</strong><br>
+                    <small>植え付けた株数を入力します（任意）</small>
+                </p>
+                <p class="mb-0"><strong>メモ</strong><br>
+                    <small>植え付けに関する備考などを自由に記入できます</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+</script>
+{% endblock %}

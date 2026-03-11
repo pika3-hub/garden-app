@@ -95,11 +95,6 @@
                     <a href="{{ url_for('harvests.edit', harvest_id=harvest.id) }}" class="btn btn-sm btn-outline-secondary">
                         <i class="bi bi-pencil"></i> 編集
                     </a>
-                    <form method="POST" action="{{ url_for('harvests.delete', harvest_id=harvest.id) }}" class="d-inline" onsubmit="return confirm('この収穫記録を削除しますか？');">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                            <i class="bi bi-trash"></i> 削除
-                        </button>
-                    </form>
                 </div>
             </div>
         </div>
