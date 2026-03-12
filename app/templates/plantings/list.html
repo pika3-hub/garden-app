@@ -94,35 +94,17 @@
                 {% endif %}
             </div>
             <div class="card-footer bg-transparent">
-                {% if crop.status == 'active' %}
-                <div class="btn-group-action mb-1">
-                    <a href="{{ url_for('plantings.new', location_crop_id=crop.id) }}"
-                       class="btn btn-sm btn-outline-info">
-                        <i class="bi bi-plus-circle"></i> 栽培記録を追加
-                    </a>
-                    <a href="{{ url_for('harvests.new', location_crop_id=crop.id) }}"
-                       class="btn btn-sm btn-outline-success">
-                        <i class="bi bi-basket"></i> 収穫を記録
-                    </a>
-                    <form method="POST"
-                          action="{{ url_for('locations.complete_harvest', location_id=crop.location_id, location_crop_id=crop.id) }}"
-                          class="d-inline"
-                          onsubmit="return confirm('この作物の栽培を終了しますか？');">
-                        <button type="submit" class="btn btn-sm btn-outline-warning">
-                            <i class="bi bi-check-circle"></i> 栽培終了
-                        </button>
-                    </form>
-                </div>
-                {% endif %}
                 <div class="btn-group-action">
                     <a href="{{ url_for('plantings.detail', location_crop_id=crop.id) }}"
                        class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-eye"></i> 詳細
                     </a>
+                    {% if crop.status == 'active' %}
                     <a href="{{ url_for('plantings.planting_edit', location_crop_id=crop.id) }}"
                        class="btn btn-sm btn-outline-secondary">
                         <i class="bi bi-pencil"></i> 編集
                     </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

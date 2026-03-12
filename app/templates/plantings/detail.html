@@ -77,6 +77,7 @@
         </div>
     </div>
 
+    {% if location_crop.status == 'active' %}
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
@@ -84,10 +85,19 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
+                    <span class="text-muted">植え付け情報の編集・削除をする</span>
                     <a href="{{ url_for('plantings.planting_edit', location_crop_id=location_crop.id) }}" class="btn btn-outline-secondary">
                         <i class="bi bi-pencil"></i> 植え付けを編集
                     </a>
-                    {% if location_crop.status == 'active' %}
+                    <form method="POST"
+                          action="{{ url_for('locations.remove_crop', location_id=location_crop.location_id, location_crop_id=location_crop.id) }}"
+                          onsubmit="return confirm('削除してもよろしいですか？');">
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="bi bi-x-circle"></i> 植え付けを削除
+                        </button>
+                    </form>
+                    <hr class="my-3">
+                    <span class="text-muted">栽培・収穫情報の記録をする</span>
                     <a href="{{ url_for('plantings.new', location_crop_id=location_crop.id) }}" class="btn btn-outline-info">
                         <i class="bi bi-plus-circle"></i> 栽培記録を追加
                     </a>
@@ -98,25 +108,14 @@
                           action="{{ url_for('locations.complete_harvest', location_id=location_crop.location_id, location_crop_id=location_crop.id) }}"
                           onsubmit="return confirm('この作物の栽培を終了しますか？');">
                         <button type="submit" class="btn btn-outline-warning w-100">
-                            <i class="bi bi-check-circle"></i> 栽培終了
+                            <i class="bi bi-check-circle"></i> 栽培を終了
                         </button>
                     </form>
-                    <form method="POST"
-                          action="{{ url_for('locations.remove_crop', location_id=location_crop.location_id, location_crop_id=location_crop.id) }}"
-                          onsubmit="return confirm('削除してもよろしいですか？');">
-                        <button type="submit" class="btn btn-outline-danger w-100">
-                            <i class="bi bi-x-circle"></i> 削除
-                        </button>
-                    </form>
-                    {% else %}
-                    <a href="{{ url_for('plantings.index') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-list"></i> 一覧に戻る
-                    </a>
-                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <!-- 下段: 栽培記録一覧 -->
