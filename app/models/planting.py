@@ -260,6 +260,35 @@ class Planting:
         return [dict(crop) for crop in crops]
 
     @staticmethod
+    def update_all(location_crop_id, data):
+        """植え付けデータを全フィールド更新（location_id, crop_id含む）"""
+        db = get_db()
+        db.execute(
+            '''UPDATE plantings
+               SET location_id = ?, crop_id = ?, planted_date = ?,
+                   quantity = ?, notes = ?, updated_at = ?
+               WHERE id = ?''',
+            (data['location_id'], data['crop_id'],
+             data.get('planted_date'), data.get('quantity'),
+             data.get('notes'), get_jst_now(), location_crop_id)
+        )
+        db.commit()
+
+    @staticmethod
+    def get_earliest_child_date(location_crop_id):
+        """この植え付けに紐づく最も古い子レコードの日付を取得"""
+        db = get_db()
+        record = db.execute(
+            '''SELECT MIN(d) as earliest FROM (
+                   SELECT MIN(recorded_at) as d FROM planting_records WHERE location_crop_id = ?
+                   UNION ALL
+                   SELECT MIN(harvest_date) as d FROM harvests WHERE location_crop_id = ?
+               )''',
+            (location_crop_id, location_crop_id)
+        ).fetchone()
+        return record['earliest'] if record else None
+
+    @staticmethod
     def get_recent(limit=5):
         """最近植え付けた作物を取得（作物・場所情報付き）"""
         db = get_db()
