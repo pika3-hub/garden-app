@@ -137,7 +137,7 @@ class CanvasEditor {
         // Label
         const label = document.createElement('div');
         label.className = 'placed-crop-label';
-        label.textContent = data.cropName;
+        label.textContent = data.variety ? `${data.variety}（${data.cropName}）` : data.cropName;
         el.appendChild(label);
 
         // Events

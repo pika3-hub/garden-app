@@ -29,10 +29,12 @@ def detail(location_crop_id):
         return redirect(url_for('plantings.index'))
 
     records = PlantingRecord.get_by_location_crop(location_crop_id)
+    location = Location.get_by_id(location_crop['location_id'])
 
     return render_template('plantings/detail.html',
                           records=records,
-                          location_crop=location_crop)
+                          location_crop=location_crop,
+                          location=location)
 
 
 @bp.route('/record/<int:record_id>')

@@ -2,6 +2,14 @@
 
 {% block title %}植え付け詳細 - {{ location_crop.crop_name }} - 家庭菜園管理アプリ{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/canvas.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/canvas-preview.js') }}"></script>
+{% endblock %}
+
 {% block body_bg %}<div class="page-bg-image page-bg-location-crop"></div>{% endblock %}
 
 {% block content %}
@@ -117,6 +125,22 @@
     </div>
     {% endif %}
 </div>
+
+<!-- 見取り図プレビュー -->
+{% if location %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-map"></i> 見取り図での配置位置</h5>
+    </div>
+    <div class="card-body d-flex justify-content-center">
+        {% with preview_location_id=location.id,
+                preview_bg_image=location.bg_image,
+                preview_highlight_id=location_crop.id %}
+        {% include 'locations/_canvas_preview.html' %}
+        {% endwith %}
+    </div>
+</div>
+{% endif %}
 
 <!-- 下段: 栽培記録一覧 -->
 <h4 class="mb-3"><i class="bi bi-journal-text text-info"></i> 栽培記録</h4>

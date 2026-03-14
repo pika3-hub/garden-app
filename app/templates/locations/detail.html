@@ -2,6 +2,14 @@
 
 {% block title %}{{ location.name }} - 場所詳細{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/canvas.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/canvas-preview.js') }}"></script>
+{% endblock %}
+
 {% block body_bg %}<div class="page-bg-image page-bg-location"></div>{% endblock %}
 
 {% block content %}
@@ -65,23 +73,16 @@
 
         <!-- 見取り図カード -->
         <div class="card mb-3">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-map"></i> 見取り図</h5>
+                <a href="{{ url_for('locations.canvas', location_id=location.id) }}" class="btn btn-sm btn-light">
+                    <i class="bi bi-pencil"></i> 編集
+                </a>
             </div>
-            <div class="card-body text-center">
-                {% if location.canvas_data %}
-                <p class="text-muted">見取り図が設定されています</p>
-                <a href="{{ url_for('locations.canvas', location_id=location.id) }}"
-                   class="btn btn-primary">
-                    <i class="bi bi-pencil"></i> 見取り図を編集
-                </a>
-                {% else %}
-                <p class="text-muted">まだ見取り図が作成されていません</p>
-                <a href="{{ url_for('locations.canvas', location_id=location.id) }}"
-                   class="btn btn-outline-primary">
-                    <i class="bi bi-plus-circle"></i> 見取り図を作成
-                </a>
-                {% endif %}
+            <div class="card-body d-flex justify-content-center">
+                {% with preview_location_id=location.id, preview_bg_image=location.bg_image %}
+                {% include 'locations/_canvas_preview.html' %}
+                {% endwith %}
             </div>
         </div>
 
