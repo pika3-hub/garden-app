@@ -55,7 +55,8 @@ def detail(location_id):
 @bp.route('/new')
 def new():
     """場所登録フォーム"""
-    return render_template('locations/form.html', location=None, action='create')
+    bg_images = Location.get_bg_images()
+    return render_template('locations/form.html', location=None, action='create', bg_images=bg_images)
 
 
 @bp.route('/create', methods=['POST'])
@@ -66,7 +67,8 @@ def create():
         'location_type': request.form.get('location_type'),
         'area_size': request.form.get('area_size'),
         'sun_exposure': request.form.get('sun_exposure'),
-        'notes': request.form.get('notes')
+        'notes': request.form.get('notes'),
+        'bg_image': request.form.get('bg_image') or None
     }
 
     # バリデーション
@@ -96,7 +98,8 @@ def edit(location_id):
     if not location:
         flash('場所が見つかりません', 'danger')
         return redirect(url_for('locations.list'))
-    return render_template('locations/form.html', location=location, action='update')
+    bg_images = Location.get_bg_images()
+    return render_template('locations/form.html', location=location, action='update', bg_images=bg_images)
 
 
 @bp.route('/<int:location_id>/update', methods=['POST'])
@@ -113,7 +116,8 @@ def update(location_id):
         'area_size': request.form.get('area_size'),
         'sun_exposure': request.form.get('sun_exposure'),
         'notes': request.form.get('notes'),
-        'image_path': location.get('image_path')  # 既存の画像パスを保持
+        'image_path': location.get('image_path'),  # 既存の画像パスを保持
+        'bg_image': request.form.get('bg_image') or None
     }
 
     # バリデーション
@@ -243,7 +247,7 @@ def get_canvas_data(location_id):
     if canvas_data:
         return jsonify(canvas_data)
     else:
-        return jsonify({'version': '1.0', 'objects': []})
+        return jsonify({'version': '2.0', 'placements': []})
 
 
 @bp.route('/<int:location_id>/canvas/save', methods=['POST'])
@@ -252,17 +256,17 @@ def save_canvas_data(location_id):
     try:
         canvas_data = request.get_json()
         Location.save_canvas_data(location_id, canvas_data)
-        return jsonify({'status': 'success'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 400
 
+        # placements から各作物の位置を更新
+        if canvas_data and 'placements' in canvas_data:
+            # 同一 locationCropId の最初の配置座標を保存
+            seen = set()
+            for p in canvas_data['placements']:
+                lc_id = p.get('locationCropId')
+                if lc_id and lc_id not in seen:
+                    seen.add(lc_id)
+                    Planting.update_position(lc_id, p.get('x', 0), p.get('y', 0))
 
-@bp.route('/<int:location_id>/crops/<int:location_crop_id>/position', methods=['POST'])
-def update_crop_position(location_id, location_crop_id):
-    """作物位置更新API"""
-    try:
-        data = request.get_json()
-        Planting.update_position(location_crop_id, data['x'], data['y'])
         return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
