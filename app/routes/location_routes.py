@@ -264,6 +264,25 @@ def get_canvas_data(location_id):
         return jsonify({'version': '2.0', 'placements': []})
 
 
+@bp.route('/<int:location_id>/canvas/history/range', methods=['GET'])
+def canvas_history_range(location_id):
+    """見取り図に変化がある日付一覧を返すAPI"""
+    dates = Planting.get_historical_change_dates(location_id)
+    if dates:
+        return jsonify({'dates': dates})
+    return jsonify({'dates': []})
+
+
+@bp.route('/<int:location_id>/canvas/history', methods=['GET'])
+def canvas_history(location_id):
+    """指定日付の見取り図配置データを返すAPI"""
+    target_date = request.args.get('date')
+    if not target_date:
+        return jsonify({'error': 'date parameter is required'}), 400
+    data = Planting.get_historical_canvas_data(location_id, target_date)
+    return jsonify(data)
+
+
 @bp.route('/<int:location_id>/canvas/save', methods=['POST'])
 def save_canvas_data(location_id):
     """キャンバスデータ保存API"""

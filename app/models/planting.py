@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.database import get_db
 from app.utils.timezone import get_jst_now
@@ -302,6 +302,149 @@ class Planting:
             (location_crop_id, location_crop_id)
         ).fetchone()
         return record['earliest'] if record else None
+
+    @staticmethod
+    def _get_canvas_placement_map(location_id):
+        """locations.canvas_data から locationCropId → [配置情報] のマップを構築"""
+        from app.models.location import Location
+        canvas_data = Location.get_canvas_data(location_id)
+        placement_map = {}
+        if canvas_data and canvas_data.get('version') == '2.0':
+            for p in canvas_data.get('placements', []):
+                lc_id = p.get('locationCropId')
+                if lc_id is not None:
+                    placement_map.setdefault(lc_id, []).append(p)
+        return placement_map
+
+    @staticmethod
+    def _get_snapshot_placements(canvas_snapshot, location_crop_id):
+        """canvas_snapshot JSON から該当 locationCropId の配置リストを返す"""
+        if not canvas_snapshot:
+            return []
+        try:
+            snap = json.loads(canvas_snapshot)
+            if snap.get('version') == '2.0':
+                return [p for p in snap.get('placements', [])
+                        if p.get('locationCropId') == location_crop_id]
+        except (json.JSONDecodeError, TypeError):
+            pass
+        return []
+
+    @staticmethod
+    def get_historical_change_dates(location_id):
+        """見取り図に変化がある日付の一覧を返す（位置情報を持つ植え付けのみ対象）"""
+        db = get_db()
+        rows = db.execute(
+            '''SELECT id, DATE(planted_date) as planted, DATE(end_date) as ended,
+                      status, canvas_snapshot
+               FROM plantings
+               WHERE location_id = ? AND planted_date IS NOT NULL
+                 AND NOT (end_date IS NULL AND status = 'harvested')''',
+            (location_id,)
+        ).fetchall()
+
+        # active 作物用: locations.canvas_data から位置マップを取得
+        canvas_map = Planting._get_canvas_placement_map(location_id)
+
+        # 位置情報を持つ（プレビュー再現可能な）植え付けのみ抽出
+        renderable = []
+        for r in rows:
+            if r['status'] == 'active':
+                has_pos = r['id'] in canvas_map
+            else:
+                has_pos = len(Planting._get_snapshot_placements(
+                    r['canvas_snapshot'], r['id'])) > 0
+            if has_pos:
+                renderable.append({'planted': r['planted'], 'ended': r['ended']})
+
+        if not renderable:
+            return None
+
+        # 候補日付を収集
+        candidate_dates = set()
+        for p in renderable:
+            candidate_dates.add(p['planted'])
+            if p['ended']:
+                candidate_dates.add(p['ended'])
+
+        # 各候補日付について、再現可能な植え付けが1つでも表示されるか確認
+        valid_dates = []
+        for d in sorted(candidate_dates):
+            for p in renderable:
+                if p['planted'] <= d and (p['ended'] is None or p['ended'] >= d):
+                    valid_dates.append(d)
+                    break
+
+        if not valid_dates:
+            return None
+
+        # 左端: 最初の植え付け日の1日前を追加（何もない状態）
+        first_date = valid_dates[0]
+        day_before = (datetime.strptime(first_date, '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')
+        valid_dates.insert(0, day_before)
+
+        # 右端: 今日の日付を追加（重複は除く）
+        today = get_jst_now()[:10]
+        if valid_dates[-1] != today:
+            valid_dates.append(today)
+        return valid_dates
+
+    @staticmethod
+    def get_historical_canvas_data(location_id, target_date):
+        """指定日付の見取り図配置データを返す（version 2.0形式）
+        - active 作物: locations.canvas_data から位置取得（複数配置対応）
+        - harvested 作物: plantings.canvas_snapshot から位置取得
+        """
+        db = get_db()
+        rows = db.execute(
+            '''SELECT lc.id as location_crop_id, lc.crop_id, lc.status,
+                      lc.canvas_snapshot,
+                      c.name as crop_name, c.variety, c.icon_path, c.image_color
+               FROM plantings lc
+               JOIN crops c ON lc.crop_id = c.id
+               WHERE lc.location_id = ? AND lc.planted_date IS NOT NULL
+                 AND DATE(lc.planted_date) <= ?
+                 AND NOT (lc.end_date IS NULL AND lc.status = 'harvested')
+                 AND (lc.end_date IS NULL OR DATE(lc.end_date) >= ?)''',
+            (location_id, target_date, target_date)
+        ).fetchall()
+
+        # active 作物用: locations.canvas_data から位置マップを取得
+        canvas_map = Planting._get_canvas_placement_map(location_id)
+
+        placements = []
+        for row in rows:
+            r = dict(row)
+            lc_id = r['location_crop_id']
+            base = {
+                'cropId': r['crop_id'],
+                'iconPath': r['icon_path'],
+                'imageColor': r['image_color'],
+                'cropName': r['crop_name'],
+                'variety': r['variety']
+            }
+
+            if r['status'] == 'active':
+                # active: locations.canvas_data から取得（複数配置対応）
+                for p in canvas_map.get(lc_id, []):
+                    placements.append({
+                        **base,
+                        'locationCropId': lc_id,
+                        'x': p.get('x', 0),
+                        'y': p.get('y', 0),
+                    })
+            else:
+                # harvested: canvas_snapshot から取得
+                for p in Planting._get_snapshot_placements(
+                        r['canvas_snapshot'], lc_id):
+                    placements.append({
+                        **base,
+                        'locationCropId': lc_id,
+                        'x': p.get('x', 0),
+                        'y': p.get('y', 0),
+                    })
+
+        return {'version': '2.0', 'placements': placements}
 
     @staticmethod
     def get_recent(limit=5):

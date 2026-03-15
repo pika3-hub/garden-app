@@ -107,10 +107,20 @@ class CanvasPreview {
         msg.innerHTML = '<i class="bi bi-map"></i> 見取り図が設定されていません';
         this.area.appendChild(msg);
     }
+
+    updateData(data) {
+        this.area.innerHTML = '';
+        if (data && data.version === '2.0' && data.placements && data.placements.length > 0) {
+            this._render(data.placements);
+        } else {
+            this._showEmpty();
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.canvas-preview-container').forEach(el => {
+        if (el.dataset.manualInit) return;
         new CanvasPreview(el);
     });
 });
