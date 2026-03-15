@@ -7,64 +7,69 @@ document.addEventListener('DOMContentLoaded', function() {
     // キーボードナビゲーションの設定
     initKeyboardNavigation();
 
-    // モバイル用日付詳細モーダルの設定
-    initMobileDayModal();
+    // アイコンクリックでモーダル表示
+    initCalendarIconClick();
 });
 
 /**
  * Bootstrap Tooltipを初期化
  */
 function initTooltips() {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(function(tooltipTriggerEl) {
-        new bootstrap.Tooltip(tooltipTriggerEl);
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('.calendar-icon-btn[title]'));
+    tooltipTriggerList.forEach(function(el) {
+        new bootstrap.Tooltip(el, { trigger: 'hover focus' });
     });
 }
 
 /**
- * モバイル用日付詳細モーダルを初期化
- * スマートフォン幅でセルをタップするとモーダルでアイコンを表示
+ * アイコンボタンクリックでモーダルを表示
  */
-function initMobileDayModal() {
-    var cells = document.querySelectorAll('.calendar-cell.has-data');
-    var modalEl = document.getElementById('dayDetailModal');
+function initCalendarIconClick() {
+    var modalEl = document.getElementById('calendarModal');
     if (!modalEl) return;
 
     // <main class="page-with-sky"> の z-index:0 がスタッキングコンテキストを
     // 生成し、backdrop(body直下)の背面にモーダルが隠れるため、body直下に移動
     document.body.appendChild(modalEl);
 
-    var modal = new bootstrap.Modal(modalEl);
-    var titleEl = document.getElementById('dayDetailModalLabel');
-    var iconsContainer = document.getElementById('dayDetailIcons');
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.calendar-icon-btn');
+        if (!btn) return;
+        e.preventDefault();
 
-    cells.forEach(function(cell) {
-        cell.addEventListener('click', function(e) {
-            // デスクトップ幅では無効
-            if (window.innerWidth > 575.98) return;
+        var typeLabel = btn.dataset.typeLabel;
+        var dateStr = btn.dataset.date;
+        var items = JSON.parse(btn.dataset.items);
 
-            e.preventDefault();
+        // モーダルタイトル: "2026年3月15日 ― 作物"
+        var parts = dateStr.split('-');
+        var y = parseInt(parts[0], 10);
+        var m = parseInt(parts[1], 10);
+        var d = parseInt(parts[2], 10);
+        document.getElementById('calendarModalTitle').textContent =
+            y + '年' + m + '月' + d + '日 ― ' + typeLabel;
 
-            // 日付を取得してフォーマット
-            var dateStr = cell.getAttribute('data-date');
-            if (!dateStr) return;
-            var parts = dateStr.split('-');
-            var year = parseInt(parts[0], 10);
-            var month = parseInt(parts[1], 10);
-            var day = parseInt(parts[2], 10);
-            titleEl.textContent = year + '年' + month + '月' + day + '日';
+        // モーダルボディ: アイテムリスト
+        var body = document.getElementById('calendarModalBody');
+        body.innerHTML = items.map(function(item) {
+            return '<a href="' + item.url + '" class="list-group-item list-group-item-action">' +
+                   escapeHtml(item.label) + '</a>';
+        }).join('');
 
-            // セル内のアイコンをクローンしてモーダルに挿入
-            iconsContainer.innerHTML = '';
-            var dayIcons = cell.querySelector('.day-icons');
-            if (dayIcons) {
-                var clone = dayIcons.cloneNode(true);
-                iconsContainer.appendChild(clone);
-            }
-
-            modal.show();
-        });
+        var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
     });
+}
+
+/**
+ * HTML特殊文字をエスケープ
+ */
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 /**

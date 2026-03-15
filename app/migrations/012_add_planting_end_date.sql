@@ -1,0 +1,1 @@
+ALTER TABLE plantings ADD COLUMN end_date DATE DEFAULT NULL;

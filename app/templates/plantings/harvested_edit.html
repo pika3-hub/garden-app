@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}植え付け編集 - {{ planting.crop_name }} - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img icon-img-lg">
+            植え付け編集（栽培終了）
+        </h1>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('plantings.detail', location_crop_id=planting.id) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 詳細に戻る
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-flower1"></i> {{ planting.crop_name }}{% if planting.variety %}（{{ planting.variety }}）{% endif %}
+                    <span class="text-white-50">@ {{ planting.location_name }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('plantings.planting_update_harvested', location_crop_id=planting.id) }}">
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">栽培終了日</label>
+                        <input type="date" id="end_date" name="end_date" class="form-control"
+                               value="{{ planting.end_date or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">メモ</label>
+                        <textarea id="notes" name="notes" class="form-control" rows="4">{{ planting.notes or '' }}</textarea>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> 更新する
+                        </button>
+                        <a href="{{ url_for('plantings.detail', location_crop_id=planting.id) }}" class="btn btn-outline-secondary">
+                            キャンセル
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

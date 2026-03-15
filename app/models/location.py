@@ -112,6 +112,23 @@ class Location:
         return None
 
     @staticmethod
+    def remove_from_canvas(location_id, location_crop_id):
+        """見取り図から指定の植え付けを削除"""
+        canvas_data = Location.get_canvas_data(location_id)
+        if not canvas_data or 'placements' not in canvas_data:
+            return
+        canvas_data['placements'] = [
+            p for p in canvas_data['placements']
+            if p.get('locationCropId') != location_crop_id
+        ]
+        db = get_db()
+        db.execute(
+            'UPDATE locations SET canvas_data = ?, updated_at = ? WHERE id = ?',
+            (json.dumps(canvas_data, ensure_ascii=False), get_jst_now(), location_id)
+        )
+        db.commit()
+
+    @staticmethod
     def save_canvas_data(location_id, canvas_dict):
         """キャンバスデータをJSON形式で保存"""
         from app.models.planting import Planting

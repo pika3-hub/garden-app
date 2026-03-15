@@ -206,7 +206,9 @@ def plant(location_id):
 def complete_harvest(location_id, location_crop_id):
     """栽培終了（収穫済みステータスに変更）"""
     try:
-        Planting.harvest(location_crop_id)
+        end_date = request.form.get('end_date') or None
+        Planting.harvest(location_crop_id, end_date=end_date)
+        Location.remove_from_canvas(location_id, location_crop_id)
         flash('栽培を終了しました', 'success')
     except Exception as e:
         flash(f'エラーが発生しました: {str(e)}', 'danger')

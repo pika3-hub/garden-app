@@ -43,10 +43,13 @@ class Calendar:
             date_str = crop['date']
             if date_str not in result:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
+            variety_str = f"（{crop['variety']}）" if crop['variety'] else ''
             result[date_str]['crops'].append({
                 'id': crop['id'],
                 'name': crop['name'],
-                'variety': crop['variety']
+                'variety': crop['variety'],
+                'label': f"{crop['name']}{variety_str}",
+                'url': f"/crops/{crop['id']}"
             })
 
         # 場所を取得 (created_atの日付部分で取得)
@@ -63,7 +66,9 @@ class Calendar:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
             result[date_str]['locations'].append({
                 'id': location['id'],
-                'name': location['name']
+                'name': location['name'],
+                'label': f"{location['name']}",
+                'url': f"/locations/{location['id']}"
             })
 
         # 日記を取得 (entry_dateで取得)
@@ -80,7 +85,9 @@ class Calendar:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
             result[date_str]['diaries'].append({
                 'id': diary['id'],
-                'title': diary['title']
+                'title': diary['title'],
+                'label': f"{diary['title']}",
+                'url': f"/diary/{diary['id']}"
             })
 
         # 栽培中を取得 (planted_dateで取得)
@@ -98,12 +105,15 @@ class Calendar:
             date_str = lc['date']
             if date_str not in result:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
+            variety_str = f"（{lc['variety']}）" if lc['variety'] else ''
             result[date_str]['location_crops'].append({
                 'id': lc['id'],
                 'location_id': lc['location_id'],
                 'crop_name': lc['crop_name'],
                 'variety': lc['variety'],
-                'location_name': lc['location_name']
+                'location_name': lc['location_name'],
+                'label': f"{lc['crop_name']}{variety_str}@{lc['location_name']}",
+                'url': f"/plantings/{lc['id']}"
             })
 
         # 収穫を取得 (harvest_dateで取得)
@@ -121,12 +131,16 @@ class Calendar:
             date_str = harvest['date']
             if date_str not in result:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
+            variety_str = f"（{harvest['variety']}）" if harvest['variety'] else ''
+            qty_str = f" {harvest['quantity']}{harvest['unit'] or ''}" if harvest['quantity'] else ''
             result[date_str]['harvests'].append({
                 'id': harvest['id'],
                 'crop_name': harvest['crop_name'],
                 'variety': harvest['variety'],
                 'quantity': harvest['quantity'],
-                'unit': harvest['unit']
+                'unit': harvest['unit'],
+                'label': f"{harvest['crop_name']}{variety_str}{qty_str}",
+                'url': f"/harvests/{harvest['id']}"
             })
 
         # タスクを取得 (due_dateで取得)
@@ -144,7 +158,9 @@ class Calendar:
             result[date_str]['tasks'].append({
                 'id': task['id'],
                 'title': task['title'],
-                'status': task['status']
+                'status': task['status'],
+                'label': f"{task['title']}",
+                'url': f"/tasks/{task['id']}"
             })
 
         # 栽培記録を取得 (recorded_atで取得)
@@ -167,12 +183,15 @@ class Calendar:
                     'location_crops': [], 'harvests': [], 'tasks': [],
                     'growth_records': []
                 }
+            variety_str = f"（{gr['variety']}）" if gr['variety'] else ''
             result[date_str]['growth_records'].append({
                 'id': gr['id'],
                 'location_crop_id': gr['location_crop_id'],
                 'crop_name': gr['crop_name'],
                 'variety': gr['variety'],
-                'location_name': gr['location_name']
+                'location_name': gr['location_name'],
+                'label': f"{gr['crop_name']}{variety_str}@{gr['location_name']}",
+                'url': f"/plantings/record/{gr['id']}"
             })
 
         return result
