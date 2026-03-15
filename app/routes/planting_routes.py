@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.planting_record import PlantingRecord
 from app.models.planting import Planting
@@ -32,11 +33,19 @@ def detail(location_crop_id):
     location = Location.get_by_id(location_crop['location_id'])
     today = date.today().isoformat()
 
+    canvas_snapshot = None
+    if location_crop.get('canvas_snapshot'):
+        try:
+            canvas_snapshot = json.loads(location_crop['canvas_snapshot'])
+        except (json.JSONDecodeError, TypeError):
+            canvas_snapshot = None
+
     return render_template('plantings/detail.html',
                           records=records,
                           location_crop=location_crop,
                           location=location,
-                          today=today)
+                          today=today,
+                          canvas_snapshot=canvas_snapshot)
 
 
 @bp.route('/record/<int:record_id>')

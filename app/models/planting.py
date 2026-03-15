@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from app.database import get_db
@@ -115,13 +116,15 @@ class Planting:
         db.commit()
 
     @staticmethod
-    def harvest(location_crop_id, end_date=None):
+    def harvest(location_crop_id, end_date=None, canvas_snapshot=None):
         """収穫済みに変更"""
         db = get_db()
         db.execute(
-            '''UPDATE plantings SET status = 'harvested', end_date = ?, updated_at = ?
-               WHERE id = ?''',
-            (end_date or get_jst_now()[:10], get_jst_now(), location_crop_id)
+            '''UPDATE plantings SET status = 'harvested', end_date = ?,
+               canvas_snapshot = ?, updated_at = ? WHERE id = ?''',
+            (end_date or get_jst_now()[:10],
+             json.dumps(canvas_snapshot, ensure_ascii=False) if canvas_snapshot else None,
+             get_jst_now(), location_crop_id)
         )
         db.commit()
 

@@ -19,6 +19,22 @@ class CanvasPreview {
             this.area.style.backgroundImage = `url('/static/images/location_bg_images/${this.bgImage}')`;
         }
 
+        // インライン JSON がある場合はそちらを優先
+        const inlineJson = this.container.dataset.canvasJson;
+        if (inlineJson) {
+            try {
+                const data = JSON.parse(inlineJson);
+                if (data.version === '2.0' && data.placements?.length > 0) {
+                    this._render(data.placements);
+                } else {
+                    this._showEmpty();
+                }
+            } catch {
+                this._showEmpty();
+            }
+            return;
+        }
+
         try {
             const res = await fetch(`/locations/${this.locationId}/canvas/data`);
             const data = await res.json();
