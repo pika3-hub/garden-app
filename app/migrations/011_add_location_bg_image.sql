@@ -1,0 +1,1 @@
+ALTER TABLE locations ADD COLUMN bg_image TEXT DEFAULT NULL;

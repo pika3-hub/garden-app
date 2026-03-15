@@ -57,6 +57,34 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">見取り図背景画像</label>
+                        <input type="hidden" name="bg_image" id="bg_image" value="{{ location.bg_image if location and location.bg_image else '' }}">
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="bg-image-option {% if not location or not location.bg_image %}selected{% endif %}"
+                                 data-value="" onclick="selectBgImage(this)">
+                                <div class="bg-image-none d-flex align-items-center justify-content-center"
+                                     style="width:100px;height:75px;border:2px solid #ccc;border-radius:6px;background:#f8f8f8;">
+                                    <small class="text-muted">なし</small>
+                                </div>
+                            </div>
+                            {% for img in bg_images %}
+                            <div class="bg-image-option {% if location and location.bg_image == img %}selected{% endif %}"
+                                 data-value="{{ img }}" onclick="selectBgImage(this)">
+                                <img src="{{ url_for('static', filename='images/location_bg_images/' + img) }}"
+                                     alt="{{ img }}" style="width:100px;height:75px;object-fit:cover;border:2px solid #ccc;border-radius:6px;">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <style>
+                            .bg-image-option { cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+                            .bg-image-option:hover { opacity: 1; }
+                            .bg-image-option.selected { opacity: 1; }
+                            .bg-image-option.selected img,
+                            .bg-image-option.selected .bg-image-none { border-color: #4CAF50 !important; box-shadow: 0 0 0 2px #4CAF50; }
+                        </style>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="image" class="form-label">画像</label>
                         {% if location and location.image_path %}
                         <div class="mb-2">
@@ -106,4 +134,14 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectBgImage(el) {
+    document.querySelectorAll('.bg-image-option').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('bg_image').value = el.dataset.value;
+}
+</script>
 {% endblock %}

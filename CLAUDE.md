@@ -14,7 +14,8 @@
 ### 主な機能
 - **作物管理:** 作物の種類、品種、特徴のCRUD操作
 - **場所管理:** 畑やプランターの場所のCRUD、画像サポート付き
-- **キャンバスエディター:** Fabric.jsを使用したビジュアル菜園レイアウトデザイナー（作物、図形、テキストのドラッグ&ドロップ）
+- **キャンバスエディター:** バニラJSベースのビジュアル菜園レイアウトデザイナー（作物アイコンのドラッグ&ドロップ配置、背景画像選択）
+- **見取り図プレビュー:** 場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）
 - **栽培記録:** 作物と場所をリンクし、ステータス追跡（栽培中/栽培終了/削除済み）、タブフィルター付き一覧（`/plantings/`）、栽培観察記録の登録・管理
 - **収穫記録:** 複数回の収穫を記録、収穫量・単位・メモ・画像対応、植え付けからの日数自動計算
 - **日記システム:** 複数エンティティ（作物、場所、植え付け、収穫）との関連付けと画像添付を持つ栽培日記
@@ -56,13 +57,15 @@ garden-app/
 │   ├── utils/               # ユーティリティ
 │   │   ├── upload.py        # 画像アップロードヘルパー（サムネイル自動生成含む）
 │   │   ├── migration.py     # マイグレーションユーティリティ
-│   │   └── generate_thumbnails.py  # 既存画像の一括サムネイル生成スクリプト
+│   │   ├── generate_thumbnails.py  # 既存画像の一括サムネイル生成スクリプト
+│   │   ├── split_sprite.py  # 作物アイコンスプライトシート分割ユーティリティ
+│   │   └── trim_icons.py    # アイコン余白トリムユーティリティ
 │   ├── migrations/          # データベースマイグレーション（増分SQL）
 │   ├── templates/           # Jinja2 テンプレート
 │   │   ├── base.html        # ナビバー付きベースレイアウト
 │   │   ├── index.html       # ダッシュボード
 │   │   ├── crops/           # 作物テンプレート
-│   │   ├── locations/       # 場所テンプレート（+ canvas.html）
+│   │   ├── locations/       # 場所テンプレート（canvas.html, _canvas_preview.html）
 │   │   ├── diary/           # 日記テンプレート
 │   │   ├── harvests/        # 収穫記録テンプレート
 │   │   ├── plantings/       # 栽培記録テンプレート（list/detail/record_detail/form）
@@ -70,8 +73,13 @@ garden-app/
 │   │   └── tasks/           # タスクテンプレート
 │   └── static/              # 静的アセット
 │       ├── css/             # Bootstrap カスタマイズ
-│       ├── js/              # キャンバスエディター、ユーティリティ
-│       └── uploads/         # ユーザー画像（crops/, locations/, diary/, harvests/）
+│       ├── js/              # canvas-editor.js, canvas-preview.js, ユーティリティ
+│       ├── images/          # UIアイコン・静的画像
+│       │   ├── location_bg_images/  # 見取り図の背景画像（手動配置）
+│       │   │   ├── bg_image_default.png  # デフォルト背景
+│       │   │   └── bg_image_001.png〜    # 追加背景画像
+│       │   └── crop_icons/  # 作物アイコン（icon_{row:02d}_{col:02d}.png）
+│       └── uploads/         # ユーザーアップロード画像（crops/, locations/, diary/, harvests/）
 │                            # 各フォルダに thumbs/ サブフォルダ（サムネイル置き場）
 ├── instance/                # Flask インスタンスフォルダ（garden.db）
 ├── run.py                   # アプリケーション起動スクリプト
@@ -96,8 +104,8 @@ uv run python run.py
 **使用ライブラリ:**
 - Bootstrap 5.3（CDN）
 - Bootstrap Icons（CDN）
-- Fabric.js（キャンバス機能のみ）
 - Pillow（サムネイル生成、Python依存）
+- ※ Fabric.js は削除済み（見取り図はバニラJSで実装）
 
 ### 画像サムネイル
 
@@ -109,6 +117,71 @@ uv run python run.py
 - **onerrorフォールバック**: サムネイルがない場合はオリジナルにフォールバック
 - **GIF**: サムネイル非対応のためスキップ
 - **既存画像の一括変換**: `uv run python app/utils/generate_thumbnails.py`
+
+### 見取り図機能
+
+#### アーキテクチャ
+
+| コンポーネント | ファイル | 役割 |
+|------------|--------|------|
+| エディター画面 | `locations/canvas.html` + `canvas-editor.js` | 作物配置の編集（800×800px） |
+| プレビューコンポーネント | `locations/_canvas_preview.html` + `canvas-preview.js` | 読み取り専用の表示（400×400px） |
+| CSSスタイル | `static/css/canvas.css` | エディター・プレビュー共通スタイル |
+
+#### 背景画像
+
+- **保存場所**: `app/static/images/location_bg_images/`（静的ファイル、アップロード不可）
+- **追加方法**: 画像ファイルを直接このフォルダに配置する（`bg_image_001.png` などの連番命名）
+- **対応形式**: `.png`, `.jpg`, `.jpeg`, `.webp`
+- **選択UI**: `Location.get_bg_images()` でファイル一覧を取得し、エディター画面でセレクト
+- **デフォルト**: `bg_image_default.png`
+
+#### 作物アイコン
+
+- **保存場所**: `app/static/images/crop_icons/`
+- **命名規則**: `icon_{row:02d}_{col:02d}.png`（例: `icon_01_03.png`）
+- **生成元**: スプライトシートを `split_sprite.py` で分割（12列×7行 = 84アイコン）
+
+#### データ形式（version 2.0 JSON）
+
+```json
+{
+  "version": "2.0",
+  "placements": [
+    {
+      "locationCropId": 1,
+      "cropId": 5,
+      "x": 350,
+      "y": 420,
+      "iconPath": "icon_01_03.png",
+      "imageColor": "#4CAF50",
+      "cropName": "トマト",
+      "variety": "ミニトマト"
+    }
+  ]
+}
+```
+
+- `canvas_data` カラム（`locations` テーブル、TEXT型）に JSON 文字列として保存
+- 旧形式（Fabric.js の version 1.x）は無視してプレビューを非表示にする
+
+#### APIエンドポイント
+
+| エンドポイント | メソッド | 説明 |
+|-------------|--------|------|
+| `/locations/<id>/canvas` | GET | エディター画面 |
+| `/locations/<id>/canvas/data` | GET | 配置データ取得（JSON） |
+| `/locations/<id>/canvas/save` | POST | 配置データ保存 |
+
+#### プレビューコンポーネントの使い方
+
+```html
+{% include 'locations/_canvas_preview.html' %}
+```
+
+テンプレートに渡す変数:
+- `location` — 場所オブジェクト（`location['id']`, `location['bg_image']` を使用）
+- `preview_highlight_id`（任意）— ハイライトする `location_crop_id`
 
 ### URL設計
 
@@ -153,3 +226,11 @@ uv run python run.py
 5. **CSS（任意）**: `app/static/css/{feature}.css`
 6. **JS（任意）**: `app/static/js/{feature}.js`
 7. **ナビ追加**: `app/templates/base.html` のナビゲーションに追加
+
+### ドキュメント更新チェックリスト
+
+モデルやスキーマを変更した際は必ず以下も更新すること：
+
+- **`app/models/CLAUDE.md`**: テーブル定義・カラム定義の追加・変更・削除を反映
+- **`CLAUDE.md`（このファイル）**: プロジェクト構造・機能概要・見取り図など関連セクションを更新
+- **`README.md`**: ユーザー向けの機能説明・プロジェクト構造を更新

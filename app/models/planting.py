@@ -250,6 +250,7 @@ class Planting:
         db = get_db()
         crops = db.execute(
             '''SELECT lc.*, c.name as crop_name, c.crop_type,
+               c.icon_path, c.image_color, c.variety,
                lc.position_x, lc.position_y
                FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id

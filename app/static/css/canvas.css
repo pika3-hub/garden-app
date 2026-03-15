@@ -1,5 +1,5 @@
 /**
- * Canvas Editor Styles — 田園詩テーマ
+ * Canvas Editor Styles — Simple placement editor
  */
 
 .canvas-editor {
@@ -31,72 +31,14 @@
     gap: 0.5rem;
 }
 
-#zoom-indicator {
-    font-size: 0.875rem;
-    font-weight: 500;
-    font-family: var(--font-serif);
-    min-width: 50px;
-    text-align: center;
-    color: var(--ink-soft);
-}
-
 .canvas-main {
     display: flex;
     flex: 1;
     overflow: hidden;
 }
 
-/* ツールパレット */
-.tool-palette {
-    width: 120px;
-    padding: 1rem;
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    background-color: var(--parchment);
-    overflow-y: auto;
-}
-
-.tool-palette hr {
-    width: 100%;
-    margin: 0.5rem 0;
-    border-top: 1px solid var(--border);
-}
-
-.tool-btn {
-    width: 48px;
-    height: 48px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    color: var(--ink-soft);
-}
-
-.tool-btn:hover {
-    background: var(--parchment);
-    border-color: var(--sage);
-    color: var(--forest);
-}
-
-.tool-btn.active {
-    background: var(--forest);
-    color: #F0EBE0;
-    border-color: var(--forest);
-}
-
-.tool-btn i {
-    pointer-events: none;
-}
-
-/* キャンバスコンテナ */
-.canvas-container {
+/* Canvas area wrapper */
+.canvas-area-wrapper {
     flex: 1;
     display: flex;
     justify-content: center;
@@ -106,13 +48,85 @@
     background-color: var(--cream);
 }
 
-#canvas {
+#canvas-area {
+    width: 800px;
+    height: 800px;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     border: 2px solid var(--border);
     box-shadow: 0 2px 8px rgba(43, 71, 56, 0.1);
-    background-color: var(--surface-elevated);
+    overflow: hidden;
 }
 
-/* 作物サイドバー */
+/* Placed crop icon */
+.placed-crop {
+    position: absolute;
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+    touch-action: none;
+    transition: filter 0.15s;
+    z-index: 1;
+}
+
+.placed-crop:hover {
+    filter: brightness(1.1);
+    z-index: 2;
+}
+
+.placed-crop.selected {
+    z-index: 3;
+    box-shadow: 0 0 0 3px #2196F3, 0 0 10px rgba(33, 150, 243, 0.5);
+}
+
+.placed-crop img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #4CAF50;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    pointer-events: none;
+}
+
+.placed-crop-fallback {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #4CAF50;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    pointer-events: none;
+    color: #fff;
+    font-size: 22px;
+}
+
+.placed-crop-label {
+    margin-top: 2px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #333;
+    background: rgba(255,255,255,0.85);
+    padding: 1px 6px;
+    border-radius: 3px;
+    white-space: normal;
+    max-width: 80px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-align: center;
+    word-break: break-all;
+    pointer-events: none;
+}
+
+/* Crop sidebar */
 .crop-sidebar {
     width: 250px;
     padding: 1rem;
@@ -152,20 +166,20 @@
     transform: translateX(-2px);
 }
 
-.crop-item i {
-    color: var(--ink-muted);
-}
-
-.crop-item .badge {
-    margin-left: auto;
-    font-size: 0.7rem;
-}
-
 .crop-item-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
+}
+
+.crop-sidebar .crop-icon-circle {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #4CAF50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .crop-name {
@@ -179,14 +193,134 @@
     color: var(--ink-muted);
 }
 
-/* 保存インジケーター */
+/* Info panel */
+.info-panel {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border);
+    background-color: var(--parchment);
+}
+
+.info-panel-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Save indicator */
 #save-indicator {
     font-size: 0.875rem;
     font-weight: 500;
     font-family: var(--font-serif);
 }
 
-/* レスポンシブ対応 */
+/* Scrollbar styling */
+.crop-sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.crop-sidebar::-webkit-scrollbar-track {
+    background: var(--parchment);
+}
+
+.crop-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.crop-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-muted);
+}
+
+/* ===== Preview (read-only) ===== */
+
+.canvas-preview-container {
+    display: inline-block;
+}
+
+.canvas-preview-area {
+    width: 400px;
+    height: 400px;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.placed-crop-preview {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+    z-index: 1;
+    transform: translate(-50%, -50%);
+}
+
+.placed-crop-preview img {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #4CAF50;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.placed-crop-preview-fallback {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #4CAF50;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    color: #fff;
+    font-size: 11px;
+}
+
+.placed-crop-preview .placed-crop-label {
+    margin-top: 1px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #333;
+    background: rgba(255,255,255,0.85);
+    padding: 0 4px;
+    border-radius: 3px;
+    white-space: normal;
+    max-width: 60px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-align: center;
+    word-break: break-all;
+    pointer-events: none;
+}
+
+.placed-crop-preview.highlight {
+    box-shadow: 0 0 0 2px #2196F3, 0 0 8px rgba(33, 150, 243, 0.45);
+    z-index: 2;
+}
+
+.placed-crop-preview.dimmed {
+    opacity: 0.35;
+}
+
+.canvas-preview-empty {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--ink-muted);
+    font-size: 0.875rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
     .canvas-editor {
         height: auto;
@@ -197,22 +331,14 @@
         flex-direction: column;
     }
 
-    .tool-palette {
-        width: 100%;
-        flex-direction: row;
-        justify-content: center;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-    }
-
-    .canvas-container {
+    .canvas-area-wrapper {
         padding: 1rem;
-        min-height: 400px;
     }
 
-    #canvas {
-        max-width: 100%;
-        height: auto;
+    #canvas-area {
+        width: 100%;
+        max-width: 800px;
+        height: 400px;
     }
 
     .crop-sidebar {
@@ -232,74 +358,4 @@
         text-align: left;
         font-size: 1rem;
     }
-}
-
-/* 色選択パネル */
-.color-palette {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background: var(--surface);
-    border-radius: 6px;
-    border: 1px solid var(--border);
-}
-
-.color-palette label {
-    font-size: 0.75rem;
-    font-weight: 500;
-    font-family: var(--font-serif);
-    margin-bottom: 0.25rem;
-    color: var(--ink-soft);
-}
-
-.color-palette input[type="color"] {
-    width: 100%;
-    height: 32px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.color-palette .fill-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.75rem;
-    font-family: var(--font-serif);
-    margin-top: 0.25rem;
-}
-
-.color-palette .fill-checkbox input[type="checkbox"] {
-    margin: 0;
-}
-
-/* グリッドコントロール */
-.grid-controls {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-}
-
-.grid-controls .tool-btn {
-    width: 48px;
-    height: 48px;
-}
-
-/* スクロールバーのスタイリング */
-.crop-sidebar::-webkit-scrollbar {
-    width: 8px;
-}
-
-.crop-sidebar::-webkit-scrollbar-track {
-    background: var(--parchment);
-}
-
-.crop-sidebar::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 4px;
-}
-
-.crop-sidebar::-webkit-scrollbar-thumb:hover {
-    background: var(--ink-muted);
 }

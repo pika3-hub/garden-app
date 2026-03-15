@@ -1,4 +1,6 @@
 import json
+import os
+from flask import current_app
 from app.database import get_db
 from app.utils.timezone import get_jst_now
 
@@ -31,11 +33,11 @@ class Location:
         db = get_db()
         now = get_jst_now()
         cursor = db.execute(
-            '''INSERT INTO locations (name, location_type, area_size, sun_exposure, notes, image_path, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            '''INSERT INTO locations (name, location_type, area_size, sun_exposure, notes, image_path, bg_image, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['name'], data['location_type'], data.get('area_size'),
              data.get('sun_exposure'), data.get('notes'), data.get('image_path'),
-             now, now)
+             data.get('bg_image'), now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -46,11 +48,11 @@ class Location:
         db = get_db()
         db.execute(
             '''UPDATE locations SET name = ?, location_type = ?, area_size = ?,
-               sun_exposure = ?, notes = ?, image_path = ?, updated_at = ?
+               sun_exposure = ?, notes = ?, image_path = ?, bg_image = ?, updated_at = ?
                WHERE id = ?''',
             (data['name'], data['location_type'], data.get('area_size'),
              data.get('sun_exposure'), data.get('notes'), data.get('image_path'),
-             get_jst_now(), location_id)
+             data.get('bg_image'), get_jst_now(), location_id)
         )
         db.commit()
 
@@ -79,6 +81,19 @@ class Location:
             (f'%{keyword}%', f'%{keyword}%')
         ).fetchall()
         return [dict(location) for location in locations]
+
+    @staticmethod
+    def get_bg_images():
+        """static/images/location_bg_images/ から背景画像ファイル名リストを返す"""
+        bg_dir = os.path.join(current_app.static_folder, 'images', 'location_bg_images')
+        if not os.path.isdir(bg_dir):
+            return []
+        allowed_ext = {'.png', '.jpg', '.jpeg', '.webp'}
+        files = []
+        for f in sorted(os.listdir(bg_dir)):
+            if os.path.splitext(f)[1].lower() in allowed_ext:
+                files.append(f)
+        return files
 
     @staticmethod
     def get_canvas_data(location_id):
@@ -112,7 +127,13 @@ class Location:
 
         # キャンバス上に存在する作物のIDを抽出
         location_crop_ids = set()
-        if canvas_dict and 'objects' in canvas_dict:
+        if canvas_dict and 'placements' in canvas_dict:
+            # 新フォーマット (version 2.0)
+            for p in canvas_dict['placements']:
+                if p.get('locationCropId'):
+                    location_crop_ids.add(int(p['locationCropId']))
+        elif canvas_dict and 'objects' in canvas_dict:
+            # 旧フォーマット (Fabric.js)
             for obj in canvas_dict['objects']:
                 if obj.get('locationCropId'):
                     location_crop_ids.add(int(obj['locationCropId']))
