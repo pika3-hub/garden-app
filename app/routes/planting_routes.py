@@ -30,11 +30,13 @@ def detail(location_crop_id):
 
     records = PlantingRecord.get_by_location_crop(location_crop_id)
     location = Location.get_by_id(location_crop['location_id'])
+    today = date.today().isoformat()
 
     return render_template('plantings/detail.html',
                           records=records,
                           location_crop=location_crop,
-                          location=location)
+                          location=location,
+                          today=today)
 
 
 @bp.route('/record/<int:record_id>')
@@ -177,6 +179,34 @@ def delete(record_id):
     if location_crop_id:
         return redirect(url_for('plantings.detail', location_crop_id=location_crop_id))
     return redirect(url_for('plantings.index'))
+
+
+@bp.route('/<int:location_crop_id>/edit-harvested')
+def planting_edit_harvested(location_crop_id):
+    """栽培終了済み植え付けの限定編集フォーム"""
+    planting = Planting.get_by_id(location_crop_id)
+    if not planting or planting['status'] != 'harvested':
+        flash('対象の植え付けが見つかりません', 'danger')
+        return redirect(url_for('plantings.index'))
+    return render_template('plantings/harvested_edit.html', planting=planting)
+
+
+@bp.route('/<int:location_crop_id>/update-harvested', methods=['POST'])
+def planting_update_harvested(location_crop_id):
+    """栽培終了済み植え付けの限定更新処理"""
+    planting = Planting.get_by_id(location_crop_id)
+    if not planting or planting['status'] != 'harvested':
+        flash('対象の植え付けが見つかりません', 'danger')
+        return redirect(url_for('plantings.index'))
+    end_date = request.form.get('end_date') or None
+    notes = request.form.get('notes') or None
+    try:
+        Planting.update_end_date_notes(location_crop_id, end_date, notes)
+        flash('植え付け情報を更新しました', 'success')
+        return redirect(url_for('plantings.detail', location_crop_id=location_crop_id))
+    except Exception as e:
+        flash(f'エラーが発生しました: {str(e)}', 'danger')
+        return redirect(url_for('plantings.planting_edit_harvested', location_crop_id=location_crop_id))
 
 
 @bp.route('/plant/new')

@@ -49,6 +49,7 @@
 | location_id | INTEGER | 場所ID（FK） |
 | crop_id | INTEGER | 作物ID（FK） |
 | planted_date | DATE | 植え付け日 |
+| end_date | DATE | 栽培終了日（harvested 時に自動セット、任意） |
 | status | TEXT | 状態（active/harvested/removed） |
 | position_x | DECIMAL | キャンバスX座標 |
 | position_y | DECIMAL | キャンバスY座標 |

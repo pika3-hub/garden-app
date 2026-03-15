@@ -115,13 +115,24 @@ class Planting:
         db.commit()
 
     @staticmethod
-    def harvest(location_crop_id):
+    def harvest(location_crop_id, end_date=None):
         """収穫済みに変更"""
         db = get_db()
         db.execute(
-            '''UPDATE plantings SET status = 'harvested', updated_at = ?
+            '''UPDATE plantings SET status = 'harvested', end_date = ?, updated_at = ?
                WHERE id = ?''',
-            (get_jst_now(), location_crop_id)
+            (end_date or get_jst_now()[:10], get_jst_now(), location_crop_id)
+        )
+        db.commit()
+
+    @staticmethod
+    def update_end_date_notes(location_crop_id, end_date, notes):
+        """harvested 状態の植え付けの終了日・メモを更新"""
+        db = get_db()
+        db.execute(
+            '''UPDATE plantings SET end_date = ?, notes = ?, updated_at = ?
+               WHERE id = ?''',
+            (end_date or None, notes, get_jst_now(), location_crop_id)
         )
         db.commit()
 

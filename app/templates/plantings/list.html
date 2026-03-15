@@ -86,6 +86,9 @@
                 {% if crop.status == 'active' and crop.days_from_planting is not none %}
                 <p class="card-text mb-1">栽培日数: <span class="badge bg-success">{{ crop.days_from_planting }}日目</span></p>
                 {% endif %}
+                {% if crop.status == 'harvested' %}
+                <p class="card-text mb-1">栽培終了日: {{ crop.end_date or '未設定' }}</p>
+                {% endif %}
                 {% if crop.growth_record_count > 0 %}
                 <p class="card-text mb-1">栽培記録: {{ crop.growth_record_count }}件</p>
                 {% endif %}
