@@ -38,7 +38,8 @@
 | name | TEXT | 場所名（必須） |
 | description | TEXT | 説明 |
 | image_path | TEXT | 画像パス |
-| canvas_data | TEXT | キャンバスJSON |
+| canvas_data | TEXT | 見取り図データ（version 2.0 JSON形式、旧Fabric.js形式は無視） |
+| bg_image | TEXT | 見取り図の背景画像ファイル名（`location_bg_images/` 内のファイル名） |
 | created_at | DATETIME | 作成日時 |
 
 #### plantings

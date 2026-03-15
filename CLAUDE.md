@@ -226,3 +226,11 @@ uv run python run.py
 5. **CSS（任意）**: `app/static/css/{feature}.css`
 6. **JS（任意）**: `app/static/js/{feature}.js`
 7. **ナビ追加**: `app/templates/base.html` のナビゲーションに追加
+
+### ドキュメント更新チェックリスト
+
+モデルやスキーマを変更した際は必ず以下も更新すること：
+
+- **`app/models/CLAUDE.md`**: テーブル定義・カラム定義の追加・変更・削除を反映
+- **`CLAUDE.md`（このファイル）**: プロジェクト構造・機能概要・見取り図など関連セクションを更新
+- **`README.md`**: ユーザー向けの機能説明・プロジェクト構造を更新
