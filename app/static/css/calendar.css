@@ -88,19 +88,43 @@
     align-content: flex-start;
 }
 
-/* カレンダーアイコン */
-.calendar-icon {
+/* 集約アイコンボタン */
+.calendar-icon-btn {
+    position: relative;
     display: inline-block;
-    transition: transform 0.2s;
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    line-height: 0;
 }
 
-.calendar-icon:hover {
+.calendar-icon-btn img {
+    width: 40px;
+    height: 40px;
+    transition: transform 0.15s;
+}
+
+.calendar-icon-btn:hover img {
     transform: scale(1.2);
 }
 
-.calendar-icon img {
-    width: 50px;
-    height: 50px;
+/* 件数バッジ */
+.icon-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--terracotta);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    pointer-events: none;
 }
 
 /* 凡例 */
@@ -124,8 +148,8 @@
 }
 
 .legend-item img {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
 }
 
 /* ナビゲーション */
@@ -144,48 +168,13 @@
     margin: 0;
 }
 
-/* モバイル用ドットインジケーター（デフォルト非表示） */
-.mobile-dot {
-    display: none;
-}
-
-/* モーダル内凡例 */
-.modal-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background-color: var(--parchment);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-.modal-legend .legend-item img {
-    width: 35px;
-    height: 35px;
-}
-
-/* モーダル内アイコン表示（モバイルの display:none を上書き） */
-#dayDetailIcons .day-icons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    padding: 0.5rem 0;
-}
-
-#dayDetailIcons .calendar-icon img {
-    width: 45px;
-    height: 45px;
-}
-
 /* レスポンシブ対応 - タブレット */
 @media (max-width: 991.98px) {
     .calendar-cell {
         height: 80px;
     }
 
-    .calendar-icon img {
+    .calendar-icon-btn img {
         width: 40px;
         height: 40px;
     }
@@ -202,7 +191,7 @@
 /* レスポンシブ対応 - スマートフォン */
 @media (max-width: 575.98px) {
     .calendar-cell {
-        height: 60px;
+        height: 70px;
     }
 
     .day-number {
@@ -218,33 +207,21 @@
         font-size: 1rem;
     }
 
-    /* モバイル: セル内アイコンを非表示 */
-    .day-icons {
-        display: none;
-    }
-
     /* モバイル: メイン凡例を非表示 */
     .calendar-legend {
         display: none;
     }
 
-    /* モバイル: ドットインジケーター表示 */
-    .mobile-dot {
-        display: block;
-        width: 8px;
-        height: 8px;
-        background-color: var(--forest);
-        border-radius: 50%;
-        position: absolute;
-        bottom: 4px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1;
+    /* モバイル: アイコンを小さく表示 */
+    .calendar-icon-btn img {
+        width: 28px;
+        height: 28px;
     }
 
-    /* モバイル: タップ可能を示すカーソル */
-    .calendar-cell.has-data {
-        cursor: pointer;
+    .icon-badge {
+        width: 12px;
+        height: 12px;
+        font-size: 0.55rem;
     }
 }
 

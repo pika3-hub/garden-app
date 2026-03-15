@@ -88,74 +88,31 @@
                         {{ day.day }}
                     </div>
 
-                    <!-- モバイル用ドットインジケーター -->
-                    {% if day_data %}
-                    <div class="mobile-dot"></div>
-                    {% endif %}
-
                     <!-- アイコン -->
                     <div class="day-icons">
-                        {# 作物アイコン #}
-                        {% for crop in day_data.get('crops', []) %}
-                        <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="calendar-icon"
-                           data-bs-toggle="tooltip" data-bs-placement="top"
-                           title="作物: {{ crop.name }}{% if crop.variety %}({{ crop.variety }}){% endif %}">
-                            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="作物">
-                        </a>
-                        {% endfor %}
-
-                        {# 場所アイコン #}
-                        {% for location in day_data.get('locations', []) %}
-                        <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="calendar-icon"
-                           data-bs-toggle="tooltip" data-bs-placement="top"
-                           title="場所: {{ location.name }}">
-                            <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="場所">
-                        </a>
-                        {% endfor %}
-
-                        {# 日記アイコン #}
-                        {% for diary in day_data.get('diaries', []) %}
-                        <a href="{{ url_for('diary.detail', diary_id=diary.id) }}" class="calendar-icon"
-                           data-bs-toggle="tooltip" data-bs-placement="top"
-                           title="日記: {{ diary.title }}">
-                            <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="日記">
-                        </a>
-                        {% endfor %}
-
-                        {# 栽培中アイコン #}
-                        {% for lc in day_data.get('location_crops', []) %}
-                        <a href="{{ url_for('locations.detail', location_id=lc.location_id) }}" class="calendar-icon"
-                           data-bs-toggle="tooltip" data-bs-placement="top"
-                           title="植付: {{ lc.crop_name }}{% if lc.variety %}({{ lc.variety }}){% endif %} @ {{ lc.location_name }}">
-                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培中">
-                        </a>
-                        {% endfor %}
-
-                        {# 収穫アイコン #}
-                        {% for harvest in day_data.get('harvests', []) %}
-                        <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="calendar-icon"
-                           data-bs-toggle="tooltip" data-bs-placement="top"
-                           title="収穫: {{ harvest.crop_name }}{% if harvest.variety %}({{ harvest.variety }}){% endif %}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">
-                            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="収穫">
-                        </a>
-                        {% endfor %}
-
-                        {# タスクアイコン #}
-                        {% for task in day_data.get('tasks', []) %}
-                        <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="calendar-icon"
-                           data-bs-toggle="tooltip" data-bs-placement="top"
-                           title="タスク: {{ task.title }}">
-                            <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="タスク">
-                        </a>
-                        {% endfor %}
-
-                        {# 栽培記録アイコン #}
-                        {% for gr in day_data.get('growth_records', []) %}
-                        <a href="{{ url_for('plantings.record_detail', record_id=gr.id) }}" class="calendar-icon"
-                           data-bs-toggle="tooltip" data-bs-placement="top"
-                           title="栽培記録: {{ gr.crop_name }}{% if gr.variety %}({{ gr.variety }}){% endif %} @ {{ gr.location_name }}">
-                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培記録">
-                        </a>
+                        {% set type_defs = [
+                            ('crops',          'icon_crop.png',          '作物',     day_data.get('crops', [])),
+                            ('locations',      'icon_location.png',      '場所',     day_data.get('locations', [])),
+                            ('diaries',        'icon_diary.png',         '日記',     day_data.get('diaries', [])),
+                            ('location_crops', 'icon_location_crop.png', '植付',     day_data.get('location_crops', [])),
+                            ('harvests',       'icon_harvest.png',       '収穫',     day_data.get('harvests', [])),
+                            ('tasks',          'icon_tasklist.png',      'タスク',   day_data.get('tasks', [])),
+                            ('growth_records', 'icon_location_crop.png', '栽培記録', day_data.get('growth_records', [])),
+                        ] %}
+                        {% for type_key, icon, type_label, items in type_defs %}
+                        {% if items %}
+                        <button class="calendar-icon-btn"
+                                data-type-label="{{ type_label }}"
+                                data-date="{{ date_str }}"
+                                data-items='{{ items | tojson }}'
+                                data-bs-html="true"
+                                title="<strong>{{ type_label }}</strong><br>{{ items | map(attribute='label') | map('escape') | join('<br>') | safe }}">
+                            <img src="{{ url_for('static', filename='images/' + icon) }}" alt="{{ type_label }}">
+                            {% if items | length > 1 %}
+                            <span class="icon-badge">{{ items | length }}</span>
+                            {% endif %}
+                        </button>
+                        {% endif %}
                         {% endfor %}
                     </div>
                 </td>
@@ -166,48 +123,16 @@
         </tbody>
     </table>
 
-    <!-- モバイル用日付詳細モーダル -->
-    <div class="modal fade" id="dayDetailModal" tabindex="-1" aria-labelledby="dayDetailModalLabel" aria-hidden="true">
+    <!-- アイコンクリック用モーダル -->
+    <div class="modal fade" id="calendarModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="dayDetailModalLabel"></h5>
+                    <h5 class="modal-title" id="calendarModalTitle"></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
                 </div>
-                <div class="modal-body">
-                    <!-- モーダル内凡例 -->
-                    <div class="modal-legend">
-                        <div class="legend-item">
-                            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="作物">
-                            <span>作物</span>
-                        </div>
-                        <div class="legend-item">
-                            <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="場所">
-                            <span>場所</span>
-                        </div>
-                        <div class="legend-item">
-                            <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="日記">
-                            <span>日記</span>
-                        </div>
-                        <div class="legend-item">
-                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培中">
-                            <span>栽培中</span>
-                        </div>
-                        <div class="legend-item">
-                            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="収穫">
-                            <span>収穫</span>
-                        </div>
-                        <div class="legend-item">
-                            <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="タスク">
-                            <span>タスク</span>
-                        </div>
-                        <div class="legend-item">
-                            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培記録">
-                            <span>栽培記録</span>
-                        </div>
-                    </div>
-                    <!-- アイコン表示エリア -->
-                    <div id="dayDetailIcons"></div>
+                <div class="modal-body p-0">
+                    <div class="list-group list-group-flush" id="calendarModalBody"></div>
                 </div>
             </div>
         </div>
