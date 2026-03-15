@@ -15,7 +15,7 @@
 - **作物管理:** 作物の種類、品種、特徴のCRUD操作
 - **場所管理:** 畑やプランターの場所のCRUD、画像サポート付き
 - **キャンバスエディター:** バニラJSベースのビジュアル菜園レイアウトデザイナー（作物アイコンのドラッグ&ドロップ配置、背景画像選択）
-- **見取り図プレビュー:** 場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）
+- **見取り図プレビュー:** 場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）、場所詳細では日付スライダーで過去の配置状態を再現可能
 - **栽培記録:** 作物と場所をリンクし、ステータス追跡（栽培中/栽培終了/削除済み）、タブフィルター付き一覧（`/plantings/`）、栽培観察記録の登録・管理
 - **収穫記録:** 複数回の収穫を記録、収穫量・単位・メモ・画像対応、植え付けからの日数自動計算
 - **日記システム:** 複数エンティティ（作物、場所、植え付け、収穫）との関連付けと画像添付を持つ栽培日記
@@ -73,7 +73,7 @@ garden-app/
 │   │   └── tasks/           # タスクテンプレート
 │   └── static/              # 静的アセット
 │       ├── css/             # Bootstrap カスタマイズ
-│       ├── js/              # canvas-editor.js, canvas-preview.js, ユーティリティ
+│       ├── js/              # canvas-editor.js, canvas-preview.js, canvas-history.js, ユーティリティ
 │       ├── images/          # UIアイコン・静的画像
 │       │   ├── location_bg_images/  # 見取り図の背景画像（手動配置）
 │       │   │   ├── bg_image_default.png  # デフォルト背景
@@ -126,6 +126,7 @@ uv run python run.py
 |------------|--------|------|
 | エディター画面 | `locations/canvas.html` + `canvas-editor.js` | 作物配置の編集（800×800px） |
 | プレビューコンポーネント | `locations/_canvas_preview.html` + `canvas-preview.js` | 読み取り専用の表示（400×400px） |
+| 履歴スライダー | `canvas-history.js` | 場所詳細で日付スライダーによる過去配置の再現 |
 | CSSスタイル | `static/css/canvas.css` | エディター・プレビュー共通スタイル |
 
 #### 背景画像
@@ -172,6 +173,8 @@ uv run python run.py
 | `/locations/<id>/canvas` | GET | エディター画面 |
 | `/locations/<id>/canvas/data` | GET | 配置データ取得（JSON） |
 | `/locations/<id>/canvas/save` | POST | 配置データ保存 |
+| `/locations/<id>/canvas/history/range` | GET | 見取り図に変化がある日付一覧（`{dates: [...]}` 形式） |
+| `/locations/<id>/canvas/history?date=YYYY-MM-DD` | GET | 指定日付の配置データ（version 2.0 JSON） |
 
 #### プレビューコンポーネントの使い方
 
@@ -182,6 +185,18 @@ uv run python run.py
 テンプレートに渡す変数:
 - `location` — 場所オブジェクト（`location['id']`, `location['bg_image']` を使用）
 - `preview_highlight_id`（任意）— ハイライトする `location_crop_id`
+
+`CanvasPreview` クラスのAPI:
+- `updateData(data)` — 表示内容をクリアして新しいデータで再描画（履歴スライダー等で使用）
+- `data-manual-init="true"` 属性 — 自動初期化をスキップ（JS側で手動制御する場合に指定）
+
+#### 履歴スライダー
+
+場所詳細ページの見取り図カードに統合。`canvas-history.js` が制御。
+- 植え付け日・栽培終了日など、見取り図に変化がある日付のみスライド可能
+- 左端: 最初の植え付け日の1日前（何もない状態）、右端: 今日（`locations.canvas_data` で表示）
+- 位置情報の取得元: active作物は `locations.canvas_data`（複数配置対応）、harvested作物は `plantings.canvas_snapshot`
+- 位置情報を持たない植え付けのみの日付はスライダーから除外
 
 ### URL設計
 
