@@ -19,6 +19,27 @@ class CanvasPreview {
             this.area.style.backgroundImage = `url('/static/images/location_bg_images/${this.bgImage}')`;
         }
 
+        // Responsive scaling: fit 400px area into container width
+        this._applyScale();
+        this._resizeObserver = new ResizeObserver(() => this._applyScale());
+        this._resizeObserver.observe(this.container);
+
+        // インライン JSON がある場合はそちらを優先
+        const inlineJson = this.container.dataset.canvasJson;
+        if (inlineJson) {
+            try {
+                const data = JSON.parse(inlineJson);
+                if (data.version === '2.0' && data.placements?.length > 0) {
+                    this._render(data.placements);
+                } else {
+                    this._showEmpty();
+                }
+            } catch {
+                this._showEmpty();
+            }
+            return;
+        }
+
         try {
             const res = await fetch(`/locations/${this.locationId}/canvas/data`);
             const data = await res.json();
@@ -63,13 +84,9 @@ class CanvasPreview {
             label.textContent = p.variety ? `${p.variety}（${p.cropName}）` : (p.cropName || '');
             el.appendChild(label);
 
-            if (this.highlightId !== null) {
-                if (p.locationCropId === this.highlightId) {
-                    el.classList.add('highlight');
-                    el.style.setProperty('--highlight-color', color);
-                } else {
-                    el.classList.add('dimmed');
-                }
+            if (this.highlightId !== null && p.locationCropId === this.highlightId) {
+                el.classList.add('highlight');
+                el.style.setProperty('--highlight-color', color);
             }
 
             this.area.appendChild(el);
@@ -85,16 +102,40 @@ class CanvasPreview {
         return div;
     }
 
+    _applyScale() {
+        const containerWidth = this.container.clientWidth;
+        const areaWidth = 400;
+        if (containerWidth < areaWidth) {
+            const scale = containerWidth / areaWidth;
+            this.area.style.transform = `scale(${scale})`;
+            this.area.style.transformOrigin = 'top left';
+            this.container.style.height = `${Math.round(areaWidth * scale)}px`;
+        } else {
+            this.area.style.transform = '';
+            this.container.style.height = '';
+        }
+    }
+
     _showEmpty() {
         const msg = document.createElement('div');
         msg.className = 'canvas-preview-empty';
         msg.innerHTML = '<i class="bi bi-map"></i> 見取り図が設定されていません';
         this.area.appendChild(msg);
     }
+
+    updateData(data) {
+        this.area.innerHTML = '';
+        if (data && data.version === '2.0' && data.placements && data.placements.length > 0) {
+            this._render(data.placements);
+        } else {
+            this._showEmpty();
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.canvas-preview-container').forEach(el => {
+        if (el.dataset.manualInit) return;
         new CanvasPreview(el);
     });
 });

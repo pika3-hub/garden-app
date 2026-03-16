@@ -53,6 +53,7 @@
 | status | TEXT | 状態（active/harvested/removed） |
 | position_x | DECIMAL | キャンバスX座標 |
 | position_y | DECIMAL | キャンバスY座標 |
+| canvas_snapshot | TEXT | 栽培終了時の見取り図スナップショット（version 2.0 JSON） |
 | created_at | DATETIME | 作成日時 |
 
 #### diary_entries

@@ -207,7 +207,19 @@ def complete_harvest(location_id, location_crop_id):
     """栽培終了（収穫済みステータスに変更）"""
     try:
         end_date = request.form.get('end_date') or None
-        Planting.harvest(location_crop_id, end_date=end_date)
+
+        # スナップショット取得（作物が配置されている場合のみ）
+        canvas_data = Location.get_canvas_data(location_id)
+        snapshot = None
+        if canvas_data and 'placements' in canvas_data:
+            is_placed = any(
+                p.get('locationCropId') == location_crop_id
+                for p in canvas_data['placements']
+            )
+            if is_placed:
+                snapshot = canvas_data
+
+        Planting.harvest(location_crop_id, end_date=end_date, canvas_snapshot=snapshot)
         Location.remove_from_canvas(location_id, location_crop_id)
         flash('栽培を終了しました', 'success')
     except Exception as e:
@@ -250,6 +262,25 @@ def get_canvas_data(location_id):
         return jsonify(canvas_data)
     else:
         return jsonify({'version': '2.0', 'placements': []})
+
+
+@bp.route('/<int:location_id>/canvas/history/range', methods=['GET'])
+def canvas_history_range(location_id):
+    """見取り図に変化がある日付一覧を返すAPI"""
+    dates = Planting.get_historical_change_dates(location_id)
+    if dates:
+        return jsonify({'dates': dates})
+    return jsonify({'dates': []})
+
+
+@bp.route('/<int:location_id>/canvas/history', methods=['GET'])
+def canvas_history(location_id):
+    """指定日付の見取り図配置データを返すAPI"""
+    target_date = request.args.get('date')
+    if not target_date:
+        return jsonify({'error': 'date parameter is required'}), 400
+    data = Planting.get_historical_canvas_data(location_id, target_date)
+    return jsonify(data)
 
 
 @bp.route('/<int:location_id>/canvas/save', methods=['POST'])

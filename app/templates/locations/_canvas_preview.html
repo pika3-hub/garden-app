@@ -1,6 +1,7 @@
 <div class="canvas-preview-container"
      data-location-id="{{ preview_location_id }}"
      data-bg-image="{{ preview_bg_image or 'bg_image_default.png' }}"
-     {% if preview_highlight_id %}data-highlight-id="{{ preview_highlight_id }}"{% endif %}>
+     {% if preview_highlight_id %}data-highlight-id="{{ preview_highlight_id }}"{% endif %}
+     {% if preview_canvas_json %}data-canvas-json="{{ preview_canvas_json | tojson | forceescape }}"{% endif %}>
     <div class="canvas-preview-area"></div>
 </div>
