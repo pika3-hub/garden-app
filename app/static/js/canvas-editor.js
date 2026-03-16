@@ -6,9 +6,11 @@ class CanvasEditor {
     constructor(locationId) {
         this.locationId = locationId;
         this.canvasArea = document.getElementById('canvas-area');
+        this.wrapper = this.canvasArea.parentElement;
         this.placements = []; // { id, locationCropId, cropId, x, y, iconPath, imageColor, cropName, variety, element }
         this.selectedId = null;
         this.nextId = 1;
+        this.scale = 1;
 
         // Drag state
         this.dragState = null; // { id, offsetX, offsetY }
@@ -18,6 +20,7 @@ class CanvasEditor {
 
     init() {
         this.setupBackground();
+        this.setupScale();
         this.setupSidebarDragDrop();
         this.setupCanvasEvents();
         this.setupSaveButton();
@@ -28,6 +31,46 @@ class CanvasEditor {
     setupBackground() {
         const bgImage = document.getElementById('bg-image').value;
         this.canvasArea.style.backgroundImage = `url('/static/images/location_bg_images/${bgImage}')`;
+    }
+
+    /** モバイル時: 800px キャンバスを wrapper 幅に合わせて縮小表示 */
+    setupScale() {
+        this._applyScale();
+        this._resizeObserver = new ResizeObserver(() => this._applyScale());
+        this._resizeObserver.observe(this.wrapper);
+    }
+
+    _applyScale() {
+        // padding を除いた利用可能幅を計算
+        const style = getComputedStyle(this.wrapper);
+        const padL = parseFloat(style.paddingLeft) || 0;
+        const padR = parseFloat(style.paddingRight) || 0;
+        const availableWidth = this.wrapper.clientWidth - padL - padR;
+        const canvasSize = 800;
+
+        if (availableWidth < canvasSize) {
+            this.scale = availableWidth / canvasSize;
+            this.canvasArea.style.transform = `scale(${this.scale})`;
+            this.canvasArea.style.transformOrigin = 'top left';
+            // ラッパーの高さ = 縮小後のキャンバス高さ + 上下パディング
+            const padT = parseFloat(style.paddingTop) || 0;
+            const padB = parseFloat(style.paddingBottom) || 0;
+            this.wrapper.style.height = `${Math.round(canvasSize * this.scale) + padT + padB}px`;
+        } else {
+            this.scale = 1;
+            this.canvasArea.style.transform = '';
+            this.canvasArea.style.transformOrigin = '';
+            this.wrapper.style.height = '';
+        }
+    }
+
+    /** スクリーン座標 → キャンバス座標に変換 */
+    _toCanvasCoords(clientX, clientY) {
+        const rect = this.canvasArea.getBoundingClientRect();
+        return {
+            x: (clientX - rect.left) / this.scale,
+            y: (clientY - rect.top) / this.scale
+        };
     }
 
     setupSidebarDragDrop() {
@@ -59,9 +102,9 @@ class CanvasEditor {
             }
             if (!data || !data.cropId) return;
 
-            const rect = this.canvasArea.getBoundingClientRect();
-            const x = Math.max(0, Math.min(e.clientX - rect.left - 25, 750));
-            const y = Math.max(0, Math.min(e.clientY - rect.top - 25, 750));
+            const coords = this._toCanvasCoords(e.clientX, e.clientY);
+            const x = Math.max(0, Math.min(coords.x - 25, 750));
+            const y = Math.max(0, Math.min(coords.y - 25, 750));
 
             this.addPlacement({
                 locationCropId: data.locationCropId,
@@ -176,18 +219,19 @@ class CanvasEditor {
         const p = this.placements.find(p => p.id === id);
         if (!p) return;
 
-        const rect = p.element.getBoundingClientRect();
+        // ドラッグ開始時のオフセットをキャンバス座標で計算
+        const coords = this._toCanvasCoords(e.clientX, e.clientY);
         this.dragState = {
             id,
-            offsetX: e.clientX - rect.left,
-            offsetY: e.clientY - rect.top
+            offsetX: coords.x - p.x,
+            offsetY: coords.y - p.y
         };
 
         const onMove = (e) => {
             if (!this.dragState) return;
-            const areaRect = this.canvasArea.getBoundingClientRect();
-            let x = e.clientX - areaRect.left - this.dragState.offsetX;
-            let y = e.clientY - areaRect.top - this.dragState.offsetY;
+            const coords = this._toCanvasCoords(e.clientX, e.clientY);
+            let x = coords.x - this.dragState.offsetX;
+            let y = coords.y - this.dragState.offsetY;
 
             // Clamp to canvas area
             x = Math.max(0, Math.min(x, 750));

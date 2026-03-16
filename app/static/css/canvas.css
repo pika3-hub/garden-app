@@ -51,6 +51,7 @@
 #canvas-area {
     width: 800px;
     height: 800px;
+    flex-shrink: 0;
     position: relative;
     background-size: cover;
     background-position: center;
@@ -58,6 +59,16 @@
     border: 2px solid var(--border);
     box-shadow: 0 2px 8px rgba(43, 71, 56, 0.1);
     overflow: hidden;
+}
+
+#canvas-area::before,
+.canvas-preview-area::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.2);
+    z-index: 0;
+    pointer-events: none;
 }
 
 /* Placed crop icon */
@@ -235,6 +246,8 @@
 
 .canvas-preview-container {
     display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .canvas-preview-area {
@@ -256,7 +269,6 @@
     align-items: center;
     user-select: none;
     z-index: 1;
-    transform: translate(-50%, -50%);
 }
 
 .placed-crop-preview img {
@@ -314,14 +326,75 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: var(--ink-muted);
+    color: #555;
     font-size: 0.875rem;
     text-align: center;
     white-space: nowrap;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    z-index: 1;
+}
+
+/* ===== History slider area ===== */
+
+.history-nav-btn {
+    min-width: 44px;
+    min-height: 44px;  /* モバイルの推奨タップターゲットサイズ */
+}
+
+.history-nav-date {
+    font-size: 0.8em;
+    opacity: 0.7;
+    margin-left: 0.25em;
+    margin-right: 0.25em;
+}
+
+/* デスクトップ: ボタンはコンパクト、スライダーが主役 */
+@media (min-width: 769px) {
+    .history-nav-btn {
+        min-width: 10em;
+        min-height: auto;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* モバイル: ボタンが大きく主役、スライダーは補助 */
+@media (max-width: 768px) {
+    .history-nav-btn {
+        flex: 1;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
+    .history-slider-row {
+        opacity: 0.7;
+    }
+    .history-slider-area {
+        margin-bottom: 0.75rem;
+    }
+    /* スライダーのつまみを大きくする */
+    .history-slider-area input[type="range"]::-webkit-slider-thumb {
+        width: 28px;
+        height: 28px;
+    }
+    .history-slider-area input[type="range"]::-moz-range-thumb {
+        width: 28px;
+        height: 28px;
+    }
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+    .canvas-preview-container {
+        width: 100%;
+    }
+    .canvas-preview-area {
+        transform-origin: top left;
+        /* scale is set dynamically by JS — see canvas-preview.js */
+    }
+
     .canvas-editor {
         height: auto;
         min-height: calc(100vh - 100px);
@@ -332,20 +405,24 @@
     }
 
     .canvas-area-wrapper {
+        flex: none;
         padding: 1rem;
+        justify-content: flex-start;
+        align-items: flex-start;
+        overflow: hidden;
     }
 
     #canvas-area {
-        width: 100%;
-        max-width: 800px;
-        height: 400px;
+        /* JS の transform: scale() で縮小するため、サイズは 800x800 を維持 */
+        width: 800px;
+        height: 800px;
     }
 
     .crop-sidebar {
         width: 100%;
         border-left: none;
         border-top: 1px solid var(--border);
-        max-height: 200px;
+        overflow-y: visible;
     }
 
     .canvas-header {

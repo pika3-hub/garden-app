@@ -198,6 +198,29 @@ uv run python run.py
 - 位置情報の取得元: active作物は `locations.canvas_data`（複数配置対応）、harvested作物は `plantings.canvas_snapshot`
 - 位置情報を持たない植え付けのみの日付はスライダーから除外
 
+#### レスポンシブ対応（重要）
+
+**座標系は常に800×800px固定。これを変更してはならない。**
+
+作物の配置座標（`x`, `y`）はすべて800×800pxキャンバス上の絶対ピクセル値として保存される。モバイル等で表示領域が狭い場合は、キャンバス要素のサイズは800×800を維持したまま `transform: scale()` で縮小表示する。`width: 100%` 等でキャンバス自体を縮小すると、`overflow: hidden` により端の作物がクリップされて見えなくなる。
+
+**エディター（`canvas-editor.js`）のスケーリング:**
+- `ResizeObserver` でラッパー幅を監視し、800px未満なら `transform: scale(factor)` を適用
+- `transform-origin: top left` で左上基点に縮小
+- ラッパーの高さを縮小後のサイズに合わせて設定（空白防止）
+- ドラッグ・ドロップの座標は `_toCanvasCoords()` でスケール補正が必要（`clientX / scale`）
+- 保存時の座標は常に800×800基準のまま
+
+**プレビュー（`canvas-preview.js`）のスケーリング:**
+- 400×400pxのプレビュー領域を、コンテナ幅に合わせて同様に `transform: scale()` で縮小
+- `ResizeObserver` で動的に追従
+
+**CSS上の注意点:**
+- `#canvas-area` には `flex-shrink: 0` が必須。flexboxコンテナ内でデフォルトの `flex-shrink: 1` だとキャンバスが縮小され、transform と二重に縮小されてしまう
+- モバイルではラッパーに `overflow: hidden`（レイアウト上800×800のままの要素をクリップ）
+- モバイルではラッパーに `flex: none`（不要な余白を防ぎ、サイドバーをキャンバス直下に配置）
+- モバイルではサイドバーの `overflow-y: visible`（ブラウザスクロールに委ねる）、デスクトップでは `overflow-y: auto`
+
 ### URL設計
 
 | 機能 | Blueprint | 一覧 | 詳細 | 新規 | 編集 |

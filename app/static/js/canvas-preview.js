@@ -19,6 +19,11 @@ class CanvasPreview {
             this.area.style.backgroundImage = `url('/static/images/location_bg_images/${this.bgImage}')`;
         }
 
+        // Responsive scaling: fit 400px area into container width
+        this._applyScale();
+        this._resizeObserver = new ResizeObserver(() => this._applyScale());
+        this._resizeObserver.observe(this.container);
+
         // インライン JSON がある場合はそちらを優先
         const inlineJson = this.container.dataset.canvasJson;
         if (inlineJson) {
@@ -79,13 +84,9 @@ class CanvasPreview {
             label.textContent = p.variety ? `${p.variety}（${p.cropName}）` : (p.cropName || '');
             el.appendChild(label);
 
-            if (this.highlightId !== null) {
-                if (p.locationCropId === this.highlightId) {
-                    el.classList.add('highlight');
-                    el.style.setProperty('--highlight-color', color);
-                } else {
-                    el.classList.add('dimmed');
-                }
+            if (this.highlightId !== null && p.locationCropId === this.highlightId) {
+                el.classList.add('highlight');
+                el.style.setProperty('--highlight-color', color);
             }
 
             this.area.appendChild(el);
@@ -99,6 +100,20 @@ class CanvasPreview {
         div.style.borderColor = color;
         div.innerHTML = '<i class="bi bi-flower1"></i>';
         return div;
+    }
+
+    _applyScale() {
+        const containerWidth = this.container.clientWidth;
+        const areaWidth = 400;
+        if (containerWidth < areaWidth) {
+            const scale = containerWidth / areaWidth;
+            this.area.style.transform = `scale(${scale})`;
+            this.area.style.transformOrigin = 'top left';
+            this.container.style.height = `${Math.round(areaWidth * scale)}px`;
+        } else {
+            this.area.style.transform = '';
+            this.container.style.height = '';
+        }
     }
 
     _showEmpty() {
