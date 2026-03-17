@@ -4,11 +4,26 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/canvas.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/canvas-fullscreen.css') }}">
 {% endblock %}
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/canvas-preview.js') }}"></script>
 <script src="{{ url_for('static', filename='js/canvas-history.js') }}"></script>
+<script src="{{ url_for('static', filename='js/canvas-fullscreen.js') }}"></script>
+<script>
+document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', function() {
+    var state = window._canvasHistoryState;
+    openCanvasFullscreen({
+        locationId: {{ location.id }},
+        bgImage: '{{ location.bg_image or "bg_image_default.png" }}',
+        highlightId: null,
+        canvasData: null,
+        dates: state ? state.dates : null,
+        currentDateIndex: state ? state.getCurrentIndex() : null
+    });
+});
+</script>
 {% endblock %}
 
 {% block body_bg %}<div class="page-bg-image page-bg-location"></div>{% endblock %}
@@ -76,9 +91,15 @@
         <div class="card mb-3" id="history-card">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-map"></i> 見取り図</h5>
-                <a href="{{ url_for('locations.canvas', location_id=location.id) }}" class="btn btn-sm btn-light">
-                    <i class="bi bi-pencil"></i> 編集
-                </a>
+                <div>
+                    <button type="button" class="btn btn-sm btn-light me-1" id="canvas-fullscreen-btn"
+                            title="拡大表示">
+                        <i class="bi bi-arrows-fullscreen"></i> 拡大
+                    </button>
+                    <a href="{{ url_for('locations.canvas', location_id=location.id) }}" class="btn btn-sm btn-light">
+                        <i class="bi bi-pencil"></i> 編集
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <!-- 日付表示（見取り図の上） -->
