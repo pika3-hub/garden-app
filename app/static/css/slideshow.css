@@ -1,0 +1,106 @@
+/* スライドショー（栽培記録画像ビューア） */
+.slideshow-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.slideshow-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.slideshow-overlay img.slideshow-main-img {
+    max-width: 95vw;
+    max-height: 85vh;
+    object-fit: contain;
+}
+
+.slideshow-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    opacity: 0.8;
+    z-index: 1;
+}
+
+.slideshow-close:hover {
+    opacity: 1;
+}
+
+.slideshow-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.slideshow-nav:hover {
+    background: rgba(255, 255, 255, 0.4);
+    opacity: 1;
+}
+
+.slideshow-nav.prev {
+    left: 1rem;
+}
+
+.slideshow-nav.next {
+    right: 1rem;
+}
+
+.slideshow-meta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.95rem;
+}
+
+.slideshow-meta .slideshow-info {
+    display: flex;
+    gap: 1.5rem;
+    min-width: 0;
+}
+
+.slideshow-meta .slideshow-caption {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.85;
+}
+
+img.slideshow-target {
+    cursor: zoom-in;
+}

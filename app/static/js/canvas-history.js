@@ -48,6 +48,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!dates || dates.length === 0) return;
 
+    // Expose history state for fullscreen viewer
+    window._canvasHistoryState = {
+        dates: dates,
+        getCurrentIndex: () => parseInt(slider.value),
+        setIndex: (idx) => { slider.value = idx; loadDate(dates[idx]); }
+    };
+
+    // Sync slider when fullscreen closes
+    document.addEventListener('canvas-fullscreen-close', (e) => {
+        if (e.detail && e.detail.currentDateIndex != null) {
+            const idx = e.detail.currentDateIndex;
+            if (idx >= 0 && idx < dates.length) {
+                slider.value = idx;
+                loadDate(dates[idx]);
+            }
+        }
+    });
+
     // Show the date display and slider area
     if (dateArea) dateArea.style.display = '';
     sliderArea.style.display = '';
