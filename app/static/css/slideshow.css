@@ -91,6 +91,14 @@
 .slideshow-meta .slideshow-info {
     display: flex;
     gap: 1.5rem;
+    min-width: 0;
+}
+
+.slideshow-meta .slideshow-caption {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.85;
 }
 
 img.slideshow-target {

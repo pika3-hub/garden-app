@@ -2,10 +2,21 @@
 
 {% block title %}収穫記録一覧 - 家庭菜園管理アプリ{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/slideshow.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <h1><img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img icon-img-lg"> 収穫記録一覧</h1>
+        <h1>
+            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img icon-img-lg"> 収穫記録一覧
+            {% if harvests|selectattr('image_path')|list|length > 0 %}
+            <button id="slideshow-btn" class="btn btn-sm btn-outline-success ms-2">
+                <i class="bi bi-images"></i> スライドショー
+            </button>
+            {% endif %}
+        </h1>
     </div>
 </div>
 
@@ -59,10 +70,15 @@
     <div class="col-md-6 col-lg-4 mb-3">
         <div class="card h-100 card-with-bg card-bg-harvest">
             {% if harvest.image_path %}
-            <img src="{{ url_for('static', filename='uploads/' + (harvest.image_path | thumb_path)) }}"
-                 class="card-img-top" alt="{{ harvest.crop_name }}" style="height: 150px; object-fit: cover;"
-                 loading="lazy"
-                 onerror="this.src='{{ url_for('static', filename='uploads/' + harvest.image_path) }}'">
+            <div class="card-img-wrapper">
+                <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"
+                     class="card-img-top slideshow-target" alt="{{ harvest.crop_name }}"
+                     style="height: 150px; object-fit: cover;"
+                     data-slideshow-date="{{ harvest.harvest_date }}"
+                     data-slideshow-days="{{ harvest.days_from_planting }}"
+                     data-slideshow-caption="{{ harvest.crop_name }}{% if harvest.variety %}（{{ harvest.variety }}）{% endif %}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">
+                <span class="card-img-date-overlay">{{ harvest.harvest_date }}</span>
+            </div>
             {% endif %}
             <div class="card-body">
                 <div class="fw-bold text-primary mb-1">{{ harvest.harvest_date }}</div>
@@ -113,4 +129,8 @@
     {% endif %}
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/slideshow.js') }}"></script>
 {% endblock %}

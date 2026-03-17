@@ -8,7 +8,8 @@ document.addEventListener('DOMContentLoaded', function () {
         return {
             src: img.src,
             date: img.dataset.slideshowDate || '',
-            days: img.dataset.slideshowDays || ''
+            days: img.dataset.slideshowDays || '',
+            caption: img.dataset.slideshowCaption || ''
         };
     });
 
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
             '<div class="slideshow-info">' +
                 '<span class="slideshow-date"></span>' +
                 '<span class="slideshow-days"></span>' +
+                '<span class="slideshow-caption"></span>' +
             '</div>' +
             '<span class="slideshow-counter"></span>' +
         '</div>';
@@ -37,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var nextBtn = overlay.querySelector('.slideshow-nav.next');
     var dateEl = overlay.querySelector('.slideshow-date');
     var daysEl = overlay.querySelector('.slideshow-days');
+    var captionEl = overlay.querySelector('.slideshow-caption');
     var counterEl = overlay.querySelector('.slideshow-counter');
 
     function showImage(index) {
@@ -45,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
         mainImg.src = slide.src;
         dateEl.textContent = slide.date ? slide.date : '';
         daysEl.textContent = slide.days ? '植え付けから ' + slide.days + '日目' : '';
+        captionEl.textContent = slide.caption;
         counterEl.textContent = (index + 1) + ' / ' + slides.length;
 
         // 1枚しかないときはナビボタンを非表示

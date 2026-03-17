@@ -245,7 +245,8 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
             <div class="card-img-wrapper">
                 <img src="{{ url_for('static', filename='uploads/' + record.image_path) }}" class="card-img-top slideshow-target" alt="栽培記録画像" style="height: 150px; object-fit: cover;"
                      data-slideshow-date="{{ record.recorded_at }}"
-                     data-slideshow-days="{{ record.days_from_planting }}">
+                     data-slideshow-days="{{ record.days_from_planting }}"
+                     {% if record.notes %}data-slideshow-caption="{{ record.notes|replace('\n', ' ')|truncate(80) }}"{% endif %}>
                 <span class="card-img-date-overlay">{{ record.recorded_at }}</span>
             </div>
             {% endif %}
