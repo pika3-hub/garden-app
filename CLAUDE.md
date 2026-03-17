@@ -20,6 +20,7 @@
 - **収穫記録:** 複数回の収穫を記録、収穫量・単位・メモ・画像対応、植え付けからの日数自動計算
 - **日記システム:** 複数エンティティ（作物、場所、植え付け、収穫）との関連付けと画像添付を持つ栽培日記
 - **画像サポート:** 作物、場所、日記、収穫記録の画像アップロード・管理（最大16MB）、一覧画面はサムネイル（800×600px JPEG）を使用して高速化
+- **スライドショー:** 栽培記録一覧（植え付け詳細内）・収穫記録一覧の画像をフルスクリーンで閲覧（`slideshow.js` + `slideshow.css`）、日付・日数・キャプション表示、キーボード操作対応
 - **検索とフィルター:** エンティティ全体でのキーワード検索、日記・収穫記録の日付範囲フィルタリング
 - **ダッシュボード:** 統計情報と最近のアクティビティ概要
 - **カレンダービュー:** 月別カレンダーで作物・場所・日記・植え付け・収穫・タスクをアイコン表示、詳細ページへのリンク
@@ -73,7 +74,7 @@ garden-app/
 │   │   └── tasks/           # タスクテンプレート
 │   └── static/              # 静的アセット
 │       ├── css/             # Bootstrap カスタマイズ
-│       ├── js/              # canvas-editor.js, canvas-preview.js, canvas-history.js, ユーティリティ
+│       ├── js/              # canvas-editor.js, canvas-preview.js, canvas-history.js, slideshow.js, ユーティリティ
 │       ├── images/          # UIアイコン・静的画像
 │       │   ├── location_bg_images/  # 見取り図の背景画像（手動配置）
 │       │   │   ├── bg_image_default.png  # デフォルト背景
@@ -117,6 +118,48 @@ uv run python run.py
 - **onerrorフォールバック**: サムネイルがない場合はオリジナルにフォールバック
 - **GIF**: サムネイル非対応のためスキップ
 - **既存画像の一括変換**: `uv run python app/utils/generate_thumbnails.py`
+
+### スライドショー機能
+
+画像付き一覧画面でフルスクリーンのスライドショー表示を提供する汎用コンポーネント。
+
+#### 使用箇所
+
+| 画面 | テンプレート | キャプション内容 |
+|------|------------|----------------|
+| 栽培記録一覧（植え付け詳細内） | `plantings/detail.html` | メモ（80文字で切り詰め） |
+| 収穫記録一覧 | `harvests/list.html` | 作物名（品種名）+ 収穫量 |
+
+#### テンプレートでの使い方
+
+1. CSS/JSを読み込む:
+```html
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/slideshow.css') }}">
+{% endblock %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/slideshow.js') }}"></script>
+{% endblock %}
+```
+
+2. 起動ボタンを配置（`id="slideshow-btn"`）
+
+3. 画像に属性を付与:
+```html
+<img src="..." class="slideshow-target"
+     data-slideshow-date="2025-07-01"
+     data-slideshow-days="45"
+     data-slideshow-caption="トマト（ミニトマト）">
+```
+
+#### data属性
+
+| 属性 | 必須 | 説明 |
+|-----|------|------|
+| `class="slideshow-target"` | ○ | JS収集対象 + クリックで起動 |
+| `data-slideshow-date` | - | フッターに表示する日付 |
+| `data-slideshow-days` | - | 「植え付けから N日目」として表示 |
+| `data-slideshow-caption` | - | フッターに表示するキャプションテキスト |
 
 ### 見取り図機能
 
