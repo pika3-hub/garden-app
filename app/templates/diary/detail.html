@@ -84,7 +84,7 @@
             <div class="card-body{% if entry.weather and weather_bg_classes.get(entry.weather) %} card-body-weather {{ weather_bg_classes[entry.weather] }}{% endif %}">
                 {% if entry.image_path %}
                 <div class="text-center mb-3">
-                    <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}" alt="{{ entry.title }}" class="img-fluid rounded" style="max-height: 400px;">
+                    <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}" alt="{{ entry.title }}" class="img-fluid rounded lightbox-target" style="max-height: 400px;">
                 </div>
                 {% endif %}
                 {% if entry.content %}
