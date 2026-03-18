@@ -150,17 +150,6 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
             </div>
         </div>
 
-        <div class="btn-group-action mb-4">
-            <a href="{{ url_for('locations.edit', location_id=location.id) }}" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> 編集
-            </a>
-            <form method="POST" action="{{ url_for('locations.delete', location_id=location.id) }}" class="d-inline" onsubmit="return confirmDelete('{{ location.name }}');">
-                <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-trash"></i> 削除
-                </button>
-            </form>
-        </div>
-
         <!-- 栽培中の作物 -->
         <div class="card">
             <div class="card-header bg-success text-white">
@@ -237,51 +226,26 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
     </div>
 
     <div class="col-md-4">
-        <!-- 作物を植え付けるフォーム -->
+        <!-- 操作 -->
         <div class="card mb-3">
-            <div class="card-header bg-success text-white">
-                <h6 class="mb-0"><i class="bi bi-plus-circle"></i> 作物を植え付ける</h6>
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="bi bi-gear"></i> 操作</h6>
             </div>
-            <div class="card-body">
-                {% if all_crops %}
-                <form method="POST" action="{{ url_for('locations.plant', location_id=location.id) }}">
-                    <div class="mb-3">
-                        <label for="crop_id" class="form-label">作物 <span class="text-danger">*</span></label>
-                        <select class="form-select" id="crop_id" name="crop_id" required>
-                            <option value="">選択してください</option>
-                            {% for crop in all_crops %}
-                            <option value="{{ crop.id }}">{{ crop.name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="planted_date" class="form-label">植え付け日</label>
-                        <input type="date" class="form-control" id="planted_date" name="planted_date" value="{{ today }}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="quantity" class="form-label">株数</label>
-                        <input type="number" class="form-control" id="quantity" name="quantity" min="1">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="notes" class="form-label">メモ</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-plus-circle"></i> 植え付ける
-                        </button>
-                    </div>
+            <div class="card-body d-grid gap-2">
+                <a href="{{ url_for('plantings.plant_new') }}?location_id={{ location.id }}"
+                   class="btn btn-outline-success">
+                    <i class="bi bi-plus-circle"></i> 作物を植え付ける
+                </a>
+                <a href="{{ url_for('locations.edit', location_id=location.id) }}"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-pencil"></i> 場所を編集
+                </a>
+                <form method="POST" action="{{ url_for('locations.delete', location_id=location.id) }}"
+                      onsubmit="return confirmDelete('{{ location.name }}');">
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-trash"></i> 場所を削除
+                    </button>
                 </form>
-                {% else %}
-                <p class="text-muted text-center mb-0">
-                    <small>作物が登録されていません。<br>
-                    <a href="{{ url_for('crops.new') }}">作物を登録</a>してください。</small>
-                </p>
-                {% endif %}
             </div>
         </div>
 

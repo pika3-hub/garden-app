@@ -177,6 +177,18 @@
     transform: translateX(-2px);
 }
 
+.crop-item-new {
+    border-color: #198754;
+    border-width: 2px;
+    background: rgba(25, 135, 84, 0.08);
+    animation: crop-item-pulse 2s ease-in-out 3;
+}
+
+@keyframes crop-item-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(25, 135, 84, 0); }
+}
+
 .crop-item-content {
     flex: 1;
     display: flex;

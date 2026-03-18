@@ -261,12 +261,8 @@ class CanvasEditor {
         this.deselectAll();
     }
 
-    async save() {
-        const indicator = document.getElementById('save-indicator');
-        indicator.textContent = '保存中...';
-        indicator.className = 'ms-2 text-warning';
-
-        const data = {
+    buildSaveData() {
+        return {
             version: '2.0',
             placements: this.placements.map(p => ({
                 locationCropId: p.locationCropId,
@@ -279,6 +275,14 @@ class CanvasEditor {
                 variety: p.variety || ''
             }))
         };
+    }
+
+    async save() {
+        const indicator = document.getElementById('save-indicator');
+        indicator.textContent = '保存中...';
+        indicator.className = 'ms-2 text-warning';
+
+        const data = this.buildSaveData();
 
         try {
             const response = await fetch(`/locations/${this.locationId}/canvas/save`, {
@@ -322,5 +326,5 @@ class CanvasEditor {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     const locationId = document.getElementById('location-id').value;
-    new CanvasEditor(locationId);
+    window._canvasEditor = new CanvasEditor(locationId);
 });

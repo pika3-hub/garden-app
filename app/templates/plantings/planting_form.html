@@ -51,6 +51,7 @@
                                 {% for loc in locations %}
                                 <option value="{{ loc.id }}"
                                     {% if planting and planting.location_id == loc.id %}selected
+                                    {% elif not planting and preselected_location_id and preselected_location_id == loc.id %}selected
                                     {% endif %}>
                                     {{ loc.name }} ({{ loc.location_type }})
                                 </option>

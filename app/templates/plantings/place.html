@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/canvas.css') }}">
+{% endblock %}
+
+{% block content %}
+<input type="hidden" id="location-id" value="{{ location.id }}">
+<input type="hidden" id="bg-image" value="{{ location.bg_image or 'bg_image_default.png' }}">
+<input type="hidden" id="new-location-crop-id" value="{{ new_location_crop_id }}">
+<input type="hidden" id="detail-url" value="{{ url_for('plantings.detail', location_crop_id=new_location_crop_id) }}">
+
+<div class="canvas-editor" style="margin-top: 30px;">
+    <!-- ヘッダー -->
+    <div class="canvas-header">
+        <a href="{{ url_for('plantings.detail', location_crop_id=new_location_crop_id) }}" class="btn btn-secondary" id="skip-btn">
+            <i class="bi bi-skip-forward"></i> スキップ
+        </a>
+        <h4>{{ planting.crop_name }}{% if planting.variety %}（{{ planting.variety }}）{% endif %} - {{ location.name }} 見取り図配置</h4>
+        <div class="header-controls">
+            <button id="save-btn" class="btn btn-success">
+                <i class="bi bi-save"></i> 保存して完了
+            </button>
+            <span id="save-indicator" class="ms-2"></span>
+        </div>
+    </div>
+
+    <!-- メインエリア -->
+    <div class="canvas-main">
+        <!-- キャンバスエリア -->
+        <div class="canvas-area-wrapper">
+            <div id="canvas-area"></div>
+        </div>
+
+        <!-- 作物サイドバー -->
+        <div class="crop-sidebar">
+            <h6>栽培中の作物</h6>
+            <div class="crop-list">
+                {% for crop in crops %}
+                <div class="crop-item{% if crop.id == new_location_crop_id %} crop-item-new{% endif %}" draggable="true"
+                     data-crop-id="{{ crop.crop_id }}"
+                     data-location-crop-id="{{ crop.id }}"
+                     data-crop-name="{{ crop.crop_name }}"
+                     data-variety="{{ crop.variety or '' }}"
+                     data-planted-date="{{ crop.planted_date or '' }}"
+                     data-icon-path="{{ crop.icon_path or '' }}"
+                     data-image-color="{{ crop.image_color or '#4CAF50' }}">
+                    {% if crop.icon_path %}
+                    <img src="{{ url_for('static', filename='images/crop_icons/' + crop.icon_path) }}"
+                         alt="" class="crop-icon-circle"
+                         style="width:32px;height:32px;border-color:{{ crop.image_color or '#4CAF50' }};">
+                    {% else %}
+                    <div class="crop-icon-circle"
+                         style="width:32px;height:32px;background:{{ crop.image_color or '#4CAF50' }};border-color:{{ crop.image_color or '#4CAF50' }};">
+                        <i class="bi bi-flower1" style="color:#fff;font-size:16px;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="crop-item-content">
+                        <div class="crop-name">{{ crop.crop_name }}</div>
+                        {% if crop.variety %}
+                        <div class="crop-date">{{ crop.variety }}</div>
+                        {% endif %}
+                        {% if crop.id == new_location_crop_id %}
+                        <div class="crop-date text-success fw-bold">← 新規</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <p class="text-muted mt-3">
+                <small><i class="bi bi-info-circle"></i>
+                作物を見取り図にドラッグして配置</small>
+            </p>
+        </div>
+    </div>
+
+    <!-- 情報パネル -->
+    <div id="info-panel" class="info-panel" style="display:none;">
+        <div class="info-panel-content">
+            <span id="info-crop-name" class="fw-bold"></span>
+            <span id="info-variety" class="text-muted ms-2"></span>
+            <span id="info-planted-date" class="text-muted ms-3"></span>
+            <button id="delete-placement-btn" class="btn btn-outline-danger btn-sm ms-auto">
+                <i class="bi bi-trash"></i> 削除
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/canvas-editor.js') }}"></script>
+<script src="{{ url_for('static', filename='js/canvas-placement.js') }}"></script>
+{% endblock %}

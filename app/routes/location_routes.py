@@ -36,9 +36,6 @@ def detail(location_id):
     for crop in active_crops:
         crop['harvests'] = Harvest.get_by_location_crop(crop['id'])
 
-    # 植え付け用の作物リストを取得
-    all_crops = Crop.get_all()
-
     # 関連する日記を取得
     related_diaries = DiaryEntry.get_by_location(location_id)
 
@@ -48,7 +45,6 @@ def detail(location_id):
     return render_template('locations/detail.html',
                           location=location,
                           active_crops=active_crops,
-                          all_crops=all_crops,
                           related_diaries=related_diaries,
                           today=today,
                           prev_location=prev_location,
@@ -196,9 +192,10 @@ def plant(location_id):
         return redirect(url_for('locations.detail', location_id=location_id))
 
     try:
-        Planting.plant(data)
+        new_id = Planting.plant(data)
         crop = Crop.get_by_id(data['crop_id'])
         flash(f'「{crop["name"]}」を植え付けました', 'success')
+        return redirect(url_for('plantings.place', location_crop_id=new_id))
     except Exception as e:
         flash(f'エラーが発生しました: {str(e)}', 'danger')
 
