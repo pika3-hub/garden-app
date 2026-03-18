@@ -40,6 +40,15 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
     </div>
 </div>
 
+{% set prev_item = {'url': url_for('locations.detail', location_id=prev_location.id),
+                    'button_text': '前の場所',
+                    'label': prev_location.name} if prev_location else None %}
+{% set next_item = {'url': url_for('locations.detail', location_id=next_location.id),
+                    'button_text': '次の場所',
+                    'label': next_location.name} if next_location else None %}
+{% set nav_label = '場所ナビゲーション' %}
+{% include '_detail_nav.html' %}
+
 <div class="row">
     <div class="col-md-8">
         <div class="card mb-3">

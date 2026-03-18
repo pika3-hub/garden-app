@@ -40,12 +40,16 @@ def detail(location_crop_id):
         except (json.JSONDecodeError, TypeError):
             canvas_snapshot = None
 
+    prev_planting, next_planting = Planting.get_adjacent(location_crop_id)
+
     return render_template('plantings/detail.html',
                           records=records,
                           location_crop=location_crop,
                           location=location,
                           today=today,
-                          canvas_snapshot=canvas_snapshot)
+                          canvas_snapshot=canvas_snapshot,
+                          prev_planting=prev_planting,
+                          next_planting=next_planting)
 
 
 @bp.route('/record/<int:record_id>')
@@ -56,7 +60,12 @@ def record_detail(record_id):
         flash('栽培記録が見つかりません', 'danger')
         return redirect(url_for('plantings.index'))
 
-    return render_template('plantings/record_detail.html', record=record)
+    prev_record, next_record = PlantingRecord.get_adjacent(record_id)
+
+    return render_template('plantings/record_detail.html',
+                          record=record,
+                          prev_record=prev_record,
+                          next_record=next_record)
 
 
 @bp.route('/new/<int:location_crop_id>')

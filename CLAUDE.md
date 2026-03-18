@@ -25,6 +25,7 @@
 - **ダッシュボード:** 統計情報と最近のアクティビティ概要
 - **カレンダービュー:** 月別カレンダーで作物・場所・日記・植え付け・収穫・タスクをアイコン表示、詳細ページへのリンク
 - **タスク管理:** 栽培作業タスクのCRUD、ステータス管理（未着手/進行中/完了）、期限日設定、作物・場所・栽培記録との関連付け
+- **詳細画面ナビゲーション:** 全詳細画面（作物・場所・植え付け・栽培記録・収穫・日記・タスク）で前後データへの移動ボタンを表示。共通部品 `_detail_nav.html` を使用し、各モデルの `get_adjacent()` メソッドで一覧の表示順に基づく前後を取得
 
 ---
 
@@ -64,6 +65,7 @@ garden-app/
 │   ├── migrations/          # データベースマイグレーション（増分SQL）
 │   ├── templates/           # Jinja2 テンプレート
 │   │   ├── base.html        # ナビバー付きベースレイアウト
+│   │   ├── _detail_nav.html # 詳細画面の前後ナビゲーション共通部品
 │   │   ├── index.html       # ダッシュボード
 │   │   ├── crops/           # 作物テンプレート
 │   │   ├── locations/       # 場所テンプレート（canvas.html, _canvas_preview.html）
@@ -160,6 +162,41 @@ uv run python run.py
 | `data-slideshow-date` | - | フッターに表示する日付 |
 | `data-slideshow-days` | - | 「植え付けから N日目」として表示 |
 | `data-slideshow-caption` | - | フッターに表示するキャプションテキスト |
+
+### 詳細画面ナビゲーション
+
+全詳細画面で前後データへの移動ボタンを表示する共通機能。一覧に戻らずにデータ間を移動できる。
+
+#### 共通部品
+
+`app/templates/_detail_nav.html` — 前後ナビボタンを描画する include 用テンプレート。
+
+#### テンプレートでの使い方
+
+`{% set %}` で変数を構築してから `{% include %}` する。配置場所は `<div class="row">` の直前（全幅）。
+
+```html
+{% set prev_item = {'url': url_for('crops.detail', crop_id=prev_crop.id),
+                    'button_text': '前の作物',
+                    'label': prev_crop.name} if prev_crop else None %}
+{% set next_item = {'url': url_for('crops.detail', crop_id=next_crop.id),
+                    'button_text': '次の作物',
+                    'label': next_crop.name} if next_crop else None %}
+{% set nav_label = '作物ナビゲーション' %}
+{% include '_detail_nav.html' %}
+```
+
+#### 各画面の `get_adjacent()` 実装
+
+| 画面 | モデルメソッド | 表示順 | ラベル |
+|------|-------------|--------|-------|
+| 作物詳細 | `Crop.get_adjacent(crop_id)` | `created_at DESC` | 作物名（品種） |
+| 場所詳細 | `Location.get_adjacent(location_id)` | `created_at DESC` | 場所名 |
+| 植え付け詳細 | `Planting.get_adjacent(id, status)` | `planted_date DESC`、同じステータス内 | 作物名（品種）- 場所名 |
+| 栽培記録詳細 | `PlantingRecord.get_adjacent(record_id)` | `recorded_at DESC`、同一植え付け内 | 記録日 |
+| 収穫詳細 | `Harvest.get_adjacent(harvest_id)` | `harvest_date DESC` | 収穫日 作物名 |
+| 日記詳細 | `DiaryEntry.get_adjacent(diary_id)` | `entry_date DESC` | 日付 タイトル |
+| タスク詳細 | `Task.get_adjacent(task_id)` | ステータス順→期限日（Python側でインデックス検索） | タイトル |
 
 ### 見取り図機能
 

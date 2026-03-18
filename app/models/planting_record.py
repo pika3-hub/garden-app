@@ -83,6 +83,47 @@ class PlantingRecord:
         return None
 
     @staticmethod
+    def get_adjacent(record_id):
+        """同一植え付け内の前後の栽培記録を取得（recorded_at DESC順）"""
+        db = get_db()
+        current = db.execute(
+            'SELECT id, location_crop_id, recorded_at, created_at FROM planting_records WHERE id = ?',
+            (record_id,)
+        ).fetchone()
+        if not current:
+            return None, None
+
+        params = {
+            'location_crop_id': current['location_crop_id'],
+            'recorded_at': current['recorded_at'],
+            'created_at': current['created_at'],
+            'id': current['id'],
+        }
+
+        prev_record = db.execute(
+            '''SELECT id, recorded_at FROM planting_records
+               WHERE location_crop_id = :location_crop_id
+                 AND ((recorded_at < :recorded_at)
+                   OR (recorded_at = :recorded_at AND created_at < :created_at)
+                   OR (recorded_at = :recorded_at AND created_at = :created_at AND id < :id))
+               ORDER BY recorded_at DESC, created_at DESC, id DESC LIMIT 1''',
+            params
+        ).fetchone()
+
+        next_record = db.execute(
+            '''SELECT id, recorded_at FROM planting_records
+               WHERE location_crop_id = :location_crop_id
+                 AND ((recorded_at > :recorded_at)
+                   OR (recorded_at = :recorded_at AND created_at > :created_at)
+                   OR (recorded_at = :recorded_at AND created_at = :created_at AND id > :id))
+               ORDER BY recorded_at ASC, created_at ASC, id ASC LIMIT 1''',
+            params
+        ).fetchone()
+
+        return (dict(prev_record) if prev_record else None,
+                dict(next_record) if next_record else None)
+
+    @staticmethod
     def create(data):
         """栽培記録を作成"""
         db = get_db()

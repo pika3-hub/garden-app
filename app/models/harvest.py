@@ -126,6 +126,50 @@ class Harvest:
         return result
 
     @staticmethod
+    def get_adjacent(harvest_id):
+        """現在の収穫記録の前後を取得（harvest_date DESC順）"""
+        db = get_db()
+        current = db.execute(
+            'SELECT id, harvest_date, created_at FROM harvests WHERE id = ?',
+            (harvest_id,)
+        ).fetchone()
+        if not current:
+            return None, None
+
+        params = {
+            'harvest_date': current['harvest_date'],
+            'created_at': current['created_at'],
+            'id': current['id'],
+        }
+
+        prev_harvest = db.execute(
+            '''SELECT h.id, h.harvest_date, c.name as crop_name
+               FROM harvests h
+               JOIN plantings lc ON h.location_crop_id = lc.id
+               JOIN crops c ON lc.crop_id = c.id
+               WHERE (h.harvest_date < :harvest_date)
+                  OR (h.harvest_date = :harvest_date AND h.created_at < :created_at)
+                  OR (h.harvest_date = :harvest_date AND h.created_at = :created_at AND h.id < :id)
+               ORDER BY h.harvest_date DESC, h.created_at DESC, h.id DESC LIMIT 1''',
+            params
+        ).fetchone()
+
+        next_harvest = db.execute(
+            '''SELECT h.id, h.harvest_date, c.name as crop_name
+               FROM harvests h
+               JOIN plantings lc ON h.location_crop_id = lc.id
+               JOIN crops c ON lc.crop_id = c.id
+               WHERE (h.harvest_date > :harvest_date)
+                  OR (h.harvest_date = :harvest_date AND h.created_at > :created_at)
+                  OR (h.harvest_date = :harvest_date AND h.created_at = :created_at AND h.id > :id)
+               ORDER BY h.harvest_date ASC, h.created_at ASC, h.id ASC LIMIT 1''',
+            params
+        ).fetchone()
+
+        return (dict(prev_harvest) if prev_harvest else None,
+                dict(next_harvest) if next_harvest else None)
+
+    @staticmethod
     def create(data):
         """収穫記録を作成"""
         db = get_db()

@@ -75,6 +75,37 @@ class Crop:
         return result['count'] if result else 0
 
     @staticmethod
+    def get_adjacent(crop_id):
+        """現在の作物の前後の作物を取得（created_at DESC順）"""
+        db = get_db()
+        current = db.execute(
+            'SELECT id, created_at FROM crops WHERE id = ?', (crop_id,)
+        ).fetchone()
+        if not current:
+            return None, None
+
+        params = {'created_at': current['created_at'], 'id': current['id']}
+
+        prev_crop = db.execute(
+            '''SELECT id, name, variety FROM crops
+               WHERE (created_at < :created_at)
+                  OR (created_at = :created_at AND id < :id)
+               ORDER BY created_at DESC, id DESC LIMIT 1''',
+            params
+        ).fetchone()
+
+        next_crop = db.execute(
+            '''SELECT id, name, variety FROM crops
+               WHERE (created_at > :created_at)
+                  OR (created_at = :created_at AND id > :id)
+               ORDER BY created_at ASC, id ASC LIMIT 1''',
+            params
+        ).fetchone()
+
+        return (dict(prev_crop) if prev_crop else None,
+                dict(next_crop) if next_crop else None)
+
+    @staticmethod
     def search(keyword):
         """作物を検索"""
         db = get_db()

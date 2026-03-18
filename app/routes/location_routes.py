@@ -43,13 +43,16 @@ def detail(location_id):
     related_diaries = DiaryEntry.get_by_location(location_id)
 
     today = date.today().isoformat()
+    prev_location, next_location = Location.get_adjacent(location_id)
 
     return render_template('locations/detail.html',
                           location=location,
                           active_crops=active_crops,
                           all_crops=all_crops,
                           related_diaries=related_diaries,
-                          today=today)
+                          today=today,
+                          prev_location=prev_location,
+                          next_location=next_location)
 
 
 @bp.route('/new')

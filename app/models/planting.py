@@ -176,6 +176,60 @@ class Planting:
         return Planting.get_all_with_stats(status='active')
 
     @staticmethod
+    def get_adjacent(location_crop_id, status=None):
+        """現在の植え付けの前後を取得（planted_date DESC順、同じステータス内）"""
+        db = get_db()
+        current = db.execute(
+            '''SELECT id, planted_date, created_at, status FROM plantings WHERE id = ?''',
+            (location_crop_id,)
+        ).fetchone()
+        if not current:
+            return None, None
+
+        filter_status = status or current['status']
+        params = {
+            'planted_date': current['planted_date'],
+            'created_at': current['created_at'],
+            'id': current['id'],
+            'status': filter_status,
+        }
+
+        prev_planting = db.execute(
+            '''SELECT lc.id, c.name as crop_name, c.variety, l.name as location_name
+               FROM plantings lc
+               JOIN crops c ON lc.crop_id = c.id
+               JOIN locations l ON lc.location_id = l.id
+               WHERE lc.status = :status
+                 AND ((lc.planted_date < :planted_date)
+                   OR (lc.planted_date = :planted_date AND lc.created_at < :created_at)
+                   OR (lc.planted_date = :planted_date AND lc.created_at = :created_at AND lc.id < :id)
+                   OR (lc.planted_date IS NULL AND :planted_date IS NOT NULL)
+                   OR (lc.planted_date IS NULL AND :planted_date IS NULL AND lc.created_at < :created_at)
+                   OR (lc.planted_date IS NULL AND :planted_date IS NULL AND lc.created_at = :created_at AND lc.id < :id))
+               ORDER BY lc.planted_date DESC, lc.created_at DESC, lc.id DESC LIMIT 1''',
+            params
+        ).fetchone()
+
+        next_planting = db.execute(
+            '''SELECT lc.id, c.name as crop_name, c.variety, l.name as location_name
+               FROM plantings lc
+               JOIN crops c ON lc.crop_id = c.id
+               JOIN locations l ON lc.location_id = l.id
+               WHERE lc.status = :status
+                 AND ((lc.planted_date > :planted_date)
+                   OR (lc.planted_date = :planted_date AND lc.created_at > :created_at)
+                   OR (lc.planted_date = :planted_date AND lc.created_at = :created_at AND lc.id > :id)
+                   OR (:planted_date IS NULL AND lc.planted_date IS NOT NULL)
+                   OR (:planted_date IS NULL AND lc.planted_date IS NULL AND lc.created_at > :created_at)
+                   OR (:planted_date IS NULL AND lc.planted_date IS NULL AND lc.created_at = :created_at AND lc.id > :id))
+               ORDER BY lc.planted_date ASC, lc.created_at ASC, lc.id ASC LIMIT 1''',
+            params
+        ).fetchone()
+
+        return (dict(prev_planting) if prev_planting else None,
+                dict(next_planting) if next_planting else None)
+
+    @staticmethod
     def get_all_with_stats(status=None):
         """全ての作物を取得（作物・場所情報付き、栽培記録の件数・最新画像含む）。statusで絞り込み可能"""
         db = get_db()

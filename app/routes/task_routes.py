@@ -44,12 +44,15 @@ def detail(task_id):
         return redirect(url_for('tasks.list'))
 
     relations = Task.get_relations(task_id)
+    prev_task, next_task = Task.get_adjacent(task_id)
 
     return render_template('tasks/detail.html',
                           task=task,
                           relations=relations,
                           today=date.today(),
-                          Task=Task)
+                          Task=Task,
+                          prev_task=prev_task,
+                          next_task=next_task)
 
 
 @bp.route('/new')

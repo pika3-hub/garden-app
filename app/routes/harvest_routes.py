@@ -51,7 +51,12 @@ def detail(harvest_id):
         flash('収穫記録が見つかりません', 'danger')
         return redirect(url_for('harvests.list'))
 
-    return render_template('harvests/detail.html', harvest=harvest)
+    prev_harvest, next_harvest = Harvest.get_adjacent(harvest_id)
+
+    return render_template('harvests/detail.html',
+                          harvest=harvest,
+                          prev_harvest=prev_harvest,
+                          next_harvest=next_harvest)
 
 
 @bp.route('/new/<int:location_crop_id>')
