@@ -16,6 +16,15 @@
     </div>
 </div>
 
+{% set prev_item = {'url': url_for('tasks.detail', task_id=prev_task.id),
+                    'button_text': '前のタスク',
+                    'label': prev_task.title} if prev_task else None %}
+{% set next_item = {'url': url_for('tasks.detail', task_id=next_task.id),
+                    'button_text': '次のタスク',
+                    'label': next_task.title} if next_task else None %}
+{% set nav_label = 'タスクナビゲーション' %}
+{% include '_detail_nav.html' %}
+
 <div class="row">
     <div class="col-md-8">
         <div class="card mb-3">

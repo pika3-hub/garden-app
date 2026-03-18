@@ -20,6 +20,15 @@
     </div>
 </div>
 
+{% set prev_item = {'url': url_for('plantings.record_detail', record_id=prev_record.id),
+                    'button_text': '前の記録',
+                    'label': prev_record.recorded_at} if prev_record else None %}
+{% set next_item = {'url': url_for('plantings.record_detail', record_id=next_record.id),
+                    'button_text': '次の記録',
+                    'label': next_record.recorded_at} if next_record else None %}
+{% set nav_label = '栽培記録ナビゲーション' %}
+{% include '_detail_nav.html' %}
+
 <div class="row">
     <div class="col-md-8">
         <div class="card">

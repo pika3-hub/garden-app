@@ -34,11 +34,15 @@ def detail(crop_id):
     # 関連する日記を取得
     related_diaries = DiaryEntry.get_by_crop(crop_id)
 
+    prev_crop, next_crop = Crop.get_adjacent(crop_id)
+
     return render_template('crops/detail.html',
                           crop=crop,
                           active_locations=active_locations,
                           harvested_locations=harvested_locations,
-                          related_diaries=related_diaries)
+                          related_diaries=related_diaries,
+                          prev_crop=prev_crop,
+                          next_crop=next_crop)
 
 
 def _get_crop_icon_list():

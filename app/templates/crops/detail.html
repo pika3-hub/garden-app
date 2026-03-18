@@ -28,6 +28,15 @@
     </div>
 </div>
 
+{% set prev_item = {'url': url_for('crops.detail', crop_id=prev_crop.id),
+                    'button_text': '前の作物',
+                    'label': prev_crop.name ~ ('（' ~ prev_crop.variety ~ '）' if prev_crop.variety else '')} if prev_crop else None %}
+{% set next_item = {'url': url_for('crops.detail', crop_id=next_crop.id),
+                    'button_text': '次の作物',
+                    'label': next_crop.name ~ ('（' ~ next_crop.variety ~ '）' if next_crop.variety else '')} if next_crop else None %}
+{% set nav_label = '作物ナビゲーション' %}
+{% include '_detail_nav.html' %}
+
 <div class="row">
     <div class="col-md-8">
         <div class="card mb-3">

@@ -234,6 +234,36 @@ class Task:
         db.commit()
 
     @staticmethod
+    def get_adjacent(task_id):
+        """現在のタスクの前後を取得（一覧の表示順に基づく）"""
+        db = get_db()
+        tasks = db.execute(
+            '''SELECT id, title FROM tasks
+               ORDER BY CASE status
+                           WHEN 'in_progress' THEN 1
+                           WHEN 'pending' THEN 2
+                           WHEN 'completed' THEN 3
+                        END,
+                        CASE WHEN status != 'completed' THEN due_date END ASC NULLS LAST,
+                        CASE WHEN status = 'completed' THEN due_date END DESC NULLS LAST'''
+        ).fetchall()
+
+        task_list = [dict(t) for t in tasks]
+        current_index = None
+        for i, t in enumerate(task_list):
+            if t['id'] == task_id:
+                current_index = i
+                break
+
+        if current_index is None:
+            return None, None
+
+        prev_task = task_list[current_index - 1] if current_index > 0 else None
+        next_task = task_list[current_index + 1] if current_index < len(task_list) - 1 else None
+
+        return prev_task, next_task
+
+    @staticmethod
     def update_status(task_id, status):
         """ステータスのみを更新"""
         db = get_db()

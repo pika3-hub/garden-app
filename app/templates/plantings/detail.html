@@ -43,10 +43,19 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
     </div>
 </div>
 
+{% set prev_item = {'url': url_for('plantings.detail', location_crop_id=prev_planting.id),
+                    'button_text': '前の植え付け',
+                    'label': prev_planting.crop_name ~ ('（' ~ prev_planting.variety ~ '）' if prev_planting.variety else '') ~ ' - ' ~ prev_planting.location_name} if prev_planting else None %}
+{% set next_item = {'url': url_for('plantings.detail', location_crop_id=next_planting.id),
+                    'button_text': '次の植え付け',
+                    'label': next_planting.crop_name ~ ('（' ~ next_planting.variety ~ '）' if next_planting.variety else '') ~ ' - ' ~ next_planting.location_name} if next_planting else None %}
+{% set nav_label = '植え付けナビゲーション' %}
+{% include '_detail_nav.html' %}
+
 <!-- 上段: 基本情報カード -->
 <div class="row mb-4">
     <div class="col-md-8">
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-header bg-info text-white d-flex align-items-center justify-content-between">
                 <h5 class="mb-0">
                     <i class="bi bi-flower1"></i> {{ location_crop.crop_name }}{% if location_crop.variety %}（{{ location_crop.variety }}）{% endif %}
@@ -112,6 +121,45 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
                         <p class="mb-0" style="white-space: pre-wrap;">{{ location_crop.notes }}</p>
                     </div>
                 </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 見取り図プレビュー -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-map"></i>
+                    {% if location_crop.status == 'harvested' %}
+                        栽培終了時の見取り図
+                    {% else %}
+                        見取り図での配置位置
+                    {% endif %}
+                </h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="canvas-fullscreen-btn"
+                        title="拡大表示">
+                    <i class="bi bi-arrows-fullscreen"></i> 拡大
+                </button>
+            </div>
+            <div class="card-body d-flex justify-content-center">
+                {% if location_crop.status == 'harvested' %}
+                    {% if canvas_snapshot %}
+                        {% with preview_location_id=location.id,
+                                preview_bg_image=location.bg_image,
+                                preview_highlight_id=location_crop.id,
+                                preview_canvas_json=canvas_snapshot %}
+                        {% include 'locations/_canvas_preview.html' %}
+                        {% endwith %}
+                    {% else %}
+                        <p class="text-muted">見取り図への配置記録がありません</p>
+                    {% endif %}
+                {% else %}
+                    {% if location %}
+                        {% with preview_location_id=location.id,
+                                preview_bg_image=location.bg_image,
+                                preview_highlight_id=location_crop.id %}
+                        {% include 'locations/_canvas_preview.html' %}
+                        {% endwith %}
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -185,45 +233,6 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
         </div>
     </div>
     {% endif %}
-</div>
-
-<!-- 見取り図プレビュー -->
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-map"></i>
-            {% if location_crop.status == 'harvested' %}
-                栽培終了時の見取り図
-            {% else %}
-                見取り図での配置位置
-            {% endif %}
-        </h5>
-        <button type="button" class="btn btn-sm btn-outline-secondary" id="canvas-fullscreen-btn"
-                title="拡大表示">
-            <i class="bi bi-arrows-fullscreen"></i> 拡大
-        </button>
-    </div>
-    <div class="card-body d-flex justify-content-center">
-        {% if location_crop.status == 'harvested' %}
-            {% if canvas_snapshot %}
-                {% with preview_location_id=location.id,
-                        preview_bg_image=location.bg_image,
-                        preview_highlight_id=location_crop.id,
-                        preview_canvas_json=canvas_snapshot %}
-                {% include 'locations/_canvas_preview.html' %}
-                {% endwith %}
-            {% else %}
-                <p class="text-muted">見取り図への配置記録がありません</p>
-            {% endif %}
-        {% else %}
-            {% if location %}
-                {% with preview_location_id=location.id,
-                        preview_bg_image=location.bg_image,
-                        preview_highlight_id=location_crop.id %}
-                {% include 'locations/_canvas_preview.html' %}
-                {% endwith %}
-            {% endif %}
-        {% endif %}
-    </div>
 </div>
 
 <!-- 下段: 栽培記録一覧 -->

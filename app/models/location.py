@@ -71,6 +71,37 @@ class Location:
         return result['count'] if result else 0
 
     @staticmethod
+    def get_adjacent(location_id):
+        """現在の場所の前後の場所を取得（created_at DESC順）"""
+        db = get_db()
+        current = db.execute(
+            'SELECT id, created_at FROM locations WHERE id = ?', (location_id,)
+        ).fetchone()
+        if not current:
+            return None, None
+
+        params = {'created_at': current['created_at'], 'id': current['id']}
+
+        prev_loc = db.execute(
+            '''SELECT id, name FROM locations
+               WHERE (created_at < :created_at)
+                  OR (created_at = :created_at AND id < :id)
+               ORDER BY created_at DESC, id DESC LIMIT 1''',
+            params
+        ).fetchone()
+
+        next_loc = db.execute(
+            '''SELECT id, name FROM locations
+               WHERE (created_at > :created_at)
+                  OR (created_at = :created_at AND id > :id)
+               ORDER BY created_at ASC, id ASC LIMIT 1''',
+            params
+        ).fetchone()
+
+        return (dict(prev_loc) if prev_loc else None,
+                dict(next_loc) if next_loc else None)
+
+    @staticmethod
     def search(keyword):
         """場所を検索"""
         db = get_db()

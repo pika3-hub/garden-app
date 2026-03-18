@@ -1,0 +1,20 @@
+<!-- 前後ナビゲーション共通部品 -->
+<nav class="d-flex justify-content-between align-items-start mb-3" aria-label="{{ nav_label | default('ナビゲーション') }}">
+    {% if prev_item %}
+    <a href="{{ prev_item.url }}" class="btn btn-outline-secondary text-start">
+        <i class="bi bi-chevron-left"></i> {{ prev_item.button_text }}
+        <small class="d-block text-muted">{{ prev_item.label }}</small>
+    </a>
+    {% else %}
+    <div></div>
+    {% endif %}
+
+    {% if next_item %}
+    <a href="{{ next_item.url }}" class="btn btn-outline-secondary text-end">
+        {{ next_item.button_text }} <i class="bi bi-chevron-right"></i>
+        <small class="d-block text-muted">{{ next_item.label }}</small>
+    </a>
+    {% else %}
+    <div></div>
+    {% endif %}
+</nav>

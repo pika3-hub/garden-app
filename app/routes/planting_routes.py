@@ -40,12 +40,16 @@ def detail(location_crop_id):
         except (json.JSONDecodeError, TypeError):
             canvas_snapshot = None
 
+    prev_planting, next_planting = Planting.get_adjacent(location_crop_id)
+
     return render_template('plantings/detail.html',
                           records=records,
                           location_crop=location_crop,
                           location=location,
                           today=today,
-                          canvas_snapshot=canvas_snapshot)
+                          canvas_snapshot=canvas_snapshot,
+                          prev_planting=prev_planting,
+                          next_planting=next_planting)
 
 
 @bp.route('/record/<int:record_id>')
@@ -56,7 +60,12 @@ def record_detail(record_id):
         flash('栽培記録が見つかりません', 'danger')
         return redirect(url_for('plantings.index'))
 
-    return render_template('plantings/record_detail.html', record=record)
+    prev_record, next_record = PlantingRecord.get_adjacent(record_id)
+
+    return render_template('plantings/record_detail.html',
+                          record=record,
+                          prev_record=prev_record,
+                          next_record=next_record)
 
 
 @bp.route('/new/<int:location_crop_id>')
@@ -218,17 +227,35 @@ def planting_update_harvested(location_crop_id):
         return redirect(url_for('plantings.planting_edit_harvested', location_crop_id=location_crop_id))
 
 
+@bp.route('/<int:location_crop_id>/place')
+def place(location_crop_id):
+    """見取り図配置ページ"""
+    planting = Planting.get_by_id(location_crop_id)
+    if not planting:
+        flash('栽培情報が見つかりません', 'danger')
+        return redirect(url_for('plantings.index'))
+    location = Location.get_by_id(planting['location_id'])
+    crops_with_position = Planting.get_crops_with_position(location['id'])
+    return render_template('plantings/place.html',
+                           planting=planting,
+                           location=location,
+                           crops=crops_with_position,
+                           new_location_crop_id=location_crop_id)
+
+
 @bp.route('/plant/new')
 def plant_new():
     """植え付け登録フォーム"""
     crops = Crop.get_all()
     locations = Location.get_all()
     today = date.today().isoformat()
+    preselected_location_id = request.args.get('location_id', type=int)
     return render_template('plantings/planting_form.html',
                            planting=None,
                            crops=crops,
                            locations=locations,
-                           today=today)
+                           today=today,
+                           preselected_location_id=preselected_location_id)
 
 
 @bp.route('/plant/create', methods=['POST'])
@@ -252,7 +279,7 @@ def plant_create():
     try:
         new_id = Planting.plant(data)
         flash('植え付けを登録しました', 'success')
-        return redirect(url_for('plantings.detail', location_crop_id=new_id))
+        return redirect(url_for('plantings.place', location_crop_id=new_id))
     except Exception as e:
         flash(f'エラーが発生しました: {str(e)}', 'danger')
         return redirect(url_for('plantings.plant_new'))

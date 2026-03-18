@@ -16,11 +16,17 @@
         <a href="{{ url_for('harvests.list') }}" class="btn btn-outline-secondary">
             <i class="bi bi-list"></i> 一覧に戻る
         </a>
-        <a href="{{ url_for('harvests.edit', harvest_id=harvest.id) }}" class="btn btn-primary">
-            <i class="bi bi-pencil"></i> 編集
-        </a>
     </div>
 </div>
+
+{% set prev_item = {'url': url_for('harvests.detail', harvest_id=prev_harvest.id),
+                    'button_text': '前の収穫',
+                    'label': prev_harvest.harvest_date ~ ' ' ~ prev_harvest.crop_name} if prev_harvest else None %}
+{% set next_item = {'url': url_for('harvests.detail', harvest_id=next_harvest.id),
+                    'button_text': '次の収穫',
+                    'label': next_harvest.harvest_date ~ ' ' ~ next_harvest.crop_name} if next_harvest else None %}
+{% set nav_label = '収穫記録ナビゲーション' %}
+{% include '_detail_nav.html' %}
 
 <div class="row">
     <div class="col-md-8">
