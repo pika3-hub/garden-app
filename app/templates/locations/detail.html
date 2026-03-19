@@ -16,6 +16,7 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
     var state = window._canvasHistoryState;
     openCanvasFullscreen({
         locationId: {{ location.id }},
+        locationName: {{ location.name | tojson }},
         bgImage: '{{ location.bg_image or "bg_image_default.png" }}',
         highlightId: null,
         canvasData: null,
