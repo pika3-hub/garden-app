@@ -57,9 +57,6 @@
             <div class="card-body">
                 <p class="card-text mb-1">
                     <span class="badge bg-success">{{ crop.crop_type }}</span>
-                    {% if crop.variety %}
-                    <span class="badge bg-secondary">{{ crop.variety }}</span>
-                    {% endif %}
                     {% if crop.status == 'active' %}
                     <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
                     {% elif crop.status == 'harvested' %}
@@ -70,7 +67,7 @@
                 </p>
                 <h5 class="card-title">
                     <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}" class="text-decoration-none">
-                        {{ crop.crop_name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %}
+                        {{ crop_display_name(crop.crop_name, crop.variety) }}
                     </a>
                 </h5>
                 <p class="card-text mb-1">

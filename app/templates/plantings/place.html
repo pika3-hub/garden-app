@@ -16,7 +16,7 @@
         <a href="{{ url_for('plantings.detail', location_crop_id=new_location_crop_id) }}" class="btn btn-secondary" id="skip-btn">
             <i class="bi bi-skip-forward"></i> スキップ
         </a>
-        <h4>{{ planting.crop_name }}{% if planting.variety %}（{{ planting.variety }}）{% endif %} - {{ location.name }} 見取り図配置</h4>
+        <h4>{{ crop_display_name(planting.crop_name, planting.variety) }} - {{ location.name }} 見取り図配置</h4>
         <div class="header-controls">
             <button id="save-btn" class="btn btn-success">
                 <i class="bi bi-save"></i> 保存して完了

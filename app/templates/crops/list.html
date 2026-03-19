@@ -62,14 +62,11 @@
                 {% endif %}
                 <h5 class="card-title" style="{% if crop.icon_path %}padding-right: 68px;{% endif %}">
                     <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="text-decoration-none">
-                        {{ crop.name }}
+                        {{ crop_display_name(crop.name, crop.variety) }}
                     </a>
                 </h5>
                 <p class="card-text">
                     <span class="badge bg-success">{{ crop.crop_type }}</span>
-                    {% if crop.variety %}
-                    <span class="badge bg-secondary">{{ crop.variety }}</span>
-                    {% endif %}
                 </p>
                 {% if crop.planting_season or crop.harvest_season %}
                 <p class="card-text text-muted-light">

@@ -43,12 +43,12 @@ class Calendar:
             date_str = crop['date']
             if date_str not in result:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
-            variety_str = f"（{crop['variety']}）" if crop['variety'] else ''
+            label = f"{crop['variety']}（{crop['name']}）" if crop['variety'] else crop['name']
             result[date_str]['crops'].append({
                 'id': crop['id'],
                 'name': crop['name'],
                 'variety': crop['variety'],
-                'label': f"{crop['name']}{variety_str}",
+                'label': label,
                 'url': f"/crops/{crop['id']}"
             })
 
@@ -105,14 +105,14 @@ class Calendar:
             date_str = lc['date']
             if date_str not in result:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
-            variety_str = f"（{lc['variety']}）" if lc['variety'] else ''
+            crop_label = f"{lc['variety']}（{lc['crop_name']}）" if lc['variety'] else lc['crop_name']
             result[date_str]['location_crops'].append({
                 'id': lc['id'],
                 'location_id': lc['location_id'],
                 'crop_name': lc['crop_name'],
                 'variety': lc['variety'],
                 'location_name': lc['location_name'],
-                'label': f"{lc['crop_name']}{variety_str}@{lc['location_name']}",
+                'label': f"{crop_label}@{lc['location_name']}",
                 'url': f"/plantings/{lc['id']}"
             })
 
@@ -131,7 +131,7 @@ class Calendar:
             date_str = harvest['date']
             if date_str not in result:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
-            variety_str = f"（{harvest['variety']}）" if harvest['variety'] else ''
+            crop_label = f"{harvest['variety']}（{harvest['crop_name']}）" if harvest['variety'] else harvest['crop_name']
             qty_str = f" {harvest['quantity']}{harvest['unit'] or ''}" if harvest['quantity'] else ''
             result[date_str]['harvests'].append({
                 'id': harvest['id'],
@@ -139,7 +139,7 @@ class Calendar:
                 'variety': harvest['variety'],
                 'quantity': harvest['quantity'],
                 'unit': harvest['unit'],
-                'label': f"{harvest['crop_name']}{variety_str}{qty_str}",
+                'label': f"{crop_label}{qty_str}",
                 'url': f"/harvests/{harvest['id']}"
             })
 
@@ -183,14 +183,14 @@ class Calendar:
                     'location_crops': [], 'harvests': [], 'tasks': [],
                     'growth_records': []
                 }
-            variety_str = f"（{gr['variety']}）" if gr['variety'] else ''
+            crop_label = f"{gr['variety']}（{gr['crop_name']}）" if gr['variety'] else gr['crop_name']
             result[date_str]['growth_records'].append({
                 'id': gr['id'],
                 'location_crop_id': gr['location_crop_id'],
                 'crop_name': gr['crop_name'],
                 'variety': gr['variety'],
                 'location_name': gr['location_name'],
-                'label': f"{gr['crop_name']}{variety_str}@{gr['location_name']}",
+                'label': f"{crop_label}@{gr['location_name']}",
                 'url': f"/plantings/record/{gr['id']}"
             })
 

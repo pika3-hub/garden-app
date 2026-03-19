@@ -162,8 +162,7 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>作物名</th>
-                                <th>品種</th>
+                                <th>作物</th>
                                 <th>植え付け日</th>
                                 <th>株数</th>
                                 <th>操作</th>
@@ -173,11 +172,10 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
                             {% for lc in active_crops %}
                             <tr>
                                 <td>
-                                    <a href="{{ url_for('crops.detail', crop_id=lc.crop_id) }}">
-                                        {{ lc.crop_name }}
+                                    <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}">
+                                        {{ crop_display_name(lc.crop_name, lc.variety) }}
                                     </a>
                                 </td>
-                                <td>{{ lc.variety or '-' }}</td>
                                 <td>{{ lc.planted_date or '-' }}</td>
                                 <td>{{ lc.quantity or '-' }}</td>
                                 <td>

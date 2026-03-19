@@ -18,6 +18,13 @@ def _thumb_path_filter(image_path):
     return f"{folder}/thumbs/{basename}.jpg"
 
 
+def _crop_display_name(name, variety=None):
+    """作物名表記ルール: 品種あり→品種名（作物名）、品種なし→作物名"""
+    if variety:
+        return f"{variety}（{name}）"
+    return name
+
+
 def create_app(config_name='default'):
     """Flaskアプリケーションファクトリ"""
     app = Flask(__name__, instance_relative_config=True)
@@ -30,6 +37,9 @@ def create_app(config_name='default'):
 
     # Jinja2 フィルター登録
     app.jinja_env.filters['thumb_path'] = _thumb_path_filter
+
+    # Jinja2 グローバル関数登録
+    app.jinja_env.globals['crop_display_name'] = _crop_display_name
 
     # ブループリント登録
     from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes, task_routes, planting_routes

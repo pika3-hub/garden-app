@@ -82,7 +82,7 @@
                     {% for crop in relations.crops %}
                     <li class="list-group-item">
                         <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}">
-                            <i class="bi bi-basket-fill text-success"></i> {{ crop.crop_name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %}
+                            <i class="bi bi-basket-fill text-success"></i> {{ crop_display_name(crop.crop_name, crop.variety) }}
                         </a>
                         <span class="badge bg-secondary">{{ crop.crop_type }}</span>
                     </li>
@@ -122,7 +122,7 @@
                     {% for lc in relations.location_crops %}
                     <li class="list-group-item">
                         <div>
-                            <i class="bi bi-flower1 text-warning"></i> {{ lc.crop_name }}{% if lc.variety %}（{{ lc.variety }}）{% endif %}
+                            <i class="bi bi-flower1 text-warning"></i> {{ crop_display_name(lc.crop_name, lc.variety) }}
                             <small class="text-muted">@ {{ lc.location_name }}</small>
                         </div>
                         <small class="text-muted">

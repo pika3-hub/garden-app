@@ -59,8 +59,8 @@
                             <label for="crop_ids" class="form-label">作物</label>
                             <select class="form-select" id="crop_ids" name="crop_ids" multiple size="5">
                                 {% for crop in crops %}
-                                <option value="{{ crop.id }}" {% if selected_relations and crop.id|string in selected_relations.crop_ids %}selected{% endif %}>
-                                    {{ crop.name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %} ({{ crop.crop_type }})
+                                <option value="{{ crop.id }}" {% if selected_relations and crop.id|string in selected_relations.crop_ids %}selected{% endif %} title="{{ crop_display_name(crop.name, crop.variety) }}">
+                                    {{ crop_display_name(crop.name, crop.variety) }} ({{ crop.crop_type }})
                                 </option>
                                 {% endfor %}
                             </select>
@@ -81,8 +81,8 @@
                             <label for="location_crop_ids" class="form-label">植え付け</label>
                             <select class="form-select" id="location_crop_ids" name="location_crop_ids" multiple size="5">
                                 {% for lc in location_crops %}
-                                <option value="{{ lc.id }}" {% if selected_relations and lc.id|string in selected_relations.location_crop_ids %}selected{% endif %}>
-                                    {{ lc.crop_name }}{% if lc.variety %}（{{ lc.variety }}）{% endif %} @ {{ lc.location_name }}
+                                <option value="{{ lc.id }}" {% if selected_relations and lc.id|string in selected_relations.location_crop_ids %}selected{% endif %} title="{{ crop_display_name(lc.crop_name, lc.variety) }} ＠ {{ lc.location_name }}">
+                                    {{ crop_display_name(lc.crop_name, lc.variety) }} ＠ {{ lc.location_name }}
                                 </option>
                                 {% endfor %}
                             </select>

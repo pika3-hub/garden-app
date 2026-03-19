@@ -40,8 +40,8 @@
             <span>日記</span>
         </div>
         <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培中">
-            <span>栽培中</span>
+            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="植え付け">
+            <span>植え付け</span>
         </div>
         <div class="legend-item">
             <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="収穫">
@@ -94,7 +94,7 @@
                             ('crops',          'icon_crop.png',          '作物',     day_data.get('crops', [])),
                             ('locations',      'icon_location.png',      '場所',     day_data.get('locations', [])),
                             ('diaries',        'icon_diary.png',         '日記',     day_data.get('diaries', [])),
-                            ('location_crops', 'icon_location_crop.png', '植付',     day_data.get('location_crops', [])),
+                            ('location_crops', 'icon_location_crop.png', '植え付け', day_data.get('location_crops', [])),
                             ('harvests',       'icon_harvest.png',       '収穫',     day_data.get('harvests', [])),
                             ('tasks',          'icon_tasklist.png',      'タスク',   day_data.get('tasks', [])),
                             ('growth_records', 'icon_location_crop.png', '栽培記録', day_data.get('growth_records', [])),

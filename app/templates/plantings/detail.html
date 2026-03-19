@@ -46,10 +46,10 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
 
 {% set prev_item = {'url': url_for('plantings.detail', location_crop_id=prev_planting.id),
                     'button_text': '前の植え付け',
-                    'label': prev_planting.crop_name ~ ('（' ~ prev_planting.variety ~ '）' if prev_planting.variety else '') ~ ' - ' ~ prev_planting.location_name} if prev_planting else None %}
+                    'label': crop_display_name(prev_planting.crop_name, prev_planting.variety) ~ ' - ' ~ prev_planting.location_name} if prev_planting else None %}
 {% set next_item = {'url': url_for('plantings.detail', location_crop_id=next_planting.id),
                     'button_text': '次の植え付け',
-                    'label': next_planting.crop_name ~ ('（' ~ next_planting.variety ~ '）' if next_planting.variety else '') ~ ' - ' ~ next_planting.location_name} if next_planting else None %}
+                    'label': crop_display_name(next_planting.crop_name, next_planting.variety) ~ ' - ' ~ next_planting.location_name} if next_planting else None %}
 {% set nav_label = '植え付けナビゲーション' %}
 {% include '_detail_nav.html' %}
 
@@ -59,7 +59,7 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
         <div class="card mb-3">
             <div class="card-header bg-info text-white d-flex align-items-center justify-content-between">
                 <h5 class="mb-0">
-                    <i class="bi bi-flower1"></i> {{ location_crop.crop_name }}{% if location_crop.variety %}（{{ location_crop.variety }}）{% endif %}
+                    <i class="bi bi-flower1"></i> {{ crop_display_name(location_crop.crop_name, location_crop.variety) }}
                     <span class="text-white-50">@ {{ location_crop.location_name }}</span>
                 </h5>
                 {% if location_crop.status == 'active' %}
@@ -103,8 +103,8 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
                 {% endif %}
                 <div class="row">
                     <div class="col-md-6">
-                        <h6 class="text-muted">作物種類・品種</h6>
-                        <p>{{ location_crop.crop_name }}{% if location_crop.variety %} / {{ location_crop.variety }}{% endif %}</p>
+                        <h6 class="text-muted">作物</h6>
+                        <p>{{ crop_display_name(location_crop.crop_name, location_crop.variety) }}</p>
                     </div>
                     <div class="col-md-6">
                         <h6 class="text-muted">場所</h6>
