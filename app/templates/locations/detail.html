@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}{{ location.name }} - 場所詳細{% endblock %}
 
@@ -16,6 +17,7 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
     var state = window._canvasHistoryState;
     openCanvasFullscreen({
         locationId: {{ location.id }},
+        locationName: {{ location.name | tojson }},
         bgImage: '{{ location.bg_image or "bg_image_default.png" }}',
         highlightId: null,
         canvasData: null,
@@ -161,8 +163,7 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>作物名</th>
-                                <th>品種</th>
+                                <th>作物</th>
                                 <th>植え付け日</th>
                                 <th>株数</th>
                                 <th>操作</th>
@@ -172,11 +173,10 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
                             {% for lc in active_crops %}
                             <tr>
                                 <td>
-                                    <a href="{{ url_for('crops.detail', crop_id=lc.crop_id) }}">
-                                        {{ lc.crop_name }}
+                                    <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}">
+                                        {{ crop_label(lc.crop_name, lc.variety, lc.icon_path, lc.image_color) }}
                                     </a>
                                 </td>
-                                <td>{{ lc.variety or '-' }}</td>
                                 <td>{{ lc.planted_date or '-' }}</td>
                                 <td>{{ lc.quantity or '-' }}</td>
                                 <td>

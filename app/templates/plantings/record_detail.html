@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}栽培記録詳細 - 家庭菜園管理アプリ{% endblock %}
 
@@ -34,7 +35,7 @@
         <div class="card">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
-                    <i class="bi bi-flower1"></i> {{ record.crop_name }}{% if record.variety %}（{{ record.variety }}）{% endif %}
+                    {{ crop_label(record.crop_name, record.variety, record.icon_path, record.image_color) }}
                     <span class="text-white-50">@ {{ record.location_name }}</span>
                 </h5>
             </div>

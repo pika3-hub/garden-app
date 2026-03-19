@@ -609,3 +609,15 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     letter-spacing: 0.02em;
     pointer-events: none;
 }
+
+/* ── Crop Inline Icon ──────────────────────────────────── */
+.crop-icon-inline {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #4CAF50;
+    background-color: #fff;
+    vertical-align: text-bottom;
+    margin-right: 2px;
+}

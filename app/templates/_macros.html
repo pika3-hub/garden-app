@@ -1,0 +1,8 @@
+{% macro crop_label(name, variety, icon_path=None, image_color=None) %}
+{%- if icon_path -%}
+<img src="{{ url_for('static', filename='images/crop_icons/' ~ icon_path) }}"
+     alt="" class="crop-icon-inline"
+     style="border-color: {{ image_color or '#4CAF50' }};">
+{%- endif -%}
+{{ crop_display_name(name, variety) }}
+{%- endmacro %}

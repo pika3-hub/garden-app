@@ -18,7 +18,8 @@
       "Bash(cmd /c \"gh auth status 2>&1\")",
       "Bash(powershell -Command:*)",
       "Bash(cd:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(ls:*)"
     ]
   }
 }

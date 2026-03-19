@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}収穫記録一覧 - 家庭菜園管理アプリ{% endblock %}
 
@@ -50,7 +51,7 @@
                 <select class="form-select" id="crop_id" name="crop_id">
                     <option value="">すべて</option>
                     {% for crop in crops %}
-                    <option value="{{ crop.id }}" {% if selected_crop_id == crop.id|string %}selected{% endif %}>{{ crop.name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %}</option>
+                    <option value="{{ crop.id }}" {% if selected_crop_id == crop.id|string %}selected{% endif %} title="{{ crop_display_name(crop.name, crop.variety) }}">{{ crop_display_name(crop.name, crop.variety) }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -76,7 +77,7 @@
                      style="height: 150px; object-fit: cover;"
                      data-slideshow-date="{{ harvest.harvest_date }}"
                      data-slideshow-days="{{ harvest.days_from_planting }}"
-                     data-slideshow-caption="{{ harvest.crop_name }}{% if harvest.variety %}（{{ harvest.variety }}）{% endif %}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">
+                     data-slideshow-caption="{{ crop_display_name(harvest.crop_name, harvest.variety) }}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">
                 <span class="card-img-date-overlay">{{ harvest.harvest_date }}</span>
             </div>
             {% endif %}
@@ -84,8 +85,7 @@
                 <div class="fw-bold text-primary mb-1">{{ harvest.harvest_date }}</div>
                 <h5 class="card-title">
                     <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="text-decoration-none">
-                        <i class="bi bi-flower1 text-success"></i>
-                        {{ harvest.crop_name }}{% if harvest.variety %}（{{ harvest.variety }}）{% endif %}
+                        {{ crop_label(harvest.crop_name, harvest.variety, harvest.icon_path, harvest.image_color) }}
                     </a>
                 </h5>
                 <p class="card-text mb-1">

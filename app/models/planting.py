@@ -25,7 +25,8 @@ class Planting:
         """場所に紐付く作物を取得"""
         db = get_db()
         query = '''
-            SELECT lc.*, c.name as crop_name, c.crop_type, c.variety
+            SELECT lc.*, c.name as crop_name, c.crop_type, c.variety,
+                   c.icon_path, c.image_color
             FROM plantings lc
             JOIN crops c ON lc.crop_id = c.id
             WHERE lc.location_id = ?
@@ -67,7 +68,8 @@ class Planting:
         """IDで場所-作物関連を取得"""
         db = get_db()
         location_crop = db.execute(
-            '''SELECT lc.*, c.name as crop_name, c.variety, l.name as location_name
+            '''SELECT lc.*, c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color, l.name as location_name
                FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
@@ -195,7 +197,8 @@ class Planting:
         }
 
         prev_planting = db.execute(
-            '''SELECT lc.id, c.name as crop_name, c.variety, l.name as location_name
+            '''SELECT lc.id, c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color, l.name as location_name
                FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
@@ -211,7 +214,8 @@ class Planting:
         ).fetchone()
 
         next_planting = db.execute(
-            '''SELECT lc.id, c.name as crop_name, c.variety, l.name as location_name
+            '''SELECT lc.id, c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color, l.name as location_name
                FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
@@ -235,6 +239,7 @@ class Planting:
         db = get_db()
         query = '''SELECT lc.*,
                       c.name as crop_name, c.crop_type, c.variety,
+                      c.icon_path, c.image_color,
                       l.name as location_name, l.location_type,
                       COALESCE(gr_stats.record_count, 0) as growth_record_count,
                       gr_img.image_path as latest_growth_image,
@@ -507,6 +512,7 @@ class Planting:
         crops = db.execute(
             '''SELECT lc.*,
                       c.name as crop_name, c.crop_type, c.variety,
+                      c.icon_path, c.image_color,
                       l.name as location_name, l.location_type
                FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id

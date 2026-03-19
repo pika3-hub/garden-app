@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}{{ entry.title }} - 管理日記{% endblock %}
 
@@ -110,7 +111,7 @@
                     {% for crop in relations.crops %}
                     <li class="list-group-item">
                         <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}">
-                            <i class="bi bi-basket-fill text-success"></i> {{ crop.crop_name }}{% if crop.variety %}（{{ crop.variety }}）{% endif %}
+                            {{ crop_label(crop.crop_name, crop.variety, crop.icon_path, crop.image_color) }}
                         </a>
                         <span class="badge bg-secondary">{{ crop.crop_type }}</span>
                     </li>
@@ -150,7 +151,7 @@
                     {% for lc in relations.location_crops %}
                     <li class="list-group-item">
                         <div>
-                            <i class="bi bi-flower1 text-warning"></i> {{ lc.crop_name }}{% if lc.variety %}（{{ lc.variety }}）{% endif %}
+                            {{ crop_label(lc.crop_name, lc.variety, lc.icon_path, lc.image_color) }}
                             <small class="text-muted">@ {{ lc.location_name }}</small>
                         </div>
                         <small class="text-muted">
@@ -176,7 +177,7 @@
                     {% for h in relations.harvests %}
                     <li class="list-group-item">
                         <a href="{{ url_for('harvests.detail', harvest_id=h.harvest_id) }}">
-                            <i class="bi bi-basket2-fill text-success"></i> {{ h.crop_name }}
+                            {{ crop_label(h.crop_name, h.variety, h.icon_path, h.image_color) }}
                         </a>
                         <small class="text-muted">@ {{ h.location_name }}</small>
                         <div>

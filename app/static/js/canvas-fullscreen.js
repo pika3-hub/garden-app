@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtn.title = '閉じる';
     overlay.appendChild(closeBtn);
 
+    // Location name label (top)
+    const nameLabel = document.createElement('div');
+    nameLabel.className = 'canvas-fullscreen-name';
+    overlay.appendChild(nameLabel);
+
     // Canvas wrapper
     const canvasWrap = document.createElement('div');
     canvasWrap.className = 'canvas-fullscreen-canvas-wrap';
@@ -184,6 +189,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch {
                 preview.updateData(null);
             }
+        }
+
+        // Set location name
+        if (config.locationName) {
+            nameLabel.textContent = config.locationName;
+            nameLabel.classList.remove('hidden');
+        } else {
+            nameLabel.textContent = '';
+            nameLabel.classList.add('hidden');
         }
 
         // Show overlay

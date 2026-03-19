@@ -33,7 +33,8 @@ class Calendar:
 
         # 作物を取得 (created_atの日付部分で取得)
         crops = db.execute(
-            '''SELECT id, name, variety, DATE(created_at) as date
+            '''SELECT id, name, variety, icon_path, image_color,
+                      DATE(created_at) as date
                FROM crops
                WHERE DATE(created_at) BETWEEN ? AND ?
                ORDER BY created_at''',
@@ -43,12 +44,14 @@ class Calendar:
             date_str = crop['date']
             if date_str not in result:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
-            variety_str = f"（{crop['variety']}）" if crop['variety'] else ''
+            label = f"{crop['variety']}（{crop['name']}）" if crop['variety'] else crop['name']
             result[date_str]['crops'].append({
                 'id': crop['id'],
                 'name': crop['name'],
                 'variety': crop['variety'],
-                'label': f"{crop['name']}{variety_str}",
+                'icon_path': crop['icon_path'],
+                'image_color': crop['image_color'],
+                'label': label,
                 'url': f"/crops/{crop['id']}"
             })
 
@@ -93,7 +96,8 @@ class Calendar:
         # 栽培中を取得 (planted_dateで取得)
         location_crops = db.execute(
             '''SELECT lc.id, lc.location_id, DATE(lc.planted_date) as date,
-                      c.name as crop_name, c.variety, l.name as location_name
+                      c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color, l.name as location_name
                FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
@@ -105,21 +109,24 @@ class Calendar:
             date_str = lc['date']
             if date_str not in result:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
-            variety_str = f"（{lc['variety']}）" if lc['variety'] else ''
+            crop_label = f"{lc['variety']}（{lc['crop_name']}）" if lc['variety'] else lc['crop_name']
             result[date_str]['location_crops'].append({
                 'id': lc['id'],
                 'location_id': lc['location_id'],
                 'crop_name': lc['crop_name'],
                 'variety': lc['variety'],
+                'icon_path': lc['icon_path'],
+                'image_color': lc['image_color'],
                 'location_name': lc['location_name'],
-                'label': f"{lc['crop_name']}{variety_str}@{lc['location_name']}",
+                'label': f"{crop_label}@{lc['location_name']}",
                 'url': f"/plantings/{lc['id']}"
             })
 
         # 収穫を取得 (harvest_dateで取得)
         harvests = db.execute(
             '''SELECT h.id, h.quantity, h.unit, DATE(h.harvest_date) as date,
-                      c.name as crop_name, c.variety
+                      c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color
                FROM harvests h
                JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
@@ -131,15 +138,17 @@ class Calendar:
             date_str = harvest['date']
             if date_str not in result:
                 result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
-            variety_str = f"（{harvest['variety']}）" if harvest['variety'] else ''
+            crop_label = f"{harvest['variety']}（{harvest['crop_name']}）" if harvest['variety'] else harvest['crop_name']
             qty_str = f" {harvest['quantity']}{harvest['unit'] or ''}" if harvest['quantity'] else ''
             result[date_str]['harvests'].append({
                 'id': harvest['id'],
                 'crop_name': harvest['crop_name'],
                 'variety': harvest['variety'],
+                'icon_path': harvest['icon_path'],
+                'image_color': harvest['image_color'],
                 'quantity': harvest['quantity'],
                 'unit': harvest['unit'],
-                'label': f"{harvest['crop_name']}{variety_str}{qty_str}",
+                'label': f"{crop_label}{qty_str}",
                 'url': f"/harvests/{harvest['id']}"
             })
 
@@ -166,7 +175,8 @@ class Calendar:
         # 栽培記録を取得 (recorded_atで取得)
         growth_records = db.execute(
             '''SELECT gr.id, gr.location_crop_id, DATE(gr.recorded_at) as date,
-                      c.name as crop_name, c.variety, l.name as location_name
+                      c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color, l.name as location_name
                FROM planting_records gr
                JOIN plantings lc ON gr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
@@ -183,14 +193,16 @@ class Calendar:
                     'location_crops': [], 'harvests': [], 'tasks': [],
                     'growth_records': []
                 }
-            variety_str = f"（{gr['variety']}）" if gr['variety'] else ''
+            crop_label = f"{gr['variety']}（{gr['crop_name']}）" if gr['variety'] else gr['crop_name']
             result[date_str]['growth_records'].append({
                 'id': gr['id'],
                 'location_crop_id': gr['location_crop_id'],
                 'crop_name': gr['crop_name'],
                 'variety': gr['variety'],
+                'icon_path': gr['icon_path'],
+                'image_color': gr['image_color'],
                 'location_name': gr['location_name'],
-                'label': f"{gr['crop_name']}{variety_str}@{gr['location_name']}",
+                'label': f"{crop_label}@{gr['location_name']}",
                 'url': f"/plantings/record/{gr['id']}"
             })
 

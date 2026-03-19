@@ -48,7 +48,8 @@ class PlantingRecord:
         """最新の栽培記録を取得"""
         db = get_db()
         records = db.execute(
-            '''SELECT gr.*, c.name as crop_name, c.variety, l.name as location_name,
+            '''SELECT gr.*, c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color, l.name as location_name,
                       lc.location_id, lc.crop_id, lc.planted_date
                FROM planting_records gr
                JOIN plantings lc ON gr.location_crop_id = lc.id
@@ -65,7 +66,8 @@ class PlantingRecord:
         """IDで栽培記録を取得"""
         db = get_db()
         record = db.execute(
-            '''SELECT gr.*, c.name as crop_name, c.variety, l.name as location_name,
+            '''SELECT gr.*, c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color, l.name as location_name,
                       lc.location_id, lc.crop_id, lc.planted_date
                FROM planting_records gr
                JOIN plantings lc ON gr.location_crop_id = lc.id

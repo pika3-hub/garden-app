@@ -119,7 +119,7 @@ class CanvasPreview {
     _showEmpty() {
         const msg = document.createElement('div');
         msg.className = 'canvas-preview-empty';
-        msg.innerHTML = '<i class="bi bi-map"></i> 見取り図が設定されていません';
+        msg.innerHTML = '<i class="bi bi-map"></i> 何も植え付けられていません';
         this.area.appendChild(msg);
     }
 
