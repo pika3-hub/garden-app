@@ -65,6 +65,7 @@ garden-app/
 │   ├── migrations/          # データベースマイグレーション（増分SQL）
 │   ├── templates/           # Jinja2 テンプレート
 │   │   ├── base.html        # ナビバー付きベースレイアウト
+│   │   ├── _macros.html     # Jinja2マクロ（crop_label等）
 │   │   ├── _detail_nav.html # 詳細画面の前後ナビゲーション共通部品
 │   │   ├── index.html       # ダッシュボード
 │   │   ├── crops/           # 作物テンプレート
@@ -109,6 +110,57 @@ uv run python run.py
 - Bootstrap Icons（CDN）
 - Pillow（サムネイル生成、Python依存）
 - ※ Fabric.js は削除済み（見取り図はバニラJSで実装）
+
+### 作物名の表記ルール
+
+作物名・品種名の表示はアプリ全体で統一されたルールに従う。
+
+#### 表記フォーマット
+
+| 条件 | 表示 | 例 |
+|------|------|-----|
+| 品種あり | `{品種名}（{作物名}）` | ミニトマト（トマト） |
+| 品種なし | `{作物名}` | バジル |
+
+#### 実装方法: 2層構造
+
+**1. `crop_display_name` — テキスト専用グローバル関数**
+
+`app/__init__.py` で定義・登録。プレーンテキストを返す。`<option>` タグ、`data-*` 属性、`title` 属性など **HTMLが使えない箇所** で使用する。
+
+```html
+<!-- プルダウン内（HTMLタグ不可） -->
+<option>{{ crop_display_name(crop.name, crop.variety) }}</option>
+```
+
+**2. `crop_label` — アイコン付きHTML用マクロ**
+
+`app/templates/_macros.html` で定義。作物アイコン（丸型、イメージカラーボーダー、白背景）＋ `crop_display_name` テキストを返す。**HTML表示箇所** で使用する。
+
+```html
+{% from '_macros.html' import crop_label %}
+
+<!-- カードタイトル、ナビラベル等 -->
+{{ crop_label(crop.crop_name, crop.variety, crop.icon_path, crop.image_color) }}
+```
+
+引数: `name`, `variety`, `icon_path`（任意）, `image_color`（任意）
+
+**CSSクラス**: `.crop-icon-inline`（`custom.css` で定義、22px丸型、白背景、イメージカラーボーダー）
+
+#### 適用範囲
+
+| 対象 | 方式 | 備考 |
+|------|------|------|
+| HTML表示（カードタイトル、ヘッダ、ナビラベル、一覧等） | `crop_label` マクロ | アイコン＋テキスト |
+| `<select>` / `<option>` 内 | `crop_display_name` 関数 | テキストのみ（HTML不可） |
+| `data-*` / `title` 属性 | `crop_display_name` 関数 | テキストのみ |
+| カレンダーモーダル（JS動的生成） | JS側で `item.icon_path` を参照 | `calendar.js` で生成 |
+| 作物エンティティ画面（一覧・詳細・登録・編集） | アイコン表示なし | `crop_display_name` のみ使用 |
+
+#### クエリ要件
+
+`crop_label` マクロを使用する画面では、モデルのクエリで `c.icon_path, c.image_color` を `crops` テーブルからSELECTする必要がある。新規クエリ追加時は注意すること。
 
 ### 画像サムネイル
 
