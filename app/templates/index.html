@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}ホーム - 家庭菜園管理アプリ{% endblock %}
 
@@ -119,7 +120,7 @@
                     {% for planting in recent_plantings %}
                     <a href="{{ url_for('plantings.detail', location_crop_id=planting.id) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ crop_display_name(planting.crop_name, planting.variety) }}</h6>
+                            <h6 class="mb-1">{{ crop_label(planting.crop_name, planting.variety, planting.icon_path, planting.image_color) }}</h6>
                             <small class="text-muted">{{ planting.planted_date }}</small>
                         </div>
                         <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ planting.location_name }}</small>
@@ -150,7 +151,7 @@
                     {% for record in recent_growth_records %}
                     <a href="{{ url_for('plantings.record_detail', record_id=record.id) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ crop_display_name(record.crop_name, record.variety) }}</h6>
+                            <h6 class="mb-1">{{ crop_label(record.crop_name, record.variety, record.icon_path, record.image_color) }}</h6>
                             <small class="text-muted">{{ record.recorded_at }}</small>
                         </div>
                         <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ record.location_name }}</small>
@@ -183,7 +184,7 @@
                     {% for harvest in recent_harvests %}
                     <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ crop_display_name(harvest.crop_name, harvest.variety) }}</h6>
+                            <h6 class="mb-1">{{ crop_label(harvest.crop_name, harvest.variety, harvest.icon_path, harvest.image_color) }}</h6>
                             <small class="text-muted">{{ harvest.harvest_date }}</small>
                         </div>
                         <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ harvest.location_name }}</small>

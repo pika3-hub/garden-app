@@ -52,8 +52,14 @@ function initCalendarIconClick() {
         // モーダルボディ: アイテムリスト
         var body = document.getElementById('calendarModalBody');
         body.innerHTML = items.map(function(item) {
+            var iconHtml = '';
+            if (item.icon_path) {
+                iconHtml = '<img src="/static/images/crop_icons/' + escapeHtml(item.icon_path) + '"' +
+                    ' alt="" class="crop-icon-inline"' +
+                    ' style="border-color: ' + escapeHtml(item.image_color || '#4CAF50') + ';">';
+            }
             return '<a href="' + item.url + '" class="list-group-item list-group-item-action">' +
-                   escapeHtml(item.label) + '</a>';
+                   iconHtml + escapeHtml(item.label) + '</a>';
         }).join('');
 
         var modal = bootstrap.Modal.getOrCreateInstance(modalEl);

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}{% if record %}栽培記録編集{% else %}栽培記録登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
 
@@ -29,7 +30,7 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <strong><i class="bi bi-flower1"></i> 作物:</strong>
-                                {{ crop_display_name(location_crop.crop_name, location_crop.variety) }}
+                                {{ crop_label(location_crop.crop_name, location_crop.variety, location_crop.icon_path, location_crop.image_color) }}
                             </div>
                             <div class="col-md-4">
                                 <strong><i class="bi bi-geo-alt"></i> 場所:</strong>

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}{{ location.name }} - 場所詳細{% endblock %}
 
@@ -173,7 +174,7 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
                             <tr>
                                 <td>
                                     <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}">
-                                        {{ crop_display_name(lc.crop_name, lc.variety) }}
+                                        {{ crop_label(lc.crop_name, lc.variety, lc.icon_path, lc.image_color) }}
                                     </a>
                                 </td>
                                 <td>{{ lc.planted_date or '-' }}</td>

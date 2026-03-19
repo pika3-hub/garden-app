@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}収穫記録一覧 - 家庭菜園管理アプリ{% endblock %}
 
@@ -84,8 +85,7 @@
                 <div class="fw-bold text-primary mb-1">{{ harvest.harvest_date }}</div>
                 <h5 class="card-title">
                     <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="text-decoration-none">
-                        <i class="bi bi-flower1 text-success"></i>
-                        {{ crop_display_name(harvest.crop_name, harvest.variety) }}
+                        {{ crop_label(harvest.crop_name, harvest.variety, harvest.icon_path, harvest.image_color) }}
                     </a>
                 </h5>
                 <p class="card-text mb-1">
