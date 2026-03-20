@@ -40,6 +40,11 @@ class CanvasPreview {
             return;
         }
 
+        if (!this.locationId) {
+            this._showEmpty();
+            return;
+        }
+
         try {
             const res = await fetch(`/locations/${this.locationId}/canvas/data`);
             const data = await res.json();
