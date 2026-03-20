@@ -663,11 +663,18 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 
 /* 画像なし時のフォールバック背景 */
 .card-photo.card-no-image::before {
-    width: 40%; height: 40%;
+    content: '';
+    position: absolute;
+    width: 60%; height: 60%;
     top: 50%; left: 50%;
     bottom: auto; right: auto;
     transform: translate(-50%, -50%);
     opacity: 0.15;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    pointer-events: none;
+    z-index: 0;
 }
 
 /* テキストオーバーレイ（下部グラデーション） */
@@ -695,6 +702,35 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 /* 画像なし + グラデーション不要（タスク等） */
 .card-photo.card-no-image .card-photo-overlay {
     background: linear-gradient(transparent, rgba(0,0,0,0.25));
+}
+
+/* テキスト中央配置カード（画像なし専用、タスク等） */
+.card-photo-text-only {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.card-photo-text-center {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 2.5rem 1rem 1rem;
+    color: var(--ink);
+}
+.card-photo-text-center .card-title {
+    color: var(--forest);
+    text-shadow: none;
+    margin-bottom: 0.5rem;
+}
+.card-photo-description {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-bottom: 0.4rem;
+}
+.card-photo-meta {
+    color: var(--ink-muted);
+    font-size: 0.8rem;
 }
 
 /* 日付オーバーレイ（card-photo 内で使用） */

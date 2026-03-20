@@ -52,7 +52,7 @@
 <div class="row">
     {% for task in tasks %}
     <div class="col-md-4 mb-3">
-        <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="card h-100 card-photo card-no-image card-bg-tasklist">
+        <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="card h-100 card-photo card-no-image card-bg-tasklist card-photo-text-only">
             <div class="card-photo-badge-top">
                 <span class="badge {{ Task.get_status_badge(task.status) }}">
                     {{ Task.get_status_label(task.status) }}
@@ -61,10 +61,13 @@
                 <span class="badge bg-danger">期限切れ</span>
                 {% endif %}
             </div>
-            <div class="card-photo-overlay">
+            <div class="card-photo-text-center">
                 <h5 class="card-title">{{ task.title }}</h5>
+                {% if task.description %}
+                <p class="card-photo-description">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
+                {% endif %}
                 {% if task.due_date %}
-                <small>期限: {{ task.due_date }}</small>
+                <small class="card-photo-meta">期限: {{ task.due_date }}</small>
                 {% endif %}
             </div>
         </a>
