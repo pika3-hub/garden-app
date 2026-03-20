@@ -14,15 +14,18 @@
 <script src="{{ url_for('static', filename='js/slideshow.js') }}"></script>
 <script src="{{ url_for('static', filename='js/canvas-fullscreen.js') }}"></script>
 <script>
-document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', function() {
-    openCanvasFullscreen({
-        locationId: {{ location.id }},
-        locationName: {{ location.name | tojson }},
-        bgImage: '{{ location.bg_image or "bg_image_default.png" }}',
-        highlightId: {{ location_crop.id }},
-        canvasData: {% if canvas_snapshot %}{{ canvas_snapshot | tojson }}{% else %}null{% endif %},
-        dates: null,
-        currentDateIndex: null
+document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', function() {
+        openCanvasFullscreen({
+            locationId: {{ location.id }},
+            locationName: {{ location.name | tojson }},
+            bgImage: '{{ location.bg_image or "bg_image_default.png" }}',
+            highlightId: {{ location_crop.id }},
+            canvasData: {% if canvas_snapshot %}{{ canvas_snapshot | tojson }}{% else %}null{% endif %},
+            dates: null,
+            currentDateIndex: null
+        });
     });
 });
 </script>
@@ -130,7 +133,7 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
         <!-- 見取り図プレビュー（栽培終了かつ配置なしの場合は非表示） -->
         {% if not (location_crop.status == 'harvested' and not canvas_snapshot) %}
         <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-map"></i>
                     {% if location_crop.status == 'harvested' %}
                         栽培終了時の見取り図
@@ -138,10 +141,6 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
                         見取り図での配置位置
                     {% endif %}
                 </h5>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="canvas-fullscreen-btn"
-                        title="拡大表示">
-                    <i class="bi bi-arrows-fullscreen"></i> 拡大
-                </button>
             </div>
             <div class="card-body d-flex justify-content-center">
                 {% if location_crop.status == 'harvested' %}

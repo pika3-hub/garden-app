@@ -10,21 +10,34 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/canvas-preview.js') }}"></script>
-<script src="{{ url_for('static', filename='js/canvas-history.js') }}"></script>
 <script src="{{ url_for('static', filename='js/canvas-fullscreen.js') }}"></script>
 <script>
-document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', function() {
-    var state = window._canvasHistoryState;
-    openCanvasFullscreen({
-        locationId: {{ location.id }},
-        locationName: {{ location.name | tojson }},
-        bgImage: '{{ location.bg_image or "bg_image_default.png" }}',
-        highlightId: null,
-        canvasData: null,
-        dates: state ? state.dates : null,
-        currentDateIndex: state ? state.getCurrentIndex() : null
+(async function() {
+    var canvasEl = document.getElementById('history-canvas');
+    if (!canvasEl) return;
+
+    // 履歴の日付を事前取得
+    var dates = null;
+    try {
+        var res = await fetch('/locations/{{ location.id }}/canvas/history/range');
+        var data = await res.json();
+        if (data.dates && data.dates.length > 0) dates = data.dates;
+    } catch {}
+
+    // 見取り図クリックでフルスクリーン表示
+    canvasEl.style.cursor = 'pointer';
+    canvasEl.addEventListener('click', function() {
+        openCanvasFullscreen({
+            locationId: {{ location.id }},
+            locationName: {{ location.name | tojson }},
+            bgImage: '{{ location.bg_image or "bg_image_default.png" }}',
+            highlightId: null,
+            canvasData: null,
+            dates: dates,
+            currentDateIndex: dates ? dates.length - 1 : null
+        });
     });
-});
+})();
 </script>
 {% endblock %}
 
@@ -102,51 +115,16 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
         <div class="card mb-3" id="history-card">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-map"></i> 見取り図</h5>
-                <div>
-                    <button type="button" class="btn btn-sm btn-light me-1" id="canvas-fullscreen-btn"
-                            title="拡大表示">
-                        <i class="bi bi-arrows-fullscreen"></i> 拡大
-                    </button>
-                    <a href="{{ url_for('locations.canvas', location_id=location.id) }}" class="btn btn-sm btn-light">
-                        <i class="bi bi-pencil"></i> 編集
-                    </a>
-                </div>
+                <a href="{{ url_for('locations.canvas', location_id=location.id) }}" class="btn btn-sm btn-light">
+                    <i class="bi bi-pencil"></i> 編集
+                </a>
             </div>
             <div class="card-body">
-                <!-- 日付表示（見取り図の上） -->
-                <div id="history-date-area" style="display:none;">
-                    <div class="text-center mb-2">
-                        <span class="badge bg-primary fs-6" id="history-date-display"></span>
-                        <span class="text-muted small ms-2" id="history-date-counter"></span>
-                    </div>
-                </div>
-                <!-- 見取り図 -->
                 <div class="d-flex justify-content-center">
                     <div class="canvas-preview-container" id="history-canvas"
                          data-location-id="{{ location.id }}"
-                         data-bg-image="{{ location.bg_image or 'bg_image_default.png' }}"
-                         data-manual-init="true">
+                         data-bg-image="{{ location.bg_image or 'bg_image_default.png' }}">
                         <div class="canvas-preview-area"></div>
-                    </div>
-                </div>
-                <!-- 操作部（見取り図の下） -->
-                <div id="history-slider-area" class="history-slider-area" style="display:none;">
-                    <!-- スライダー -->
-                    <div class="d-flex align-items-center history-slider-row mt-2">
-                        <span id="history-date-min" class="me-2 small text-nowrap text-muted"></span>
-                        <input type="range" class="form-range flex-grow-1" id="history-slider">
-                        <span id="history-date-max" class="ms-2 small text-nowrap text-muted"></span>
-                    </div>
-                    <!-- ◀▶ ボタン -->
-                    <div class="d-flex justify-content-center align-items-center gap-2 mt-2">
-                        <button type="button" class="btn btn-outline-primary history-nav-btn" id="history-prev"
-                                title="前の変更">
-                            <i class="bi bi-chevron-left"></i> 前へ<span class="history-nav-date" id="history-prev-date"></span>
-                        </button>
-                        <button type="button" class="btn btn-outline-primary history-nav-btn" id="history-next"
-                                title="次の変更">
-                            次へ <span class="history-nav-date" id="history-next-date"></span><i class="bi bi-chevron-right"></i>
-                        </button>
                     </div>
                 </div>
             </div>

@@ -54,10 +54,7 @@
                     </div>
                     {% endif %}
                     <div class="crop-item-content">
-                        <div class="crop-name">{{ crop.crop_name }}</div>
-                        {% if crop.variety %}
-                        <div class="crop-date">{{ crop.variety }}</div>
-                        {% endif %}
+                        <div class="crop-name">{{ crop_display_name(crop.crop_name, crop.variety) }}</div>
                     </div>
                 </div>
                 {% endfor %}
