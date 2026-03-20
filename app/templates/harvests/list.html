@@ -69,51 +69,26 @@
 <div class="row">
     {% for harvest in harvests %}
     <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card h-100 card-with-bg card-bg-harvest">
+        <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="card h-100 card-photo card-bg-harvest {{ '' if harvest.image_path else 'card-no-image' }}">
             {% if harvest.image_path %}
-            <div class="card-img-wrapper">
-                <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"
-                     class="card-img-top slideshow-target" alt="{{ harvest.crop_name }}"
-                     style="height: 150px; object-fit: cover;"
-                     data-slideshow-date="{{ harvest.harvest_date }}"
-                     data-slideshow-days="{{ harvest.days_from_planting }}"
-                     data-slideshow-caption="{{ crop_display_name(harvest.crop_name, harvest.variety) }}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">
-                <span class="card-img-date-overlay">{{ harvest.harvest_date }}</span>
+            <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"
+                 class="card-photo-img slideshow-target" alt="{{ harvest.crop_name }}"
+                 data-slideshow-date="{{ harvest.harvest_date }}"
+                 data-slideshow-days="{{ harvest.days_from_planting }}"
+                 data-slideshow-caption="{{ crop_display_name(harvest.crop_name, harvest.variety) }}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">
+            {% endif %}
+            {% if harvest.days_from_planting is not none %}
+            <div class="card-photo-badge-top">
+                <span class="badge bg-success">{{ harvest.days_from_planting }}日目</span>
             </div>
             {% endif %}
-            <div class="card-body">
-                <div class="fw-bold text-primary mb-1">{{ harvest.harvest_date }}</div>
+            <div class="card-photo-overlay">
                 <h5 class="card-title">
-                    <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="text-decoration-none">
-                        {{ crop_label(harvest.crop_name, harvest.variety, harvest.icon_path, harvest.image_color) }}
-                    </a>
+                    {{ crop_label(harvest.crop_name, harvest.variety, harvest.icon_path, harvest.image_color) }}
                 </h5>
-                <p class="card-text mb-1">
-                    <small class="text-muted"><i class="bi bi-geo-alt text-primary"></i> {{ harvest.location_name }}</small>
-                </p>
-                {% if harvest.quantity %}
-                <p class="card-text mb-1">収穫量: {{ harvest.quantity }} {{ harvest.unit or '' }}</p>
-                {% endif %}
-                {% if harvest.days_from_planting is not none %}
-                <p class="card-text mb-1">植え付けから: {{ harvest.days_from_planting }}日</p>
-                {% endif %}
-                {% if harvest.notes %}
-                <p class="card-text text-muted-light">
-                    {{ harvest.notes[:80] }}{% if harvest.notes|length > 80 %}...{% endif %}
-                </p>
-                {% endif %}
+                <small>{{ harvest.location_name }} · {{ harvest.harvest_date }}</small>
             </div>
-            <div class="card-footer bg-transparent">
-                <div class="btn-group-action">
-                    <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-eye"></i> 詳細
-                    </a>
-                    <a href="{{ url_for('harvests.edit', harvest_id=harvest.id) }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-pencil"></i> 編集
-                    </a>
-                </div>
-            </div>
-        </div>
+        </a>
     </div>
     {% endfor %}
 </div>

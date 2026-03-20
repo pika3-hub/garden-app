@@ -34,40 +34,17 @@
 <div class="row">
     {% for location in locations %}
     <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card h-100 card-with-bg card-bg-location">
+        <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="card h-100 card-photo card-bg-location {{ '' if location.image_path else 'card-no-image' }}">
             {% if location.image_path %}
             <img src="{{ url_for('static', filename='uploads/' + (location.image_path | thumb_path)) }}"
-                 class="card-img-top" alt="{{ location.name }}" style="height: 150px; object-fit: cover;"
+                 class="card-photo-img" alt="{{ location.name }}"
                  loading="lazy"
                  onerror="this.src='{{ url_for('static', filename='uploads/' + location.image_path) }}'">
             {% endif %}
-            <div class="card-body">
-                <h5 class="card-title">
-                    <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="text-decoration-none">
-                        {{ location.name }}
-                    </a>
-                </h5>
-                <p class="card-text">
-                    <span class="badge bg-info">{{ location.location_type }}</span>
-                    {% if location.area_size %}
-                    <span class="badge bg-secondary">{{ location.area_size }}㎡</span>
-                    {% endif %}
-                </p>
-                {% if location.sun_exposure %}
-                <p class="card-text text-muted-light">
-                    <i class="bi bi-sun"></i> {{ location.sun_exposure }}
-                </p>
-                {% endif %}
-                <div class="btn-group-action">
-                    <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-eye"></i> 詳細
-                    </a>
-                    <a href="{{ url_for('locations.edit', location_id=location.id) }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-pencil"></i> 編集
-                    </a>
-                </div>
+            <div class="card-photo-overlay">
+                <h5 class="card-title">{{ location.name }}</h5>
             </div>
-        </div>
+        </a>
     </div>
     {% endfor %}
 </div>

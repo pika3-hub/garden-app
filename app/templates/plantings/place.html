@@ -57,10 +57,7 @@
                     </div>
                     {% endif %}
                     <div class="crop-item-content">
-                        <div class="crop-name">{{ crop.crop_name }}</div>
-                        {% if crop.variety %}
-                        <div class="crop-date">{{ crop.variety }}</div>
-                        {% endif %}
+                        <div class="crop-name">{{ crop_display_name(crop.crop_name, crop.variety) }}</div>
                         {% if crop.id == new_location_crop_id %}
                         <div class="crop-date text-success fw-bold">← 新規</div>
                         {% endif %}

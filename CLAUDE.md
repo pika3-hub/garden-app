@@ -156,6 +156,7 @@ uv run python run.py
 | `<select>` / `<option>` 内 | `crop_display_name` 関数 | テキストのみ（HTML不可） |
 | `data-*` / `title` 属性 | `crop_display_name` 関数 | テキストのみ |
 | カレンダーモーダル（JS動的生成） | JS側で `item.icon_path` を参照 | `calendar.js` で生成 |
+| 見取り図サイドバー（エディター・配置ページ） | `crop_display_name` 関数 | テキストのみ |
 | 作物エンティティ画面（一覧・詳細・登録・編集） | アイコン表示なし | `crop_display_name` のみ使用 |
 
 #### クエリ要件
@@ -259,7 +260,7 @@ uv run python run.py
 | エディター画面 | `locations/canvas.html` + `canvas-editor.js` | 作物配置の編集（800×800px） |
 | 植え付け配置ページ | `plantings/place.html` + `canvas-placement.js` | 植え付け登録後の見取り図配置（エディターを再利用） |
 | プレビューコンポーネント | `locations/_canvas_preview.html` + `canvas-preview.js` | 読み取り専用の表示（400×400px） |
-| 履歴スライダー | `canvas-history.js` | 場所詳細で日付スライダーによる過去配置の再現 |
+| フルスクリーン表示 | `canvas-fullscreen.js` + `canvas-fullscreen.css` | プレビュークリックで拡大表示（日付ナビ付き） |
 | CSSスタイル | `static/css/canvas.css` | エディター・プレビュー共通スタイル |
 
 #### 背景画像
@@ -320,16 +321,16 @@ uv run python run.py
 - `preview_highlight_id`（任意）— ハイライトする `location_crop_id`
 
 `CanvasPreview` クラスのAPI:
-- `updateData(data)` — 表示内容をクリアして新しいデータで再描画（履歴スライダー等で使用）
+- `updateData(data)` — 表示内容をクリアして新しいデータで再描画（フルスクリーン表示等で使用）
 - `data-manual-init="true"` 属性 — 自動初期化をスキップ（JS側で手動制御する場合に指定）
 
-#### 履歴スライダー
+#### フルスクリーン表示
 
-場所詳細ページの見取り図カードに統合。`canvas-history.js` が制御。
-- 植え付け日・栽培終了日など、見取り図に変化がある日付のみスライド可能
-- 左端: 最初の植え付け日の1日前（何もない状態）、右端: 今日（`locations.canvas_data` で表示）
+見取り図プレビューをクリックすると `canvas-fullscreen.js` でフルスクリーン表示が開く。
+- 場所詳細・植え付け詳細の両方で利用（拡大ボタンは廃止、プレビュークリックで起動）
+- 場所詳細では履歴の日付ナビゲーション（前へ/次へボタン＋キーボード左右矢印）が利用可能
+- 日付データは `/locations/<id>/canvas/history/range` API から取得
 - 位置情報の取得元: active作物は `locations.canvas_data`（複数配置対応）、harvested作物は `plantings.canvas_snapshot`
-- 位置情報を持たない植え付けのみの日付はスライダーから除外
 
 #### レスポンシブ対応（重要）
 

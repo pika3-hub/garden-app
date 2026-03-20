@@ -43,72 +43,35 @@
 <div class="row">
     {% for crop in crops %}
     <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card h-100 card-with-bg card-bg-location-crop">
+        <a href="{{ url_for('plantings.detail', location_crop_id=crop.id) }}" class="card h-100 card-photo card-bg-location-crop {{ '' if crop.latest_growth_image else 'card-no-image' }}">
             {% if crop.latest_growth_image %}
-            <div class="card-img-wrapper">
-                <img src="{{ url_for('static', filename='uploads/' + (crop.latest_growth_image | thumb_path)) }}"
-                     class="card-img-top" alt="{{ crop.crop_name }}" style="height: 150px; object-fit: cover;"
-                     loading="lazy"
-                     onerror="this.src='{{ url_for('static', filename='uploads/' + crop.latest_growth_image) }}'">
-                {% if crop.latest_growth_image_date %}
-                <span class="card-img-date-overlay">{{ crop.latest_growth_image_date }}</span>
-                {% endif %}
-            </div>
+            <img src="{{ url_for('static', filename='uploads/' + (crop.latest_growth_image | thumb_path)) }}"
+                 class="card-photo-img" alt="{{ crop.crop_name }}"
+                 loading="lazy"
+                 onerror="this.src='{{ url_for('static', filename='uploads/' + crop.latest_growth_image) }}'">
+            {% if crop.latest_growth_image_date %}
+            <span class="card-img-date-overlay">{{ crop.latest_growth_image_date }}</span>
             {% endif %}
-            <div class="card-body">
-                <p class="card-text mb-1">
-                    <span class="badge bg-success">{{ crop.crop_type }}</span>
-                    {% if crop.status == 'active' %}
-                    <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
-                    {% elif crop.status == 'harvested' %}
-                    <span class="badge bg-secondary"><i class="bi bi-check-circle"></i> 栽培終了</span>
-                    {% elif crop.status == 'removed' %}
-                    <span class="badge bg-danger"><i class="bi bi-x-circle"></i> 削除済み</span>
-                    {% endif %}
-                </p>
+            {% endif %}
+            <div class="card-photo-badge-top">
+                {% if crop.status == 'active' %}
+                <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
+                {% if crop.days_from_planting is not none %}
+                <span class="badge bg-success">{{ crop.days_from_planting }}日目</span>
+                {% endif %}
+                {% elif crop.status == 'harvested' %}
+                <span class="badge bg-secondary"><i class="bi bi-check-circle"></i> 栽培終了</span>
+                {% elif crop.status == 'removed' %}
+                <span class="badge bg-danger"><i class="bi bi-x-circle"></i> 削除済み</span>
+                {% endif %}
+            </div>
+            <div class="card-photo-overlay">
                 <h5 class="card-title">
-                    <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}" class="text-decoration-none">
-                        {{ crop_label(crop.crop_name, crop.variety, crop.icon_path, crop.image_color) }}
-                    </a>
+                    {{ crop_label(crop.crop_name, crop.variety, crop.icon_path, crop.image_color) }}
                 </h5>
-                <p class="card-text mb-1">
-                    <i class="bi bi-geo-alt-fill text-info"></i>
-                    <a href="{{ url_for('locations.detail', location_id=crop.location_id) }}" class="text-decoration-none">
-                        {{ crop.location_name }}
-                    </a>
-                    <span class="badge bg-info">{{ crop.location_type }}</span>
-                </p>
-                {% if crop.planted_date %}
-                <p class="card-text mb-1">植え付け日: {{ crop.planted_date }}</p>
-                {% endif %}
-                {% if crop.status == 'active' and crop.days_from_planting is not none %}
-                <p class="card-text mb-1">栽培日数: <span class="badge bg-success">{{ crop.days_from_planting }}日目</span></p>
-                {% endif %}
-                {% if crop.status == 'harvested' %}
-                <p class="card-text mb-1">栽培終了日: {{ crop.end_date or '未設定' }}</p>
-                {% endif %}
-                {% if crop.growth_record_count > 0 %}
-                <p class="card-text mb-1">栽培記録: {{ crop.growth_record_count }}件</p>
-                {% endif %}
-                {% if crop.quantity %}
-                <p class="card-text mb-1">株数: {{ crop.quantity }}</p>
-                {% endif %}
+                <small>{{ crop.location_name }}</small>
             </div>
-            <div class="card-footer bg-transparent">
-                <div class="btn-group-action">
-                    <a href="{{ url_for('plantings.detail', location_crop_id=crop.id) }}"
-                       class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-eye"></i> 詳細
-                    </a>
-                    {% if crop.status == 'active' %}
-                    <a href="{{ url_for('plantings.planting_edit', location_crop_id=crop.id) }}"
-                       class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-pencil"></i> 編集
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+        </a>
     </div>
     {% endfor %}
 </div>
