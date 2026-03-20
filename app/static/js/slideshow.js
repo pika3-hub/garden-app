@@ -75,13 +75,6 @@ document.addEventListener('DOMContentLoaded', function () {
         showImage((currentIndex + 1) % slides.length);
     }
 
-    // 各画像クリックでスライドショーを開く
-    targets.forEach(function (img, i) {
-        img.addEventListener('click', function () {
-            open(i);
-        });
-    });
-
     // スライドショーボタン
     var slideshowBtn = document.getElementById('slideshow-btn');
     if (slideshowBtn) {

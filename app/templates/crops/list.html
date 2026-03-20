@@ -2,18 +2,6 @@
 
 {% block title %}作物一覧 - 家庭菜園管理アプリ{% endblock %}
 
-{% block extra_css %}
-<style>
-.crop-icon-circle {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid #4CAF50;
-}
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-6">
@@ -46,48 +34,23 @@
 <div class="row">
     {% for crop in crops %}
     <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card h-100 card-with-bg card-bg-crop">
+        <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="card h-100 card-photo card-bg-crop {{ '' if crop.image_path else 'card-no-image' }}">
             {% if crop.image_path %}
             <img src="{{ url_for('static', filename='uploads/' + (crop.image_path | thumb_path)) }}"
-                 class="card-img-top" alt="{{ crop.name }}" style="height: 150px; object-fit: cover;"
+                 class="card-photo-img" alt="{{ crop.name }}"
                  loading="lazy"
                  onerror="this.src='{{ url_for('static', filename='uploads/' + crop.image_path) }}'">
             {% endif %}
-            <div class="card-body position-relative">
-                {% if crop.icon_path %}
-                <img src="{{ url_for('static', filename='images/crop_icons/' ~ crop.icon_path) }}"
-                     class="crop-icon-circle position-absolute"
-                     style="border-color: {{ crop.image_color or '#4CAF50' }}; top: 0.75rem; right: 0.75rem;"
-                     alt="{{ crop.name }}">
-                {% endif %}
-                <h5 class="card-title" style="{% if crop.icon_path %}padding-right: 68px;{% endif %}">
-                    <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="text-decoration-none">
-                        {{ crop_display_name(crop.name, crop.variety) }}
-                    </a>
-                </h5>
-                <p class="card-text">
-                    <span class="badge bg-success">{{ crop.crop_type }}</span>
-                </p>
-                {% if crop.planting_season or crop.harvest_season %}
-                <p class="card-text text-muted-light">
-                    {% if crop.planting_season %}
-                    <i class="bi bi-calendar-plus"></i> 植付: {{ crop.planting_season }}
-                    {% endif %}
-                    {% if crop.harvest_season %}
-                    <i class="bi bi-calendar-check"></i> 収穫: {{ crop.harvest_season }}
-                    {% endif %}
-                </p>
-                {% endif %}
-                <div class="btn-group-action">
-                    <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-eye"></i> 詳細
-                    </a>
-                    <a href="{{ url_for('crops.edit', crop_id=crop.id) }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-pencil"></i> 編集
-                    </a>
-                </div>
+            {% if crop.icon_path %}
+            <img src="{{ url_for('static', filename='images/crop_icons/' ~ crop.icon_path) }}"
+                 class="crop-icon-card"
+                 style="border-color: {{ crop.image_color or '#4CAF50' }};"
+                 alt="{{ crop.name }}">
+            {% endif %}
+            <div class="card-photo-overlay">
+                <h5 class="card-title">{{ crop_display_name(crop.name, crop.variety) }}</h5>
             </div>
-        </div>
+        </a>
     </div>
     {% endfor %}
 </div>

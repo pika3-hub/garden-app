@@ -16,92 +16,74 @@
 <div class="row g-4 mb-4">
     <!-- 作物カード -->
     <div class="col-12 col-lg">
-        <div class="card text-center h-100 dashboard-card-with-bg card-bg-crop">
+        <a href="{{ url_for('crops.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-crop dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.crop_count }}</span>
                 <h5 class="card-title mb-1">作物</h5>
-                <p class="card-text text-muted small mb-3">登録済みの作物数</p>
-                <a href="{{ url_for('crops.list') }}" class="btn btn-outline-success btn-sm">
-                    <i class="bi bi-list-ul"></i> 一覧
-                </a>
+                <p class="card-text text-muted small mb-0">登録済みの作物数</p>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- 場所カード -->
     <div class="col-12 col-lg">
-        <div class="card text-center h-100 dashboard-card-with-bg card-bg-location">
+        <a href="{{ url_for('locations.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.location_count }}</span>
                 <h5 class="card-title mb-1">場所</h5>
-                <p class="card-text text-muted small mb-3">登録済みの場所数</p>
-                <a href="{{ url_for('locations.list') }}" class="btn btn-outline-info btn-sm">
-                    <i class="bi bi-list-ul"></i> 一覧
-                </a>
+                <p class="card-text text-muted small mb-0">登録済みの場所数</p>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- 栽培中カード -->
     <div class="col-12 col-lg">
-        <div class="card text-center h-100 dashboard-card-with-bg card-bg-location-crop">
+        <a href="{{ url_for('plantings.index') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location-crop dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.active_crop_count }}</span>
                 <h5 class="card-title mb-1">栽培中</h5>
-                <p class="card-text text-muted small mb-3">現在育てている作物数</p>
-                <a href="{{ url_for('plantings.index') }}" class="btn btn-outline-warning btn-sm">
-                    <i class="bi bi-list-ul"></i> 一覧
-                </a>
+                <p class="card-text text-muted small mb-0">現在育てている作物数</p>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- 収穫カード -->
     <div class="col-12 col-lg">
-        <div class="card text-center h-100 dashboard-card-with-bg card-bg-harvest">
+        <a href="{{ url_for('harvests.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-harvest dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.harvest_count }}</span>
                 <h5 class="card-title mb-1">収穫</h5>
-                <p class="card-text text-muted small mb-3">収穫した作物数</p>
-                <a href="{{ url_for('harvests.list') }}" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-list-ul"></i> 一覧
-                </a>
+                <p class="card-text text-muted small mb-0">収穫した作物数</p>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- 日記カード -->
     <div class="col-12 col-lg">
-        <div class="card text-center h-100 dashboard-card-with-bg card-bg-diary">
+        <a href="{{ url_for('diary.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-diary dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.diary_count }}</span>
                 <h5 class="card-title mb-1">日記</h5>
-                <p class="card-text text-muted small mb-3">記録した日記数</p>
-                <a href="{{ url_for('diary.list') }}" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-list-ul"></i> 一覧
-                </a>
+                <p class="card-text text-muted small mb-0">記録した日記数</p>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- タスクカード -->
     <div class="col-12 col-lg">
-        <div class="card text-center h-100 dashboard-card-with-bg card-bg-tasklist">
+        <a href="{{ url_for('tasks.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-tasklist dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.pending_task_count }}</span>
                 <h5 class="card-title mb-1">未完了タスク</h5>
-                <p class="card-text text-muted small mb-3">残りのタスク数</p>
-                <a href="{{ url_for('tasks.list') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-list-ul"></i> 一覧
-                </a>
+                <p class="card-text text-muted small mb-0">残りのタスク数</p>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

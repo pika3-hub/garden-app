@@ -249,45 +249,23 @@ document.getElementById('canvas-fullscreen-btn')?.addEventListener('click', func
 <div class="row">
     {% for record in records %}
     <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card h-100">
+        <a href="{{ url_for('plantings.record_detail', record_id=record.id) }}" class="card h-100 card-photo card-bg-location-crop {{ '' if record.image_path else 'card-no-image' }}">
             {% if record.image_path %}
-            <div class="card-img-wrapper">
-                <img src="{{ url_for('static', filename='uploads/' + record.image_path) }}" class="card-img-top slideshow-target" alt="栽培記録画像" style="height: 150px; object-fit: cover;"
-                     data-slideshow-date="{{ record.recorded_at }}"
-                     data-slideshow-days="{{ record.days_from_planting }}"
-                     {% if record.notes %}data-slideshow-caption="{{ record.notes|replace('\n', ' ')|truncate(80) }}"{% endif %}>
-                <span class="card-img-date-overlay">{{ record.recorded_at }}</span>
+            <img src="{{ url_for('static', filename='uploads/' + record.image_path) }}"
+                 class="card-photo-img slideshow-target" alt="栽培記録画像"
+                 data-slideshow-date="{{ record.recorded_at }}"
+                 data-slideshow-days="{{ record.days_from_planting }}"
+                 {% if record.notes %}data-slideshow-caption="{{ record.notes|replace('\n', ' ')|truncate(80) }}"{% endif %}>
+            {% endif %}
+            {% if record.days_from_planting is not none %}
+            <div class="card-photo-badge-top">
+                <span class="badge bg-success">{{ record.days_from_planting }}日目</span>
             </div>
             {% endif %}
-            <div class="card-body">
-                <div class="fw-bold text-primary mb-1">{{ record.recorded_at }}</div>
-                {% if record.days_from_planting is not none %}
-                <p class="card-text mb-1">植え付けからの日数: <span class="badge bg-success">{{ record.days_from_planting }}日目</span></p>
-                {% endif %}
-                {% if record.notes %}
-                <p class="card-text text-muted-light">
-                    {{ record.notes[:80] }}{% if record.notes|length > 80 %}...{% endif %}
-                </p>
-                {% else %}
-                <p class="card-text text-muted"><small>メモなし</small></p>
-                {% endif %}
+            <div class="card-photo-overlay">
+                <h5 class="card-title">{{ record.recorded_at }}</h5>
             </div>
-            <div class="card-footer bg-transparent">
-                <div class="btn-group-action">
-                    <a href="{{ url_for('plantings.record_detail', record_id=record.id) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-eye"></i> 詳細
-                    </a>
-                    <a href="{{ url_for('plantings.edit', record_id=record.id) }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-pencil"></i> 編集
-                    </a>
-                    <form method="POST" action="{{ url_for('plantings.delete', record_id=record.id) }}" class="d-inline" onsubmit="return confirm('この栽培記録を削除しますか？');">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                            <i class="bi bi-trash"></i> 削除
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
+        </a>
     </div>
     {% endfor %}
 </div>

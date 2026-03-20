@@ -44,57 +44,20 @@
 <div class="row">
     {% for entry in entries %}
     <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card h-100 card-with-bg card-bg-diary">
+        <a href="{{ url_for('diary.detail', diary_id=entry.id) }}" class="card h-100 card-photo card-bg-diary {{ '' if entry.image_path else 'card-no-image' }}">
             {% if entry.image_path %}
             <img src="{{ url_for('static', filename='uploads/' + (entry.image_path | thumb_path)) }}"
-                 class="card-img-top" alt="{{ entry.title }}" style="height: 150px; object-fit: cover;"
+                 class="card-photo-img" alt="{{ entry.title }}"
                  loading="lazy"
                  onerror="this.src='{{ url_for('static', filename='uploads/' + entry.image_path) }}'">
             {% endif %}
-            <div class="card-body">
-                {% set weather_icons = {
-                    '晴れ': 'weather_sunny.png',
-                    '曇り': 'weather_cloudy.png',
-                    '雨': 'weather_rain.png',
-                    '雪': 'weather_snow.png',
-                    '晴れ時々曇り': 'weather_sun_cloud.png',
-                    '曇り時々雨': 'weather_cloud_rain.png'
-                } %}
+            <div class="card-photo-overlay">
                 <div class="mb-1">
-                    <span class="fw-bold text-primary">{{ entry.entry_date }}</span>
-                    {% if entry.weather %}
-                    <span class="badge bg-light text-dark d-inline-flex align-items-center ms-1">
-                        <img src="{{ url_for('static',
-                            filename='images/' ~ weather_icons.get(entry.weather, 'unknown.png')) }}"
-                            alt="{{ entry.weather }}"
-                            width="20"
-                            class="me-1">
-                        {{ entry.weather }}
-                    </span>
-                    {% endif %}
+                    <span class="fw-bold">{{ entry.entry_date }}</span>
                 </div>
-                <h5 class="card-title">
-                    <a href="{{ url_for('diary.detail', diary_id=entry.id) }}" class="text-decoration-none">
-                        {{ entry.title }}
-                    </a>
-                </h5>
-                {% if entry.content %}
-                <p class="card-text text-muted-light">
-                    {{ entry.content[:100] }}{% if entry.content|length > 100 %}...{% endif %}
-                </p>
-                {% endif %}
+                <h5 class="card-title">{{ entry.title }}</h5>
             </div>
-            <div class="card-footer bg-transparent">
-                <div class="btn-group-action">
-                    <a href="{{ url_for('diary.detail', diary_id=entry.id) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-eye"></i> 詳細
-                    </a>
-                    <a href="{{ url_for('diary.edit', diary_id=entry.id) }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-pencil"></i> 編集
-                    </a>
-                </div>
-            </div>
-        </div>
+        </a>
     </div>
     {% endfor %}
 </div>
