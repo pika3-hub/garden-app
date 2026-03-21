@@ -734,7 +734,8 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 }
 
 /* 日付オーバーレイ（card-photo 内で使用） */
-.card-photo .card-img-date-overlay {
+.card-photo .card-img-date-overlay,
+.card-photo-detail .card-img-date-overlay {
     z-index: 3;
 }
 
@@ -752,7 +753,8 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 }
 
 /* 作物アイコン（カード右上に表示） */
-.card-photo .crop-icon-card {
+.card-photo .crop-icon-card,
+.card-photo-detail .crop-icon-card {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
@@ -764,4 +766,146 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     background-color: #fff;
     box-shadow: 0 1px 4px rgba(0,0,0,0.2);
     z-index: 3;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DETAIL HERO CARD (詳細画面用)
+   画像上・テキスト下の縦積みレイアウト
+   ══════════════════════════════════════════════════════════ */
+
+/* カード全体 */
+.card-photo-detail {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.card-photo-detail:hover {
+    transform: none;
+    box-shadow: var(--shadow-xs);
+}
+
+/* 画像ラッパー */
+.card-photo-detail-img-wrapper {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+    background-color: var(--parchment);
+}
+
+/* 画像（切れないよう contain で中央表示） */
+.card-photo-detail .card-photo-img {
+    position: relative;
+    width: 100%;
+    height: auto;
+    max-height: 420px;
+    object-fit: contain;
+    object-position: center center;
+    background-color: var(--parchment);
+}
+
+/* テキストパネル */
+.card-photo-detail-overlay {
+    padding: 1rem 1.25rem;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    border-top: 1px solid var(--border-light);
+}
+
+/* 画像なし時: ボーダー不要 */
+.card-photo-detail.card-no-image .card-photo-detail-overlay {
+    border-top: none;
+}
+
+/* タイトル */
+.card-photo-detail-title {
+    color: var(--forest);
+    margin-bottom: 0.4rem;
+    font-size: 1.2rem;
+}
+
+/* crop_label マクロ内の .crop-icon-inline */
+.card-photo-detail-overlay .crop-icon-inline {
+    border-color: #4CAF50;
+}
+
+/* フィールド群（縦積み左揃え） */
+.detail-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-bottom: 0.3rem;
+}
+.detail-field {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.detail-field-label {
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+}
+.detail-field-value {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--ink);
+}
+
+/* メモ・本文 */
+.detail-notes {
+    white-space: pre-wrap;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-top: 0.3rem;
+    margin-bottom: 0.2rem;
+}
+
+/* タイムスタンプ */
+.detail-timestamps {
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+    margin-top: 0.3rem;
+}
+
+/* 日記: 天気背景用 */
+.card-photo-detail.card-weather-bg {
+    position: relative;
+}
+.card-photo-detail.card-weather-bg::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0.18;
+    background-size: cover;
+    background-repeat: repeat-x;
+    background-position: bottom left;
+    pointer-events: none;
+    z-index: 0;
+}
+.card-photo-detail.card-weather-bg .card-photo-detail-overlay {
+    position: relative;
+    z-index: 1;
+    border-top: none;
+}
+.card-weather-sunny::before      { background-image: url('../images/bg_sunny.png'); }
+.card-weather-cloudy::before     { background-image: url('../images/bg_cloudy.png'); }
+.card-weather-rain::before       { background-image: url('../images/bg_rain.png'); }
+.card-weather-snow::before       { background-image: url('../images/bg_snow.png'); }
+.card-weather-sun-cloud::before  { background-image: url('../images/bg_sun_cloud.png'); }
+.card-weather-cloud-rain::before { background-image: url('../images/bg_cloud_rain.png'); }
+
+/* レスポンシブ */
+@media (max-width: 576px) {
+    .card-photo-detail .card-photo-img {
+        max-height: 55vw;
+    }
+    .card-photo-detail-overlay {
+        padding: 0.9rem 1rem;
+    }
+    .card-photo-detail-title {
+        font-size: 1.05rem;
+    }
 }

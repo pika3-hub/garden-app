@@ -19,7 +19,9 @@
       "Bash(powershell -Command:*)",
       "Bash(cd:*)",
       "Bash(find:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(2)",
+      "Bash(uv run python -c \":*)"
     ]
   }
 }

@@ -60,73 +60,70 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
 <!-- 上段: 基本情報カード -->
 <div class="row mb-4">
     <div class="col-md-8">
-        <div class="card mb-3">
-            <div class="card-header bg-info text-white d-flex align-items-center justify-content-between">
-                <h5 class="mb-0">
-                    {{ crop_label(location_crop.crop_name, location_crop.variety, location_crop.icon_path, location_crop.image_color) }}
-                    <span class="text-white-50">@ {{ location_crop.location_name }}</span>
-                </h5>
-                {% if location_crop.status == 'active' %}
-                <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
-                {% elif location_crop.status == 'harvested' %}
-                <span class="badge bg-secondary"><i class="bi bi-check-circle"></i> 栽培終了</span>
-                {% elif location_crop.status == 'removed' %}
-                <span class="badge bg-danger"><i class="bi bi-x-circle"></i> 削除済み</span>
-                {% endif %}
+        {% set ns = namespace(hero_image=None, hero_date=None) %}
+        {% for r in records if r.image_path %}
+            {% if not ns.hero_image %}
+                {% set ns.hero_image = r.image_path %}
+                {% set ns.hero_date = r.recorded_at %}
+            {% endif %}
+        {% endfor %}
+        <div class="card mb-3 card-photo-detail card-bg-location-crop {{ '' if ns.hero_image else 'card-no-image' }}">
+            {% if ns.hero_image %}
+            <div class="card-photo-detail-img-wrapper">
+                <img src="{{ url_for('static', filename='uploads/' + ns.hero_image) }}"
+                     class="card-photo-img lightbox-target" alt="栽培記録画像">
+                <div class="card-img-date-overlay">{{ ns.hero_date }}</div>
             </div>
-            <div class="card-body">
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <h6 class="text-muted">植え付け日</h6>
-                        <p class="h5">{{ location_crop.planted_date or '未設定' }}</p>
+            {% endif %}
+            <div class="card-photo-detail-overlay">
+                <h4 class="card-photo-detail-title">
+                    {{ crop_label(location_crop.crop_name, location_crop.variety, location_crop.icon_path, location_crop.image_color) }}
+                    <small>@ {{ location_crop.location_name }}</small>
+                </h4>
+                <div class="detail-fields">
+                    <div class="detail-field">
+                        <span class="detail-field-label">植え付け日:</span>
+                        <span class="detail-field-value">{{ location_crop.planted_date or '未設定' }}</span>
                     </div>
-                    <div class="col-md-4">
-                        <h6 class="text-muted">株数</h6>
-                        <p class="h5">{{ location_crop.quantity or '-' }}</p>
+                    <div class="detail-field">
+                        <span class="detail-field-label">株数:</span>
+                        <span class="detail-field-value">{{ location_crop.quantity or '-' }}</span>
                     </div>
-                    <div class="col-md-4">
-                        <h6 class="text-muted">栽培記録数</h6>
-                        <p class="h5">{{ records|length }}件</p>
+                    <div class="detail-field">
+                        <span class="detail-field-label">栽培記録数:</span>
+                        <span class="detail-field-value">{{ records|length }}件</span>
                     </div>
-                </div>
-                {% if location_crop.status == 'harvested' or location_crop.end_date %}
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <h6 class="text-muted">栽培終了日</h6>
-                        <p class="h5">{{ location_crop.end_date or '未設定' }}</p>
+                    {% if location_crop.status == 'active' and location_crop.days_from_planting is not none %}
+                    <div class="detail-field">
+                        <span class="detail-field-label">栽培日数:</span>
+                        <span class="detail-field-value"><span class="badge bg-success">{{ location_crop.days_from_planting }}日目</span></span>
                     </div>
-                </div>
-                {% endif %}
-                {% if location_crop.status == 'active' and location_crop.days_from_planting is not none %}
-                <div class="row mb-2">
-                    <div class="col-md-4">
-                        <h6 class="text-muted">栽培日数</h6>
-                        <p class="h5"><span class="badge bg-success">{{ location_crop.days_from_planting }}日目</span></p>
+                    {% endif %}
+                    {% if location_crop.status == 'harvested' or location_crop.end_date %}
+                    <div class="detail-field">
+                        <span class="detail-field-label">栽培終了日:</span>
+                        <span class="detail-field-value">{{ location_crop.end_date or '未設定' }}</span>
                     </div>
-                </div>
-                {% endif %}
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-muted">作物</h6>
-                        <p>{{ crop_label(location_crop.crop_name, location_crop.variety, location_crop.icon_path, location_crop.image_color) }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-muted">場所</h6>
-                        <p>
-                            <a href="{{ url_for('locations.detail', location_id=location_crop.location_id) }}">
-                                <i class="bi bi-geo-alt"></i> {{ location_crop.location_name }}
-                            </a>
-                        </p>
+                    {% endif %}
+                    <div class="detail-field">
+                        <span class="detail-field-label">ステータス:</span>
+                        <span class="detail-field-value">
+                            {% if location_crop.status == 'active' %}
+                            <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
+                            {% elif location_crop.status == 'harvested' %}
+                            <span class="badge bg-secondary"><i class="bi bi-check-circle"></i> 栽培終了</span>
+                            {% elif location_crop.status == 'removed' %}
+                            <span class="badge bg-danger"><i class="bi bi-x-circle"></i> 削除済み</span>
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
                 {% if location_crop.notes %}
-                <div class="row mt-2">
-                    <div class="col-12">
-                        <h6 class="text-muted">メモ</h6>
-                        <p class="mb-0" style="white-space: pre-wrap;">{{ location_crop.notes }}</p>
-                    </div>
-                </div>
+                <div class="detail-notes">{{ location_crop.notes }}</div>
                 {% endif %}
+                <div class="detail-timestamps">
+                    登録日時: {{ location_crop.created_at }} / 更新日時: {{ location_crop.updated_at }}
+                </div>
             </div>
         </div>
 

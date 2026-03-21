@@ -28,63 +28,56 @@
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card mb-3">
-            <!-- <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-calendar-date"></i> {{ entry.entry_date }}
+        {% set weather_icons = {
+            '晴れ': 'weather_sunny.png',
+            '曇り': 'weather_cloudy.png',
+            '雨': 'weather_rain.png',
+            '雪': 'weather_snow.png',
+            '晴れ時々曇り': 'weather_sun_cloud.png',
+            '曇り時々雨': 'weather_cloud_rain.png'
+        } %}
+        {% set weather_card_classes = {
+            '晴れ': 'card-weather-sunny',
+            '曇り': 'card-weather-cloudy',
+            '雨': 'card-weather-rain',
+            '雪': 'card-weather-snow',
+            '晴れ時々曇り': 'card-weather-sun-cloud',
+            '曇り時々雨': 'card-weather-cloud-rain'
+        } %}
+        <div class="card mb-3 card-photo-detail
+            {%- if entry.image_path %}"
+        >
+            <div class="card-photo-detail-img-wrapper">
+                <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}"
+                     class="card-photo-img lightbox-target" alt="{{ entry.title }}">
+            </div>
+        {%- elif entry.weather and weather_card_classes.get(entry.weather) %} card-weather-bg {{ weather_card_classes[entry.weather] }}">
+        {%- else %} card-no-image card-bg-diary">
+        {%- endif %}
+            <div class="card-photo-detail-overlay">
+                <h4 class="card-photo-detail-title">{{ entry.title }}</h4>
+                <div class="detail-fields">
+                    <div class="detail-field">
+                        <span class="detail-field-label">日付:</span>
+                        <span class="detail-field-value">{{ entry.entry_date }}</span>
+                    </div>
                     {% if entry.weather %}
-                    <span class="badge bg-light text-dark ms-2">{{ entry.weather }}</span>
-                    {% endif %}
-                </h5>
-            </div> -->
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-calendar-date"></i> {{ entry.entry_date }}
-
-                    {% if entry.weather %}
-                        {% set weather_icons = {
-                            '晴れ': 'weather_sunny.png',
-                            '曇り': 'weather_cloudy.png',
-                            '雨': 'weather_rain.png',
-                            '雪': 'weather_snow.png',
-                            '晴れ時々曇り': 'weather_sun_cloud.png',
-                            '曇り時々雨': 'weather_cloud_rain.png'
-                        } %}
-
-                        <span class="badge bg-light text-dark ms-2 d-inline-flex align-items-center">
-                            <img src="{{ url_for('static',
-                                filename='images/' ~ weather_icons.get(entry.weather, 'unknown.png')) }}"
-                                alt="{{ entry.weather }}"
-                                width="20"
-                                class="me-1">
+                    <div class="detail-field">
+                        <span class="detail-field-label">天気:</span>
+                        <span class="detail-field-value d-inline-flex align-items-center">
+                            <img src="{{ url_for('static', filename='images/' ~ weather_icons.get(entry.weather, 'unknown.png')) }}"
+                                 alt="{{ entry.weather }}" width="20" class="me-1">
                             {{ entry.weather }}
                         </span>
+                    </div>
                     {% endif %}
-                </h5>
-            </div>
-            {# 天気→背景CSSクラスのマッピング #}
-            {% set weather_bg_classes = {
-                '晴れ': 'weather-bg-sunny',
-                '曇り': 'weather-bg-cloudy',
-                '雨': 'weather-bg-rain',
-                '雪': 'weather-bg-snow',
-                '晴れ時々曇り': 'weather-bg-sun-cloud',
-                '曇り時々雨': 'weather-bg-cloud-rain'
-            } %}
-            <div class="card-body{% if entry.weather and weather_bg_classes.get(entry.weather) %} card-body-weather {{ weather_bg_classes[entry.weather] }}{% endif %}">
-                {% if entry.image_path %}
-                <div class="text-center mb-3">
-                    <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}" alt="{{ entry.title }}" class="img-fluid rounded lightbox-target" style="max-height: 400px;">
                 </div>
-                {% endif %}
                 {% if entry.content %}
-                <div class="diary-content" style="white-space: pre-wrap;">{{ entry.content }}</div>
-                {% else %}
-                <p class="text-muted">内容なし</p>
+                <div class="detail-notes">{{ entry.content }}</div>
                 {% endif %}
-            </div>
-            <div class="card-footer text-muted-light">
-                登録日時: {{ entry.created_at }}<br>
-                更新日時: {{ entry.updated_at }}
+                <div class="detail-timestamps">
+                    登録日時: {{ entry.created_at }} / 更新日時: {{ entry.updated_at }}
+                </div>
             </div>
         </div>
 

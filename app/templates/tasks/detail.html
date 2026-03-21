@@ -28,35 +28,36 @@
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card mb-3">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-list-check"></i> タスク詳細
-                    <span class="badge {{ Task.get_status_badge(task.status) }} ms-2">
-                        {{ Task.get_status_label(task.status) }}
-                    </span>
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if task.due_date %}
-                <div class="mb-3">
-                    <strong><i class="bi bi-calendar-event"></i> 期限:</strong>
-                    <span class="ms-2">{{ task.due_date }}</span>
-                    {% if task.status != 'completed' and task.due_date|string < today|string %}
-                        <span class="badge bg-danger ms-2">期限切れ</span>
+        <div class="card mb-3 card-photo-detail card-no-image card-bg-tasklist">
+            <div class="card-photo-detail-overlay">
+                <h4 class="card-photo-detail-title">{{ task.title }}</h4>
+                <div class="detail-fields">
+                    <div class="detail-field">
+                        <span class="detail-field-label">ステータス:</span>
+                        <span class="detail-field-value">
+                            <span class="badge {{ Task.get_status_badge(task.status) }}">
+                                {{ Task.get_status_label(task.status) }}
+                            </span>
+                        </span>
+                    </div>
+                    {% if task.due_date %}
+                    <div class="detail-field">
+                        <span class="detail-field-label">期限:</span>
+                        <span class="detail-field-value">
+                            {{ task.due_date }}
+                            {% if task.status != 'completed' and task.due_date|string < today|string %}
+                                <span class="badge bg-danger ms-1">期限切れ</span>
+                            {% endif %}
+                        </span>
+                    </div>
                     {% endif %}
                 </div>
-                {% endif %}
-
                 {% if task.description %}
-                <div class="task-content" style="white-space: pre-wrap;">{{ task.description }}</div>
-                {% else %}
-                <p class="text-muted">説明なし</p>
+                <div class="detail-notes">{{ task.description }}</div>
                 {% endif %}
-            </div>
-            <div class="card-footer text-muted-light">
-                登録日時: {{ task.created_at }}<br>
-                更新日時: {{ task.updated_at }}
+                <div class="detail-timestamps">
+                    登録日時: {{ task.created_at }} / 更新日時: {{ task.updated_at }}
+                </div>
             </div>
         </div>
 

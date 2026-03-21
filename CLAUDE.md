@@ -216,6 +216,62 @@ uv run python run.py
 | `data-slideshow-days` | - | 「植え付けから N日目」として表示 |
 | `data-slideshow-caption` | - | フッターに表示するキャプションテキスト |
 
+### 詳細画面 基本情報カード
+
+全詳細画面の基本情報は `card-photo-detail` パターンで統一表示。画像上・テキスト下の縦積みレイアウト。
+
+#### CSS（`custom.css` の `DETAIL HERO CARD` セクション）
+
+| クラス | 役割 |
+|--------|------|
+| `.card-photo-detail` | コンテナ（`display: flex; flex-direction: column`） |
+| `.card-photo-detail-img-wrapper` | 画像ラッパー（`position: relative`、日付オーバーレイの基準） |
+| `.card-photo-img` | 画像（`object-fit: contain` で切れずに中央表示、`max-height: 420px`） |
+| `.card-photo-detail-overlay` | テキストパネル（通常フロー、`border-top` で画像と区切り） |
+| `.card-photo-detail-title` | タイトル（`color: var(--forest)`） |
+| `.detail-fields` / `.detail-field` | フィールド群（縦積み左揃え） |
+| `.detail-field-label` / `.detail-field-value` | ラベルと値 |
+| `.detail-notes` | メモ・本文（`white-space: pre-wrap`） |
+| `.detail-timestamps` | タイムスタンプ（`登録日時: ... / 更新日時: ...` 統一書式） |
+
+#### 各画面のHTML構造
+
+```html
+<div class="card mb-3 card-photo-detail card-bg-{type} {画像なし: card-no-image}">
+    <!-- 画像あり時 -->
+    <div class="card-photo-detail-img-wrapper">
+        <img src="..." class="card-photo-img lightbox-target" alt="...">
+        <!-- 日付オーバーレイ（植え付け詳細のみ） -->
+        <div class="card-img-date-overlay">2026-01-01</div>
+    </div>
+    <!-- テキストパネル -->
+    <div class="card-photo-detail-overlay">
+        <h4 class="card-photo-detail-title">タイトル</h4>
+        <div class="detail-fields">...</div>
+        <div class="detail-notes">メモ</div>
+        <div class="detail-timestamps">登録日時: ... / 更新日時: ...</div>
+    </div>
+</div>
+```
+
+#### 画像の扱い
+
+| ページ | 画像ソース | 画像なし時 |
+|--------|-----------|-----------|
+| 作物 | `crop.image_path` | テキストのみ表示 |
+| 場所 | `location.image_path` | テキストのみ表示 |
+| 植え付け | `records`の最新画像付きレコード（`namespace`使用） | テキストのみ表示 |
+| 栽培記録 | `record.image_path` | テキストのみ表示 |
+| 収穫 | `harvest.image_path` | テキストのみ表示 |
+| 日記(画像あり) | `entry.image_path` | - |
+| 日記(天気あり) | なし（`card-weather-bg` + `::before` で天気背景） | - |
+| 日記(その他) | なし | テキストのみ表示 |
+| タスク | なし（常にテキストのみ） | テキストのみ表示 |
+
+- 画像ありの場合のみ `lightbox-target` クラスを付与（既存 `lightbox.js` が動作）
+- 画像なし時（`card-no-image`）はテキストパネルのみ表示（フォールバック画像なし）
+- 植え付け詳細の画像取得は Jinja2 の `namespace` パターン（`{% set ns = namespace(hero_image=None) %}`）でループ内から変数を書き出す
+
 ### 詳細画面ナビゲーション
 
 全詳細画面で前後データへの移動ボタンを表示する共通機能。一覧に戻らずにデータ間を移動できる。
