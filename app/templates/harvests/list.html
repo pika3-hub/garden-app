@@ -85,8 +85,9 @@
             <div class="card-photo-overlay">
                 <h5 class="card-title">
                     {{ crop_label(harvest.crop_name, harvest.variety, harvest.icon_path, harvest.image_color) }}
+                    <small>@ {{ harvest.location_name }}</small>
                 </h5>
-                <small>{{ harvest.location_name }} · {{ harvest.harvest_date }}</small>
+                <small>収穫日: {{ harvest.harvest_date }}</small>
             </div>
         </a>
     </div>
