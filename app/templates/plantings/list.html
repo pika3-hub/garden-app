@@ -53,6 +53,13 @@
             <span class="card-img-date-overlay">{{ crop.latest_growth_image_date }}</span>
             {% endif %}
             {% endif %}
+            {% if task_counts.get(crop.id) %}
+            <div class="card-photo-badge-task">
+                <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
+                    <i class="bi bi-bell-fill"></i> {{ task_counts[crop.id] }}
+                </span>
+            </div>
+            {% endif %}
             <div class="card-photo-badge-top">
                 {% if crop.status == 'active' %}
                 <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>

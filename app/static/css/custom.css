@@ -747,6 +747,14 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     z-index: 3;
 }
 
+/* カード左上タスクバッジ */
+.card-photo-badge-task {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 3;
+}
+
 /* slideshow-target のカーソルを card-photo 内ではポインターに統一 */
 .card-photo img.slideshow-target {
     cursor: pointer;

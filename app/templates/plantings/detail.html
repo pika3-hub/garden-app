@@ -203,6 +203,7 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
                 </div>
             </div>
         </div>
+        {% include '_tasks_card.html' %}
     </div>
     {% elif location_crop.status == 'harvested' %}
     <div class="col-md-4">
@@ -227,6 +228,7 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
                 </div>
             </div>
         </div>
+        {% include '_tasks_card.html' %}
     </div>
     {% endif %}
 </div>

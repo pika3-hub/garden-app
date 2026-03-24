@@ -47,6 +47,13 @@
                  style="border-color: {{ crop.image_color or '#4CAF50' }};"
                  alt="{{ crop.name }}">
             {% endif %}
+            {% if task_counts.get(crop.id) %}
+            <div class="card-photo-badge-task">
+                <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
+                    <i class="bi bi-bell-fill"></i> {{ task_counts[crop.id] }}
+                </span>
+            </div>
+            {% endif %}
             <div class="card-photo-overlay">
                 <h5 class="card-title">{{ crop_display_name(crop.name, crop.variety) }}</h5>
             </div>
