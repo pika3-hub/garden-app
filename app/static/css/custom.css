@@ -448,6 +448,7 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  margin-bottom: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -744,6 +745,14 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
+    z-index: 3;
+}
+
+/* カード左上タスクバッジ */
+.card-photo-badge-task {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
     z-index: 3;
 }
 

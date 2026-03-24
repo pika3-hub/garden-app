@@ -285,3 +285,59 @@ class Task:
     def get_status_badge(status):
         """ステータスのバッジクラスを取得"""
         return Task.STATUS_BADGES.get(status, 'bg-secondary')
+
+    @staticmethod
+    def get_upcoming_task_counts(relation_type, entity_ids):
+        """エンティティごとの期限間近タスク数を一括取得（一覧画面用）"""
+        if not entity_ids:
+            return {}
+        db = get_db()
+        col_map = {
+            'crop': 'crop_id',
+            'location': 'location_id',
+            'location_crop': 'location_crop_id'
+        }
+        col = col_map.get(relation_type)
+        if not col:
+            return {}
+        placeholders = ','.join('?' * len(entity_ids))
+        rows = db.execute(f'''
+            SELECT tr.{col} as entity_id, COUNT(DISTINCT t.id) as task_count
+            FROM task_relations tr
+            JOIN tasks t ON tr.task_id = t.id
+            WHERE tr.relation_type = ?
+              AND tr.{col} IN ({placeholders})
+              AND t.status != 'completed'
+              AND t.due_date IS NOT NULL
+              AND DATE(t.due_date) <= DATE('now', '+9 hours', '+7 days')
+            GROUP BY tr.{col}
+        ''', [relation_type] + list(entity_ids)).fetchall()
+        return {row['entity_id']: row['task_count'] for row in rows}
+
+    @staticmethod
+    def get_incomplete_tasks_for_entity(relation_type, entity_id):
+        """エンティティに関連する未完了タスクを取得（詳細画面用）"""
+        db = get_db()
+        col_map = {
+            'crop': 'crop_id',
+            'location': 'location_id',
+            'location_crop': 'location_crop_id'
+        }
+        col = col_map.get(relation_type)
+        if not col:
+            return []
+        rows = db.execute(f'''
+            SELECT DISTINCT t.id, t.title, t.due_date, t.status
+            FROM tasks t
+            JOIN task_relations tr ON t.id = tr.task_id
+            WHERE tr.relation_type = ?
+              AND tr.{col} = ?
+              AND t.status != 'completed'
+            ORDER BY CASE t.status
+                        WHEN 'in_progress' THEN 1
+                        WHEN 'pending' THEN 2
+                     END,
+                     CASE WHEN t.due_date IS NULL THEN 1 ELSE 0 END,
+                     t.due_date ASC
+        ''', (relation_type, entity_id)).fetchall()
+        return [dict(r) for r in rows]

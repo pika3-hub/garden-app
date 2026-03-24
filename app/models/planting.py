@@ -69,7 +69,9 @@ class Planting:
         db = get_db()
         location_crop = db.execute(
             '''SELECT lc.*, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name
+                      c.icon_path, c.image_color, l.name as location_name,
+                      c.planting_season, c.harvest_season, c.characteristics,
+                      c.notes as crop_notes, c.crop_type
                FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
@@ -255,14 +257,14 @@ class Planting:
                LEFT JOIN (
                    SELECT gr1.location_crop_id, gr1.image_path, gr1.recorded_at as latest_growth_image_date
                    FROM planting_records gr1
-                   INNER JOIN (
-                       SELECT location_crop_id, MAX(recorded_at) as max_date
-                       FROM planting_records
-                       WHERE image_path IS NOT NULL AND image_path != ''
-                       GROUP BY location_crop_id
-                   ) gr2 ON gr1.location_crop_id = gr2.location_crop_id
-                        AND gr1.recorded_at = gr2.max_date
                    WHERE gr1.image_path IS NOT NULL AND gr1.image_path != ''
+                     AND gr1.id = (
+                       SELECT gr2.id FROM planting_records gr2
+                       WHERE gr2.location_crop_id = gr1.location_crop_id
+                         AND gr2.image_path IS NOT NULL AND gr2.image_path != ''
+                       ORDER BY gr2.recorded_at DESC, gr2.id DESC
+                       LIMIT 1
+                   )
                ) gr_img ON gr_img.location_crop_id = lc.id'''
         params = []
         if status:

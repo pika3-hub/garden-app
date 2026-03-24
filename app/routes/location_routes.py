@@ -5,6 +5,7 @@ from app.models.planting import Planting
 from app.models.crop import Crop
 from app.models.diary import DiaryEntry
 from app.models.harvest import Harvest
+from app.models.task import Task
 from app.utils.upload import save_image, delete_image
 
 bp = Blueprint('locations', __name__, url_prefix='/locations')
@@ -18,7 +19,9 @@ def list():
         locations = Location.search(keyword)
     else:
         locations = Location.get_all()
-    return render_template('locations/list.html', locations=locations, keyword=keyword)
+    location_ids = [l['id'] for l in locations]
+    task_counts = Task.get_upcoming_task_counts('location', location_ids)
+    return render_template('locations/list.html', locations=locations, keyword=keyword, task_counts=task_counts)
 
 
 @bp.route('/<int:location_id>')
@@ -41,6 +44,7 @@ def detail(location_id):
 
     today = date.today().isoformat()
     prev_location, next_location = Location.get_adjacent(location_id)
+    related_tasks = Task.get_incomplete_tasks_for_entity('location', location_id)
 
     return render_template('locations/detail.html',
                           location=location,
@@ -48,7 +52,8 @@ def detail(location_id):
                           related_diaries=related_diaries,
                           today=today,
                           prev_location=prev_location,
-                          next_location=next_location)
+                          next_location=next_location,
+                          related_tasks=related_tasks)
 
 
 @bp.route('/new')

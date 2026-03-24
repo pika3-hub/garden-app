@@ -89,10 +89,6 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
                         <span class="detail-field-label">株数:</span>
                         <span class="detail-field-value">{{ location_crop.quantity or '-' }}</span>
                     </div>
-                    <div class="detail-field">
-                        <span class="detail-field-label">栽培記録数:</span>
-                        <span class="detail-field-value">{{ records|length }}件</span>
-                    </div>
                     {% if location_crop.status == 'active' and location_crop.days_from_planting is not none %}
                     <div class="detail-field">
                         <span class="detail-field-label">栽培日数:</span>
@@ -125,6 +121,38 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
                     登録日時: {{ location_crop.created_at }} / 更新日時: {{ location_crop.updated_at }}
                 </div>
             </div>
+        </div>
+
+        <div class="btn-group-action">
+            {% if location_crop.status == 'active' %}
+            <a href="{{ url_for('plantings.planting_edit', location_crop_id=location_crop.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 編集
+            </a>
+            <a href="{{ url_for('harvests.new', location_crop_id=location_crop.id) }}" class="btn btn-success">
+                <i class="bi bi-basket"></i> 収穫を記録
+            </a>
+            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#endCultivationModal">
+                <i class="bi bi-check-circle"></i> 栽培を終了
+            </button>
+            <form method="POST"
+                  action="{{ url_for('locations.remove_crop', location_id=location_crop.location_id, location_crop_id=location_crop.id) }}"
+                  class="d-inline" onsubmit="return confirm('削除してもよろしいですか？');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-x-circle"></i> 削除
+                </button>
+            </form>
+            {% elif location_crop.status == 'harvested' %}
+            <a href="{{ url_for('plantings.planting_edit_harvested', location_crop_id=location_crop.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 編集
+            </a>
+            <form method="POST"
+                  action="{{ url_for('locations.remove_crop', location_id=location_crop.location_id, location_crop_id=location_crop.id) }}"
+                  class="d-inline" onsubmit="return confirm('削除してもよろしいですか？');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-x-circle"></i> 削除
+                </button>
+            </form>
+            {% endif %}
         </div>
 
         <!-- 見取り図プレビュー（栽培終了かつ配置なしの場合は非表示） -->
@@ -161,79 +189,28 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
         {% endif %}
     </div>
 
-    {% if location_crop.status == 'active' %}
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="bi bi-gear"></i> 操作</h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <span class="text-muted">植え付け情報の編集・削除をする</span>
-                    <a href="{{ url_for('plantings.planting_edit', location_crop_id=location_crop.id) }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-pencil"></i> 植え付けを編集
-                    </a>
-                    <form method="POST"
-                          action="{{ url_for('locations.remove_crop', location_id=location_crop.location_id, location_crop_id=location_crop.id) }}"
-                          onsubmit="return confirm('削除してもよろしいですか？');">
-                        <button type="submit" class="btn btn-outline-danger w-100">
-                            <i class="bi bi-x-circle"></i> 植え付けを削除
-                        </button>
-                    </form>
-                    <hr class="my-3">
-                    <span class="text-muted">栽培・収穫情報の記録をする</span>
-                    <a href="{{ url_for('plantings.new', location_crop_id=location_crop.id) }}" class="btn btn-outline-info">
-                        <i class="bi bi-plus-circle"></i> 栽培記録を追加
-                    </a>
-                    <a href="{{ url_for('harvests.new', location_crop_id=location_crop.id) }}" class="btn btn-outline-success">
-                        <i class="bi bi-basket"></i> 収穫を記録
-                    </a>
-                    <form method="POST"
-                          action="{{ url_for('locations.complete_harvest', location_id=location_crop.location_id, location_crop_id=location_crop.id) }}"
-                          onsubmit="return confirm('この作物の栽培を終了しますか？');">
-                        <div class="mb-2">
-                            <label class="form-label small text-muted">栽培終了日</label>
-                            <input type="date" name="end_date" class="form-control form-control-sm"
-                                   value="{{ today }}">
-                        </div>
-                        <button type="submit" class="btn btn-outline-warning w-100">
-                            <i class="bi bi-check-circle"></i> 栽培を終了
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
+        {% set crop_info = {
+            'crop_id': location_crop.crop_id,
+            'crop_type': location_crop.crop_type,
+            'planting_season': location_crop.planting_season,
+            'harvest_season': location_crop.harvest_season,
+            'characteristics': location_crop.characteristics,
+            'crop_notes': location_crop.crop_notes
+        } %}
+        {% include '_crop_info_card.html' %}
+        {% include '_tasks_card.html' %}
     </div>
-    {% elif location_crop.status == 'harvested' %}
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="bi bi-gear"></i> 操作</h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <span class="text-muted">植え付け情報の編集・削除をする</span>
-                    <a href="{{ url_for('plantings.planting_edit_harvested', location_crop_id=location_crop.id) }}"
-                       class="btn btn-outline-secondary">
-                        <i class="bi bi-pencil"></i> 植え付けを編集
-                    </a>
-                    <form method="POST"
-                          action="{{ url_for('locations.remove_crop', location_id=location_crop.location_id, location_crop_id=location_crop.id) }}"
-                          onsubmit="return confirm('削除してもよろしいですか？');">
-                        <button type="submit" class="btn btn-outline-danger w-100">
-                            <i class="bi bi-x-circle"></i> 植え付けを削除
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 
 <!-- 下段: 栽培記録一覧 -->
 <h4 class="mb-3">
     <i class="bi bi-journal-text text-info"></i> 栽培記録
+    {% if location_crop.status == 'active' %}
+    <a href="{{ url_for('plantings.new', location_crop_id=location_crop.id) }}" class="btn btn-sm btn-info ms-2">
+        <i class="bi bi-plus-circle"></i> 栽培記録を追加
+    </a>
+    {% endif %}
     {% if records|selectattr('image_path')|list|length > 0 %}
     <button id="slideshow-btn" class="btn btn-sm btn-outline-info ms-2">
         <i class="bi bi-images"></i> スライドショー
@@ -242,6 +219,7 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
 </h4>
 
 {% if records %}
+<p class="text-muted mb-3">{{ records|length }}件の栽培記録</p>
 <div class="row">
     {% for record in records %}
     <div class="col-md-6 col-lg-4 mb-3">
@@ -266,11 +244,39 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
     {% endfor %}
 </div>
 
-<p class="text-muted">{{ records|length }}件の栽培記録</p>
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>
     栽培記録はまだありません。{% if location_crop.status == 'active' %}「新規記録追加」ボタンから記録を追加できます。{% endif %}
+</div>
+{% endif %}
+
+{% if location_crop.status == 'active' %}
+<!-- 栽培終了モーダル -->
+<div class="modal fade" id="endCultivationModal" tabindex="-1" aria-labelledby="endCultivationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('plantings.end_cultivation', location_crop_id=location_crop.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="endCultivationModalLabel">栽培を終了</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>この作物の栽培を終了しますか？</p>
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">栽培終了日</label>
+                        <input type="date" name="end_date" id="end_date" class="form-control" value="{{ today }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-check-circle"></i> 栽培を終了
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endif %}
 {% endblock %}

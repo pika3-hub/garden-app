@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from app.models.crop import Crop
 from app.models.planting import Planting
 from app.models.diary import DiaryEntry
+from app.models.task import Task
 from app.utils.upload import save_image, delete_image
 
 bp = Blueprint('crops', __name__, url_prefix='/crops')
@@ -16,7 +17,9 @@ def list():
         crops = Crop.search(keyword)
     else:
         crops = Crop.get_all()
-    return render_template('crops/list.html', crops=crops, keyword=keyword)
+    crop_ids = [c['id'] for c in crops]
+    task_counts = Task.get_upcoming_task_counts('crop', crop_ids)
+    return render_template('crops/list.html', crops=crops, keyword=keyword, task_counts=task_counts)
 
 
 @bp.route('/<int:crop_id>')
@@ -35,6 +38,7 @@ def detail(crop_id):
     related_diaries = DiaryEntry.get_by_crop(crop_id)
 
     prev_crop, next_crop = Crop.get_adjacent(crop_id)
+    related_tasks = Task.get_incomplete_tasks_for_entity('crop', crop_id)
 
     return render_template('crops/detail.html',
                           crop=crop,
@@ -42,7 +46,8 @@ def detail(crop_id):
                           harvested_locations=harvested_locations,
                           related_diaries=related_diaries,
                           prev_crop=prev_crop,
-                          next_crop=next_crop)
+                          next_crop=next_crop,
+                          related_tasks=related_tasks)
 
 
 def _get_crop_icon_list():

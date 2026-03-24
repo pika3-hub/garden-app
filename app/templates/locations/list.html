@@ -31,6 +31,7 @@
 </div>
 
 {% if locations %}
+<p class="text-muted mb-3">{{ locations|length }}件の場所</p>
 <div class="row">
     {% for location in locations %}
     <div class="col-md-6 col-lg-4 mb-3">
@@ -40,6 +41,13 @@
                  class="card-photo-img" alt="{{ location.name }}"
                  loading="lazy"
                  onerror="this.src='{{ url_for('static', filename='uploads/' + location.image_path) }}'">
+            {% endif %}
+            {% if task_counts.get(location.id) %}
+            <div class="card-photo-badge-task">
+                <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
+                    <i class="bi bi-bell-fill"></i> {{ task_counts[location.id] }}
+                </span>
+            </div>
             {% endif %}
             <div class="card-photo-overlay">
                 <h5 class="card-title">{{ location.name }}</h5>

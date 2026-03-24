@@ -4,6 +4,7 @@ from app.models.planting_record import PlantingRecord
 from app.models.planting import Planting
 from app.models.crop import Crop
 from app.models.location import Location
+from app.models.task import Task
 from app.utils.upload import save_image, delete_image
 from datetime import date
 
@@ -18,7 +19,9 @@ def index():
         crops = Planting.get_all_with_stats(status=None)
     else:
         crops = Planting.get_all_with_stats(status=status)
-    return render_template('plantings/list.html', crops=crops, current_status=status)
+    planting_ids = [c['id'] for c in crops]
+    task_counts = Task.get_upcoming_task_counts('location_crop', planting_ids)
+    return render_template('plantings/list.html', crops=crops, current_status=status, task_counts=task_counts)
 
 
 @bp.route('/<int:location_crop_id>')
@@ -41,6 +44,7 @@ def detail(location_crop_id):
             canvas_snapshot = None
 
     prev_planting, next_planting = Planting.get_adjacent(location_crop_id)
+    related_tasks = Task.get_incomplete_tasks_for_entity('location_crop', location_crop_id)
 
     return render_template('plantings/detail.html',
                           records=records,
@@ -49,7 +53,40 @@ def detail(location_crop_id):
                           today=today,
                           canvas_snapshot=canvas_snapshot,
                           prev_planting=prev_planting,
-                          next_planting=next_planting)
+                          next_planting=next_planting,
+                          related_tasks=related_tasks)
+
+
+@bp.route('/<int:location_crop_id>/end', methods=['POST'])
+def end_cultivation(location_crop_id):
+    """栽培終了（植え付け詳細から）"""
+    location_crop = Planting.get_by_id(location_crop_id)
+    if not location_crop:
+        flash('栽培情報が見つかりません', 'danger')
+        return redirect(url_for('plantings.index'))
+
+    try:
+        end_date = request.form.get('end_date') or None
+        location_id = location_crop['location_id']
+
+        # スナップショット取得（作物が配置されている場合のみ）
+        canvas_data = Location.get_canvas_data(location_id)
+        snapshot = None
+        if canvas_data and 'placements' in canvas_data:
+            is_placed = any(
+                p.get('locationCropId') == location_crop_id
+                for p in canvas_data['placements']
+            )
+            if is_placed:
+                snapshot = canvas_data
+
+        Planting.harvest(location_crop_id, end_date=end_date, canvas_snapshot=snapshot)
+        Location.remove_from_canvas(location_id, location_crop_id)
+        flash('栽培を終了しました', 'success')
+    except Exception as e:
+        flash(f'エラーが発生しました: {str(e)}', 'danger')
+
+    return redirect(url_for('plantings.detail', location_crop_id=location_crop_id))
 
 
 @bp.route('/record/<int:record_id>')

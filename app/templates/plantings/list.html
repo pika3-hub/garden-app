@@ -40,6 +40,7 @@
 </ul>
 
 {% if crops %}
+<p class="text-muted mb-3">{{ crops|length }}件の植え付け</p>
 <div class="row">
     {% for crop in crops %}
     <div class="col-md-6 col-lg-4 mb-3">
@@ -52,6 +53,13 @@
             {% if crop.latest_growth_image_date %}
             <span class="card-img-date-overlay">{{ crop.latest_growth_image_date }}</span>
             {% endif %}
+            {% endif %}
+            {% if task_counts.get(crop.id) %}
+            <div class="card-photo-badge-task">
+                <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
+                    <i class="bi bi-bell-fill"></i> {{ task_counts[crop.id] }}
+                </span>
+            </div>
             {% endif %}
             <div class="card-photo-badge-top">
                 {% if crop.status == 'active' %}
@@ -68,15 +76,15 @@
             <div class="card-photo-overlay">
                 <h5 class="card-title">
                     {{ crop_label(crop.crop_name, crop.variety, crop.icon_path, crop.image_color) }}
+                    <small>@ {{ crop.location_name }}</small>
                 </h5>
-                <small>{{ crop.location_name }}</small>
+                <small>植え付け日: {{ crop.planted_date }}</small>
             </div>
         </a>
     </div>
     {% endfor %}
 </div>
 
-<p class="text-muted">合計: {{ crops|length }} 件</p>
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>
