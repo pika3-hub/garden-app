@@ -67,6 +67,7 @@ garden-app/
 │   │   ├── base.html        # ナビバー付きベースレイアウト
 │   │   ├── _macros.html     # Jinja2マクロ（crop_label等）
 │   │   ├── _detail_nav.html # 詳細画面の前後ナビゲーション共通部品
+│   │   ├── _crop_info_card.html # 作物情報サイドバーカード（植え付け・収穫詳細用）
 │   │   ├── index.html       # ダッシュボード
 │   │   ├── crops/           # 作物テンプレート
 │   │   ├── locations/       # 場所テンプレート（canvas.html, _canvas_preview.html）
@@ -272,6 +273,87 @@ uv run python run.py
 - 画像なし時（`card-no-image`）はテキストパネルのみ表示（フォールバック画像なし）
 - 植え付け詳細の画像取得は Jinja2 の `namespace` パターン（`{% set ns = namespace(hero_image=None) %}`）でループ内から変数を書き出す
 
+### 詳細画面の操作ボタン配置
+
+全詳細画面で編集・削除ボタンは基本情報カードの直下に `btn-group-action` で統一配置する。右カラムに「操作」カードは置かない。
+
+#### `btn-group-action` パターン
+
+```html
+<div class="btn-group-action">
+    <a href="..." class="btn btn-primary"><i class="bi bi-pencil"></i> 編集</a>
+    <form method="POST" action="..." class="d-inline" onsubmit="return confirm(...);">
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> 削除</button>
+    </form>
+</div>
+```
+
+CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モバイルでは縦積み）
+
+#### 各画面のボタン構成
+
+| 画面 | ボタン |
+|------|--------|
+| 作物詳細 | 編集、削除 |
+| 場所詳細 | 編集、削除 |
+| 植え付け詳細(active) | 編集、収穫を記録、栽培を終了（モーダル）、削除 |
+| 植え付け詳細(harvested) | 編集、削除 |
+| 収穫詳細 | 編集、削除 |
+| 日記詳細 | 編集、削除 |
+| タスク詳細 | 編集、削除 |
+
+#### 新規登録ボタンの配置ルール
+
+新規登録系のボタンは関連する一覧の直上に配置する:
+- 場所詳細の「作物を植え付ける」→ 栽培中の作物カード内、テーブルの上
+- 植え付け詳細の「栽培記録を追加」→ 栽培記録一覧の見出し横
+
+#### 栽培終了モーダル
+
+植え付け詳細（active）の「栽培を終了」ボタンはBootstrap 5モーダル（`#endCultivationModal`）で確認ダイアログを表示。栽培終了日の入力フィールドを含む。POST先は `plantings.end_cultivation`。
+
+### 作物情報カード（サイドバー用）
+
+`app/templates/_crop_info_card.html` — 植え付け詳細・収穫詳細の右カラムに配置する共通部品。
+
+**テンプレート変数**: `crop_info` dict を `{% set %}` で構築してから `{% include %}` する。
+
+```html
+{% set crop_info = {
+    'crop_id': location_crop.crop_id,
+    'crop_type': location_crop.crop_type,
+    'planting_season': location_crop.planting_season,
+    'harvest_season': location_crop.harvest_season,
+    'characteristics': location_crop.characteristics,
+    'crop_notes': location_crop.crop_notes
+} %}
+{% include '_crop_info_card.html' %}
+```
+
+**表示内容**: 種類（badge）、植え付け時期、収穫時期、特性、メモ、作物詳細リンク。各フィールドは値がある場合のみ表示。
+
+**クエリ要件**: `Planting.get_by_id()` と `Harvest.get_by_id()` で `c.planting_season, c.harvest_season, c.characteristics, c.notes as crop_notes, c.crop_type` をSELECTしている。`c.notes` は `crop_notes` にエイリアス（植え付けの `notes` との衝突回避）。
+
+### 一覧画面の件数表示
+
+全一覧画面でデータ件数をカードグリッドの上部に表示する。
+
+```html
+<p class="text-muted mb-3">{{ items|length }}件の○○</p>
+```
+
+| 画面 | 表示テキスト |
+|------|------------|
+| 作物一覧 | `X件の作物` |
+| 場所一覧 | `X件の場所` |
+| 植え付け一覧 | `X件の植え付け` |
+| 収穫記録一覧 | `X件の収穫記録` |
+| 日記一覧 | `X件の日記` |
+| タスク一覧 | `X件のタスク` |
+| 栽培記録一覧（植え付け詳細内） | `X件の栽培記録` |
+
+データが0件の場合は `alert alert-info` で案内メッセージを表示（件数は表示しない）。
+
 ### 詳細画面ナビゲーション
 
 全詳細画面で前後データへの移動ボタンを表示する共通機能。一覧に戻らずにデータ間を移動できる。
@@ -424,7 +506,7 @@ uv run python run.py
   └─ スキップ → 植え付け詳細へ（配置なしでもOK）
 ```
 
-- **場所詳細からの植え付け:** 操作カードの「作物を植え付ける」→ `/plantings/plant/new?location_id=<id>`（場所プリセレクト済み）
+- **場所詳細からの植え付け:** 栽培中の作物カード内の「作物を植え付ける」→ `/plantings/plant/new?location_id=<id>`（場所プリセレクト済み）
 - **`canvas-placement.js`:** `canvas-editor.js` の上に載せる薄いラッパー。保存後に植え付け詳細へリダイレクトする動作を追加
 - **`canvas-editor.js`:** `window._canvasEditor` でインスタンスを公開、`buildSaveData()` メソッドで保存データを取得可能
 
@@ -454,6 +536,7 @@ uv run python run.py
 | `plantings.new` | `/plantings/new/<location_crop_id>` | 栽培記録登録 |
 | `plantings.record_detail` | `/plantings/record/<record_id>` | 栽培記録詳細 |
 | `plantings.edit` | `/plantings/record/<record_id>/edit` | 栽培記録編集 |
+| `plantings.end_cultivation` | POST `/plantings/<location_crop_id>/end` | 栽培終了（植え付け詳細から） |
 | `plantings.delete` | POST `/plantings/record/<record_id>/delete` | 栽培記録削除 |
 
 `url_for` 例:
@@ -462,6 +545,7 @@ uv run python run.py
 - `url_for('plantings.place', location_crop_id=1)` → `/plantings/1/place`
 - `url_for('plantings.record_detail', record_id=1)` → `/plantings/record/1`
 - `url_for('plantings.edit', record_id=1)` → `/plantings/record/1/edit`
+- `url_for('plantings.end_cultivation', location_crop_id=1)` → `/plantings/1/end`（POST）
 - `url_for('diary.detail', diary_id=1)` → `/diary/1`
 
 ### 新機能追加チェックリスト

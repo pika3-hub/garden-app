@@ -111,6 +111,7 @@ garden-app/
 │   │   └── planting_routes.py      # Blueprint: plantings
 │   ├── templates/          # HTMLテンプレート
 │   │   ├── _detail_nav.html # 詳細画面の前後ナビゲーション共通部品
+│   │   ├── _crop_info_card.html # 作物情報サイドバーカード
 │   │   ├── crops/         # 作物関連
 │   │   ├── locations/     # 場所関連（見取り図含む）
 │   │   ├── diary/         # 日記関連

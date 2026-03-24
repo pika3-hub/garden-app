@@ -66,6 +66,7 @@
 
 <!-- 収穫記録一覧 -->
 {% if harvests %}
+<p class="text-muted mb-3">{{ harvests|length }}件の収穫記録</p>
 <div class="row">
     {% for harvest in harvests %}
     <div class="col-md-6 col-lg-4 mb-3">
@@ -94,7 +95,6 @@
     {% endfor %}
 </div>
 
-<p class="text-muted">{{ harvests|length }}件の収穫記録</p>
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>

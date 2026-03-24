@@ -40,6 +40,7 @@
 </ul>
 
 {% if crops %}
+<p class="text-muted mb-3">{{ crops|length }}件の植え付け</p>
 <div class="row">
     {% for crop in crops %}
     <div class="col-md-6 col-lg-4 mb-3">
@@ -84,7 +85,6 @@
     {% endfor %}
 </div>
 
-<p class="text-muted">合計: {{ crops|length }} 件</p>
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>

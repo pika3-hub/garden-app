@@ -46,7 +46,9 @@ class Harvest:
         harvest = db.execute(
             '''SELECT h.*, c.name as crop_name, c.variety,
                       c.icon_path, c.image_color, l.name as location_name,
-                      lc.planted_date, lc.location_id
+                      lc.planted_date, lc.location_id, lc.crop_id,
+                      c.planting_season, c.harvest_season, c.characteristics,
+                      c.notes as crop_notes, c.crop_type
                FROM harvests h
                JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id

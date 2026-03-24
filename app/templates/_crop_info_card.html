@@ -1,0 +1,46 @@
+{# 作物情報カード（植え付け詳細・収穫詳細サイドバー用） #}
+{# 必要な変数: crop_info (dict with crop_id, planting_season, harvest_season, characteristics, crop_notes, crop_type) #}
+{% if crop_info %}
+<div class="card mb-3">
+    <div class="card-header bg-success text-white">
+        <h6 class="mb-0"><i class="bi bi-flower2"></i> 作物情報</h6>
+    </div>
+    <div class="card-body">
+        {% if crop_info.crop_type %}
+        <div class="mb-2">
+            <small class="text-muted d-block">種類</small>
+            <span class="badge bg-success">{{ crop_info.crop_type }}</span>
+        </div>
+        {% endif %}
+        {% if crop_info.planting_season %}
+        <div class="mb-2">
+            <small class="text-muted d-block">植え付け時期</small>
+            <span>{{ crop_info.planting_season }}</span>
+        </div>
+        {% endif %}
+        {% if crop_info.harvest_season %}
+        <div class="mb-2">
+            <small class="text-muted d-block">収穫時期</small>
+            <span>{{ crop_info.harvest_season }}</span>
+        </div>
+        {% endif %}
+        {% if crop_info.characteristics %}
+        <div class="mb-2">
+            <small class="text-muted d-block">特性</small>
+            <div class="small" style="white-space: pre-wrap;">{{ crop_info.characteristics }}</div>
+        </div>
+        {% endif %}
+        {% if crop_info.crop_notes %}
+        <div class="mb-2">
+            <small class="text-muted d-block">メモ</small>
+            <div class="small" style="white-space: pre-wrap;">{{ crop_info.crop_notes }}</div>
+        </div>
+        {% endif %}
+        <div class="mt-2">
+            <a href="{{ url_for('crops.detail', crop_id=crop_info.crop_id) }}" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-box-arrow-up-right"></i> 作物詳細を見る
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}

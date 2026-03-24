@@ -448,6 +448,7 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  margin-bottom: 1rem;
 }
 
 @media (max-width: 768px) {

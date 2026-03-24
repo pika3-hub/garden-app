@@ -49,6 +49,7 @@
 </div>
 
 {% if tasks %}
+<p class="text-muted mb-3">{{ tasks|length }}件のタスク</p>
 <div class="row">
     {% for task in tasks %}
     <div class="col-md-4 mb-3">
