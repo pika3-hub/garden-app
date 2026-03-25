@@ -214,9 +214,14 @@ class Harvest:
 
     @staticmethod
     def count():
-        """収穫記録の総数を取得"""
+        """収穫記録の総数を取得（一覧と同じJOIN条件）"""
         db = get_db()
-        result = db.execute('SELECT COUNT(*) as count FROM harvests').fetchone()
+        result = db.execute(
+            '''SELECT COUNT(*) as count FROM harvests h
+               JOIN plantings lc ON h.location_crop_id = lc.id
+               JOIN crops c ON lc.crop_id = c.id
+               JOIN locations l ON lc.location_id = l.id'''
+        ).fetchone()
         return result['count'] if result else 0
 
     @staticmethod
