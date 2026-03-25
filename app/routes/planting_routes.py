@@ -287,12 +287,14 @@ def plant_new():
     locations = Location.get_all()
     today = date.today().isoformat()
     preselected_location_id = request.args.get('location_id', type=int)
+    preselected_crop_id = request.args.get('crop_id', type=int)
     return render_template('plantings/planting_form.html',
                            planting=None,
                            crops=crops,
                            locations=locations,
                            today=today,
-                           preselected_location_id=preselected_location_id)
+                           preselected_location_id=preselected_location_id,
+                           preselected_crop_id=preselected_crop_id)
 
 
 @bp.route('/plant/create', methods=['POST'])

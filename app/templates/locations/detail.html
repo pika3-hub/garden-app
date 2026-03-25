@@ -96,6 +96,12 @@
                 {% if location.notes %}
                 <div class="detail-notes">{{ location.notes }}</div>
                 {% endif %}
+                <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
+                    <a href="{{ url_for('plantings.plant_new') }}?location_id={{ location.id }}"
+                       class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> 作物を植え付ける
+                    </a>
+                </div>
                 <div class="detail-timestamps">
                     登録日時: {{ location.created_at }} / 更新日時: {{ location.updated_at }}
                 </div>
@@ -139,12 +145,6 @@
                 <h5 class="mb-0"><i class="bi bi-basket"></i> 栽培中の作物</h5>
             </div>
             <div class="card-body">
-                <div class="mb-3">
-                    <a href="{{ url_for('plantings.plant_new') }}?location_id={{ location.id }}"
-                       class="btn btn-success">
-                        <i class="bi bi-plus-circle"></i> 作物を植え付ける
-                    </a>
-                </div>
                 {% if active_crops %}
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
                     {% for lc in active_crops %}

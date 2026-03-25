@@ -72,6 +72,11 @@
                 {% if crop.notes %}
                 <div class="detail-notes">{{ crop.notes }}</div>
                 {% endif %}
+                <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
+                    <a href="{{ url_for('plantings.plant_new', crop_id=crop.id) }}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> 作物を植え付ける
+                    </a>
+                </div>
                 <div class="detail-timestamps">
                     登録日時: {{ crop.created_at }} / 更新日時: {{ crop.updated_at }}
                 </div>

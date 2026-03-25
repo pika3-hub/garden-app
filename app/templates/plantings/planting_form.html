@@ -66,6 +66,7 @@
                                 {% for crop in crops %}
                                 <option value="{{ crop.id }}"
                                     {% if planting and planting.crop_id == crop.id %}selected
+                                    {% elif not planting and preselected_crop_id and preselected_crop_id == crop.id %}selected
                                     {% endif %}>
                                     {{ crop_display_name(crop.name, crop.variety) }}
                                 </option>
