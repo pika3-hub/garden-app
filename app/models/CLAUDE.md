@@ -11,10 +11,7 @@
 | plantings | 植え付け記録（作物×場所） | id |
 | diary_entries | 日記 | id |
 | harvests | 収穫記録 | id |
-| diary_crops | 日記×作物（多対多） | diary_id, crop_id |
-| diary_locations | 日記×場所（多対多） | diary_id, location_id |
-| diary_location_crops | 日記×植え付け記録（多対多） | diary_id, location_crop_id |
-| diary_harvests | 日記×収穫（多対多） | diary_id, harvest_id |
+| diary_relations | 日記×関連エンティティ（多対多、relation_type で区別） | id |
 | tasks | タスク | id |
 | task_relations | タスク×関連エンティティ（多対多） | id |
 | planting_records | 栽培観察記録（植え付けに紐づく） | id |
@@ -27,7 +24,13 @@
 | id | INTEGER | 主キー |
 | name | TEXT | 作物名（必須） |
 | variety | TEXT | 品種 |
+| crop_type | VARCHAR(50) | 種類（必須） |
+| planting_season | VARCHAR(50) | 植え付け時期 |
+| harvest_season | VARCHAR(50) | 収穫時期 |
 | characteristics | TEXT | 特徴 |
+| notes | TEXT | メモ |
+| icon_path | TEXT | 作物アイコンパス（`crop_icons/` 内） |
+| image_color | TEXT | イメージカラー（HEX） |
 | image_path | TEXT | 画像パス |
 | created_at | DATETIME | 作成日時 |
 
@@ -35,12 +38,16 @@
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | INTEGER | 主キー |
-| name | TEXT | 場所名（必須） |
-| description | TEXT | 説明 |
-| image_path | TEXT | 画像パス |
+| name | VARCHAR(100) | 場所名（必須） |
+| location_type | VARCHAR(50) | 場所の種類（必須） |
+| area_size | DECIMAL(10,2) | 面積（㎡） |
+| sun_exposure | VARCHAR(50) | 日当たり |
+| notes | TEXT | メモ |
+| image_path | VARCHAR(255) | 画像パス |
 | canvas_data | TEXT | 見取り図データ（version 2.0 JSON形式、旧Fabric.js形式は無視） |
 | bg_image | TEXT | 見取り図の背景画像ファイル名（`location_bg_images/` 内のファイル名） |
-| created_at | DATETIME | 作成日時 |
+| created_at | TIMESTAMP | 作成日時 |
+| updated_at | TIMESTAMP | 更新日時 |
 
 #### plantings
 | カラム | 型 | 説明 |
@@ -101,6 +108,18 @@
 | location_crop_id | INTEGER | 栽培記録ID（FK、任意） |
 | created_at | DATETIME | 作成日時 |
 
+#### diary_relations
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| diary_id | INTEGER | 日記ID（FK） |
+| relation_type | VARCHAR(20) | 関連タイプ（crop/location/location_crop/harvest） |
+| crop_id | INTEGER | 作物ID（FK、任意） |
+| location_id | INTEGER | 場所ID（FK、任意） |
+| location_crop_id | INTEGER | 植え付けID（FK、任意） |
+| harvest_id | INTEGER | 収穫ID（FK、任意） |
+| created_at | TIMESTAMP | 作成日時 |
+
 #### planting_records
 | カラム | 型 | 説明 |
 |--------|-----|------|
@@ -111,6 +130,24 @@
 | image_path | VARCHAR(255) | 画像パス |
 | created_at | TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 更新日時 |
+
+## SQLite Row の重複カラム名に関する注意（重要）
+
+SQLiteの `Row` オブジェクトを dict として扱う場合、**同名カラムは最初に出現した値が優先される**（最後ではない）。これは `SELECT dr.*, lc.id as id` のようなクエリで、`dr.*` に含まれる `id`（リレーションテーブルのID）が `lc.id as id`（エンティティのID）を上書きする原因になる。
+
+```python
+# Bad — dr.* の id がリレーションテーブルの id になり、lc.id が無視される
+'''SELECT dr.*, lc.id as id, c.name as crop_name ...
+   FROM diary_relations dr
+   JOIN plantings lc ON dr.location_crop_id = lc.id ...'''
+
+# Good — dr.* を使わず、必要なカラムだけ明示的に列挙する
+'''SELECT lc.id as id, c.name as crop_name, c.variety, ...
+   FROM diary_relations dr
+   JOIN plantings lc ON dr.location_crop_id = lc.id ...'''
+```
+
+**ルール**: リレーションテーブル（`diary_relations`, `task_relations`）を JOIN するクエリでは、`dr.*` や `tr.*` を使わず、必要なカラムを明示的に SELECT すること。特に `id` と `location_id` は衝突しやすい。
 
 ## 日付カラムの注意点
 

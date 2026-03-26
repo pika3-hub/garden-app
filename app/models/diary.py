@@ -137,9 +137,9 @@ class DiaryEntry:
 
         # 関連する植え付け場所を取得
         location_crops = db.execute(
-            '''SELECT dr.*, c.name as crop_name, c.variety,
+            '''SELECT lc.id as id, c.name as crop_name, c.variety,
                       c.icon_path, c.image_color, l.name as location_name,
-                      lc.planted_date, lc.status
+                      lc.location_id, lc.planted_date, lc.status
                FROM diary_relations dr
                JOIN plantings lc ON dr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
@@ -150,7 +150,7 @@ class DiaryEntry:
 
         # 関連する収穫記録を取得
         harvests = db.execute(
-            '''SELECT dr.*, h.harvest_date, h.quantity, h.unit,
+            '''SELECT h.id as id, h.harvest_date, h.quantity, h.unit,
                       c.name as crop_name, c.variety, c.icon_path, c.image_color,
                       l.name as location_name
                FROM diary_relations dr
@@ -248,33 +248,69 @@ class DiaryEntry:
                 dict(next_entry) if next_entry else None)
 
     @staticmethod
-    def get_by_crop(crop_id):
+    def get_by_crop(crop_id, limit=None):
         """作物に関連する日記を取得"""
         db = get_db()
-        entries = db.execute(
-            '''SELECT DISTINCT de.*
+        query = '''SELECT DISTINCT de.*
                FROM diary_entries de
                JOIN diary_relations dr ON de.id = dr.diary_id
                WHERE dr.crop_id = ? OR dr.location_crop_id IN (
                    SELECT id FROM plantings WHERE crop_id = ?
                )
-               ORDER BY de.entry_date DESC''',
-            (crop_id, crop_id)
-        ).fetchall()
+               ORDER BY de.entry_date DESC'''
+        params = [crop_id, crop_id]
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+        entries = db.execute(query, params).fetchall()
         return [dict(entry) for entry in entries]
 
     @staticmethod
-    def get_by_location(location_id):
+    def get_by_location(location_id, limit=None):
         """場所に関連する日記を取得"""
         db = get_db()
-        entries = db.execute(
-            '''SELECT DISTINCT de.*
+        query = '''SELECT DISTINCT de.*
                FROM diary_entries de
                JOIN diary_relations dr ON de.id = dr.diary_id
                WHERE dr.location_id = ? OR dr.location_crop_id IN (
                    SELECT id FROM plantings WHERE location_id = ?
                )
-               ORDER BY de.entry_date DESC''',
-            (location_id, location_id)
-        ).fetchall()
+               ORDER BY de.entry_date DESC'''
+        params = [location_id, location_id]
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+        entries = db.execute(query, params).fetchall()
+        return [dict(entry) for entry in entries]
+
+    @staticmethod
+    def get_by_location_crop(location_crop_id, limit=None):
+        """植え付けに関連する日記を取得"""
+        db = get_db()
+        query = '''SELECT DISTINCT de.*
+               FROM diary_entries de
+               JOIN diary_relations dr ON de.id = dr.diary_id
+               WHERE dr.location_crop_id = ?
+               ORDER BY de.entry_date DESC'''
+        params = [location_crop_id]
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+        entries = db.execute(query, params).fetchall()
+        return [dict(entry) for entry in entries]
+
+    @staticmethod
+    def get_by_harvest(harvest_id, limit=None):
+        """収穫記録に関連する日記を取得"""
+        db = get_db()
+        query = '''SELECT DISTINCT de.*
+               FROM diary_entries de
+               JOIN diary_relations dr ON de.id = dr.diary_id
+               WHERE dr.harvest_id = ?
+               ORDER BY de.entry_date DESC'''
+        params = [harvest_id]
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+        entries = db.execute(query, params).fetchall()
         return [dict(entry) for entry in entries]

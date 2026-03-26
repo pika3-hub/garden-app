@@ -1,0 +1,46 @@
+{# 場所情報カード（植え付け詳細・収穫詳細サイドバー用） #}
+{# 必要な変数: location_info (dict with location_id, location_name, location_type, area_size, sun_exposure, location_notes, location_image_path) #}
+{% if location_info %}
+<div class="card mb-3">
+    <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img"> 場所情報</h6>
+    </div>
+    <div class="card-body">
+        {% if location_info.location_image_path %}
+        <img src="{{ url_for('static', filename='uploads/' + location_info.location_image_path) | thumb_path }}"
+             alt="場所画像"
+             style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+             onerror="this.src='{{ url_for('static', filename='uploads/' + location_info.location_image_path) }}'">
+        {% endif %}
+        {% if location_info.location_type %}
+        <div class="mb-2">
+            <small class="text-muted d-block">種類</small>
+            <span class="badge bg-info">{{ location_info.location_type }}</span>
+        </div>
+        {% endif %}
+        {% if location_info.area_size %}
+        <div class="mb-2">
+            <small class="text-muted d-block">面積</small>
+            <span>{{ location_info.area_size }}㎡</span>
+        </div>
+        {% endif %}
+        {% if location_info.sun_exposure %}
+        <div class="mb-2">
+            <small class="text-muted d-block">日当たり</small>
+            <span>{{ location_info.sun_exposure }}</span>
+        </div>
+        {% endif %}
+        {% if location_info.location_notes %}
+        <div class="mb-2">
+            <small class="text-muted d-block">メモ</small>
+            <div class="small" style="white-space: pre-wrap;">{{ location_info.location_notes }}</div>
+        </div>
+        {% endif %}
+        <div class="mt-2">
+            <a href="{{ url_for('locations.detail', location_id=location_info.location_id) }}" class="btn btn-sm btn-outline-info">
+                <i class="bi bi-box-arrow-up-right"></i> 場所詳細を見る
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}

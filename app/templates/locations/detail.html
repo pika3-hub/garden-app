@@ -193,30 +193,9 @@
     <div class="col-md-4">
         {% include '_tasks_card.html' %}
 
-        {% if related_diaries %}
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h6 class="mb-0"><i class="bi bi-journal-text"></i> 関連する日記</h6>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    {% for diary in related_diaries %}
-                    <li class="list-group-item">
-                        <a href="{{ url_for('diary.detail', diary_id=diary.id) }}">
-                            <i class="bi bi-journal"></i> {{ diary.title }}
-                        </a>
-                        <div class="text-muted small">
-                            {{ diary.entry_date }}
-                            {% if diary.weather %}
-                            <span class="badge bg-info">{{ diary.weather }}</span>
-                            {% endif %}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        {% endif %}
+        {% include '_related_harvests_card.html' %}
+
+        {% include '_related_diaries_card.html' %}
     </div>
 </div>
 {% endblock %}

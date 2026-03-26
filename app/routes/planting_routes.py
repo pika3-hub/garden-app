@@ -5,6 +5,8 @@ from app.models.planting import Planting
 from app.models.crop import Crop
 from app.models.location import Location
 from app.models.task import Task
+from app.models.harvest import Harvest
+from app.models.diary import DiaryEntry
 from app.utils.upload import save_image, delete_image
 from datetime import date
 
@@ -45,6 +47,8 @@ def detail(location_crop_id):
 
     prev_planting, next_planting = Planting.get_adjacent(location_crop_id)
     related_tasks = Task.get_incomplete_tasks_for_entity('location_crop', location_crop_id)
+    related_harvests = Harvest.get_by_location_crop(location_crop_id, limit=10)
+    related_diaries = DiaryEntry.get_by_location_crop(location_crop_id, limit=10)
 
     return render_template('plantings/detail.html',
                           records=records,
@@ -54,7 +58,9 @@ def detail(location_crop_id):
                           canvas_snapshot=canvas_snapshot,
                           prev_planting=prev_planting,
                           next_planting=next_planting,
-                          related_tasks=related_tasks)
+                          related_tasks=related_tasks,
+                          related_harvests=related_harvests,
+                          related_diaries=related_diaries)
 
 
 @bp.route('/<int:location_crop_id>/end', methods=['POST'])

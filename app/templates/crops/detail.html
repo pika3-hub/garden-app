@@ -96,93 +96,14 @@
     </div>
 
     <div class="col-md-4">
-        <div class="card mb-3">
-            <div class="card-header bg-success text-white">
-                <h6 class="mb-0"><i class="bi bi-geo-alt"></i> 栽培中の場所</h6>
-            </div>
-            <div class="card-body">
-                {% if active_locations %}
-                <ul class="list-group list-group-flush">
-                    {% for loc in active_locations %}
-                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                        <div>
-                            <a href="{{ url_for('locations.detail', location_id=loc.location_id) }}">
-                                <i class="bi bi-geo-alt-fill text-success"></i> {{ loc.location_name }}
-                            </a>
-                            <div class="text-muted small">
-                                <span class="badge bg-secondary">{{ loc.location_type }}</span>
-                                {% if loc.planted_date %}
-                                <br>植え付け: {{ loc.planted_date }}
-                                {% endif %}
-                                {% if loc.quantity %}
-                                / {{ loc.quantity }}株
-                                {% endif %}
-                            </div>
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted text-center mb-0">
-                    <small>栽培中の場所はありません</small>
-                </p>
-                {% endif %}
-            </div>
-        </div>
-
-        {% if harvested_locations %}
-        <div class="card mb-3">
-            <div class="card-header bg-secondary text-white">
-                <h6 class="mb-0"><i class="bi bi-check-circle"></i> 収穫済みの場所</h6>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    {% for loc in harvested_locations %}
-                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                        <div>
-                            <a href="{{ url_for('locations.detail', location_id=loc.location_id) }}" class="text-muted">
-                                <i class="bi bi-geo-alt"></i> {{ loc.location_name }}
-                            </a>
-                            <div class="text-muted small">
-                                <span class="badge bg-light text-dark">{{ loc.location_type }}</span>
-                                {% if loc.planted_date %}
-                                <br>植え付け: {{ loc.planted_date }}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        {% endif %}
-
         {% include '_tasks_card.html' %}
 
-        {% if related_diaries %}
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h6 class="mb-0"><i class="bi bi-journal-text"></i> 関連する日記</h6>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    {% for diary in related_diaries %}
-                    <li class="list-group-item">
-                        <a href="{{ url_for('diary.detail', diary_id=diary.id) }}">
-                            <i class="bi bi-journal"></i> {{ diary.title }}
-                        </a>
-                        <div class="text-muted small">
-                            {{ diary.entry_date }}
-                            {% if diary.weather %}
-                            <span class="badge bg-info">{{ diary.weather }}</span>
-                            {% endif %}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        {% endif %}
+        {% set related_plantings_title = '栽培中の植え付け' %}
+        {% include '_related_plantings_card.html' %}
+
+        {% include '_related_harvests_card.html' %}
+
+        {% include '_related_diaries_card.html' %}
     </div>
 </div>
 {% endblock %}

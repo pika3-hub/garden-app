@@ -48,7 +48,10 @@ class Harvest:
                       c.icon_path, c.image_color, l.name as location_name,
                       lc.planted_date, lc.location_id, lc.crop_id,
                       c.planting_season, c.harvest_season, c.characteristics,
-                      c.notes as crop_notes, c.crop_type
+                      c.notes as crop_notes, c.crop_type,
+                      c.image_path as crop_image_path,
+                      l.location_type, l.area_size, l.sun_exposure,
+                      l.notes as location_notes, l.image_path as location_image_path
                FROM harvests h
                JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
@@ -65,39 +68,23 @@ class Harvest:
         return None
 
     @staticmethod
-    def get_by_location_crop(location_crop_id):
+    def get_by_location_crop(location_crop_id, limit=None):
         """栽培記録に紐付く収穫一覧を取得"""
         db = get_db()
-        harvests = db.execute(
-            '''SELECT h.*, lc.planted_date
-               FROM harvests h
-               JOIN plantings lc ON h.location_crop_id = lc.id
-               WHERE h.location_crop_id = ?
-               ORDER BY h.harvest_date DESC''',
-            (location_crop_id,)
-        ).fetchall()
-        result = []
-        for h in harvests:
-            harvest_dict = dict(h)
-            harvest_dict['days_from_planting'] = Harvest._calculate_days(
-                h['planted_date'], h['harvest_date']
-            )
-            result.append(harvest_dict)
-        return result
-
-    @staticmethod
-    def get_by_location(location_id):
-        """場所の全収穫記録を取得"""
-        db = get_db()
-        harvests = db.execute(
-            '''SELECT h.*, c.name as crop_name, lc.planted_date
+        query = '''SELECT h.*, lc.planted_date,
+                      c.name as crop_name, c.variety, c.icon_path, c.image_color,
+                      l.name as location_name
                FROM harvests h
                JOIN plantings lc ON h.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
-               WHERE lc.location_id = ?
-               ORDER BY h.harvest_date DESC''',
-            (location_id,)
-        ).fetchall()
+               JOIN locations l ON lc.location_id = l.id
+               WHERE h.location_crop_id = ?
+               ORDER BY h.harvest_date DESC'''
+        params = [location_crop_id]
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+        harvests = db.execute(query, params).fetchall()
         result = []
         for h in harvests:
             harvest_dict = dict(h)
@@ -108,18 +95,50 @@ class Harvest:
         return result
 
     @staticmethod
-    def get_by_crop(crop_id):
-        """作物の全収穫記録を取得"""
+    def get_by_location(location_id, limit=None):
+        """場所の全収穫記録を取得"""
         db = get_db()
-        harvests = db.execute(
-            '''SELECT h.*, l.name as location_name, lc.planted_date
+        query = '''SELECT h.*, c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color, l.name as location_name,
+                      lc.planted_date
                FROM harvests h
                JOIN plantings lc ON h.location_crop_id = lc.id
+               JOIN crops c ON lc.crop_id = c.id
+               JOIN locations l ON lc.location_id = l.id
+               WHERE lc.location_id = ?
+               ORDER BY h.harvest_date DESC'''
+        params = [location_id]
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+        harvests = db.execute(query, params).fetchall()
+        result = []
+        for h in harvests:
+            harvest_dict = dict(h)
+            harvest_dict['days_from_planting'] = Harvest._calculate_days(
+                h['planted_date'], h['harvest_date']
+            )
+            result.append(harvest_dict)
+        return result
+
+    @staticmethod
+    def get_by_crop(crop_id, limit=None):
+        """作物の全収穫記録を取得"""
+        db = get_db()
+        query = '''SELECT h.*, c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color, l.name as location_name,
+                      lc.planted_date
+               FROM harvests h
+               JOIN plantings lc ON h.location_crop_id = lc.id
+               JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE lc.crop_id = ?
-               ORDER BY h.harvest_date DESC''',
-            (crop_id,)
-        ).fetchall()
+               ORDER BY h.harvest_date DESC'''
+        params = [crop_id]
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+        harvests = db.execute(query, params).fetchall()
         result = []
         for h in harvests:
             harvest_dict = dict(h)

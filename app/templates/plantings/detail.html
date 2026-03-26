@@ -203,10 +203,27 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
             'planting_season': location_crop.planting_season,
             'harvest_season': location_crop.harvest_season,
             'characteristics': location_crop.characteristics,
-            'crop_notes': location_crop.crop_notes
+            'crop_notes': location_crop.crop_notes,
+            'crop_image_path': location_crop.crop_image_path
         } %}
         {% include '_crop_info_card.html' %}
+
+        {% set location_info = {
+            'location_id': location_crop.location_id,
+            'location_name': location_crop.location_name,
+            'location_type': location_crop.location_type,
+            'area_size': location_crop.area_size,
+            'sun_exposure': location_crop.sun_exposure,
+            'location_notes': location_crop.location_notes,
+            'location_image_path': location_crop.location_image_path
+        } %}
+        {% include '_location_info_card.html' %}
+
         {% include '_tasks_card.html' %}
+
+        {% include '_related_harvests_card.html' %}
+
+        {% include '_related_diaries_card.html' %}
     </div>
 </div>
 

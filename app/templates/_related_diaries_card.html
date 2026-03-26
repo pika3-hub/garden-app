@@ -1,0 +1,26 @@
+{# 関連する日記カード（詳細画面サイドバー用） #}
+{# 変数: related_diaries (list of dict: id, title, entry_date, weather) #}
+{% if related_diaries %}
+<div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img"> 関連する日記</h6>
+    </div>
+    <div class="card-body">
+        <ul class="list-group list-group-flush">
+            {% for diary in related_diaries %}
+            <li class="list-group-item">
+                <a href="{{ url_for('diary.detail', diary_id=diary.id) }}">
+                    <i class="bi bi-journal"></i> {{ diary.title }}
+                </a>
+                <div class="text-muted small">
+                    {{ diary.entry_date }}
+                    {% if diary.weather %}
+                    <span class="badge bg-info">{{ diary.weather }}</span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
