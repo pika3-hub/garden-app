@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from app.models.crop import Crop
 from app.models.planting import Planting
 from app.models.diary import DiaryEntry
+from app.models.harvest import Harvest
 from app.models.task import Task
 from app.utils.upload import save_image, delete_image
 
@@ -30,20 +31,20 @@ def detail(crop_id):
         flash('作物が見つかりません', 'danger')
         return redirect(url_for('crops.list'))
 
-    # 栽培中の場所を取得
-    active_locations = Planting.get_by_crop(crop_id, status='active')
-    # 収穫済みの場所を取得
-    harvested_locations = Planting.get_by_crop(crop_id, status='harvested')
+    # 栽培中の植え付けを取得
+    related_plantings = Planting.get_by_crop(crop_id, status='active')
+    # 関連する収穫を取得
+    related_harvests = Harvest.get_by_crop(crop_id, limit=10)
     # 関連する日記を取得
-    related_diaries = DiaryEntry.get_by_crop(crop_id)
+    related_diaries = DiaryEntry.get_by_crop(crop_id, limit=10)
 
     prev_crop, next_crop = Crop.get_adjacent(crop_id)
     related_tasks = Task.get_incomplete_tasks_for_entity('crop', crop_id)
 
     return render_template('crops/detail.html',
                           crop=crop,
-                          active_locations=active_locations,
-                          harvested_locations=harvested_locations,
+                          related_plantings=related_plantings,
+                          related_harvests=related_harvests,
                           related_diaries=related_diaries,
                           prev_crop=prev_crop,
                           next_crop=next_crop,

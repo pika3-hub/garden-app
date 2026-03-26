@@ -40,7 +40,10 @@ def detail(location_id):
         crop['harvests'] = Harvest.get_by_location_crop(crop['id'])
 
     # 関連する日記を取得
-    related_diaries = DiaryEntry.get_by_location(location_id)
+    related_diaries = DiaryEntry.get_by_location(location_id, limit=10)
+
+    # 関連する収穫を取得
+    related_harvests = Harvest.get_by_location(location_id, limit=10)
 
     today = date.today().isoformat()
     prev_location, next_location = Location.get_adjacent(location_id)
@@ -50,6 +53,7 @@ def detail(location_id):
                           location=location,
                           active_crops=active_crops,
                           related_diaries=related_diaries,
+                          related_harvests=related_harvests,
                           today=today,
                           prev_location=prev_location,
                           next_location=next_location,

@@ -3,6 +3,7 @@ from app.models.harvest import Harvest
 from app.models.planting import Planting
 from app.models.location import Location
 from app.models.crop import Crop
+from app.models.diary import DiaryEntry
 from app.utils.upload import save_image, delete_image
 from datetime import date
 
@@ -53,10 +54,19 @@ def detail(harvest_id):
 
     prev_harvest, next_harvest = Harvest.get_adjacent(harvest_id)
 
+    # 関連する植え付け
+    planting = Planting.get_by_id(harvest['location_crop_id'])
+    related_plantings = [planting] if planting else []
+
+    # 関連する日記
+    related_diaries = DiaryEntry.get_by_harvest(harvest_id, limit=10)
+
     return render_template('harvests/detail.html',
                           harvest=harvest,
                           prev_harvest=prev_harvest,
-                          next_harvest=next_harvest)
+                          next_harvest=next_harvest,
+                          related_plantings=related_plantings,
+                          related_diaries=related_diaries)
 
 
 @bp.route('/new/<int:location_crop_id>')

@@ -47,9 +47,11 @@ class Planting:
         """作物に紐付く場所を取得"""
         db = get_db()
         query = '''
-            SELECT lc.*, l.name as location_name, l.location_type
+            SELECT lc.*, l.name as location_name, l.location_type,
+                   c.name as crop_name, c.variety, c.icon_path, c.image_color
             FROM plantings lc
             JOIN locations l ON lc.location_id = l.id
+            JOIN crops c ON lc.crop_id = c.id
             WHERE lc.crop_id = ?
         '''
         params = [crop_id]
@@ -71,7 +73,10 @@ class Planting:
             '''SELECT lc.*, c.name as crop_name, c.variety,
                       c.icon_path, c.image_color, l.name as location_name,
                       c.planting_season, c.harvest_season, c.characteristics,
-                      c.notes as crop_notes, c.crop_type
+                      c.notes as crop_notes, c.crop_type,
+                      c.image_path as crop_image_path,
+                      l.location_type, l.area_size, l.sun_exposure,
+                      l.notes as location_notes, l.image_path as location_image_path
                FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id

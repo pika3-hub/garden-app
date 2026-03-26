@@ -1,0 +1,28 @@
+{# 関連する収穫カード（詳細画面サイドバー用） #}
+{# 変数: related_harvests (list of dict: id, crop_name, variety, icon_path, image_color, location_name, harvest_date, quantity, unit) #}
+{% from '_macros.html' import crop_label %}
+{% if related_harvests %}
+<div class="card mb-3">
+    <div class="card-header bg-success text-white">
+        <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img"> 関連する収穫</h6>
+    </div>
+    <div class="card-body">
+        <ul class="list-group list-group-flush">
+            {% for h in related_harvests %}
+            <li class="list-group-item">
+                <a href="{{ url_for('harvests.detail', harvest_id=h.id) }}">
+                    {{ crop_label(h.crop_name, h.variety, h.icon_path, h.image_color) }}
+                </a>
+                <div class="text-muted small">
+                    {{ h.harvest_date }}
+                    {% if h.quantity %}({{ h.quantity }}{{ h.unit or '' }}){% endif %}
+                    {% if h.location_name %}
+                    <span class="ms-1">@ {{ h.location_name }}</span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}

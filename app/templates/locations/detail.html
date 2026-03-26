@@ -96,6 +96,12 @@
                 {% if location.notes %}
                 <div class="detail-notes">{{ location.notes }}</div>
                 {% endif %}
+                <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
+                    <a href="{{ url_for('plantings.plant_new') }}?location_id={{ location.id }}"
+                       class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> 作物を植え付ける
+                    </a>
+                </div>
                 <div class="detail-timestamps">
                     登録日時: {{ location.created_at }} / 更新日時: {{ location.updated_at }}
                 </div>
@@ -139,69 +145,41 @@
                 <h5 class="mb-0"><i class="bi bi-basket"></i> 栽培中の作物</h5>
             </div>
             <div class="card-body">
-                <div class="mb-3">
-                    <a href="{{ url_for('plantings.plant_new') }}?location_id={{ location.id }}"
-                       class="btn btn-success">
-                        <i class="bi bi-plus-circle"></i> 作物を植え付ける
-                    </a>
-                </div>
                 {% if active_crops %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>作物</th>
-                                <th>植え付け日</th>
-                                <th>株数</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for lc in active_crops %}
-                            <tr>
-                                <td>
-                                    <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}">
-                                        {{ crop_label(lc.crop_name, lc.variety, lc.icon_path, lc.image_color) }}
-                                    </a>
-                                </td>
-                                <td>{{ lc.planted_date or '-' }}</td>
-                                <td>{{ lc.quantity or '-' }}</td>
-                                <td>
-                                    <a href="{{ url_for('harvests.new', location_crop_id=lc.id) }}" class="btn btn-sm btn-success" title="収穫を記録">
-                                        <i class="bi bi-basket"></i>
-                                    </a>
-                                    <form method="POST" action="{{ url_for('locations.complete_harvest', location_id=location.id, location_crop_id=lc.id) }}" class="d-inline" onsubmit="return confirm('この作物の栽培を終了しますか？');">
-                                        <button type="submit" class="btn btn-sm btn-warning" title="栽培終了">
-                                            <i class="bi bi-check-circle"></i>
-                                        </button>
-                                    </form>
-                                    <form method="POST" action="{{ url_for('locations.remove_crop', location_id=location.id, location_crop_id=lc.id) }}" class="d-inline" onsubmit="return confirm('削除してもよろしいですか？');">
-                                        <button type="submit" class="btn btn-sm btn-danger" title="削除">
-                                            <i class="bi bi-x-circle"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            <!-- 収穫履歴 -->
-                            {% if lc.harvests %}
-                            <tr class="table-light">
-                                <td colspan="5" class="ps-4">
-                                    <small class="text-muted">
-                                        <i class="bi bi-basket"></i> 収穫履歴:
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                    {% for lc in active_crops %}
+                    <div class="col">
+                        <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}" class="card h-100 text-decoration-none active-crop-card">
+                            <div class="card-body">
+                                <div class="card-title mb-2">
+                                    {{ crop_label(lc.crop_name, lc.variety, lc.icon_path, lc.image_color) }}
+                                </div>
+                                <div class="text-muted small">
+                                    {% if lc.planted_date %}
+                                    <i class="bi bi-calendar3"></i> {{ lc.planted_date }}
+                                    {% endif %}
+                                    {% if lc.quantity %}
+                                    <span class="ms-2"><i class="bi bi-flower3"></i> {{ lc.quantity }}株</span>
+                                    {% endif %}
+                                </div>
+                                {% if lc.harvests %}
+                                <div class="mt-2 pt-2 border-top">
+                                    <small class="text-muted d-block mb-1">
+                                        <i class="bi bi-basket"></i> 収穫履歴
                                     </small>
                                     {% for h in lc.harvests %}
-                                    <a href="{{ url_for('harvests.detail', harvest_id=h.id) }}" class="badge bg-success me-1 text-decoration-none">
+                                    <span class="badge bg-success d-block mb-1 text-start">
                                         {{ h.harvest_date }}
                                         {% if h.quantity %}({{ h.quantity }}{{ h.unit or '' }}){% endif %}
                                         {% if h.days_from_planting is not none %}<small class="text-white-50">{{ h.days_from_planting }}日目</small>{% endif %}
-                                    </a>
+                                    </span>
                                     {% endfor %}
-                                </td>
-                            </tr>
-                            {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
                 </div>
                 {% else %}
                 <p class="text-muted text-center mb-0">
@@ -215,30 +193,9 @@
     <div class="col-md-4">
         {% include '_tasks_card.html' %}
 
-        {% if related_diaries %}
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h6 class="mb-0"><i class="bi bi-journal-text"></i> 関連する日記</h6>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    {% for diary in related_diaries %}
-                    <li class="list-group-item">
-                        <a href="{{ url_for('diary.detail', diary_id=diary.id) }}">
-                            <i class="bi bi-journal"></i> {{ diary.title }}
-                        </a>
-                        <div class="text-muted small">
-                            {{ diary.entry_date }}
-                            {% if diary.weather %}
-                            <span class="badge bg-info">{{ diary.weather }}</span>
-                            {% endif %}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        {% endif %}
+        {% include '_related_harvests_card.html' %}
+
+        {% include '_related_diaries_card.html' %}
     </div>
 </div>
 {% endblock %}

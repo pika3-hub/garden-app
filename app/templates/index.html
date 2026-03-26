@@ -124,7 +124,7 @@
         <div class="card h-100 dashboard-card-with-bg card-bg-location-crop">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
-                    <i class="bi bi-journal-text"></i> 最新の栽培記録
+                    <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img icon-img-lg"> 最新の栽培記録
                 </h5>
             </div>
             <div class="card-body">
@@ -137,9 +137,6 @@
                             <small class="text-muted">{{ record.recorded_at }}</small>
                         </div>
                         <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ record.location_name }}</small>
-                        {% if record.notes %}
-                        <p class="mb-0 mt-1 small text-truncate">{{ record.notes }}</p>
-                        {% endif %}
                     </a>
                     {% endfor %}
                 </div>
@@ -196,27 +193,12 @@
             <div class="card-body">
                 {% if recent_diaries %}
                 <div class="list-group list-group-flush list-group-transparent">
-                    {% set weather_icons = {
-                        '晴れ': 'weather_sunny.png',
-                        '曇り': 'weather_cloudy.png',
-                        '雨': 'weather_rain.png',
-                        '雪': 'weather_snow.png',
-                        '晴れ時々曇り': 'weather_sun_cloud.png',
-                        '曇り時々雨': 'weather_cloud_rain.png'
-                    } %}
                     {% for diary in recent_diaries %}
                     <a href="{{ url_for('diary.detail', diary_id=diary.id) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">{{ diary.title }}</h6>
                             <small class="text-muted">{{ diary.entry_date }}</small>
                         </div>
-                        {% if diary.weather %}
-                        <small class="text-muted">
-                            <img src="{{ url_for('static', filename='images/' ~ weather_icons.get(diary.weather, 'weather_sunny.png')) }}"
-                                 alt="{{ diary.weather }}" width="16" class="me-1">
-                            {{ diary.weather }}
-                        </small>
-                        {% endif %}
                     </a>
                     {% endfor %}
                 </div>
@@ -248,10 +230,10 @@
                                 <span class="badge {{ Task.get_status_badge(task.status) }} me-1">{{ Task.get_status_label(task.status) }}</span>
                                 {{ task.title }}
                             </h6>
+                            {% if task.due_date %}
+                            <small class="text-muted"><i class="bi bi-calendar-event"></i> 期限: {{ task.due_date }}</small>
+                            {% endif %}
                         </div>
-                        {% if task.due_date %}
-                        <small class="text-muted"><i class="bi bi-calendar-event"></i> 期限: {{ task.due_date }}</small>
-                        {% endif %}
                     </a>
                     {% endfor %}
                 </div>

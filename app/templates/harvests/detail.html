@@ -94,9 +94,25 @@
             'planting_season': harvest.planting_season,
             'harvest_season': harvest.harvest_season,
             'characteristics': harvest.characteristics,
-            'crop_notes': harvest.crop_notes
+            'crop_notes': harvest.crop_notes,
+            'crop_image_path': harvest.crop_image_path
         } %}
         {% include '_crop_info_card.html' %}
+
+        {% set location_info = {
+            'location_id': harvest.location_id,
+            'location_name': harvest.location_name,
+            'location_type': harvest.location_type,
+            'area_size': harvest.area_size,
+            'sun_exposure': harvest.sun_exposure,
+            'location_notes': harvest.location_notes,
+            'location_image_path': harvest.location_image_path
+        } %}
+        {% include '_location_info_card.html' %}
+
+        {% include '_related_plantings_card.html' %}
+
+        {% include '_related_diaries_card.html' %}
     </div>
 </div>
 {% endblock %}

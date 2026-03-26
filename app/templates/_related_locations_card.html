@@ -1,0 +1,23 @@
+{# 関連する場所カード（詳細画面サイドバー用） #}
+{# 変数: related_locations (list of dict: location_id, location_name, location_type) #}
+{% if related_locations %}
+<div class="card mb-3">
+    <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img"> 関連する場所</h6>
+    </div>
+    <div class="card-body">
+        <ul class="list-group list-group-flush">
+            {% for loc in related_locations %}
+            <li class="list-group-item">
+                <a href="{{ url_for('locations.detail', location_id=loc.location_id) }}">
+                    <i class="bi bi-geo-alt-fill text-info"></i> {{ loc.location_name }}
+                </a>
+                {% if loc.location_type %}
+                <span class="badge bg-secondary">{{ loc.location_type }}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
