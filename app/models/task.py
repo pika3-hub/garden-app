@@ -184,7 +184,7 @@ class Task:
 
         # 関連する植え付け場所を取得
         location_crops = db.execute(
-            '''SELECT lc.id as id, c.name as crop_name, c.variety,
+            '''SELECT lc.id as id, lc.id as location_crop_id, c.name as crop_name, c.variety,
                       c.icon_path, c.image_color, l.name as location_name,
                       lc.location_id, lc.planted_date, lc.status
                FROM task_relations tr
