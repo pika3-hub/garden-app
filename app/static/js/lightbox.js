@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const overlayImg = overlay.querySelector('img');
     const closeBtn = overlay.querySelector('.lightbox-close');
+    let zoomed = false;
 
     function open(src, alt) {
         overlayImg.src = src;
@@ -17,8 +18,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function close() {
-        overlay.classList.remove('active');
+        zoomed = false;
+        overlay.classList.remove('active', 'zoomed');
+        overlay.scrollTop = 0;
+        overlay.scrollLeft = 0;
         document.body.style.overflow = '';
+    }
+
+    function toggleZoom() {
+        zoomed = !zoomed;
+        if (zoomed) {
+            overlay.classList.add('zoomed');
+        } else {
+            overlay.classList.remove('zoomed');
+            overlay.scrollTop = 0;
+            overlay.scrollLeft = 0;
+        }
     }
 
     // イベント委譲: img.lightbox-target のクリック
@@ -29,20 +44,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // 画像クリックでズームトグル
+    overlayImg.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleZoom();
+    });
+
     // 閉じる: ×ボタン
     closeBtn.addEventListener('click', close);
 
-    // 閉じる: オーバーレイ背景クリック（画像自体は除外）
+    // 閉じる: オーバーレイ背景クリック（画像自体は除外、ズーム中は無効）
     overlay.addEventListener('click', function (e) {
-        if (e.target === overlay) {
+        if (e.target === overlay && !zoomed) {
             close();
         }
     });
 
-    // 閉じる: Escapeキー
+    // Escapeキー: ズーム中→ズーム解除、通常→閉じる
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && overlay.classList.contains('active')) {
-            close();
+            if (zoomed) {
+                toggleZoom();
+            } else {
+                close();
+            }
         }
     });
 });
