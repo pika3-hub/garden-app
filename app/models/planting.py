@@ -167,6 +167,24 @@ class Planting:
         db.commit()
 
     @staticmethod
+    def get_active_crop_ids():
+        """栽培中の作物IDセットを取得"""
+        db = get_db()
+        rows = db.execute(
+            "SELECT DISTINCT crop_id FROM plantings WHERE status = 'active'"
+        ).fetchall()
+        return set(row['crop_id'] for row in rows)
+
+    @staticmethod
+    def get_active_counts_by_location():
+        """場所ごとの栽培中作物数を取得"""
+        db = get_db()
+        rows = db.execute(
+            "SELECT location_id, COUNT(*) as count FROM plantings WHERE status = 'active' GROUP BY location_id"
+        ).fetchall()
+        return {row['location_id']: row['count'] for row in rows}
+
+    @staticmethod
     def count_active():
         """栽培中の作物数を取得"""
         db = get_db()

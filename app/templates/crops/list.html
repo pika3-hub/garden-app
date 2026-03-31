@@ -43,11 +43,16 @@
                  style="border-color: {{ crop.image_color or '#4CAF50' }};"
                  alt="{{ crop.name }}">
             {% endif %}
-            {% if task_counts.get(crop.id) %}
-            <div class="card-photo-badge-task">
+            {% if task_counts.get(crop.id) or crop.id in active_crop_ids %}
+            <div class="card-photo-badge-top">
+                {% if crop.id in active_crop_ids %}
+                <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
+                {% endif %}
+                {% if task_counts.get(crop.id) %}
                 <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
                     <i class="bi bi-bell-fill"></i> {{ task_counts[crop.id] }}
                 </span>
+                {% endif %}
             </div>
             {% endif %}
             <div class="card-photo-overlay">

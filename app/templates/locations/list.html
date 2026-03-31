@@ -44,6 +44,11 @@
                 </span>
             </div>
             {% endif %}
+            {% if active_crop_counts.get(location.id) %}
+            <div class="card-photo-badge-top">
+                <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中: {{ active_crop_counts[location.id] }}</span>
+            </div>
+            {% endif %}
             <div class="card-photo-overlay">
                 <h5 class="card-title">{{ location.name }}</h5>
             </div>

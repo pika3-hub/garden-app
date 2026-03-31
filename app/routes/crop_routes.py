@@ -17,7 +17,8 @@ def list():
     crop_ids = [c['id'] for c in crops]
     task_counts = Task.get_upcoming_task_counts('crop', crop_ids)
     filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
-    return render_template('crops/list.html', crops=crops, task_counts=task_counts, filter_types=filter_types)
+    active_crop_ids = Planting.get_active_crop_ids()
+    return render_template('crops/list.html', crops=crops, task_counts=task_counts, filter_types=filter_types, active_crop_ids=active_crop_ids)
 
 
 @bp.route('/<int:crop_id>')

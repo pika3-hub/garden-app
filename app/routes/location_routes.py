@@ -18,7 +18,8 @@ def list():
     location_ids = [l['id'] for l in locations]
     task_counts = Task.get_upcoming_task_counts('location', location_ids)
     filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
-    return render_template('locations/list.html', locations=locations, task_counts=task_counts, filter_types=filter_types)
+    active_crop_counts = Planting.get_active_counts_by_location()
+    return render_template('locations/list.html', locations=locations, task_counts=task_counts, filter_types=filter_types, active_crop_counts=active_crop_counts)
 
 
 @bp.route('/<int:location_id>')
