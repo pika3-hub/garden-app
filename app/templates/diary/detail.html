@@ -36,24 +36,27 @@
             '晴れ時々曇り': 'weather_sun_cloud.png',
             '曇り時々雨': 'weather_cloud_rain.png'
         } %}
-        {% set weather_card_classes = {
-            '晴れ': 'card-weather-sunny',
-            '曇り': 'card-weather-cloudy',
-            '雨': 'card-weather-rain',
-            '雪': 'card-weather-snow',
-            '晴れ時々曇り': 'card-weather-sun-cloud',
-            '曇り時々雨': 'card-weather-cloud-rain'
+        {% set weather_bg_images = {
+            '晴れ': 'bg_sunny.png',
+            '曇り': 'bg_cloudy.png',
+            '雨': 'bg_rain.png',
+            '雪': 'bg_snow.png',
+            '晴れ時々曇り': 'bg_sun_cloud.png',
+            '曇り時々雨': 'bg_cloud_rain.png'
         } %}
-        <div class="card mb-3 card-photo-detail
-            {%- if entry.image_path %}"
-        >
+        <div class="card mb-3 card-photo-detail">
             <div class="card-photo-detail-img-wrapper">
+                {%- if entry.image_path %}
                 <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}"
                      class="card-photo-img lightbox-target" alt="{{ entry.title }}">
+                {%- elif entry.weather and weather_bg_images.get(entry.weather) %}
+                <img src="{{ url_for('static', filename='images/' + weather_bg_images[entry.weather]) }}"
+                     class="card-photo-img card-photo-img-fallback" alt="{{ entry.weather }}">
+                {%- else %}
+                <img src="{{ url_for('static', filename='images/card_diary.png') }}"
+                     class="card-photo-img card-photo-img-fallback card-photo-img-fallback-center" alt="日記">
+                {%- endif %}
             </div>
-        {%- elif entry.weather and weather_card_classes.get(entry.weather) %} card-weather-bg {{ weather_card_classes[entry.weather] }}">
-        {%- else %} card-no-image card-bg-diary">
-        {%- endif %}
             <div class="card-photo-detail-overlay">
                 <h4 class="card-photo-detail-title">{{ entry.title }}</h4>
                 <div class="detail-fields">
