@@ -326,6 +326,31 @@ a.dashboard-stat-link:hover {
 .badge-status-harvested{ background-color: var(--amber);     color: #F0EBE0; }
 .badge-status-removed  { background-color: var(--ink-muted); color: #F0EBE0; }
 
+/* ── Badge Filters ──────────────────────────────────────── */
+.badge-filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+.badge-filter {
+  cursor: pointer;
+  transition: opacity 0.15s;
+  font-size: 0.85em;
+  padding: 0.35em 0.75em;
+}
+.badge-filter-inactive {
+  background-color: var(--ink-muted) !important;
+  opacity: 0.55;
+}
+.badge-filter-active {
+  background-color: var(--forest) !important;
+  opacity: 1;
+}
+.badge-filter:hover {
+  opacity: 0.85;
+}
+
 /* ── Nav Tabs ────────────────────────────────────────────── */
 .nav-tabs {
   border-bottom: 2px solid var(--border);

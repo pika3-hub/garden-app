@@ -14,27 +14,22 @@
     </div>
 </div>
 
-<div class="row mb-3">
-    <div class="col-md-6">
-        <form method="GET" action="{{ url_for('locations.list') }}" class="input-group">
-            <input type="text" name="keyword" class="form-control" placeholder="場所名、種類で検索" value="{{ keyword }}">
-            <button type="submit" class="btn btn-outline-secondary">
-                <i class="bi bi-search"></i> 検索
-            </button>
-            {% if keyword %}
-            <a href="{{ url_for('locations.list') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-x-circle"></i> クリア
-            </a>
-            {% endif %}
-        </form>
-    </div>
+{% if filter_types %}
+<div id="badge-filter-container" class="badge-filter-container">
+    {% for t in filter_types %}
+    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+    {% endfor %}
 </div>
+{% endif %}
 
 {% if locations %}
-<p class="text-muted mb-3">{{ locations|length }}件の場所</p>
+<p class="text-muted mb-3"><span id="filter-count" data-suffix="件の場所">{{ locations|length }}件の場所</span></p>
+<div id="filter-empty-msg" class="alert alert-info" style="display:none;">
+    <i class="bi bi-info-circle"></i> 該当する場所がありません。
+</div>
 <div class="row">
     {% for location in locations %}
-    <div class="col-md-6 col-lg-4 mb-3">
+    <div class="col-md-6 col-lg-4 mb-3" data-filter-type="{{ location.location_type }}">
         <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="card h-100 card-photo card-bg-location {{ '' if location.image_path else 'card-no-image' }}">
             {% if location.image_path %}
             <img src="{{ url_for('static', filename='uploads/' + (location.image_path | thumb_path)) }}"
@@ -59,11 +54,11 @@
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>
-    {% if keyword %}
-    検索条件に一致する場所が見つかりませんでした。
-    {% else %}
     まだ場所が登録されていません。<a href="{{ url_for('locations.new') }}" class="alert-link">新規登録</a>から追加してください。
-    {% endif %}
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/badge-filter.js') }}"></script>
 {% endblock %}

@@ -14,14 +14,11 @@ bp = Blueprint('locations', __name__, url_prefix='/locations')
 @bp.route('/')
 def list():
     """場所一覧"""
-    keyword = request.args.get('keyword', '')
-    if keyword:
-        locations = Location.search(keyword)
-    else:
-        locations = Location.get_all()
+    locations = Location.get_all()
     location_ids = [l['id'] for l in locations]
     task_counts = Task.get_upcoming_task_counts('location', location_ids)
-    return render_template('locations/list.html', locations=locations, keyword=keyword, task_counts=task_counts)
+    filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
+    return render_template('locations/list.html', locations=locations, task_counts=task_counts, filter_types=filter_types)
 
 
 @bp.route('/<int:location_id>')

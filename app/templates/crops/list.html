@@ -14,27 +14,22 @@
     </div>
 </div>
 
-<div class="row mb-3">
-    <div class="col-md-6">
-        <form method="GET" action="{{ url_for('crops.list') }}" class="input-group">
-            <input type="text" name="keyword" class="form-control" placeholder="作物名、種類、品種で検索" value="{{ keyword }}">
-            <button type="submit" class="btn btn-outline-secondary">
-                <i class="bi bi-search"></i> 検索
-            </button>
-            {% if keyword %}
-            <a href="{{ url_for('crops.list') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-x-circle"></i> クリア
-            </a>
-            {% endif %}
-        </form>
-    </div>
+{% if filter_types %}
+<div id="badge-filter-container" class="badge-filter-container">
+    {% for t in filter_types %}
+    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+    {% endfor %}
 </div>
+{% endif %}
 
 {% if crops %}
-<p class="text-muted mb-3">{{ crops|length }}件の作物</p>
+<p class="text-muted mb-3"><span id="filter-count" data-suffix="件の作物">{{ crops|length }}件の作物</span></p>
+<div id="filter-empty-msg" class="alert alert-info" style="display:none;">
+    <i class="bi bi-info-circle"></i> 該当する作物がありません。
+</div>
 <div class="row">
     {% for crop in crops %}
-    <div class="col-md-6 col-lg-4 mb-3">
+    <div class="col-md-6 col-lg-4 mb-3" data-filter-type="{{ crop.crop_type }}">
         <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="card h-100 card-photo card-bg-crop {{ '' if crop.image_path else 'card-no-image' }}">
             {% if crop.image_path %}
             <img src="{{ url_for('static', filename='uploads/' + (crop.image_path | thumb_path)) }}"
@@ -65,11 +60,11 @@
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>
-    {% if keyword %}
-    検索条件に一致する作物が見つかりませんでした。
-    {% else %}
     まだ作物が登録されていません。<a href="{{ url_for('crops.new') }}" class="alert-link">新規登録</a>から追加してください。
-    {% endif %}
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/badge-filter.js') }}"></script>
 {% endblock %}
