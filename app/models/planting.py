@@ -456,7 +456,8 @@ class Planting:
         # 候補日付を収集
         candidate_dates = set()
         for p in renderable:
-            candidate_dates.add(p['planted'])
+            if p['planted']:
+                candidate_dates.add(p['planted'])
             if p['ended']:
                 candidate_dates.add(p['ended'])
 
