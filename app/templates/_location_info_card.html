@@ -6,6 +6,11 @@
         <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img"> 場所情報</h6>
     </div>
     <div class="card-body">
+        <div class="mb-2">
+            <a href="{{ url_for('locations.detail', location_id=location_info.location_id) }}" class="fw-bold text-decoration-none">
+                <i class="bi bi-geo-alt-fill text-info"></i> {{ location_info.location_name }}
+            </a>
+        </div>
         {% if location_info.location_image_path %}
         <img src="{{ url_for('static', filename='uploads/' + (location_info.location_image_path | thumb_path)) }}"
              alt="場所画像"
@@ -36,11 +41,6 @@
             <div class="small" style="white-space: pre-wrap;">{{ location_info.location_notes }}</div>
         </div>
         {% endif %}
-        <div class="mt-2">
-            <a href="{{ url_for('locations.detail', location_id=location_info.location_id) }}" class="btn btn-sm btn-outline-info">
-                <i class="bi bi-box-arrow-up-right"></i> 場所詳細を見る
-            </a>
-        </div>
     </div>
 </div>
 {% endif %}
