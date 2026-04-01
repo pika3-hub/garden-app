@@ -165,8 +165,8 @@ class Task:
 
         # 関連する作物を取得
         crops = db.execute(
-            '''SELECT tr.*, c.name as crop_name, c.crop_type, c.variety,
-                      c.icon_path, c.image_color
+            '''SELECT tr.crop_id, c.name as crop_name, c.crop_type, c.variety,
+                      c.icon_path, c.image_color, c.image_path as crop_image_path
                FROM task_relations tr
                JOIN crops c ON tr.crop_id = c.id
                WHERE tr.task_id = ? AND tr.relation_type = 'crop' ''',
@@ -175,7 +175,8 @@ class Task:
 
         # 関連する場所を取得
         locations = db.execute(
-            '''SELECT tr.*, l.name as location_name, l.location_type
+            '''SELECT tr.location_id, l.name as location_name, l.location_type,
+                      l.image_path as location_image_path
                FROM task_relations tr
                JOIN locations l ON tr.location_id = l.id
                WHERE tr.task_id = ? AND tr.relation_type = 'location' ''',

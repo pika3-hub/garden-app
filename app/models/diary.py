@@ -118,8 +118,8 @@ class DiaryEntry:
 
         # 関連する作物を取得
         crops = db.execute(
-            '''SELECT dr.*, c.name as crop_name, c.crop_type, c.variety,
-                      c.icon_path, c.image_color
+            '''SELECT dr.crop_id, c.name as crop_name, c.crop_type, c.variety,
+                      c.icon_path, c.image_color, c.image_path as crop_image_path
                FROM diary_relations dr
                JOIN crops c ON dr.crop_id = c.id
                WHERE dr.diary_id = ? AND dr.relation_type = 'crop' ''',
@@ -128,7 +128,8 @@ class DiaryEntry:
 
         # 関連する場所を取得
         locations = db.execute(
-            '''SELECT dr.*, l.name as location_name, l.location_type
+            '''SELECT dr.location_id, l.name as location_name, l.location_type,
+                      l.image_path as location_image_path
                FROM diary_relations dr
                JOIN locations l ON dr.location_id = l.id
                WHERE dr.diary_id = ? AND dr.relation_type = 'location' ''',
@@ -153,7 +154,8 @@ class DiaryEntry:
 
         # 関連する収穫記録を取得
         harvests = db.execute(
-            '''SELECT h.id as id, h.harvest_date, h.quantity, h.unit,
+            '''SELECT h.id as id, h.id as harvest_id, h.harvest_date, h.quantity, h.unit,
+                      h.image_path,
                       c.name as crop_name, c.variety, c.icon_path, c.image_color,
                       l.name as location_name
                FROM diary_relations dr
