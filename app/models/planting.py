@@ -26,7 +26,10 @@ class Planting:
         db = get_db()
         query = '''
             SELECT lc.*, c.name as crop_name, c.crop_type, c.variety,
-                   c.icon_path, c.image_color
+                   c.icon_path, c.image_color,
+                   (SELECT pr.image_path FROM planting_records pr
+                    WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                    ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
             FROM plantings lc
             JOIN crops c ON lc.crop_id = c.id
             WHERE lc.location_id = ?
@@ -48,7 +51,10 @@ class Planting:
         db = get_db()
         query = '''
             SELECT lc.*, l.name as location_name, l.location_type,
-                   c.name as crop_name, c.variety, c.icon_path, c.image_color
+                   c.name as crop_name, c.variety, c.icon_path, c.image_color,
+                   (SELECT pr.image_path FROM planting_records pr
+                    WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                    ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
             FROM plantings lc
             JOIN locations l ON lc.location_id = l.id
             JOIN crops c ON lc.crop_id = c.id
@@ -76,7 +82,10 @@ class Planting:
                       c.notes as crop_notes, c.crop_type,
                       c.image_path as crop_image_path,
                       l.location_type, l.area_size, l.sun_exposure,
-                      l.notes as location_notes, l.image_path as location_image_path
+                      l.notes as location_notes, l.image_path as location_image_path,
+                      (SELECT pr.image_path FROM planting_records pr
+                       WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                       ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
                FROM plantings lc
                JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
@@ -165,6 +174,24 @@ class Planting:
         db = get_db()
         db.execute('DELETE FROM plantings WHERE id = ?', (location_crop_id,))
         db.commit()
+
+    @staticmethod
+    def get_active_crop_ids():
+        """栽培中の作物IDセットを取得"""
+        db = get_db()
+        rows = db.execute(
+            "SELECT DISTINCT crop_id FROM plantings WHERE status = 'active'"
+        ).fetchall()
+        return set(row['crop_id'] for row in rows)
+
+    @staticmethod
+    def get_active_counts_by_location():
+        """場所ごとの栽培中作物数を取得"""
+        db = get_db()
+        rows = db.execute(
+            "SELECT location_id, COUNT(*) as count FROM plantings WHERE status = 'active' GROUP BY location_id"
+        ).fetchall()
+        return {row['location_id']: row['count'] for row in rows}
 
     @staticmethod
     def count_active():

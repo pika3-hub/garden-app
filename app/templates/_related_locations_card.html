@@ -1,5 +1,5 @@
 {# 関連する場所カード（詳細画面サイドバー用） #}
-{# 変数: related_locations (list of dict: location_id, location_name, location_type) #}
+{# 変数: related_locations (list of dict: location_id, location_name, location_type, location_image_path) #}
 {% if related_locations %}
 <div class="card mb-3">
     <div class="card-header bg-info text-white">
@@ -9,6 +9,12 @@
         <ul class="list-group list-group-flush">
             {% for loc in related_locations %}
             <li class="list-group-item">
+                {% if loc.location_image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + (loc.location_image_path | thumb_path)) }}"
+                     alt="場所画像"
+                     style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                     onerror="this.src='{{ url_for('static', filename='uploads/' + loc.location_image_path) }}'">
+                {% endif %}
                 <a href="{{ url_for('locations.detail', location_id=loc.location_id) }}">
                     <i class="bi bi-geo-alt-fill text-info"></i> {{ loc.location_name }}
                 </a>

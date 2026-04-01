@@ -66,9 +66,19 @@ class PlantingRecord:
         """IDで栽培記録を取得"""
         db = get_db()
         record = db.execute(
-            '''SELECT gr.*, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name,
-                      lc.location_id, lc.crop_id, lc.planted_date
+            '''SELECT gr.id, gr.location_crop_id, gr.recorded_at,
+                      gr.notes, gr.image_path,
+                      gr.created_at, gr.updated_at,
+                      c.name as crop_name, c.variety,
+                      c.icon_path, c.image_color,
+                      c.crop_type, c.planting_season, c.harvest_season,
+                      c.characteristics, c.notes as crop_notes,
+                      c.image_path as crop_image_path,
+                      l.name as location_name, lc.location_id,
+                      l.location_type, l.area_size, l.sun_exposure,
+                      l.notes as location_notes,
+                      l.image_path as location_image_path,
+                      lc.crop_id, lc.planted_date
                FROM planting_records gr
                JOIN plantings lc ON gr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id

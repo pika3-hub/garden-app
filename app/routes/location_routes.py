@@ -14,14 +14,12 @@ bp = Blueprint('locations', __name__, url_prefix='/locations')
 @bp.route('/')
 def list():
     """場所一覧"""
-    keyword = request.args.get('keyword', '')
-    if keyword:
-        locations = Location.search(keyword)
-    else:
-        locations = Location.get_all()
+    locations = Location.get_all()
     location_ids = [l['id'] for l in locations]
     task_counts = Task.get_upcoming_task_counts('location', location_ids)
-    return render_template('locations/list.html', locations=locations, keyword=keyword, task_counts=task_counts)
+    filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
+    active_crop_counts = Planting.get_active_counts_by_location()
+    return render_template('locations/list.html', locations=locations, task_counts=task_counts, filter_types=filter_types, active_crop_counts=active_crop_counts)
 
 
 @bp.route('/<int:location_id>')
@@ -35,9 +33,11 @@ def detail(location_id):
     # 栽培中の作物を取得
     active_crops = Planting.get_by_location(location_id, status='active')
 
-    # 各栽培記録に収穫履歴を追加
+    # 各栽培記録に収穫履歴・植え付け日数を追加
+    today = date.today().isoformat()
     for crop in active_crops:
         crop['harvests'] = Harvest.get_by_location_crop(crop['id'])
+        crop['days_from_planting'] = Planting._calculate_days(crop.get('planted_date'), today)
 
     # 関連する日記を取得
     related_diaries = DiaryEntry.get_by_location(location_id, limit=10)

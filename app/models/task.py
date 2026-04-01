@@ -165,8 +165,8 @@ class Task:
 
         # 関連する作物を取得
         crops = db.execute(
-            '''SELECT tr.*, c.name as crop_name, c.crop_type, c.variety,
-                      c.icon_path, c.image_color
+            '''SELECT tr.crop_id, c.name as crop_name, c.crop_type, c.variety,
+                      c.icon_path, c.image_color, c.image_path as crop_image_path
                FROM task_relations tr
                JOIN crops c ON tr.crop_id = c.id
                WHERE tr.task_id = ? AND tr.relation_type = 'crop' ''',
@@ -175,7 +175,8 @@ class Task:
 
         # 関連する場所を取得
         locations = db.execute(
-            '''SELECT tr.*, l.name as location_name, l.location_type
+            '''SELECT tr.location_id, l.name as location_name, l.location_type,
+                      l.image_path as location_image_path
                FROM task_relations tr
                JOIN locations l ON tr.location_id = l.id
                WHERE tr.task_id = ? AND tr.relation_type = 'location' ''',
@@ -184,9 +185,12 @@ class Task:
 
         # 関連する植え付け場所を取得
         location_crops = db.execute(
-            '''SELECT lc.id as id, c.name as crop_name, c.variety,
+            '''SELECT lc.id as id, lc.id as location_crop_id, c.name as crop_name, c.variety,
                       c.icon_path, c.image_color, l.name as location_name,
-                      lc.location_id, lc.planted_date, lc.status
+                      lc.location_id, lc.planted_date, lc.status,
+                      (SELECT pr.image_path FROM planting_records pr
+                       WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                       ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
                FROM task_relations tr
                JOIN plantings lc ON tr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id

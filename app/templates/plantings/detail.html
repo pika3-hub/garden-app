@@ -199,6 +199,10 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
     <div class="col-md-4">
         {% set crop_info = {
             'crop_id': location_crop.crop_id,
+            'crop_name': location_crop.crop_name,
+            'variety': location_crop.variety,
+            'icon_path': location_crop.icon_path,
+            'image_color': location_crop.image_color,
             'crop_type': location_crop.crop_type,
             'planting_season': location_crop.planting_season,
             'harvest_season': location_crop.harvest_season,

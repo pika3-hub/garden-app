@@ -52,6 +52,25 @@
                  loading="lazy"
                  onerror="this.src='{{ url_for('static', filename='uploads/' + entry.image_path) }}'">
             {% endif %}
+            {% if entry.weather %}
+            {% set weather_icons = {
+                '晴れ': 'weather_sunny.png',
+                '曇り': 'weather_cloudy.png',
+                '雨': 'weather_rain.png',
+                '雪': 'weather_snow.png',
+                '晴れ時々曇り': 'weather_sun_cloud.png',
+                '曇り時々雨': 'weather_cloud_rain.png'
+            } %}
+            <div class="card-photo-badge-top">
+                {% if weather_icons.get(entry.weather) %}
+                <img src="{{ url_for('static', filename='images/' + weather_icons[entry.weather]) }}"
+                     alt="{{ entry.weather }}" title="{{ entry.weather }}"
+                     style="width: 32px; height: 32px;">
+                {% else %}
+                <span class="badge bg-info">{{ entry.weather }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
             <div class="card-photo-overlay">
                 <div class="mb-1">
                     <span class="fw-bold">{{ entry.entry_date }}</span>

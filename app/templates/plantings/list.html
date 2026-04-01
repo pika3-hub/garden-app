@@ -39,11 +39,22 @@
     </li>
 </ul>
 
+{% if filter_types %}
+<div id="badge-filter-container" class="badge-filter-container">
+    {% for t in filter_types %}
+    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+    {% endfor %}
+</div>
+{% endif %}
+
 {% if crops %}
-<p class="text-muted mb-3">{{ crops|length }}件の植え付け</p>
+<p class="text-muted mb-3"><span id="filter-count" data-suffix="件の植え付け">{{ crops|length }}件の植え付け</span></p>
+<div id="filter-empty-msg" class="alert alert-info" style="display:none;">
+    <i class="bi bi-info-circle"></i> 該当する植え付けがありません。
+</div>
 <div class="row">
     {% for crop in crops %}
-    <div class="col-md-6 col-lg-4 mb-3">
+    <div class="col-md-6 col-lg-4 mb-3" data-filter-type="{{ crop.crop_type }}">
         <a href="{{ url_for('plantings.detail', location_crop_id=crop.id) }}" class="card h-100 card-photo card-bg-location-crop {{ '' if crop.latest_growth_image else 'card-no-image' }}">
             {% if crop.latest_growth_image %}
             <img src="{{ url_for('static', filename='uploads/' + (crop.latest_growth_image | thumb_path)) }}"
@@ -97,4 +108,8 @@
     {% endif %}
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/badge-filter.js') }}"></script>
 {% endblock %}

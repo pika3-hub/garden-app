@@ -23,7 +23,8 @@ def index():
         crops = Planting.get_all_with_stats(status=status)
     planting_ids = [c['id'] for c in crops]
     task_counts = Task.get_upcoming_task_counts('location_crop', planting_ids)
-    return render_template('plantings/list.html', crops=crops, current_status=status, task_counts=task_counts)
+    filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
+    return render_template('plantings/list.html', crops=crops, current_status=status, task_counts=task_counts, filter_types=filter_types)
 
 
 @bp.route('/<int:location_crop_id>')

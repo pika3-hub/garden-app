@@ -13,35 +13,9 @@ bp = Blueprint('harvests', __name__, url_prefix='/harvests')
 @bp.route('/')
 def list():
     """収穫記録一覧"""
-    keyword = request.args.get('keyword', '')
-    date_from = request.args.get('date_from', '')
-    date_to = request.args.get('date_to', '')
-    location_id = request.args.get('location_id', '')
-    crop_id = request.args.get('crop_id', '')
-
-    if keyword or date_from or date_to or location_id or crop_id:
-        harvests = Harvest.search(
-            keyword=keyword if keyword else None,
-            date_from=date_from if date_from else None,
-            date_to=date_to if date_to else None,
-            location_id=int(location_id) if location_id else None,
-            crop_id=int(crop_id) if crop_id else None
-        )
-    else:
-        harvests = Harvest.get_all()
-
-    locations = Location.get_all()
-    crops = Crop.get_all()
-
-    return render_template('harvests/list.html',
-                          harvests=harvests,
-                          keyword=keyword,
-                          date_from=date_from,
-                          date_to=date_to,
-                          selected_location_id=location_id,
-                          selected_crop_id=crop_id,
-                          locations=locations,
-                          crops=crops)
+    harvests = Harvest.get_all()
+    filter_types = sorted(set(h['crop_type'] for h in harvests if h['crop_type']))
+    return render_template('harvests/list.html', harvests=harvests, filter_types=filter_types)
 
 
 @bp.route('/<int:harvest_id>')

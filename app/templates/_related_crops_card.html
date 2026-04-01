@@ -1,5 +1,5 @@
 {# 関連する作物カード（詳細画面サイドバー用） #}
-{# 変数: related_crops (list of dict: crop_id, crop_name, variety, icon_path, image_color, crop_type) #}
+{# 変数: related_crops (list of dict: crop_id, crop_name, variety, icon_path, image_color, crop_type, crop_image_path) #}
 {% from '_macros.html' import crop_label %}
 {% if related_crops %}
 <div class="card mb-3">
@@ -10,6 +10,12 @@
         <ul class="list-group list-group-flush">
             {% for crop in related_crops %}
             <li class="list-group-item">
+                {% if crop.crop_image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + (crop.crop_image_path | thumb_path)) }}"
+                     alt="作物画像"
+                     style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                     onerror="this.src='{{ url_for('static', filename='uploads/' + crop.crop_image_path) }}'">
+                {% endif %}
                 <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}">
                     {{ crop_label(crop.crop_name, crop.variety, crop.icon_path, crop.image_color) }}
                 </a>

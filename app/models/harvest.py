@@ -11,7 +11,7 @@ class Harvest:
         """全収穫記録を取得（ページネーション対応）"""
         db = get_db()
         query = '''
-            SELECT h.*, c.name as crop_name, c.variety,
+            SELECT h.*, c.name as crop_name, c.variety, c.crop_type,
                    c.icon_path, c.image_color, l.name as location_name,
                    lc.planted_date
             FROM harvests h

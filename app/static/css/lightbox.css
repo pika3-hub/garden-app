@@ -21,12 +21,29 @@
     max-width: 95vw;
     max-height: 95vh;
     object-fit: contain;
+    cursor: zoom-in;
+    transition: max-width 0.2s ease, max-height 0.2s ease;
+}
+
+/* ズーム拡大時 */
+.lightbox-overlay.zoomed {
+    overflow: auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.lightbox-overlay.zoomed img {
+    max-width: none;
+    max-height: none;
+    min-width: 150vw;
+    cursor: zoom-out;
 }
 
 .lightbox-close {
-    position: absolute;
+    position: fixed;
     top: 1rem;
     right: 1rem;
+    z-index: 1;
     background: none;
     border: none;
     color: #fff;

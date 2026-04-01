@@ -1,13 +1,19 @@
 {# 作物情報カード（植え付け詳細・収穫詳細サイドバー用） #}
-{# 必要な変数: crop_info (dict with crop_id, planting_season, harvest_season, characteristics, crop_notes, crop_type, crop_image_path) #}
+{# 必要な変数: crop_info (dict with crop_id, crop_name, variety, icon_path, image_color, planting_season, harvest_season, characteristics, crop_notes, crop_type, crop_image_path) #}
+{% from '_macros.html' import crop_label %}
 {% if crop_info %}
 <div class="card mb-3">
     <div class="card-header bg-success text-white">
         <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img"> 作物情報</h6>
     </div>
     <div class="card-body">
+        <div class="mb-2">
+            <a href="{{ url_for('crops.detail', crop_id=crop_info.crop_id) }}" class="fw-bold text-decoration-none">
+                {{ crop_label(crop_info.crop_name, crop_info.variety, crop_info.icon_path, crop_info.image_color) }}
+            </a>
+        </div>
         {% if crop_info.crop_image_path %}
-        <img src="{{ url_for('static', filename='uploads/' + crop_info.crop_image_path) | thumb_path }}"
+        <img src="{{ url_for('static', filename='uploads/' + (crop_info.crop_image_path | thumb_path)) }}"
              alt="作物画像"
              style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
              onerror="this.src='{{ url_for('static', filename='uploads/' + crop_info.crop_image_path) }}'">
@@ -42,11 +48,6 @@
             <div class="small" style="white-space: pre-wrap;">{{ crop_info.crop_notes }}</div>
         </div>
         {% endif %}
-        <div class="mt-2">
-            <a href="{{ url_for('crops.detail', crop_id=crop_info.crop_id) }}" class="btn btn-sm btn-outline-success">
-                <i class="bi bi-box-arrow-up-right"></i> 作物詳細を見る
-            </a>
-        </div>
     </div>
 </div>
 {% endif %}

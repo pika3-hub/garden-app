@@ -13,6 +13,47 @@
     </div>
 </div>
 
+{% if carousel_images %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div id="dashboardCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000" data-bs-touch="true">
+            <div class="carousel-indicators d-none d-md-flex">
+                {% for img in carousel_images %}
+                <button type="button" data-bs-target="#dashboardCarousel" data-bs-slide-to="{{ loop.index0 }}"
+                    {% if loop.first %}class="active" aria-current="true"{% endif %}></button>
+                {% endfor %}
+            </div>
+            <div class="carousel-inner">
+                {% for img in carousel_images %}
+                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                    <a href="{{ img.detail_url }}">
+                        <img src="{{ url_for('static', filename='uploads/' + (img.image_path | thumb_path)) }}"
+                             class="d-block w-100 carousel-dashboard-img"
+                             alt="{{ img.label or img.type_label }}"
+                             onerror="this.src='{{ url_for('static', filename='uploads/' + img.image_path) }}'">
+                        <div class="carousel-caption">
+                            <span class="carousel-caption-badge">
+                                <img src="{{ url_for('static', filename='images/' + img.icon) }}" alt="" class="icon-img"> {{ img.label or img.type_label }}
+                            </span>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#dashboardCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#dashboardCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            </button>
+            <div class="carousel-counter d-md-none">
+                <span id="carouselCurrent">1</span> / {{ carousel_images|length }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row g-4 mb-4">
     <!-- 作物カード -->
     <div class="col-12 col-lg">
@@ -247,4 +288,20 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% if carousel_images %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var el = document.getElementById('dashboardCarousel');
+    if (!el) return;
+    var counter = document.getElementById('carouselCurrent');
+    if (!counter) return;
+    el.addEventListener('slid.bs.carousel', function(e) {
+        counter.textContent = e.to + 1;
+    });
+});
+</script>
+{% endif %}
 {% endblock %}

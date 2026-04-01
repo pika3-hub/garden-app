@@ -15,9 +15,6 @@
         <a href="{{ url_for('plantings.detail', location_crop_id=record.location_crop_id) }}" class="btn btn-outline-secondary">
             <i class="bi bi-list"></i> 一覧に戻る
         </a>
-        <a href="{{ url_for('plantings.edit', record_id=record.id) }}" class="btn btn-primary ms-2">
-            <i class="bi bi-pencil"></i> 編集
-        </a>
     </div>
 </div>
 
@@ -68,29 +65,45 @@
                 </div>
             </div>
         </div>
+
+        <div class="btn-group-action">
+            <a href="{{ url_for('plantings.edit', record_id=record.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 編集
+            </a>
+            <form method="POST" action="{{ url_for('plantings.delete', record_id=record.id) }}" class="d-inline" onsubmit="return confirm('この栽培記録を削除しますか？');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> 削除
+                </button>
+            </form>
+        </div>
     </div>
 
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0"><i class="bi bi-gear"></i> 操作</h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('plantings.edit', record_id=record.id) }}" class="btn btn-outline-primary">
-                        <i class="bi bi-pencil"></i> 編集する
-                    </a>
-                    <a href="{{ url_for('locations.detail', location_id=record.location_id) }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-geo-alt"></i> 場所を見る
-                    </a>
-                    <form method="POST" action="{{ url_for('plantings.delete', record_id=record.id) }}" onsubmit="return confirm('この栽培記録を削除しますか？');">
-                        <button type="submit" class="btn btn-outline-danger w-100">
-                            <i class="bi bi-trash"></i> 削除する
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
+        {% set crop_info = {
+            'crop_id': record.crop_id,
+            'crop_name': record.crop_name,
+            'variety': record.variety,
+            'icon_path': record.icon_path,
+            'image_color': record.image_color,
+            'crop_type': record.crop_type,
+            'planting_season': record.planting_season,
+            'harvest_season': record.harvest_season,
+            'characteristics': record.characteristics,
+            'crop_notes': record.crop_notes,
+            'crop_image_path': record.crop_image_path
+        } %}
+        {% include '_crop_info_card.html' %}
+
+        {% set location_info = {
+            'location_id': record.location_id,
+            'location_name': record.location_name,
+            'location_type': record.location_type,
+            'area_size': record.area_size,
+            'sun_exposure': record.sun_exposure,
+            'location_notes': record.location_notes,
+            'location_image_path': record.location_image_path
+        } %}
+        {% include '_location_info_card.html' %}
     </div>
 </div>
 {% endblock %}
