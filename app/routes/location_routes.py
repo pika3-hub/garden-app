@@ -33,9 +33,11 @@ def detail(location_id):
     # 栽培中の作物を取得
     active_crops = Planting.get_by_location(location_id, status='active')
 
-    # 各栽培記録に収穫履歴を追加
+    # 各栽培記録に収穫履歴・植え付け日数を追加
+    today = date.today().isoformat()
     for crop in active_crops:
         crop['harvests'] = Harvest.get_by_location_crop(crop['id'])
+        crop['days_from_planting'] = Planting._calculate_days(crop.get('planted_date'), today)
 
     # 関連する日記を取得
     related_diaries = DiaryEntry.get_by_location(location_id, limit=10)

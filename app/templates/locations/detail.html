@@ -146,36 +146,39 @@
             </div>
             <div class="card-body">
                 {% if active_crops %}
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                <div class="row">
                     {% for lc in active_crops %}
-                    <div class="col">
-                        <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}" class="card h-100 text-decoration-none active-crop-card">
-                            <div class="card-body">
-                                <div class="card-title mb-2">
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}"
+                           class="card h-100 card-photo card-bg-location-crop {{ '' if lc.latest_record_image else 'card-no-image' }}">
+                            {% if lc.latest_record_image %}
+                            <img src="{{ url_for('static', filename='uploads/' + (lc.latest_record_image | thumb_path)) }}"
+                                 class="card-photo-img" alt="{{ lc.crop_name }}"
+                                 loading="lazy"
+                                 onerror="this.src='{{ url_for('static', filename='uploads/' + lc.latest_record_image) }}'">
+                            {% endif %}
+                            <div class="card-photo-badge-top">
+                                {% if lc.days_from_planting is not none %}
+                                <span class="badge bg-success">{{ lc.days_from_planting }}日目</span>
+                                {% endif %}
+                                {% if lc.harvests %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-basket"></i> {{ lc.harvests|length }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="card-photo-overlay">
+                                <h5 class="card-title">
                                     {{ crop_label(lc.crop_name, lc.variety, lc.icon_path, lc.image_color) }}
-                                </div>
-                                <div class="text-muted small">
+                                </h5>
+                                <small>
                                     {% if lc.planted_date %}
                                     <i class="bi bi-calendar3"></i> {{ lc.planted_date }}
                                     {% endif %}
                                     {% if lc.quantity %}
                                     <span class="ms-2"><i class="bi bi-flower3"></i> {{ lc.quantity }}株</span>
                                     {% endif %}
-                                </div>
-                                {% if lc.harvests %}
-                                <div class="mt-2 pt-2 border-top">
-                                    <small class="text-muted d-block mb-1">
-                                        <i class="bi bi-basket"></i> 収穫履歴
-                                    </small>
-                                    {% for h in lc.harvests %}
-                                    <span class="badge bg-success d-block mb-1 text-start">
-                                        {{ h.harvest_date }}
-                                        {% if h.quantity %}({{ h.quantity }}{{ h.unit or '' }}){% endif %}
-                                        {% if h.days_from_planting is not none %}<small class="text-white-50">{{ h.days_from_planting }}日目</small>{% endif %}
-                                    </span>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
+                                </small>
                             </div>
                         </a>
                     </div>
