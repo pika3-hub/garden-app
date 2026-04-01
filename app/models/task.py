@@ -186,7 +186,10 @@ class Task:
         location_crops = db.execute(
             '''SELECT lc.id as id, lc.id as location_crop_id, c.name as crop_name, c.variety,
                       c.icon_path, c.image_color, l.name as location_name,
-                      lc.location_id, lc.planted_date, lc.status
+                      lc.location_id, lc.planted_date, lc.status,
+                      (SELECT pr.image_path FROM planting_records pr
+                       WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                       ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
                FROM task_relations tr
                JOIN plantings lc ON tr.location_crop_id = lc.id
                JOIN crops c ON lc.crop_id = c.id
