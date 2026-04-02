@@ -11,26 +11,20 @@ bp = Blueprint('tasks', __name__, url_prefix='/tasks')
 def list():
     """タスク一覧"""
     keyword = request.args.get('keyword', '')
-    status = request.args.get('status', '')
-    date_from = request.args.get('date_from', '')
-    date_to = request.args.get('date_to', '')
 
-    if keyword or status or date_from or date_to:
-        tasks = Task.search(
-            keyword=keyword if keyword else None,
-            status=status if status else None,
-            date_from=date_from if date_from else None,
-            date_to=date_to if date_to else None
-        )
+    if keyword:
+        tasks = Task.search(keyword=keyword)
     else:
         tasks = Task.get_all()
+
+    years = sorted(set(str(t['due_date'])[:4] for t in tasks if t.get('due_date')), reverse=True)
+    filter_statuses = sorted(set(t['status'] for t in tasks if t.get('status')))
 
     return render_template('tasks/list.html',
                           tasks=tasks,
                           keyword=keyword,
-                          status=status,
-                          date_from=date_from,
-                          date_to=date_to,
+                          filter_statuses=filter_statuses,
+                          years=years,
                           today=date.today(),
                           Task=Task)
 

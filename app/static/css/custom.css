@@ -351,6 +351,28 @@ a.dashboard-stat-link:hover {
   opacity: 0.85;
 }
 
+/* ── Date Badge Filter Groups ────────────────────────────── */
+#date-badge-filter {
+  margin-bottom: 1rem;
+}
+.badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.25rem;
+}
+.badge-group-label {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  min-width: 2.5em;
+  font-weight: 500;
+}
+.badge-filter-implied {
+  background-color: var(--forest-light) !important;
+  opacity: 0.7;
+}
+
 /* ── Nav Tabs ────────────────────────────────────────────── */
 .nav-tabs {
   border-bottom: 2px solid var(--border);
