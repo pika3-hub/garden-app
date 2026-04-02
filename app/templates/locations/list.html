@@ -29,7 +29,7 @@
 </div>
 <div class="row">
     {% for location in locations %}
-    <div class="col-md-6 col-lg-4 mb-3" data-filter-type="{{ location.location_type }}">
+    <div class="col-md-6 col-lg-4 mb-3" data-filter-type="{{ crop_types_by_location.get(location.id, []) | join(',') }}">
         <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="card h-100 card-photo card-bg-location {{ '' if location.image_path else 'card-no-image' }}">
             {% if location.image_path %}
             <img src="{{ url_for('static', filename='uploads/' + (location.image_path | thumb_path)) }}"

@@ -38,8 +38,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function applyFilter() {
         var visibleCount = 0;
         items.forEach(function (item) {
-            var type = item.dataset.filterType;
-            var show = selectedTypes.size === 0 || selectedTypes.has(type);
+            var types = item.dataset.filterType ? item.dataset.filterType.split(',') : [];
+            var show = selectedTypes.size === 0 || types.some(function (t) { return selectedTypes.has(t); });
             item.style.display = show ? '' : 'none';
             if (show) visibleCount++;
         });

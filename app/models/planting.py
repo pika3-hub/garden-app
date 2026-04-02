@@ -194,6 +194,22 @@ class Planting:
         return {row['location_id']: row['count'] for row in rows}
 
     @staticmethod
+    def get_active_crop_types_by_location():
+        """場所ごとの栽培中作物の種類セットを取得"""
+        db = get_db()
+        rows = db.execute(
+            '''SELECT lc.location_id, c.crop_type
+               FROM plantings lc
+               JOIN crops c ON lc.crop_id = c.id
+               WHERE lc.status = 'active' AND c.crop_type IS NOT NULL AND c.crop_type != ''
+               GROUP BY lc.location_id, c.crop_type'''
+        ).fetchall()
+        result = {}
+        for row in rows:
+            result.setdefault(row['location_id'], set()).add(row['crop_type'])
+        return result
+
+    @staticmethod
     def count_active():
         """栽培中の作物数を取得"""
         db = get_db()
