@@ -5,54 +5,70 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-6">
-        <h1><img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img icon-img-lg"> タスク</h1>
+        <h1><img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img icon-img-lg"> タスク<span class="text-muted fs-6"> - 登録されているタスク ({{ tasks|length }}件)</span></h1>
     </div>
     <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('tasks.new') }}" class="btn btn-success">
-            <i class="bi bi-plus-circle"></i> 新規登録
+            <i class="bi bi-plus-circle"></i> タスクを追加
         </a>
     </div>
 </div>
 
-<div class="row mb-3">
-    <div class="col-md-12">
-        <form method="GET" action="{{ url_for('tasks.list') }}" class="row g-2">
-            <div class="col-md-3">
-                <input type="text" name="keyword" class="form-control" placeholder="タイトル、説明で検索" value="{{ keyword }}">
-            </div>
-            <div class="col-md-2">
-                <select name="status" class="form-select">
-                    <option value="">-- 全てのステータス --</option>
-                    <option value="pending" {% if status == 'pending' %}selected{% endif %}>未着手</option>
-                    <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>進行中</option>
-                    <option value="completed" {% if status == 'completed' %}selected{% endif %}>完了</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <input type="date" name="date_from" class="form-control" placeholder="期限開始" value="{{ date_from }}">
-            </div>
-            <div class="col-md-2">
-                <input type="date" name="date_to" class="form-control" placeholder="期限終了" value="{{ date_to }}">
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-outline-secondary">
-                    <i class="bi bi-search"></i> 検索
-                </button>
-                {% if keyword or status or date_from or date_to %}
-                <a href="{{ url_for('tasks.list') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-x-circle"></i> クリア
-                </a>
-                {% endif %}
-            </div>
-        </form>
-    </div>
-</div>
-
 {% if tasks %}
-<p class="text-muted mb-3">{{ tasks|length }}件のタスク</p>
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div id="date-badge-filter" class="flex-grow-1">
+        {% if filter_statuses %}
+        <div class="badge-group badge-group-status">
+            <span class="badge-group-label">状態:</span>
+            {% for s in filter_statuses %}
+            <span class="badge badge-filter badge-filter-inactive" data-status="{{ s }}">{{ Task.get_status_label(s) }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if years %}
+        <div class="badge-group badge-group-year">
+            <span class="badge-group-label">年:</span>
+            {% for year in years %}
+            <span class="badge badge-filter badge-filter-inactive" data-year="{{ year }}">{{ year }}年</span>
+            {% endfor %}
+        </div>
+        <div class="badge-group badge-group-season">
+            <span class="badge-group-label">季節:</span>
+            <span class="badge badge-filter badge-filter-inactive" data-season="春" data-months="3,4,5">春(3-5月)</span>
+            <span class="badge badge-filter badge-filter-inactive" data-season="夏" data-months="6,7,8">夏(6-8月)</span>
+            <span class="badge badge-filter badge-filter-inactive" data-season="秋" data-months="9,10,11">秋(9-11月)</span>
+            <span class="badge badge-filter badge-filter-inactive" data-season="冬" data-months="12,1,2">冬(12-2月)</span>
+        </div>
+        <div class="badge-group badge-group-month">
+            <span class="badge-group-label">月:</span>
+            {% for m in range(1, 13) %}
+            <span class="badge badge-filter badge-filter-inactive" data-month="{{ m }}">{{ m }}月</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <form method="GET" action="{{ url_for('tasks.list') }}" class="d-flex gap-2 flex-shrink-0">
+        <input type="text" name="keyword" class="form-control form-control-sm" placeholder="タイトル、説明で検索" value="{{ keyword }}" style="width: 180px;">
+        <button type="submit" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-search"></i>
+        </button>
+        {% if keyword %}
+        <a href="{{ url_for('tasks.list') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-x-circle"></i>
+        </a>
+        {% endif %}
+    </form>
+</div>
+<div id="filter-empty-msg" class="alert alert-info" style="display:none;">
+    <i class="bi bi-info-circle"></i> 該当するタスクがありません。
+</div>
 <div class="row">
     {% for task in tasks %}
-    <div class="col-md-4 mb-3">
+    <div class="col-md-4 mb-3"
+         data-filter-year="{{ (task.due_date|string)[:4] if task.due_date else '' }}"
+         data-filter-month="{{ (task.due_date|string)[5:7]|int if task.due_date else '' }}"
+         data-filter-status="{{ task.status }}"
+    >
         <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="card h-100 card-photo card-no-image card-bg-tasklist card-photo-text-only">
             <div class="card-photo-badge-top">
                 <span class="badge {{ Task.get_status_badge(task.status) }}">
@@ -78,11 +94,15 @@
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>
-    {% if keyword or status or date_from or date_to %}
+    {% if keyword %}
     検索条件に一致するタスクが見つかりませんでした。
     {% else %}
     まだタスクが登録されていません。<a href="{{ url_for('tasks.new') }}" class="alert-link">新規登録</a>から追加してください。
     {% endif %}
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/date-badge-filter.js') }}"></script>
 {% endblock %}

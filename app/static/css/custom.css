@@ -86,7 +86,8 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.025em;
 }
 
-h1 { font-size: 1.7rem; }
+h1 { font-size: 1.7rem; margin-top: 0.5rem; margin-bottom: 0; }
+.container > .row.mb-4:first-child { margin-bottom: 0.5rem !important; }
 h2 { font-size: 1.4rem; }
 h5 { font-size: 1rem; }
 
@@ -170,8 +171,8 @@ small, .small { font-size: 0.84em; }
 }
 .dashboard-subtitle {
   color: var(--ink-muted);
-  font-size: 0.9rem;
-  margin: 0.2rem 0 0;
+  font-size: 0.5em;
+  font-weight: 400;
   font-style: italic;
 }
 
@@ -351,6 +352,28 @@ a.dashboard-stat-link:hover {
   opacity: 0.85;
 }
 
+/* ── Date Badge Filter Groups ────────────────────────────── */
+#date-badge-filter {
+  margin-bottom: 1rem;
+}
+.badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.25rem;
+}
+.badge-group-label {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  min-width: 2.5em;
+  font-weight: 500;
+}
+.badge-filter-implied {
+  background-color: var(--forest-light) !important;
+  opacity: 0.7;
+}
+
 /* ── Nav Tabs ────────────────────────────────────────────── */
 .nav-tabs {
   border-bottom: 2px solid var(--border);
@@ -435,6 +458,14 @@ a.dashboard-stat-link:hover {
   color: var(--forest);
 }
 .list-group-transparent .list-group-item { background-color: transparent; }
+.dashboard-list-excerpt {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 /* ── Tables ──────────────────────────────────────────────── */
 .table {
@@ -967,23 +998,26 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
         height: 220px;
     }
 }
-#dashboardCarousel .carousel-caption {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 0.75rem 1rem;
+#dashboardCarousel .carousel-caption.card-photo-overlay {
+    padding: 2rem 0.75rem 0.75rem;
     text-align: left;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
 }
-.carousel-caption-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background-color: rgba(43, 71, 56, 0.85);
-    color: #F0EBE0;
-    padding: 0.25rem 0.75rem;
-    border-radius: 6px;
-    font-size: 0.85rem;
+#dashboardCarousel .card-img-date-overlay {
+    z-index: 3;
+}
+.carousel-type-icon {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 3;
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 8px;
+    padding: 4px;
+    line-height: 0;
+}
+.carousel-type-icon img {
+    width: 32px;
+    height: 32px;
 }
 #dashboardCarousel .carousel-indicators button {
     background-color: rgba(255, 255, 255, 0.5);

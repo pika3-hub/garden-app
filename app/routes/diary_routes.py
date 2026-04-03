@@ -14,23 +14,18 @@ bp = Blueprint('diary', __name__, url_prefix='/diary')
 def list():
     """日記一覧"""
     keyword = request.args.get('keyword', '')
-    date_from = request.args.get('date_from', '')
-    date_to = request.args.get('date_to', '')
 
-    if keyword or date_from or date_to:
-        entries = DiaryEntry.search(
-            keyword=keyword if keyword else None,
-            date_from=date_from if date_from else None,
-            date_to=date_to if date_to else None
-        )
+    if keyword:
+        entries = DiaryEntry.search(keyword=keyword)
     else:
         entries = DiaryEntry.get_all()
+
+    years = sorted(set(str(e['entry_date'])[:4] for e in entries if e.get('entry_date')), reverse=True)
 
     return render_template('diary/list.html',
                           entries=entries,
                           keyword=keyword,
-                          date_from=date_from,
-                          date_to=date_to)
+                          years=years)
 
 
 @bp.route('/<int:diary_id>')
