@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-6">
-        <h1><img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg"> 管理日記</h1>
+        <h1><img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg"> 管理日記<span class="text-muted fs-6"> - 登録されている日記 ({{ entries|length }}件)</span></h1>
     </div>
     <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('diary.new') }}" class="btn btn-success">
@@ -51,7 +51,7 @@
         {% endif %}
     </form>
 </div>
-<p class="text-muted mb-3"><span id="filter-count" data-suffix="件の日記">{{ entries|length }}件の日記</span></p>
+
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当する日記がありません。
 </div>
