@@ -86,11 +86,11 @@
 
         <div class="btn-group-action">
             <a href="{{ url_for('diary.edit', diary_id=entry.id) }}" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> 編集
+                <i class="bi bi-pencil"></i> 日記を編集
             </a>
             <form method="POST" action="{{ url_for('diary.delete', diary_id=entry.id) }}" class="d-inline" onsubmit="return confirmDelete('{{ entry.title }}');">
                 <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-trash"></i> 削除
+                    <i class="bi bi-trash"></i> 日記を削除
                 </button>
             </form>
         </div>

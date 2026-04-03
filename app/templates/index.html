@@ -7,52 +7,10 @@
 <div class="row">
     <div class="col-12">
         <div class="dashboard-header mb-4">
-            <h1 class="dashboard-title">家庭菜園</h1>
-            <p class="dashboard-subtitle">の記録と管理 — ダッシュボード</p>
+            <h1 class="dashboard-title">家庭菜園 <span class="dashboard-subtitle">の記録と管理</span></h1>
         </div>
     </div>
 </div>
-
-{% if carousel_images %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div id="dashboardCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000" data-bs-touch="true">
-            <div class="carousel-indicators d-none d-md-flex">
-                {% for img in carousel_images %}
-                <button type="button" data-bs-target="#dashboardCarousel" data-bs-slide-to="{{ loop.index0 }}"
-                    {% if loop.first %}class="active" aria-current="true"{% endif %}></button>
-                {% endfor %}
-            </div>
-            <div class="carousel-inner">
-                {% for img in carousel_images %}
-                <div class="carousel-item {% if loop.first %}active{% endif %}">
-                    <a href="{{ img.detail_url }}">
-                        <img src="{{ url_for('static', filename='uploads/' + (img.image_path | thumb_path)) }}"
-                             class="d-block w-100 carousel-dashboard-img"
-                             alt="{{ img.label or img.type_label }}"
-                             onerror="this.src='{{ url_for('static', filename='uploads/' + img.image_path) }}'">
-                        <div class="carousel-caption">
-                            <span class="carousel-caption-badge">
-                                <img src="{{ url_for('static', filename='images/' + img.icon) }}" alt="" class="icon-img"> {{ img.label or img.type_label }}
-                            </span>
-                        </div>
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#dashboardCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#dashboardCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            </button>
-            <div class="carousel-counter d-md-none">
-                <span id="carouselCurrent">1</span> / {{ carousel_images|length }}
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 
 <div class="row g-4 mb-4">
     <!-- 作物カード -->
@@ -129,6 +87,123 @@
 </div>
 
 <div class="row g-4">
+    <!-- 最新の日記 -->
+    <div class="col-md-4">
+        <div class="card h-100 dashboard-card-with-bg card-bg-diary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg"> 最新の日記
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_diaries %}
+                <div class="list-group list-group-flush list-group-transparent">
+                    {% for diary in recent_diaries %}
+                    <a href="{{ url_for('diary.detail', diary_id=diary.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ diary.title }}</h6>
+                            <small class="text-muted">{{ diary.entry_date }}</small>
+                        </div>
+                        {% if diary.content %}
+                        <small class="text-muted dashboard-list-excerpt">{{ diary.content|truncate(60, True) }}</small>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    まだ日記が登録されていません。<br>
+                    <a href="{{ url_for('diary.new') }}">日記を登録</a>してください。
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- カルーセル画像 -->
+    <div class="col-md-4">
+        {% if carousel_images %}
+        <div id="dashboardCarousel" class="carousel slide h-100" data-bs-ride="carousel" data-bs-interval="4000" data-bs-touch="true">
+            <div class="carousel-inner">
+                {% for img in carousel_images %}
+                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                    <a href="{{ img.detail_url }}" class="position-relative d-block">
+                        <img src="{{ url_for('static', filename='uploads/' + (img.image_path | thumb_path)) }}"
+                             class="d-block w-100 carousel-dashboard-img"
+                             alt="{{ img.label or img.type_label }}"
+                             onerror="this.src='{{ url_for('static', filename='uploads/' + img.image_path) }}'">
+                        <span class="carousel-type-icon">
+                            <img src="{{ url_for('static', filename='images/' + img.icon) }}" alt="{{ img.type_label }}">
+                        </span>
+                        {% if img.sort_date %}
+                        <span class="card-img-date-overlay">{{ img.sort_date[:10] }}</span>
+                        {% endif %}
+                        <div class="carousel-caption card-photo-overlay">
+                            <h5 class="card-title">
+                                {% if img.crop_name %}
+                                    {{ crop_label(img.crop_name, img.variety, img.icon_path, img.image_color) }}
+                                {% else %}
+                                    {{ img.label or img.type_label }}
+                                {% endif %}
+                            </h5>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#dashboardCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#dashboardCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            </button>
+        </div>
+        {% else %}
+        <div class="card h-100">
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <p class="text-muted mb-0">画像がありません</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 未完了タスク -->
+    <div class="col-md-4">
+        <div class="card h-100 dashboard-card-with-bg card-bg-tasklist">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img icon-img-lg"> 未完了タスク
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if pending_tasks %}
+                <div class="list-group list-group-flush list-group-transparent">
+                    {% for task in pending_tasks %}
+                    <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ task.title }}</h6>
+                            {% if task.due_date %}
+                            <small class="text-muted">{{ task.due_date }}</small>
+                            {% endif %}
+                        </div>
+                        {% if task.description %}
+                        <small class="text-muted dashboard-list-excerpt">{{ task.description|truncate(60, True) }}</small>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    未完了のタスクはありません。<br>
+                    <a href="{{ url_for('tasks.new') }}">タスクを登録</a>してください。
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
     <!-- 最近植え付けた作物 -->
     <div class="col-md-4">
         <div class="card h-100 dashboard-card-with-bg card-bg-location-crop">
@@ -215,73 +290,6 @@
                 <p class="text-muted text-center mb-0">
                     まだ収穫記録がありません。<br>
                     <a href="{{ url_for('harvests.list') }}">収穫を記録</a>してください。
-                </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4 mt-2">
-    <!-- 最新の日記 -->
-    <div class="col-md-6">
-        <div class="card h-100 dashboard-card-with-bg card-bg-diary">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg"> 最新の日記
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if recent_diaries %}
-                <div class="list-group list-group-flush list-group-transparent">
-                    {% for diary in recent_diaries %}
-                    <a href="{{ url_for('diary.detail', diary_id=diary.id) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ diary.title }}</h6>
-                            <small class="text-muted">{{ diary.entry_date }}</small>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-muted text-center mb-0">
-                    まだ日記が登録されていません。<br>
-                    <a href="{{ url_for('diary.new') }}">日記を登録</a>してください。
-                </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- 未完了タスク -->
-    <div class="col-md-6">
-        <div class="card h-100 dashboard-card-with-bg card-bg-tasklist">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">
-                    <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img icon-img-lg"> 未完了タスク
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if pending_tasks %}
-                <div class="list-group list-group-flush list-group-transparent">
-                    {% for task in pending_tasks %}
-                    <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">
-                                <span class="badge {{ Task.get_status_badge(task.status) }} me-1">{{ Task.get_status_label(task.status) }}</span>
-                                {{ task.title }}
-                            </h6>
-                            {% if task.due_date %}
-                            <small class="text-muted"><i class="bi bi-calendar-event"></i> 期限: {{ task.due_date }}</small>
-                            {% endif %}
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-muted text-center mb-0">
-                    未完了のタスクはありません。<br>
-                    <a href="{{ url_for('tasks.new') }}">タスクを登録</a>してください。
                 </p>
                 {% endif %}
             </div>

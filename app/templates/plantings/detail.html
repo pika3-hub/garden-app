@@ -139,24 +139,24 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
         <div class="btn-group-action">
             {% if location_crop.status == 'active' %}
             <a href="{{ url_for('plantings.planting_edit', location_crop_id=location_crop.id) }}" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> 編集
+                <i class="bi bi-pencil"></i> 植え付けを編集
             </a>
             <form method="POST"
                   action="{{ url_for('locations.remove_crop', location_id=location_crop.location_id, location_crop_id=location_crop.id) }}"
                   class="d-inline" onsubmit="return confirm('削除してもよろしいですか？');">
                 <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-x-circle"></i> 削除
+                    <i class="bi bi-x-circle"></i> 植え付けを削除
                 </button>
             </form>
             {% elif location_crop.status == 'harvested' %}
             <a href="{{ url_for('plantings.planting_edit_harvested', location_crop_id=location_crop.id) }}" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> 編集
+                <i class="bi bi-pencil"></i> 植え付けを編集
             </a>
             <form method="POST"
                   action="{{ url_for('locations.remove_crop', location_id=location_crop.location_id, location_crop_id=location_crop.id) }}"
                   class="d-inline" onsubmit="return confirm('削除してもよろしいですか？');">
                 <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-x-circle"></i> 削除
+                    <i class="bi bi-x-circle"></i> 植え付けを削除
                 </button>
             </form>
             {% endif %}

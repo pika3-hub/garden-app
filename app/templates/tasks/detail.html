@@ -63,11 +63,11 @@
 
         <div class="btn-group-action">
             <a href="{{ url_for('tasks.edit', task_id=task.id) }}" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> 編集
+                <i class="bi bi-pencil"></i> タスクを編集
             </a>
             <form method="POST" action="{{ url_for('tasks.delete', task_id=task.id) }}" class="d-inline" onsubmit="return confirmDelete('{{ task.title }}');">
                 <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-trash"></i> 削除
+                    <i class="bi bi-trash"></i> タスクを削除
                 </button>
             </form>
         </div>

@@ -83,20 +83,31 @@ def create_app(config_name='default'):
         # カルーセル用: 最近の画像を全テーブルから取得
         db = get_db()
         carousel_images_raw = db.execute('''
-            SELECT 'crop' AS type, id, image_path, name AS label, CAST(created_at AS TEXT) AS sort_date
+            SELECT 'crop' AS type, id, image_path, name AS label, CAST(created_at AS TEXT) AS sort_date,
+                   NULL AS crop_name, NULL AS variety, NULL AS icon_path, NULL AS image_color
             FROM crops WHERE image_path IS NOT NULL AND image_path != ''
             UNION ALL
-            SELECT 'location' AS type, id, image_path, name AS label, CAST(created_at AS TEXT) AS sort_date
+            SELECT 'location' AS type, id, image_path, name AS label, CAST(created_at AS TEXT) AS sort_date,
+                   NULL, NULL, NULL, NULL
             FROM locations WHERE image_path IS NOT NULL AND image_path != ''
             UNION ALL
-            SELECT 'diary' AS type, id, image_path, title AS label, CAST(entry_date AS TEXT) AS sort_date
+            SELECT 'diary' AS type, id, image_path, title AS label, CAST(entry_date AS TEXT) AS sort_date,
+                   NULL, NULL, NULL, NULL
             FROM diary_entries WHERE image_path IS NOT NULL AND image_path != ''
             UNION ALL
-            SELECT 'harvest' AS type, id, image_path, '' AS label, CAST(harvest_date AS TEXT) AS sort_date
-            FROM harvests WHERE image_path IS NOT NULL AND image_path != ''
+            SELECT 'harvest' AS type, h.id, h.image_path, '' AS label, CAST(h.harvest_date AS TEXT) AS sort_date,
+                   c.name AS crop_name, c.variety, c.icon_path, c.image_color
+            FROM harvests h
+            JOIN plantings p ON h.location_crop_id = p.id
+            JOIN crops c ON p.crop_id = c.id
+            WHERE h.image_path IS NOT NULL AND h.image_path != ''
             UNION ALL
-            SELECT 'planting_record' AS type, id, image_path, '' AS label, CAST(recorded_at AS TEXT) AS sort_date
-            FROM planting_records WHERE image_path IS NOT NULL AND image_path != ''
+            SELECT 'planting_record' AS type, pr.id, pr.image_path, '' AS label, CAST(pr.recorded_at AS TEXT) AS sort_date,
+                   c.name AS crop_name, c.variety, c.icon_path, c.image_color
+            FROM planting_records pr
+            JOIN plantings p ON pr.location_crop_id = p.id
+            JOIN crops c ON p.crop_id = c.id
+            WHERE pr.image_path IS NOT NULL AND pr.image_path != ''
             ORDER BY sort_date DESC
             LIMIT 20
         ''').fetchall()

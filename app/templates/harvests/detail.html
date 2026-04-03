@@ -76,12 +76,12 @@
 
         <div class="btn-group-action">
             <a href="{{ url_for('harvests.edit', harvest_id=harvest.id) }}" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> 編集
+                <i class="bi bi-pencil"></i> 収穫を編集
             </a>
             <form method="POST" action="{{ url_for('harvests.delete', harvest_id=harvest.id) }}"
                   class="d-inline" onsubmit="return confirm('この収穫記録を削除しますか？');">
                 <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-trash"></i> 削除
+                    <i class="bi bi-trash"></i> 収穫を削除
                 </button>
             </form>
         </div>
