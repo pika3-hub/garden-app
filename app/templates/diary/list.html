@@ -7,17 +7,27 @@
     <div class="col-md-6">
         <h1><img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg"> 管理日記<span class="text-muted fs-6"> - 登録済みの日記 ({{ entries|length }}件)</span></h1>
     </div>
-    <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
+    <div class="col-md-6 text-end d-flex justify-content-end align-items-center gap-2">
+        <form method="GET" action="{{ url_for('diary.list') }}" class="d-flex gap-2">
+            <input type="text" name="keyword" class="form-control form-control-sm" placeholder="タイトル、内容で検索" value="{{ keyword }}" style="width: 180px;">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-search"></i>
+            </button>
+            {% if keyword %}
+            <a href="{{ url_for('diary.list') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x-circle"></i>
+            </a>
+            {% endif %}
+        </form>
         <a href="{{ url_for('diary.new') }}" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> 日記を追加
         </a>
     </div>
 </div>
 
-{% if entries %}
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    {% if years %}
-    <div id="date-badge-filter" class="flex-grow-1">
+{% if years %}
+<div class="mb-3">
+    <div id="date-badge-filter">
         <div class="badge-group badge-group-year">
             <span class="badge-group-label">年:</span>
             {% for year in years %}
@@ -38,20 +48,10 @@
             {% endfor %}
         </div>
     </div>
-    {% endif %}
-    <form method="GET" action="{{ url_for('diary.list') }}" class="d-flex gap-2 flex-shrink-0">
-        <input type="text" name="keyword" class="form-control form-control-sm" placeholder="タイトル、内容で検索" value="{{ keyword }}" style="width: 180px;">
-        <button type="submit" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-search"></i>
-        </button>
-        {% if keyword %}
-        <a href="{{ url_for('diary.list') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-x-circle"></i>
-        </a>
-        {% endif %}
-    </form>
 </div>
+{% endif %}
 
+{% if entries %}
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当する日記がありません。
 </div>
