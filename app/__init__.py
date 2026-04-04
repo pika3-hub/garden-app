@@ -84,7 +84,7 @@ def create_app(config_name='default'):
         db = get_db()
         carousel_images_raw = db.execute('''
             SELECT 'crop' AS type, id, image_path, name AS label, CAST(created_at AS TEXT) AS sort_date,
-                   NULL AS crop_name, NULL AS variety, NULL AS icon_path, NULL AS image_color
+                   name AS crop_name, variety, icon_path, image_color
             FROM crops WHERE image_path IS NOT NULL AND image_path != ''
             UNION ALL
             SELECT 'location' AS type, id, image_path, name AS label, CAST(created_at AS TEXT) AS sort_date,
