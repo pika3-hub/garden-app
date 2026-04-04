@@ -10,10 +10,12 @@
             {% for diary in related_diaries %}
             <li class="list-group-item">
                 {% if diary.image_path %}
-                <img src="{{ url_for('static', filename='uploads/' + (diary.image_path | thumb_path)) }}"
-                     alt="日記画像"
-                     style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
-                     onerror="this.src='{{ url_for('static', filename='uploads/' + diary.image_path) }}'">
+                <a href="{{ url_for('diary.detail', diary_id=diary.id) }}">
+                    <img src="{{ url_for('static', filename='uploads/' + (diary.image_path | thumb_path)) }}"
+                         alt="日記画像"
+                         style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                         onerror="this.src='{{ url_for('static', filename='uploads/' + diary.image_path) }}'">
+                </a>
                 {% endif %}
                 <a href="{{ url_for('diary.detail', diary_id=diary.id) }}">
                     <i class="bi bi-journal"></i> {{ diary.title }}

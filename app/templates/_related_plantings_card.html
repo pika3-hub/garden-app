@@ -12,10 +12,12 @@
             {% for lc in related_plantings %}
             <li class="list-group-item">
                 {% if lc.latest_record_image %}
-                <img src="{{ url_for('static', filename='uploads/' + (lc.latest_record_image | thumb_path)) }}"
-                     alt="栽培記録画像"
-                     style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
-                     onerror="this.src='{{ url_for('static', filename='uploads/' + lc.latest_record_image) }}'">
+                <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}">
+                    <img src="{{ url_for('static', filename='uploads/' + (lc.latest_record_image | thumb_path)) }}"
+                         alt="栽培記録画像"
+                         style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                         onerror="this.src='{{ url_for('static', filename='uploads/' + lc.latest_record_image) }}'">
+                </a>
                 {% endif %}
                 <div>
                     <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}">

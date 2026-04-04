@@ -13,10 +13,12 @@
             </a>
         </div>
         {% if crop_info.crop_image_path %}
-        <img src="{{ url_for('static', filename='uploads/' + (crop_info.crop_image_path | thumb_path)) }}"
-             alt="作物画像"
-             style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
-             onerror="this.src='{{ url_for('static', filename='uploads/' + crop_info.crop_image_path) }}'">
+        <a href="{{ url_for('crops.detail', crop_id=crop_info.crop_id) }}">
+            <img src="{{ url_for('static', filename='uploads/' + (crop_info.crop_image_path | thumb_path)) }}"
+                 alt="作物画像"
+                 style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                 onerror="this.src='{{ url_for('static', filename='uploads/' + crop_info.crop_image_path) }}'">
+        </a>
         {% endif %}
         {% if crop_info.crop_type %}
         <div class="mb-2">
