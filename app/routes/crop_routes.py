@@ -5,6 +5,7 @@ from app.models.planting import Planting
 from app.models.diary import DiaryEntry
 from app.models.harvest import Harvest
 from app.models.task import Task
+from app.models.supplement import Supplement
 from app.utils.upload import save_image, delete_image
 
 bp = Blueprint('crops', __name__, url_prefix='/crops')
@@ -38,6 +39,7 @@ def detail(crop_id):
 
     prev_crop, next_crop = Crop.get_adjacent(crop_id)
     related_tasks = Task.get_incomplete_tasks_for_entity('crop', crop_id)
+    supplements = Supplement.get_by_entity('crop', crop_id)
 
     return render_template('crops/detail.html',
                           crop=crop,
@@ -46,7 +48,8 @@ def detail(crop_id):
                           related_diaries=related_diaries,
                           prev_crop=prev_crop,
                           next_crop=next_crop,
-                          related_tasks=related_tasks)
+                          related_tasks=related_tasks,
+                          supplements=supplements)
 
 
 def _get_crop_icon_list():
@@ -168,6 +171,10 @@ def delete(crop_id):
         return redirect(url_for('crops.list'))
 
     try:
+        # 補足情報の画像を削除
+        supplement_images = Supplement.delete_by_entity('crop', crop_id)
+        for img_path in supplement_images:
+            delete_image(img_path)
         # 画像を削除
         if crop.get('image_path'):
             delete_image(crop['image_path'])

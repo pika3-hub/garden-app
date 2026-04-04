@@ -3,6 +3,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.task import Task
 from app.models.crop import Crop
 from app.models.location import Location
+from app.models.supplement import Supplement
+from app.utils.upload import delete_image
 
 bp = Blueprint('tasks', __name__, url_prefix='/tasks')
 
@@ -39,6 +41,7 @@ def detail(task_id):
 
     relations = Task.get_relations(task_id)
     prev_task, next_task = Task.get_adjacent(task_id)
+    supplements = Supplement.get_by_entity('task', task_id)
 
     return render_template('tasks/detail.html',
                           task=task,
@@ -46,7 +49,8 @@ def detail(task_id):
                           today=date.today(),
                           Task=Task,
                           prev_task=prev_task,
-                          next_task=next_task)
+                          next_task=next_task,
+                          supplements=supplements)
 
 
 @bp.route('/new')
@@ -179,6 +183,10 @@ def delete(task_id):
         return redirect(url_for('tasks.list'))
 
     try:
+        # 補足情報の画像を削除
+        supplement_images = Supplement.delete_by_entity('task', task_id)
+        for img_path in supplement_images:
+            delete_image(img_path)
         Task.delete(task_id)
         flash(f'タスク「{task["title"]}」を削除しました', 'success')
     except Exception as e:

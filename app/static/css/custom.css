@@ -1049,3 +1049,30 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     font-size: 0.75rem;
     pointer-events: none;
 }
+
+/* ══════════════════════════════════════════════════════════
+   SUPPLEMENTS SECTION (補足情報)
+   ══════════════════════════════════════════════════════════ */
+
+.supplement-item .supplement-actions {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.supplement-item .supplement-actions .btn {
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+}
+.supplement-text {
+  white-space: pre-wrap;
+  color: var(--ink-soft);
+}
+.supplement-url a {
+  word-break: break-all;
+}
+.supplement-youtube {
+  max-width: 560px;
+}
+#supplementTabs .nav-link {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.5rem;
+}

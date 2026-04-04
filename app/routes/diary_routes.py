@@ -5,6 +5,7 @@ from app.models.crop import Crop
 from app.models.location import Location
 from app.models.planting import Planting
 from app.models.harvest import Harvest
+from app.models.supplement import Supplement
 from app.utils.upload import save_image, delete_image
 
 bp = Blueprint('diary', __name__, url_prefix='/diary')
@@ -38,12 +39,14 @@ def detail(diary_id):
 
     relations = DiaryEntry.get_relations(diary_id)
     prev_entry, next_entry = DiaryEntry.get_adjacent(diary_id)
+    supplements = Supplement.get_by_entity('diary', diary_id)
 
     return render_template('diary/detail.html',
                           entry=entry,
                           relations=relations,
                           prev_entry=prev_entry,
-                          next_entry=next_entry)
+                          next_entry=next_entry,
+                          supplements=supplements)
 
 
 @bp.route('/new')
@@ -209,6 +212,10 @@ def delete(diary_id):
         return redirect(url_for('diary.list'))
 
     try:
+        # 補足情報の画像を削除
+        supplement_images = Supplement.delete_by_entity('diary', diary_id)
+        for img_path in supplement_images:
+            delete_image(img_path)
         # 画像を削除
         if entry.get('image_path'):
             delete_image(entry['image_path'])

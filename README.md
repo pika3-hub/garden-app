@@ -55,6 +55,11 @@
 - **詳細画面ナビゲーション**: 全詳細画面で前後データへの移動ボタンを表示
   - 一覧に戻らずに前後のデータへ移動可能
   - 各一覧画面の表示順に基づく前後移動
+- **補足情報**: 作物・場所・日記・タスクの詳細画面に外部情報を複数添付
+  - 補足テキスト（メモ・注意事項など）
+  - 追加画像（サムネイル・lightbox対応）
+  - 外部サイトへのURL（リンククリックで遷移）
+  - YouTube動画の埋め込み（詳細画面上で再生可能、タイムスタンプ対応）
 
 ## 技術スタック
 
@@ -103,7 +108,8 @@ garden-app/
 │   │   ├── harvest.py      # 収穫記録モデル
 │   │   ├── calendar.py     # カレンダーモデル
 │   │   ├── task.py         # タスクモデル
-│   │   └── planting_record.py # 栽培記録モデル
+│   │   ├── planting_record.py # 栽培記録モデル
+│   │   └── supplement.py   # 補足情報モデル
 │   ├── routes/             # ルーティング（Blueprint）
 │   │   ├── crop_routes.py          # Blueprint: crops
 │   │   ├── location_routes.py      # Blueprint: locations
@@ -111,9 +117,11 @@ garden-app/
 │   │   ├── harvest_routes.py       # Blueprint: harvests
 │   │   ├── calendar_routes.py      # Blueprint: calendar
 │   │   ├── task_routes.py          # Blueprint: tasks
-│   │   └── planting_routes.py      # Blueprint: plantings
+│   │   ├── planting_routes.py      # Blueprint: plantings
+│   │   └── supplement_routes.py   # Blueprint: supplements
 │   ├── templates/          # HTMLテンプレート
 │   │   ├── _detail_nav.html # 詳細画面の前後ナビゲーション共通部品
+│   │   ├── _supplements_section.html # 補足情報セクション共通部品
 │   │   ├── _crop_info_card.html # 作物情報サイドバーカード
 │   │   ├── crops/         # 作物関連
 │   │   ├── locations/     # 場所関連（見取り図含む）
@@ -133,7 +141,8 @@ garden-app/
 │   │       ├── crops/     # 作物画像
 │   │       ├── locations/ # 場所画像
 │   │       ├── diary/     # 日記画像
-│   │       └── harvests/  # 収穫記録画像
+│   │       ├── harvests/  # 収穫記録画像
+│   │       └── supplements/ # 補足情報画像
 │   ├── migrations/        # データベースマイグレーション（増分SQL）
 │   ├── utils/             # ユーティリティ
 │   │   ├── upload.py      # 画像アップロードヘルパー
@@ -169,6 +178,7 @@ garden-app/
 - [x] カレンダービュー（月別表示 + アイコン表示 + キーボード操作）
 - [x] タスク管理機能（CRUD + ステータス管理 + カレンダー連携）
 - [x] 詳細画面ナビゲーション（全詳細画面で前後移動）
+- [x] 補足情報（テキスト・画像・URL・YouTube埋め込み）
 
 ## 今後の予定
 - データエクスポート機能（CSV/PDF）
