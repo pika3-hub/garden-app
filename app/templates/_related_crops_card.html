@@ -11,10 +11,12 @@
             {% for crop in related_crops %}
             <li class="list-group-item">
                 {% if crop.crop_image_path %}
-                <img src="{{ url_for('static', filename='uploads/' + (crop.crop_image_path | thumb_path)) }}"
-                     alt="作物画像"
-                     style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
-                     onerror="this.src='{{ url_for('static', filename='uploads/' + crop.crop_image_path) }}'">
+                <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}">
+                    <img src="{{ url_for('static', filename='uploads/' + (crop.crop_image_path | thumb_path)) }}"
+                         alt="作物画像"
+                         style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                         onerror="this.src='{{ url_for('static', filename='uploads/' + crop.crop_image_path) }}'">
+                </a>
                 {% endif %}
                 <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}">
                     {{ crop_label(crop.crop_name, crop.variety, crop.icon_path, crop.image_color) }}

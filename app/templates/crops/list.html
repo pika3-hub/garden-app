@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}作物一覧 - 家庭菜園管理アプリ{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-6">
-        <h1><img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img icon-img-lg"> 作物一覧 <span class="text-muted fs-6"> - 登録されている作物 ({{ crops|length }}件)</span></h1>
+        <h1><img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img icon-img-lg"> 作物一覧 <span class="text-muted fs-6"> - 登録済みの作物 ({{ crops|length }}件)</span></h1>
     </div>
     <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('crops.new') }}" class="btn btn-success">
@@ -55,7 +56,7 @@
             </div>
             {% endif %}
             <div class="card-photo-overlay">
-                <h5 class="card-title">{{ crop_display_name(crop.name, crop.variety) }}</h5>
+                <h5 class="card-title">{{ crop_label(crop.name, crop.variety, crop.icon_path, crop.image_color) }}</h5>
             </div>
         </a>
     </div>

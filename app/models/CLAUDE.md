@@ -131,6 +131,19 @@
 | created_at | TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 更新日時 |
 
+#### supplements
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| entity_type | VARCHAR(20) | エンティティ種別（crop/location/diary/task） |
+| entity_id | INTEGER | 親エンティティのID |
+| supplement_type | VARCHAR(20) | 補足種別（text/image/url/youtube） |
+| title | VARCHAR(200) | 表示ラベル（任意） |
+| content | TEXT | ペイロード（text:本文, image:画像パス, url:完全URL, youtube:動画ID or 動画ID:秒数） |
+| sort_order | INTEGER | 表示順（将来用、現在は登録順） |
+| created_at | TIMESTAMP | 作成日時 |
+| updated_at | TIMESTAMP | 更新日時 |
+
 ## SQLite Row の重複カラム名に関する注意（重要）
 
 SQLiteの `Row` オブジェクトを dict として扱う場合、**同名カラムは最初に出現した値が優先される**（最後ではない）。これは `SELECT dr.*, lc.id as id` のようなクエリで、`dr.*` に含まれる `id`（リレーションテーブルのID）が `lc.id as id`（エンティティのID）を上書きする原因になる。

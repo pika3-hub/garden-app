@@ -71,6 +71,10 @@
                 </button>
             </form>
         </div>
+
+        {% set supplement_entity_type = 'task' %}
+        {% set supplement_entity_id = task.id %}
+        {% include '_supplements_section.html' %}
     </div>
 
     <div class="col-md-4">

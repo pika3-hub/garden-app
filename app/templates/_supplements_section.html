@@ -1,0 +1,214 @@
+{# 補足情報セクション（各詳細画面のメインカラムにinclude）
+   変数: supplements (list), supplement_entity_type (str), supplement_entity_id (int) #}
+
+<div class="card mb-3" id="supplements">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="bi bi-paperclip"></i> 補足情報{% if supplements %} ({{ supplements|length }}){% endif %}</h6>
+        <button class="btn btn-sm btn-outline-light" type="button"
+                data-bs-toggle="collapse" data-bs-target="#supplementAddForm"
+                aria-expanded="false" aria-controls="supplementAddForm">
+            <i class="bi bi-plus-lg"></i> 補足情報を追加
+        </button>
+    </div>
+
+    {# ── 追加フォーム（折りたたみ） ── #}
+    <div class="collapse" id="supplementAddForm">
+        <div class="card-body border-bottom">
+            {# タブ切り替え #}
+            <ul class="nav nav-tabs nav-fill mb-3" id="supplementTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-text" data-bs-toggle="tab"
+                            data-bs-target="#pane-text" type="button" role="tab">
+                        <i class="bi bi-card-text"></i> テキスト
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-image" data-bs-toggle="tab"
+                            data-bs-target="#pane-image" type="button" role="tab">
+                        <i class="bi bi-image"></i> 画像
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-url" data-bs-toggle="tab"
+                            data-bs-target="#pane-url" type="button" role="tab">
+                        <i class="bi bi-link-45deg"></i> URL
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-youtube" data-bs-toggle="tab"
+                            data-bs-target="#pane-youtube" type="button" role="tab">
+                        <i class="bi bi-youtube"></i> YouTube
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="supplementTabContent">
+                {# テキストタブ #}
+                <div class="tab-pane fade show active" id="pane-text" role="tabpanel">
+                    <form method="POST" action="{{ url_for('supplements.add', entity_type=supplement_entity_type, entity_id=supplement_entity_id) }}">
+                        <input type="hidden" name="supplement_type" value="text">
+                        <div class="mb-2">
+                            <input type="text" name="title" class="form-control form-control-sm" placeholder="見出し（任意）">
+                        </div>
+                        <div class="mb-2">
+                            <textarea name="content" class="form-control" rows="3" placeholder="補足テキストを入力..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> 追加</button>
+                    </form>
+                </div>
+
+                {# 画像タブ #}
+                <div class="tab-pane fade" id="pane-image" role="tabpanel">
+                    <form method="POST" action="{{ url_for('supplements.add', entity_type=supplement_entity_type, entity_id=supplement_entity_id) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="supplement_type" value="image">
+                        <div class="mb-2">
+                            <input type="text" name="title" class="form-control form-control-sm" placeholder="キャプション（任意）">
+                        </div>
+                        <div class="mb-2">
+                            <input type="file" name="image" class="form-control form-control-sm" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> 追加</button>
+                    </form>
+                </div>
+
+                {# URLタブ #}
+                <div class="tab-pane fade" id="pane-url" role="tabpanel">
+                    <form method="POST" action="{{ url_for('supplements.add', entity_type=supplement_entity_type, entity_id=supplement_entity_id) }}">
+                        <input type="hidden" name="supplement_type" value="url">
+                        <div class="mb-2">
+                            <input type="text" name="title" class="form-control form-control-sm" placeholder="リンク名（任意）">
+                        </div>
+                        <div class="mb-2">
+                            <input type="url" name="content" class="form-control form-control-sm" placeholder="https://..." required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> 追加</button>
+                    </form>
+                </div>
+
+                {# YouTubeタブ #}
+                <div class="tab-pane fade" id="pane-youtube" role="tabpanel">
+                    <form method="POST" action="{{ url_for('supplements.add', entity_type=supplement_entity_type, entity_id=supplement_entity_id) }}">
+                        <input type="hidden" name="supplement_type" value="youtube">
+                        <div class="mb-2">
+                            <input type="text" name="title" class="form-control form-control-sm" placeholder="動画タイトル（任意）">
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="content" class="form-control form-control-sm"
+                                   placeholder="YouTube URL を貼り付け" required>
+                            <div class="form-text">YouTube の URL または埋め込みコードを入力してください</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> 追加</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── 補足一覧 ── #}
+    {% if supplements %}
+    <ul class="list-group list-group-flush">
+        {% for s in supplements %}
+        <li class="list-group-item supplement-item">
+            {# ヘッダー: タイトル + 操作ボタン #}
+            <div class="d-flex justify-content-between align-items-start mb-1">
+                <div class="supplement-header">
+                    {% if s.supplement_type == 'text' %}
+                        <i class="bi bi-card-text text-muted"></i>
+                    {% elif s.supplement_type == 'image' %}
+                        <i class="bi bi-image text-muted"></i>
+                    {% elif s.supplement_type == 'url' %}
+                        <i class="bi bi-link-45deg text-muted"></i>
+                    {% elif s.supplement_type == 'youtube' %}
+                        <i class="bi bi-youtube text-danger"></i>
+                    {% endif %}
+                    {% if s.title %}
+                        <strong>{{ s.title }}</strong>
+                    {% endif %}
+                </div>
+                <div class="supplement-actions">
+                    <button class="btn btn-sm btn-outline-secondary" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#editSupplement{{ s.id }}"
+                            title="編集"><i class="bi bi-pencil"></i></button>
+                    <form method="POST" action="{{ url_for('supplements.delete', supplement_id=s.id) }}" class="d-inline"
+                          onsubmit="return confirm('この補足情報を削除しますか？');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="削除"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+            </div>
+
+            {# コンテンツ表示 #}
+            {% if s.supplement_type == 'text' %}
+                <div class="supplement-text">{{ s.content }}</div>
+            {% elif s.supplement_type == 'image' %}
+                <div class="supplement-image">
+                    <img src="{{ url_for('static', filename='uploads/' + s.content) }}"
+                         class="img-fluid rounded lightbox-target" alt="{{ s.title or '補足画像' }}"
+                         style="max-height: 300px; object-fit: contain;">
+                </div>
+            {% elif s.supplement_type == 'url' %}
+                <div class="supplement-url">
+                    <a href="{{ s.content }}" target="_blank" rel="noopener noreferrer">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        {{ s.title or s.content }}
+                    </a>
+                </div>
+            {% elif s.supplement_type == 'youtube' %}
+                {% set yt_parts = s.content.split(':') %}
+                {% set yt_id = yt_parts[0] %}
+                {% set yt_start = yt_parts[1] if yt_parts|length > 1 else '' %}
+                <div class="supplement-youtube ratio ratio-16x9">
+                    <iframe src="https://www.youtube.com/embed/{{ yt_id }}{% if yt_start %}?start={{ yt_start }}{% endif %}"
+                            title="{{ s.title or 'YouTube動画' }}"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allowfullscreen></iframe>
+                </div>
+            {% endif %}
+
+            {# 編集フォーム（折りたたみ） #}
+            <div class="collapse mt-2" id="editSupplement{{ s.id }}">
+                <form method="POST" action="{{ url_for('supplements.update', supplement_id=s.id) }}"
+                      {% if s.supplement_type == 'image' %}enctype="multipart/form-data"{% endif %}>
+                    <div class="mb-2">
+                        <input type="text" name="title" class="form-control form-control-sm"
+                               placeholder="{% if s.supplement_type == 'image' %}キャプション{% elif s.supplement_type == 'url' %}リンク名{% elif s.supplement_type == 'youtube' %}動画タイトル{% else %}見出し{% endif %}（任意）"
+                               value="{{ s.title or '' }}">
+                    </div>
+                    {% if s.supplement_type == 'text' %}
+                        <div class="mb-2">
+                            <textarea name="content" class="form-control" rows="3" required>{{ s.content }}</textarea>
+                        </div>
+                    {% elif s.supplement_type == 'image' %}
+                        <div class="mb-2">
+                            <input type="file" name="image" class="form-control form-control-sm" accept="image/*">
+                            <div class="form-text">新しい画像を選択すると差し替えます</div>
+                        </div>
+                    {% elif s.supplement_type == 'url' %}
+                        <div class="mb-2">
+                            <input type="url" name="content" class="form-control form-control-sm"
+                                   value="{{ s.content }}" required>
+                        </div>
+                    {% elif s.supplement_type == 'youtube' %}
+                        <div class="mb-2">
+                            <input type="text" name="content" class="form-control form-control-sm"
+                                   value="https://www.youtube.com/watch?v={{ yt_id }}{% if yt_start %}&t={{ yt_start }}{% endif %}"
+                                   required>
+                        </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> 更新</button>
+                    <button type="button" class="btn btn-secondary btn-sm"
+                            data-bs-toggle="collapse" data-bs-target="#editSupplement{{ s.id }}">キャンセル</button>
+                </form>
+            </div>
+
+            <div class="text-muted small mt-1">{{ s.created_at }}</div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% elif not supplements %}
+    <div class="card-body text-muted text-center">
+        <small>補足情報はまだありません</small>
+    </div>
+    {% endif %}
+</div>

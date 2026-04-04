@@ -6,6 +6,7 @@ from app.models.crop import Crop
 from app.models.diary import DiaryEntry
 from app.models.harvest import Harvest
 from app.models.task import Task
+from app.models.supplement import Supplement
 from app.utils.upload import save_image, delete_image
 
 bp = Blueprint('locations', __name__, url_prefix='/locations')
@@ -54,6 +55,7 @@ def detail(location_id):
     today = date.today().isoformat()
     prev_location, next_location = Location.get_adjacent(location_id)
     related_tasks = Task.get_incomplete_tasks_for_entity('location', location_id)
+    supplements = Supplement.get_by_entity('location', location_id)
 
     return render_template('locations/detail.html',
                           location=location,
@@ -63,7 +65,8 @@ def detail(location_id):
                           today=today,
                           prev_location=prev_location,
                           next_location=next_location,
-                          related_tasks=related_tasks)
+                          related_tasks=related_tasks,
+                          supplements=supplements)
 
 
 @bp.route('/new')
@@ -174,6 +177,10 @@ def delete(location_id):
         return redirect(url_for('locations.list'))
 
     try:
+        # 補足情報の画像を削除
+        supplement_images = Supplement.delete_by_entity('location', location_id)
+        for img_path in supplement_images:
+            delete_image(img_path)
         # 画像を削除
         if location.get('image_path'):
             delete_image(location['image_path'])

@@ -43,7 +43,7 @@ def create_app(config_name='default'):
     app.jinja_env.globals['crop_display_name'] = _crop_display_name
 
     # ブループリント登録
-    from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes, task_routes, planting_routes
+    from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes, task_routes, planting_routes, supplement_routes
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(location_routes.bp)
     app.register_blueprint(diary_routes.bp)
@@ -51,6 +51,7 @@ def create_app(config_name='default'):
     app.register_blueprint(calendar_routes.bp)
     app.register_blueprint(task_routes.bp)
     app.register_blueprint(planting_routes.bp)
+    app.register_blueprint(supplement_routes.bp)
 
     # ホームページルート
     @app.route('/')
@@ -84,7 +85,7 @@ def create_app(config_name='default'):
         db = get_db()
         carousel_images_raw = db.execute('''
             SELECT 'crop' AS type, id, image_path, name AS label, CAST(created_at AS TEXT) AS sort_date,
-                   NULL AS crop_name, NULL AS variety, NULL AS icon_path, NULL AS image_color
+                   name AS crop_name, variety, icon_path, image_color
             FROM crops WHERE image_path IS NOT NULL AND image_path != ''
             UNION ALL
             SELECT 'location' AS type, id, image_path, name AS label, CAST(created_at AS TEXT) AS sort_date,
