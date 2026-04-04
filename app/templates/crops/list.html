@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}作物一覧 - 家庭菜園管理アプリ{% endblock %}
 
@@ -55,7 +56,7 @@
             </div>
             {% endif %}
             <div class="card-photo-overlay">
-                <h5 class="card-title">{{ crop_display_name(crop.name, crop.variety) }}</h5>
+                <h5 class="card-title">{{ crop_label(crop.name, crop.variety, crop.icon_path, crop.image_color) }}</h5>
             </div>
         </a>
     </div>

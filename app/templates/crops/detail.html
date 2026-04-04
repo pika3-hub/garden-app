@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}{{ crop.name }} - 作物詳細{% endblock %}
 
@@ -18,10 +19,10 @@
 
 {% set prev_item = {'url': url_for('crops.detail', crop_id=prev_crop.id),
                     'button_text': '前の作物',
-                    'label': crop_display_name(prev_crop.name, prev_crop.variety)} if prev_crop else None %}
+                    'label': crop_label(prev_crop.name, prev_crop.variety, prev_crop.icon_path, prev_crop.image_color)} if prev_crop else None %}
 {% set next_item = {'url': url_for('crops.detail', crop_id=next_crop.id),
                     'button_text': '次の作物',
-                    'label': crop_display_name(next_crop.name, next_crop.variety)} if next_crop else None %}
+                    'label': crop_label(next_crop.name, next_crop.variety, next_crop.icon_path, next_crop.image_color)} if next_crop else None %}
 {% set nav_label = '作物ナビゲーション' %}
 {% include '_detail_nav.html' %}
 
@@ -41,7 +42,7 @@
                  alt="{{ crop.name }}">
             {% endif %}
             <div class="card-photo-detail-overlay">
-                <h4 class="card-photo-detail-title">{{ crop_display_name(crop.name, crop.variety) }}</h4>
+                <h4 class="card-photo-detail-title">{{ crop_label(crop.name, crop.variety, crop.icon_path, crop.image_color) }}</h4>
                 <div class="detail-fields">
                     <div class="detail-field">
                         <span class="detail-field-label">種類:</span>

@@ -165,7 +165,8 @@ uv run python run.py
 | `data-*` / `title` 属性 | `crop_display_name` 関数 | テキストのみ |
 | カレンダーモーダル（JS動的生成） | JS側で `item.icon_path` を参照 | `calendar.js` で生成 |
 | 見取り図サイドバー（エディター・配置ページ） | `crop_display_name` 関数 | テキストのみ |
-| 作物エンティティ画面（一覧・詳細・登録・編集） | アイコン表示なし | `crop_display_name` のみ使用 |
+| 作物一覧（カードタイトル） | `crop_label` マクロ | アイコン＋テキスト |
+| 作物エンティティ画面（登録・編集） | アイコン表示なし | `crop_display_name` のみ使用 |
 
 #### クエリ要件
 

@@ -87,7 +87,7 @@ class Crop:
         params = {'created_at': current['created_at'], 'id': current['id']}
 
         prev_crop = db.execute(
-            '''SELECT id, name, variety FROM crops
+            '''SELECT id, name, variety, icon_path, image_color FROM crops
                WHERE (created_at < :created_at)
                   OR (created_at = :created_at AND id < :id)
                ORDER BY created_at DESC, id DESC LIMIT 1''',
@@ -95,7 +95,7 @@ class Crop:
         ).fetchone()
 
         next_crop = db.execute(
-            '''SELECT id, name, variety FROM crops
+            '''SELECT id, name, variety, icon_path, image_color FROM crops
                WHERE (created_at > :created_at)
                   OR (created_at = :created_at AND id > :id)
                ORDER BY created_at ASC, id ASC LIMIT 1''',
