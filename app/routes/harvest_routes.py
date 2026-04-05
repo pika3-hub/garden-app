@@ -16,7 +16,8 @@ def list():
     """収穫記録一覧"""
     harvests = Harvest.get_all()
     filter_types = sorted(set(h['crop_type'] for h in harvests if h['crop_type']))
-    return render_template('harvests/list.html', harvests=harvests, filter_types=filter_types)
+    filter_locations = sorted(set(h['location_name'] for h in harvests if h['location_name']))
+    return render_template('harvests/list.html', harvests=harvests, filter_types=filter_types, filter_locations=filter_locations)
 
 
 @bp.route('/<int:harvest_id>')

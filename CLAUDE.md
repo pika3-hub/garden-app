@@ -455,26 +455,26 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 作物・場所・植え付け・収穫の一覧画面では、種類バッジによるクライアントサイドフィルターを提供する。日記・タスクは従来のサーバーサイド検索を維持。
 
-#### 仕組み
+#### 2つのモード
 
-- 共通JS `app/static/js/badge-filter.js` を4画面で共有
-- ルートで `filter_types`（ソート済みset）をテンプレートに渡す
-- テンプレートで `#badge-filter-container` 内にバッジを描画
-- カードラッパーに `data-filter-type` 属性を付与
-- クリックで `badge-filter-active` / `badge-filter-inactive` をトグル
-- 未選択時は全件表示、複数選択時はOR（いずれかに一致）
-- 件数表示（`#filter-count`）はフィルタ結果に連動して更新
+共通JS `app/static/js/badge-filter.js` が2つのモードを自動判定する:
+
+**レガシーモード（作物一覧・場所一覧）:** `#badge-filter-container` + `data-filter-type` による単一グループフィルター。OR論理（複数選択でいずれかに一致）。
+
+**マルチグループモード（植え付け一覧・収穫一覧）:** `.badge-filter-group[data-filter-key]` による複数グループフィルター。グループ間AND・グループ内OR。カードは `data-filter-card` + `data-filter-group-{key}` 属性を使用。
 
 #### 各画面のフィルター対象
 
-| 画面 | フィルター対象 | ルートで渡す変数 |
-|------|-------------|----------------|
-| 作物一覧 | `crop_type` | `filter_types` |
-| 場所一覧 | `location_type` | `filter_types` |
-| 植え付け一覧 | `crop_type`（ステータスタブは別途維持） | `filter_types` |
-| 収穫記録一覧 | `crop_type` | `filter_types` |
+| 画面 | モード | フィルター対象 | ルートで渡す変数 |
+|------|--------|-------------|----------------|
+| 作物一覧 | レガシー | `crop_type` | `filter_types` |
+| 場所一覧 | レガシー | `location_type` | `filter_types` |
+| 植え付け一覧 | マルチグループ | `crop_type` + `location_name` | `filter_types`, `filter_locations` |
+| 収穫記録一覧 | マルチグループ | `crop_type` + `location_name` | `filter_types`, `filter_locations` |
 
 #### テンプレートでの使い方
+
+**レガシーモード（作物・場所一覧）:**
 
 ```html
 {% if filter_types %}
@@ -487,17 +487,46 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 <!-- カードラッパーに data-filter-type を付与 -->
 <div class="col-md-6 col-lg-4 mb-3" data-filter-type="{{ item.crop_type }}">
+```
 
-<!-- 件数表示 -->
+**マルチグループモード（植え付け・収穫一覧）:**
+
+```html
+{% if filter_types or filter_locations %}
+<div class="badge-filter-multi">
+    {% if filter_types %}
+    <div class="badge-filter-group" data-filter-key="cropType">
+        <span class="badge-filter-group-label">種類:</span>
+        {% for t in filter_types %}
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if filter_locations %}
+    <div class="badge-filter-group" data-filter-key="locationName">
+        <span class="badge-filter-group-label">場所:</span>
+        {% for loc in filter_locations %}
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ loc }}">{{ loc }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- カードラッパーに data-filter-card + data-filter-group-* を付与 -->
+<div class="col-md-6 col-lg-4 mb-3" data-filter-card data-filter-group-crop-type="{{ item.crop_type }}" data-filter-group-location-name="{{ item.location_name }}">
+```
+
+**共通（件数・0件メッセージ）:**
+
+```html
 <p class="text-muted mb-3"><span id="filter-count" data-suffix="件の作物">{{ items|length }}件の作物</span></p>
-
-<!-- フィルタ0件時メッセージ -->
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当する項目がありません。
 </div>
 ```
 
-CSSクラス: `.badge-filter-container`, `.badge-filter`, `.badge-filter-active`, `.badge-filter-inactive`（`custom.css` で定義）
+CSSクラス: `.badge-filter-container`, `.badge-filter-multi`, `.badge-filter-group`, `.badge-filter-group-label`, `.badge-filter`, `.badge-filter-active`, `.badge-filter-inactive`（`custom.css` で定義）
 
 ### 一覧画面の件数表示
 

@@ -352,6 +352,25 @@ a.dashboard-stat-link:hover {
   opacity: 0.85;
 }
 
+/* ── Multi-group Badge Filters ──────────────────────────── */
+.badge-filter-multi {
+  margin-bottom: 1rem;
+}
+.badge-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+.badge-filter-group-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  margin-right: 0.25rem;
+  white-space: nowrap;
+}
+
 /* ── Date Badge Filter Groups ────────────────────────────── */
 #date-badge-filter {
   margin-bottom: 1rem;

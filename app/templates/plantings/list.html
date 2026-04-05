@@ -39,11 +39,24 @@
     </li>
 </ul>
 
-{% if filter_types %}
-<div id="badge-filter-container" class="badge-filter-container">
-    {% for t in filter_types %}
-    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
-    {% endfor %}
+{% if filter_types or filter_locations %}
+<div class="badge-filter-multi">
+    {% if filter_types %}
+    <div class="badge-filter-group" data-filter-key="cropType">
+        <span class="badge-filter-group-label">種類:</span>
+        {% for t in filter_types %}
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if filter_locations %}
+    <div class="badge-filter-group" data-filter-key="locationName">
+        <span class="badge-filter-group-label">場所:</span>
+        {% for loc in filter_locations %}
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ loc }}">{{ loc }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -53,7 +66,7 @@
 </div>
 <div class="row">
     {% for crop in crops %}
-    <div class="col-md-6 col-lg-4 mb-3" data-filter-type="{{ crop.crop_type }}">
+    <div class="col-md-6 col-lg-4 mb-3" data-filter-card data-filter-group-crop-type="{{ crop.crop_type }}" data-filter-group-location-name="{{ crop.location_name }}">
         <a href="{{ url_for('plantings.detail', location_crop_id=crop.id) }}" class="card h-100 card-photo card-bg-location-crop {{ '' if crop.latest_growth_image else 'card-no-image' }}">
             {% if crop.latest_growth_image %}
             <img src="{{ url_for('static', filename='uploads/' + (crop.latest_growth_image | thumb_path)) }}"

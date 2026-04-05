@@ -22,11 +22,24 @@
     </div>
 </div>
 
-{% if filter_types %}
-<div id="badge-filter-container" class="badge-filter-container">
-    {% for t in filter_types %}
-    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
-    {% endfor %}
+{% if filter_types or filter_locations %}
+<div class="badge-filter-multi">
+    {% if filter_types %}
+    <div class="badge-filter-group" data-filter-key="cropType">
+        <span class="badge-filter-group-label">種類:</span>
+        {% for t in filter_types %}
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if filter_locations %}
+    <div class="badge-filter-group" data-filter-key="locationName">
+        <span class="badge-filter-group-label">場所:</span>
+        {% for loc in filter_locations %}
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ loc }}">{{ loc }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -36,7 +49,7 @@
 </div>
 <div class="row">
     {% for harvest in harvests %}
-    <div class="col-md-6 col-lg-4 mb-3" data-filter-type="{{ harvest.crop_type }}">
+    <div class="col-md-6 col-lg-4 mb-3" data-filter-card data-filter-group-crop-type="{{ harvest.crop_type }}" data-filter-group-location-name="{{ harvest.location_name }}">
         <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="card h-100 card-photo card-bg-harvest {{ '' if harvest.image_path else 'card-no-image' }}">
             {% if harvest.image_path %}
             <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"
