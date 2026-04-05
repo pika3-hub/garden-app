@@ -261,6 +261,9 @@ document.querySelectorAll('.canvas-preview-container').forEach(function(el) {
             {% endif %}
             <div class="card-photo-overlay">
                 <h5 class="card-title">{{ record.recorded_at }}</h5>
+                {% if record.notes %}
+                <p class="card-text small text-truncate mb-0">{{ record.notes|replace('\n', ' ') }}</p>
+                {% endif %}
             </div>
         </a>
     </div>
