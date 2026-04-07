@@ -849,22 +849,6 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     cursor: pointer;
 }
 
-/* 作物アイコン（カード左上に表示） */
-.card-photo .crop-icon-card,
-.card-photo-detail .crop-icon-card {
-    position: absolute;
-    top: 0.5rem;
-    left: 0.5rem;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #fff;
-    background-color: #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-    z-index: 3;
-}
-
 /* ══════════════════════════════════════════════════════════
    DETAIL HERO CARD (詳細画面用)
    画像上・テキスト下の縦積みレイアウト

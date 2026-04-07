@@ -37,12 +37,6 @@
                  loading="lazy"
                  onerror="this.src='{{ url_for('static', filename='uploads/' + crop.image_path) }}'">
             {% endif %}
-            {% if crop.icon_path %}
-            <img src="{{ url_for('static', filename='images/crop_icons/' ~ crop.icon_path) }}"
-                 class="crop-icon-card"
-                 style="border-color: {{ crop.image_color or '#4CAF50' }};"
-                 alt="{{ crop.name }}">
-            {% endif %}
             {% if task_counts.get(crop.id) or crop.id in active_crop_ids %}
             <div class="card-photo-badge-top">
                 {% if crop.id in active_crop_ids %}

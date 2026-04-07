@@ -35,12 +35,6 @@
                      class="card-photo-img lightbox-target" alt="{{ crop.name }}">
             </div>
             {% endif %}
-            {% if crop.icon_path %}
-            <img src="{{ url_for('static', filename='images/crop_icons/' ~ crop.icon_path) }}"
-                 class="crop-icon-card"
-                 style="border-color: {{ crop.image_color or '#4CAF50' }};"
-                 alt="{{ crop.name }}">
-            {% endif %}
             <div class="card-photo-detail-overlay">
                 <h4 class="card-photo-detail-title">{{ crop_label(crop.name, crop.variety, crop.icon_path, crop.image_color) }}</h4>
                 <div class="detail-fields">
