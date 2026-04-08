@@ -725,7 +725,7 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 .card-photo {
     position: relative;
     overflow: hidden;
-    min-height: 220px;
+    min-height: 300px;
     text-decoration: none;
     color: inherit;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -998,7 +998,7 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 }
 @media (max-width: 767.98px) {
     .carousel-dashboard-img {
-        height: 220px;
+        height: 300px;
     }
 }
 #dashboardCarousel .carousel-caption.card-photo-overlay {
