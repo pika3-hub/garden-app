@@ -13,6 +13,7 @@ ENTITY_DETAIL_ROUTES = {
     'location': ('locations.detail', 'location_id'),
     'diary': ('diary.detail', 'diary_id'),
     'task': ('tasks.detail', 'task_id'),
+    'harvest': ('harvests.detail', 'harvest_id'),
 }
 
 

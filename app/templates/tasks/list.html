@@ -65,7 +65,7 @@
 </div>
 <div class="row">
     {% for task in tasks %}
-    <div class="col-md-4 mb-3"
+    <div class="col-6 col-md-4 col-lg-3 mb-3"
          data-filter-year="{{ (task.due_date|string)[:4] if task.due_date else '' }}"
          data-filter-month="{{ (task.due_date|string)[5:7]|int if task.due_date else '' }}"
          data-filter-status="{{ task.status }}"

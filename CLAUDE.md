@@ -26,7 +26,7 @@
 - **カレンダービュー:** 月別カレンダーで作物・場所・日記・植え付け・収穫・タスクをアイコン表示、詳細ページへのリンク
 - **タスク管理:** 栽培作業タスクのCRUD、ステータス管理（未着手/進行中/完了）、期限日設定、作物・場所・栽培記録との関連付け
 - **詳細画面ナビゲーション:** 全詳細画面（作物・場所・植え付け・栽培記録・収穫・日記・タスク）で前後データへの移動ボタンを表示。共通部品 `_detail_nav.html` を使用し、各モデルの `get_adjacent()` メソッドで一覧の表示順に基づく前後を取得
-- **補足情報:** 作物・場所・日記・タスクの詳細画面に補足テキスト、追加画像、外部URL、YouTube動画埋め込みを複数添付可能。共通テンプレート `_supplements_section.html` + `supplements` テーブルで管理
+- **補足情報:** 作物・場所・日記・タスク・収穫の詳細画面に補足テキスト、追加画像、外部URL、YouTube動画埋め込みを複数添付可能。共通テンプレート `_supplements_section.html` + `supplements` テーブルで管理
 
 ---
 
@@ -189,7 +189,7 @@ uv run python run.py
 
 ### ダッシュボード画像カルーセル
 
-HOME画面（`index.html`）の統計カード上部に、最近登録された画像をランダム順で自動再生するカルーセルを表示する。
+HOME画面（`index.html`）の統計カード下部に、最近登録された画像をランダム順で自動再生するカルーセルを表示する。
 
 #### データ取得
 
@@ -207,12 +207,8 @@ HOME画面（`index.html`）の統計カード上部に、最近登録された�
 
 | 表示 | デスクトップ（md以上） | モバイル（md未満） |
 |------|----------------------|-------------------|
-| 画像高さ | 360px | 220px |
-| インジケーター | 丸型ドットインジケーター表示 | 非表示（`d-none d-md-flex`） |
-| カウンター | 非表示 | `1 / N` 形式の枚数カウンター表示（`d-md-none`） |
-| 操作 | 左右ボタン + インジケータークリック | 左右ボタン + スワイプ操作（Bootstrap標準） |
-
-カウンターはスライド切り替え時に `slid.bs.carousel` イベントで更新（`index.html` 内の `<script>` ブロック）。
+| 画像高さ | 360px | 300px |
+| 操作 | 左右ボタン | 左右ボタン + スワイプ操作（Bootstrap標準） |
 
 #### CSS（`custom.css` の `Dashboard Carousel` セクション）
 
@@ -455,26 +451,26 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 作物・場所・植え付け・収穫の一覧画面では、種類バッジによるクライアントサイドフィルターを提供する。日記・タスクは従来のサーバーサイド検索を維持。
 
-#### 仕組み
+#### 2つのモード
 
-- 共通JS `app/static/js/badge-filter.js` を4画面で共有
-- ルートで `filter_types`（ソート済みset）をテンプレートに渡す
-- テンプレートで `#badge-filter-container` 内にバッジを描画
-- カードラッパーに `data-filter-type` 属性を付与
-- クリックで `badge-filter-active` / `badge-filter-inactive` をトグル
-- 未選択時は全件表示、複数選択時はOR（いずれかに一致）
-- 件数表示（`#filter-count`）はフィルタ結果に連動して更新
+共通JS `app/static/js/badge-filter.js` が2つのモードを自動判定する:
+
+**レガシーモード（作物一覧・場所一覧）:** `#badge-filter-container` + `data-filter-type` による単一グループフィルター。OR論理（複数選択でいずれかに一致）。
+
+**マルチグループモード（植え付け一覧・収穫一覧）:** `.badge-filter-group[data-filter-key]` による複数グループフィルター。グループ間AND・グループ内OR。カードは `data-filter-card` + `data-filter-group-{key}` 属性を使用。
 
 #### 各画面のフィルター対象
 
-| 画面 | フィルター対象 | ルートで渡す変数 |
-|------|-------------|----------------|
-| 作物一覧 | `crop_type` | `filter_types` |
-| 場所一覧 | `location_type` | `filter_types` |
-| 植え付け一覧 | `crop_type`（ステータスタブは別途維持） | `filter_types` |
-| 収穫記録一覧 | `crop_type` | `filter_types` |
+| 画面 | モード | フィルター対象 | ルートで渡す変数 |
+|------|--------|-------------|----------------|
+| 作物一覧 | レガシー | `crop_type` | `filter_types` |
+| 場所一覧 | レガシー | `location_type` | `filter_types` |
+| 植え付け一覧 | マルチグループ | `crop_type` + `location_name` | `filter_types`, `filter_locations` |
+| 収穫記録一覧 | マルチグループ | `crop_type` + `location_name` | `filter_types`, `filter_locations` |
 
 #### テンプレートでの使い方
+
+**レガシーモード（作物・場所一覧）:**
 
 ```html
 {% if filter_types %}
@@ -487,41 +483,46 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 <!-- カードラッパーに data-filter-type を付与 -->
 <div class="col-md-6 col-lg-4 mb-3" data-filter-type="{{ item.crop_type }}">
+```
 
-<!-- 件数表示 -->
+**マルチグループモード（植え付け・収穫一覧）:**
+
+```html
+{% if filter_types or filter_locations %}
+<div class="badge-filter-multi">
+    {% if filter_types %}
+    <div class="badge-filter-group" data-filter-key="cropType">
+        <span class="badge-filter-group-label">種類:</span>
+        {% for t in filter_types %}
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if filter_locations %}
+    <div class="badge-filter-group" data-filter-key="locationName">
+        <span class="badge-filter-group-label">場所:</span>
+        {% for loc in filter_locations %}
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ loc }}">{{ loc }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- カードラッパーに data-filter-card + data-filter-group-* を付与 -->
+<div class="col-md-6 col-lg-4 mb-3" data-filter-card data-filter-group-crop-type="{{ item.crop_type }}" data-filter-group-location-name="{{ item.location_name }}">
+```
+
+**共通（件数・0件メッセージ）:**
+
+```html
 <p class="text-muted mb-3"><span id="filter-count" data-suffix="件の作物">{{ items|length }}件の作物</span></p>
-
-<!-- フィルタ0件時メッセージ -->
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当する項目がありません。
 </div>
 ```
 
-CSSクラス: `.badge-filter-container`, `.badge-filter`, `.badge-filter-active`, `.badge-filter-inactive`（`custom.css` で定義）
-
-### 一覧画面の件数表示
-
-全一覧画面でデータ件数をカードグリッドの上部に表示する。バッジフィルター対象画面では `#filter-count` span でラップし、JSがフィルタ結果に連動して件数を更新する。
-
-```html
-<!-- バッジフィルター対象画面 -->
-<p class="text-muted mb-3"><span id="filter-count" data-suffix="件の作物">{{ items|length }}件の作物</span></p>
-
-<!-- 日記・タスク（従来通り） -->
-<p class="text-muted mb-3">{{ items|length }}件の○○</p>
-```
-
-| 画面 | 表示テキスト |
-|------|------------|
-| 作物一覧 | `X件の作物` |
-| 場所一覧 | `X件の場所` |
-| 植え付け一覧 | `X件の植え付け` |
-| 収穫記録一覧 | `X件の収穫記録` |
-| 日記一覧 | `X件の日記` |
-| タスク一覧 | `X件のタスク` |
-| 栽培記録一覧（植え付け詳細内） | `X件の栽培記録` |
-
-データが0件の場合は `alert alert-info` で案内メッセージを表示（件数は表示しない）。
+CSSクラス: `.badge-filter-container`, `.badge-filter-multi`, `.badge-filter-group`, `.badge-filter-group-label`, `.badge-filter`, `.badge-filter-active`, `.badge-filter-inactive`（`custom.css` で定義）
 
 ### 詳細画面ナビゲーション
 
@@ -560,7 +561,7 @@ CSSクラス: `.badge-filter-container`, `.badge-filter`, `.badge-filter-active`
 
 ### 補足情報（Supplements）
 
-作物・場所・日記・タスクの詳細画面に、基本情報を補う外部情報を複数添付できる機能。
+作物・場所・日記・タスク・収穫の詳細画面に、基本情報を補う外部情報を複数添付できる機能。
 
 #### 補足タイプ
 
@@ -642,6 +643,7 @@ for img_path in supplement_images:
 | 場所詳細 | location | 操作ボタンの下（見取り図カードの上） |
 | 日記詳細 | diary | 操作ボタンの下 |
 | タスク詳細 | task | 操作ボタンの下 |
+| 収穫詳細 | harvest | 操作ボタンの下 |
 
 ### 見取り図機能
 

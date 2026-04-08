@@ -85,6 +85,10 @@
                 </button>
             </form>
         </div>
+
+        {% set supplement_entity_type = 'harvest' %}
+        {% set supplement_entity_id = harvest.id %}
+        {% include '_supplements_section.html' %}
     </div>
 
     <div class="col-md-4">

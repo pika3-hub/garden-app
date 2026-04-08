@@ -352,6 +352,25 @@ a.dashboard-stat-link:hover {
   opacity: 0.85;
 }
 
+/* ── Multi-group Badge Filters ──────────────────────────── */
+.badge-filter-multi {
+  margin-bottom: 1rem;
+}
+.badge-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+.badge-filter-group-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  margin-right: 0.25rem;
+  white-space: nowrap;
+}
+
 /* ── Date Badge Filter Groups ────────────────────────────── */
 #date-badge-filter {
   margin-bottom: 1rem;
@@ -706,7 +725,7 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 .card-photo {
     position: relative;
     overflow: hidden;
-    min-height: 220px;
+    min-height: 300px;
     text-decoration: none;
     color: inherit;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -828,22 +847,6 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 /* slideshow-target のカーソルを card-photo 内ではポインターに統一 */
 .card-photo img.slideshow-target {
     cursor: pointer;
-}
-
-/* 作物アイコン（カード左上に表示） */
-.card-photo .crop-icon-card,
-.card-photo-detail .crop-icon-card {
-    position: absolute;
-    top: 0.5rem;
-    left: 0.5rem;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #fff;
-    background-color: #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-    z-index: 3;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -995,7 +998,7 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 }
 @media (max-width: 767.98px) {
     .carousel-dashboard-img {
-        height: 220px;
+        height: 300px;
     }
 }
 #dashboardCarousel .carousel-caption.card-photo-overlay {

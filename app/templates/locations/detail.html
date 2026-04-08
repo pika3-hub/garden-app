@@ -152,7 +152,7 @@
                 {% if active_crops %}
                 <div class="row">
                     {% for lc in active_crops %}
-                    <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="col-6 col-md-6 col-lg-4 mb-3">
                         <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}"
                            class="card h-100 card-photo card-bg-location-crop {{ '' if lc.latest_record_image else 'card-no-image' }}">
                             {% if lc.latest_record_image %}

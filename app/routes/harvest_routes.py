@@ -4,6 +4,7 @@ from app.models.planting import Planting
 from app.models.location import Location
 from app.models.crop import Crop
 from app.models.diary import DiaryEntry
+from app.models.supplement import Supplement
 from app.utils.upload import save_image, delete_image
 from datetime import date
 
@@ -15,7 +16,8 @@ def list():
     """収穫記録一覧"""
     harvests = Harvest.get_all()
     filter_types = sorted(set(h['crop_type'] for h in harvests if h['crop_type']))
-    return render_template('harvests/list.html', harvests=harvests, filter_types=filter_types)
+    filter_locations = sorted(set(h['location_name'] for h in harvests if h['location_name']))
+    return render_template('harvests/list.html', harvests=harvests, filter_types=filter_types, filter_locations=filter_locations)
 
 
 @bp.route('/<int:harvest_id>')
@@ -35,12 +37,16 @@ def detail(harvest_id):
     # 関連する日記
     related_diaries = DiaryEntry.get_by_harvest(harvest_id, limit=10)
 
+    # 補足情報
+    supplements = Supplement.get_by_entity('harvest', harvest_id)
+
     return render_template('harvests/detail.html',
                           harvest=harvest,
                           prev_harvest=prev_harvest,
                           next_harvest=next_harvest,
                           related_plantings=related_plantings,
-                          related_diaries=related_diaries)
+                          related_diaries=related_diaries,
+                          supplements=supplements)
 
 
 @bp.route('/new/<int:location_crop_id>')
@@ -188,6 +194,10 @@ def delete(harvest_id):
     location_id = harvest.get('location_id')
 
     try:
+        # 補足情報の連動削除（画像クリーンアップ）
+        supplement_images = Supplement.delete_by_entity('harvest', harvest_id)
+        for img_path in supplement_images:
+            delete_image(img_path)
         if harvest.get('image_path'):
             delete_image(harvest['image_path'])
         Harvest.delete(harvest_id)

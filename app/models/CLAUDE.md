@@ -135,7 +135,7 @@
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | INTEGER | 主キー |
-| entity_type | VARCHAR(20) | エンティティ種別（crop/location/diary/task） |
+| entity_type | VARCHAR(20) | エンティティ種別（crop/location/diary/task/harvest） |
 | entity_id | INTEGER | 親エンティティのID |
 | supplement_type | VARCHAR(20) | 補足種別（text/image/url/youtube） |
 | title | VARCHAR(200) | 表示ラベル（任意） |
