@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/badge-filter.js') }}"></script>
 <script src="{{ url_for('static', filename='js/canvas-preview.js') }}"></script>
 <script src="{{ url_for('static', filename='js/canvas-fullscreen.js') }}"></script>
 <script>
@@ -154,9 +155,20 @@
             </div>
             <div class="card-body">
                 {% if active_crops %}
+                {% if filter_types and active_crops|length > 1 %}
+                <div id="badge-filter-container" class="badge-filter-container mb-2">
+                    {% for t in filter_types %}
+                    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+                    {% endfor %}
+                </div>
+                <p class="text-muted mb-2"><span id="filter-count" data-suffix="件">{{ active_crops|length }}件</span></p>
+                <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
+                    <i class="bi bi-info-circle"></i> 該当する作物がありません。
+                </div>
+                {% endif %}
                 <div class="row">
                     {% for lc in active_crops %}
-                    <div class="col-6 col-md-6 col-lg-4 mb-3">
+                    <div class="col-6 col-md-6 col-lg-4 mb-3" data-filter-type="{{ lc.crop_type }}">
                         <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}"
                            class="card h-100 card-photo card-bg-location-crop {{ '' if lc.latest_record_image else 'card-no-image' }}">
                             {% if lc.latest_record_image %}

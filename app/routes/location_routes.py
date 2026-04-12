@@ -57,9 +57,13 @@ def detail(location_id):
     related_tasks = Task.get_incomplete_tasks_for_entity('location', location_id)
     supplements = Supplement.get_by_entity('location', location_id)
 
+    # 栽培中の作物の種類一覧（フィルター用）
+    filter_types = sorted(set(crop['crop_type'] for crop in active_crops if crop.get('crop_type')))
+
     return render_template('locations/detail.html',
                           location=location,
                           active_crops=active_crops,
+                          filter_types=filter_types,
                           related_diaries=related_diaries,
                           related_harvests=related_harvests,
                           today=today,
