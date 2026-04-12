@@ -13,8 +13,8 @@
 <script src="{{ url_for('static', filename='js/canvas-fullscreen.js') }}"></script>
 <script>
 (async function() {
-    var canvasEl = document.getElementById('history-canvas');
-    if (!canvasEl) return;
+    var fullscreenBtn = document.getElementById('fullscreen-btn');
+    if (!fullscreenBtn) return;
 
     // 履歴の日付を事前取得
     var dates = null;
@@ -24,9 +24,8 @@
         if (data.dates && data.dates.length > 0) dates = data.dates;
     } catch {}
 
-    // 見取り図クリックでフルスクリーン表示
-    canvasEl.style.cursor = 'pointer';
-    canvasEl.addEventListener('click', function() {
+    // 「見取り図を拡大」ボタンでフルスクリーン表示
+    fullscreenBtn.addEventListener('click', function() {
         openCanvasFullscreen({
             locationId: {{ location.id }},
             locationName: {{ location.name | tojson }},
@@ -128,9 +127,14 @@
         <div class="card mb-3" id="history-card">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-map"></i> 見取り図</h5>
-                <a href="{{ url_for('locations.canvas', location_id=location.id) }}" class="btn btn-sm btn-light">
-                    <i class="bi bi-pencil"></i> 見取り図を編集
-                </a>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-light" id="fullscreen-btn">
+                        <i class="bi bi-arrows-fullscreen"></i> 拡大
+                    </button>
+                    <a href="{{ url_for('locations.canvas', location_id=location.id) }}" class="btn btn-sm btn-light">
+                        <i class="bi bi-pencil"></i> 編集
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-center">

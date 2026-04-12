@@ -94,6 +94,16 @@ class CanvasPreview {
                 el.style.setProperty('--highlight-color', color);
             }
 
+            // クリックで植え付け詳細へ遷移
+            if (p.locationCropId) {
+                el.dataset.locationCropId = p.locationCropId;
+                el.style.cursor = 'pointer';
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.location.href = `/plantings/${p.locationCropId}`;
+                });
+            }
+
             this.area.appendChild(el);
         });
     }
