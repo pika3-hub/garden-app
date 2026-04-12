@@ -327,7 +327,7 @@
 }
 
 .placed-crop-preview[data-location-crop-id]:hover {
-    transform: scale(1.2);
+    transform: scale(1.5);
     z-index: 3;
 }
 
