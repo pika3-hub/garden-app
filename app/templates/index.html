@@ -14,7 +14,7 @@
 
 <div class="row g-4 mb-4">
     <!-- 作物カード -->
-    <div class="col-4 col-lg">
+    <div class="col-6 col-lg">
         <a href="{{ url_for('crops.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-crop dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="stat-icon">
@@ -26,7 +26,7 @@
     </div>
 
     <!-- 場所カード -->
-    <div class="col-4 col-lg">
+    <div class="col-6 col-lg">
         <a href="{{ url_for('locations.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="stat-icon">
@@ -38,7 +38,7 @@
     </div>
 
     <!-- 栽培中カード -->
-    <div class="col-4 col-lg">
+    <div class="col-6 col-lg">
         <a href="{{ url_for('plantings.index') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location-crop dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="stat-icon">
@@ -50,7 +50,7 @@
     </div>
 
     <!-- 収穫カード -->
-    <div class="col-4 col-lg">
+    <div class="col-6 col-lg">
         <a href="{{ url_for('harvests.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-harvest dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="stat-icon">
@@ -62,7 +62,7 @@
     </div>
 
     <!-- 日記カード -->
-    <div class="col-4 col-lg">
+    <div class="col-6 col-lg">
         <a href="{{ url_for('diary.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-diary dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="stat-icon">
@@ -74,7 +74,7 @@
     </div>
 
     <!-- タスクカード -->
-    <div class="col-4 col-lg">
+    <div class="col-6 col-lg">
         <a href="{{ url_for('tasks.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-tasklist dashboard-stat-link">
             <div class="card-body py-4">
                 <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="stat-icon">
