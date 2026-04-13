@@ -293,16 +293,22 @@ def plant_new():
     """植え付け登録フォーム"""
     crops = Crop.get_all()
     locations = Location.get_all()
+    crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
+    location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
     today = date.today().isoformat()
     preselected_location_id = request.args.get('location_id', type=int)
     preselected_crop_id = request.args.get('crop_id', type=int)
+    preselected_crop = next((c for c in crops if c['id'] == preselected_crop_id), None) if preselected_crop_id else None
+    preselected_location = next((l for l in locations if l['id'] == preselected_location_id), None) if preselected_location_id else None
     return render_template('plantings/planting_form.html',
                            planting=None,
                            crops=crops,
                            locations=locations,
+                           crop_filter_types=crop_filter_types,
+                           location_filter_types=location_filter_types,
                            today=today,
-                           preselected_location_id=preselected_location_id,
-                           preselected_crop_id=preselected_crop_id)
+                           preselected_location=preselected_location,
+                           preselected_crop=preselected_crop)
 
 
 @bp.route('/plant/create', methods=['POST'])
@@ -342,13 +348,21 @@ def planting_edit(location_crop_id):
 
     crops = Crop.get_all()
     locations = Location.get_all()
+    crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
+    location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
     earliest_child_date = Planting.get_earliest_child_date(location_crop_id)
+    preselected_crop = next((c for c in crops if c['id'] == planting['crop_id']), None)
+    preselected_location = next((l for l in locations if l['id'] == planting['location_id']), None)
 
     return render_template('plantings/planting_form.html',
                            planting=planting,
                            crops=crops,
                            locations=locations,
+                           crop_filter_types=crop_filter_types,
+                           location_filter_types=location_filter_types,
                            earliest_child_date=earliest_child_date,
+                           preselected_crop=preselected_crop,
+                           preselected_location=preselected_location,
                            today=None)
 
 
