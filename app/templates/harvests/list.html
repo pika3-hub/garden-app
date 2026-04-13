@@ -20,6 +20,11 @@
             {% endif %}
         </h1>
     </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('harvests.new') }}" class="btn btn-success">
+            <i class="bi bi-basket"></i> 収穫を記録
+        </a>
+    </div>
 </div>
 
 {% if filter_types or filter_locations %}

@@ -49,20 +49,29 @@ def detail(harvest_id):
                           supplements=supplements)
 
 
-@bp.route('/new/<int:location_crop_id>')
-def new(location_crop_id):
+@bp.route('/new')
+def new():
     """収穫記録登録フォーム"""
-    location_crop = Planting.get_by_id(location_crop_id)
-    if not location_crop:
-        flash('栽培記録が見つかりません', 'danger')
-        return redirect(url_for('locations.list'))
+    location_crop_id = request.args.get('location_crop_id', type=int)
+    location_crop = None
+    if location_crop_id:
+        location_crop = Planting.get_by_id(location_crop_id)
+        if not location_crop:
+            flash('栽培記録が見つかりません', 'danger')
+            return redirect(url_for('harvests.list'))
 
+    active_plantings = Planting.get_all_with_stats(status='active')
+    filter_types = sorted(set(p['crop_type'] for p in active_plantings if p.get('crop_type')))
+    filter_locations = sorted(set(p['location_name'] for p in active_plantings if p.get('location_name')))
     today = date.today().isoformat()
 
     return render_template('harvests/form.html',
                           harvest=None,
                           action='create',
                           location_crop=location_crop,
+                          active_plantings=active_plantings,
+                          filter_types=filter_types,
+                          filter_locations=filter_locations,
                           today=today)
 
 

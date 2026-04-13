@@ -17,7 +17,7 @@
 - **キャンバスエディター:** バニラJSベースのビジュアル菜園レイアウトデザイナー（作物アイコンのドラッグ&ドロップ配置、背景画像選択）。植え付け登録時に見取り図配置ページへ自動遷移（スキップ可能）
 - **見取り図プレビュー:** 場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）、場所詳細では日付スライダーで過去の配置状態を再現可能
 - **栽培記録:** 作物と場所をリンクし、ステータス追跡（栽培中/栽培終了/削除済み）、タブフィルター付き一覧（`/plantings/`）、栽培観察記録の登録・管理
-- **収穫記録:** 複数回の収穫を記録、収穫量・単位・メモ・画像対応、植え付けからの日数自動計算
+- **収穫記録:** 複数回の収穫を記録、収穫量・単位・メモ・画像対応、植え付けからの日数自動計算。収穫一覧・植え付け詳細の両方から「収穫を記録」可能で、新規フォームはモーダルから対象の植え付けを選択できる（種類・場所バッジフィルタ付き）
 - **日記システム:** 複数エンティティ（作物、場所、植え付け、収穫）との関連付けと画像添付を持つ栽培日記
 - **画像サポート:** 作物、場所、日記、収穫記録の画像アップロード・管理（最大16MB）、一覧画面はサムネイル（800×600px JPEG）を使用して高速化
 - **スライドショー:** 栽培記録一覧（植え付け詳細内）・収穫記録一覧の画像をフルスクリーンで閲覧（`slideshow.js` + `slideshow.css`）、日付・日数・キャプション表示、キーボード操作対応
@@ -773,7 +773,7 @@ for img_path in supplement_images:
 | 作物 | crops | /crops/ | /crops/{id} | /crops/new | /crops/{id}/edit |
 | 場所 | locations | /locations/ | /locations/{id} | /locations/new | /locations/{id}/edit |
 | 日記 | diary | /diary/ | /diary/{id} | /diary/new | /diary/{id}/edit |
-| 収穫 | harvests | /harvests/ | /harvests/{id} | /harvests/new | /harvests/{id}/edit |
+| 収穫 | harvests | /harvests/ | /harvests/{id} | /harvests/new?location_crop_id={id}（任意） | /harvests/{id}/edit |
 | 植え付け | plantings | /plantings/?status= | /plantings/{lc_id} | - | - |
 | タスク | tasks | /tasks/ | /tasks/{id} | /tasks/new | /tasks/{id}/edit |
 | カレンダー | calendar | /calendar/ | - | - | - |
