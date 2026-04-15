@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}写真プール - 家庭菜園管理アプリ{% endblock %}
+
+{% block extra_css %}
+<style>
+.photo-pool-card {
+    position: relative;
+    overflow: hidden;
+}
+.photo-pool-card .photo-thumb {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+    background: #f0f0f0;
+    cursor: pointer;
+}
+.photo-pool-card .usage-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.75rem;
+}
+.photo-pool-upload-area {
+    border: 2px dashed #aaa;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    background: #fafafa;
+}
+</style>
+{% endblock %}
+
+{% from '_macros.html' import crop_label %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-images"></i> 写真プール</h1>
+        <p class="text-muted mb-0">撮影した複数の写真をまとめてアップロードし、後から各登録画面へ使い回せます。</p>
+    </div>
+</div>
+
+<!-- アップロードエリア -->
+<div class="card mb-4">
+    <div class="card-body photo-pool-upload-area">
+        <form method="POST" action="{{ url_for('photo_pool.upload') }}" enctype="multipart/form-data">
+            <label class="form-label"><strong>写真を選択（複数選択可）</strong></label>
+            <input type="file" class="form-control mb-2" name="images" accept="image/*" multiple required>
+            <small class="text-muted d-block mb-3">対応形式: PNG, JPG, JPEG, GIF, WebP（各16MBまで）</small>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-upload"></i> アップロード
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- フィルター -->
+{% if photos %}
+<div class="mb-3">
+    <div class="badge-filter-container" id="usage-filter">
+        <span class="badge badge-filter badge-filter-inactive" data-usage="all">すべて ({{ photos|length }})</span>
+        <span class="badge badge-filter badge-filter-inactive" data-usage="unused">未使用 ({{ photos|selectattr('usage_count', 'equalto', 0)|list|length }})</span>
+        <span class="badge badge-filter badge-filter-inactive" data-usage="used">使用済み ({{ photos|rejectattr('usage_count', 'equalto', 0)|list|length }})</span>
+    </div>
+</div>
+{% endif %}
+
+<!-- 一覧 -->
+{% if photos %}
+<div class="row" id="photo-grid">
+    {% for photo in photos %}
+    <div class="col-md-4 col-lg-3 mb-3 photo-item" data-usage-count="{{ photo.usage_count }}">
+        <div class="card photo-pool-card h-100">
+            <img src="{{ url_for('static', filename='uploads/' + photo.image_path | thumb_path) }}"
+                 onerror="this.onerror=null;this.src='{{ url_for('static', filename='uploads/' + photo.image_path) }}';"
+                 class="photo-thumb lightbox-target"
+                 data-full="{{ url_for('static', filename='uploads/' + photo.image_path) }}"
+                 alt="{{ photo.original_filename or '' }}">
+            {% if photo.usage_count > 0 %}
+            <span class="usage-badge badge bg-success">{{ photo.usage_count }}回使用</span>
+            {% else %}
+            <span class="usage-badge badge bg-secondary">未使用</span>
+            {% endif %}
+
+            <div class="card-body p-2">
+                {% if photo.taken_at %}
+                <small class="text-muted d-block mb-1"><i class="bi bi-camera"></i> {{ photo.taken_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                {% endif %}
+                {% if photo.notes %}
+                <p class="mb-2 small">{{ photo.notes }}</p>
+                {% endif %}
+
+                <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-plus-circle"></i> この写真で登録
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='diary') }}"><img src="{{ url_for('static', filename='images/icon_diary.png') }}" class="icon-img me-1"> 日記</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='harvest') }}"><img src="{{ url_for('static', filename='images/icon_harvest.png') }}" class="icon-img me-1"> 収穫</a></li>
+                        <li><a class="dropdown-item js-pick-planting" href="#" data-photo-id="{{ photo.id }}"><img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" class="icon-img me-1"> 栽培記録</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='crop') }}"><img src="{{ url_for('static', filename='images/icon_crop.png') }}" class="icon-img me-1"> 作物</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='location') }}"><img src="{{ url_for('static', filename='images/icon_location.png') }}" class="icon-img me-1"> 場所</a></li>
+                    </ul>
+                </div>
+
+                <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" data-bs-toggle="modal" data-bs-target="#editModal{{ photo.id }}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <form method="POST" action="{{ url_for('photo_pool.delete', photo_id=photo.id) }}" class="flex-fill" onsubmit="return confirm('この写真を削除しますか？（既に登録済みのエンティティ画像は残ります）');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- メモ編集モーダル -->
+    <div class="modal fade" id="editModal{{ photo.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="{{ url_for('photo_pool.update', photo_id=photo.id) }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title">メモを編集</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <textarea class="form-control" name="notes" rows="3" placeholder="例: 7/1の畑">{{ photo.notes or '' }}</textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> まだ写真がプールにありません。上のフォームからアップロードしてください。
+</div>
+{% endif %}
+
+<!-- 栽培記録: 植え付け選択モーダル（収穫フォームと同じUIを流用） -->
+<div class="modal fade" id="plantingSelectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-list-check"></i> 栽培記録を登録する植え付けを選択</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if active_plantings and (filter_types or filter_locations) %}
+                <div class="badge-filter-multi mb-3">
+                    {% if filter_types %}
+                    <div class="badge-filter-group" data-filter-key="cropType">
+                        <span class="badge-filter-group-label">種類:</span>
+                        {% for t in filter_types %}
+                        <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if filter_locations %}
+                    <div class="badge-filter-group" data-filter-key="locationName">
+                        <span class="badge-filter-group-label">場所:</span>
+                        {% for loc in filter_locations %}
+                        <span class="badge badge-filter badge-filter-inactive" data-type="{{ loc }}">{{ loc }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <p class="text-muted mb-2"><span id="filter-count" data-suffix="件">{{ active_plantings|length }}件</span></p>
+                <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
+                    <i class="bi bi-info-circle"></i> 該当する植え付けがありません。
+                </div>
+                {% endif %}
+                {% if active_plantings %}
+                <div class="row">
+                    {% for p in active_plantings %}
+                    <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-card data-filter-group-crop-type="{{ p.crop_type }}" data-filter-group-location-name="{{ p.location_name }}">
+                        <div class="card h-100 card-photo card-bg-location-crop planting-select-card {{ '' if p.latest_growth_image else 'card-no-image' }}"
+                             role="button"
+                             data-lc-id="{{ p.id }}">
+                            {% if p.latest_growth_image %}
+                            <img src="{{ url_for('static', filename='uploads/' + (p.latest_growth_image | thumb_path)) }}"
+                                 class="card-photo-img" alt="{{ p.crop_name }}"
+                                 loading="lazy"
+                                 onerror="this.src='{{ url_for('static', filename='uploads/' + p.latest_growth_image) }}'">
+                            {% if p.latest_growth_image_date %}
+                            <span class="card-img-date-overlay">{{ p.latest_growth_image_date }}</span>
+                            {% endif %}
+                            {% endif %}
+                            <div class="card-photo-badge-top">
+                                <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
+                                {% if p.days_from_planting is not none %}
+                                <span class="badge bg-success">{{ p.days_from_planting }}日目</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-photo-overlay">
+                                <h5 class="card-title">
+                                    {{ crop_label(p.crop_name, p.variety, p.icon_path, p.image_color) }}
+                                    <small>@ {{ p.location_name }}</small>
+                                </h5>
+                                <small>植え付け日: {{ p.planted_date or '未設定' }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning mb-0">栽培中の植え付けがありません。先に植え付けを登録してください。</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/badge-filter.js') }}"></script>
+<script>
+// 栽培記録: 植え付け選択モーダル連携
+document.addEventListener('DOMContentLoaded', function() {
+    let currentPhotoId = null;
+    const modalEl = document.getElementById('plantingSelectModal');
+    const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+
+    document.querySelectorAll('.js-pick-planting').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            currentPhotoId = this.dataset.photoId;
+            if (modal) modal.show();
+        });
+    });
+
+    document.querySelectorAll('#plantingSelectModal .planting-select-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            const lcId = card.dataset.lcId;
+            if (!currentPhotoId || !lcId) return;
+            window.location.href = '/plantings/new/' + lcId + '?photo_pool_id=' + currentPhotoId;
+        });
+    });
+});
+</script>
+<script>
+// 使用状況フィルター（簡易版）
+document.addEventListener('DOMContentLoaded', function() {
+    const badges = document.querySelectorAll('#usage-filter .badge-filter');
+    const items = document.querySelectorAll('.photo-item');
+    let current = 'all';
+
+    function apply() {
+        items.forEach(el => {
+            const count = parseInt(el.dataset.usageCount || '0', 10);
+            let show = true;
+            if (current === 'unused') show = count === 0;
+            if (current === 'used') show = count > 0;
+            el.style.display = show ? '' : 'none';
+        });
+    }
+
+    badges.forEach(b => {
+        if (b.dataset.usage === 'all') {
+            b.classList.remove('badge-filter-inactive');
+            b.classList.add('badge-filter-active');
+        }
+        b.addEventListener('click', function() {
+            current = this.dataset.usage;
+            badges.forEach(x => {
+                x.classList.remove('badge-filter-active');
+                x.classList.add('badge-filter-inactive');
+            });
+            this.classList.remove('badge-filter-inactive');
+            this.classList.add('badge-filter-active');
+            apply();
+        });
+    });
+});
+</script>
+{% endblock %}

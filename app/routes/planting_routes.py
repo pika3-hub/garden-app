@@ -7,7 +7,8 @@ from app.models.location import Location
 from app.models.task import Task
 from app.models.harvest import Harvest
 from app.models.diary import DiaryEntry
-from app.utils.upload import save_image, delete_image
+from app.models.photo_pool import PhotoPool
+from app.utils.upload import save_image, delete_image, copy_image
 from datetime import date
 
 bp = Blueprint('plantings', __name__, url_prefix='/plantings')
@@ -123,11 +124,15 @@ def new(location_crop_id):
 
     today = date.today().isoformat()
 
+    photo_pool_id = request.args.get('photo_pool_id', type=int)
+    preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
+
     return render_template('plantings/form.html',
                           record=None,
                           action='create',
                           location_crop=location_crop,
-                          today=today)
+                          today=today,
+                          preselected_photo=preselected_photo)
 
 
 @bp.route('/create', methods=['POST'])
@@ -150,13 +155,20 @@ def create():
         flash('記録日は必須です', 'danger')
         return redirect(url_for('plantings.new', location_crop_id=location_crop_id))
 
-    if 'image' in request.files:
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            data['image_path'] = copy_image(pool_photo['image_path'], 'growth_records')
+    elif 'image' in request.files:
         image = request.files['image']
         image_path = save_image(image, 'growth_records')
         data['image_path'] = image_path
 
     try:
-        PlantingRecord.create(data)
+        record_id = PlantingRecord.create(data)
+        if photo_pool_id and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'planting_record', record_id, data['image_path'])
         flash('栽培記録を登録しました', 'success')
         return redirect(url_for('plantings.detail', location_crop_id=location_crop_id))
     except Exception as e:

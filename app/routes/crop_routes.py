@@ -6,7 +6,8 @@ from app.models.diary import DiaryEntry
 from app.models.harvest import Harvest
 from app.models.task import Task
 from app.models.supplement import Supplement
-from app.utils.upload import save_image, delete_image
+from app.models.photo_pool import PhotoPool
+from app.utils.upload import save_image, delete_image, copy_image
 
 bp = Blueprint('crops', __name__, url_prefix='/crops')
 
@@ -60,8 +61,11 @@ def _get_crop_icon_list():
 @bp.route('/new')
 def new():
     """作物登録フォーム"""
+    photo_pool_id = request.args.get('photo_pool_id', type=int)
+    preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
     return render_template('crops/form.html', crop=None, action='create',
-                           crop_icon_list=_get_crop_icon_list())
+                           crop_icon_list=_get_crop_icon_list(),
+                           preselected_photo=preselected_photo)
 
 
 @bp.route('/create', methods=['POST'])
@@ -84,14 +88,21 @@ def create():
         flash('作物名と作物種類は必須です', 'danger')
         return redirect(url_for('crops.new'))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            data['image_path'] = copy_image(pool_photo['image_path'], 'crops')
+    elif 'image' in request.files:
         image = request.files['image']
         image_path = save_image(image, 'crops')
         data['image_path'] = image_path
 
     try:
         crop_id = Crop.create(data)
+        if photo_pool_id and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'crop', crop_id, data['image_path'])
         flash(f'作物「{data["name"]}」を登録しました', 'success')
         return redirect(url_for('crops.detail', crop_id=crop_id))
     except Exception as e:

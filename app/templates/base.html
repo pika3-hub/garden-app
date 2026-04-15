@@ -80,6 +80,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        {% set is_photo_pool = request.endpoint and request.endpoint.startswith('photo_pool.') %}
+                        <a class="nav-link {% if is_photo_pool %}active{% endif %}" href="{{ url_for('photo_pool.index') }}" {% if is_photo_pool %}aria-current="page"{% endif %}>
+                            <i class="bi bi-images"></i> 写真プール
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         {% set is_calendar = request.endpoint and request.endpoint.startswith('calendar.') %}
                         <a class="nav-link {% if is_calendar %}active{% endif %}" href="{{ url_for('calendar.index') }}" {% if is_calendar %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_calendar.png') }}" alt="" class="icon-img icon-img-lg"> カレンダー

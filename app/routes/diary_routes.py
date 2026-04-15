@@ -6,7 +6,8 @@ from app.models.location import Location
 from app.models.planting import Planting
 from app.models.harvest import Harvest
 from app.models.supplement import Supplement
-from app.utils.upload import save_image, delete_image
+from app.models.photo_pool import PhotoPool
+from app.utils.upload import save_image, delete_image, copy_image
 
 bp = Blueprint('diary', __name__, url_prefix='/diary')
 
@@ -61,6 +62,9 @@ def new():
 
     today = date.today().isoformat()
 
+    photo_pool_id = request.args.get('photo_pool_id', type=int)
+    preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
+
     return render_template('diary/form.html',
                           entry=None,
                           action='create',
@@ -69,7 +73,8 @@ def new():
                           location_crops=location_crops,
                           harvests=harvests,
                           selected_relations=None,
-                          today=today)
+                          today=today,
+                          preselected_photo=preselected_photo)
 
 
 @bp.route('/create', methods=['POST'])
@@ -88,14 +93,21 @@ def create():
         flash('タイトルと日付は必須です', 'danger')
         return redirect(url_for('diary.new'))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            data['image_path'] = copy_image(pool_photo['image_path'], 'diary')
+    elif 'image' in request.files:
         image = request.files['image']
         image_path = save_image(image, 'diary')
         data['image_path'] = image_path
 
     try:
         diary_id = DiaryEntry.create(data)
+        if photo_pool_id and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'diary', diary_id, data['image_path'])
 
         # 関連を保存
         relations = {

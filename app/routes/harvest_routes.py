@@ -5,7 +5,8 @@ from app.models.location import Location
 from app.models.crop import Crop
 from app.models.diary import DiaryEntry
 from app.models.supplement import Supplement
-from app.utils.upload import save_image, delete_image
+from app.models.photo_pool import PhotoPool
+from app.utils.upload import save_image, delete_image, copy_image
 from datetime import date
 
 bp = Blueprint('harvests', __name__, url_prefix='/harvests')
@@ -65,6 +66,9 @@ def new():
     filter_locations = sorted(set(p['location_name'] for p in active_plantings if p.get('location_name')))
     today = date.today().isoformat()
 
+    photo_pool_id = request.args.get('photo_pool_id', type=int)
+    preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
+
     return render_template('harvests/form.html',
                           harvest=None,
                           action='create',
@@ -72,7 +76,8 @@ def new():
                           active_plantings=active_plantings,
                           filter_types=filter_types,
                           filter_locations=filter_locations,
-                          today=today)
+                          today=today,
+                          preselected_photo=preselected_photo)
 
 
 @bp.route('/create', methods=['POST'])
@@ -106,14 +111,21 @@ def create():
             flash('収穫量は数値で入力してください', 'danger')
             return redirect(url_for('harvests.new', location_crop_id=location_crop_id))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            data['image_path'] = copy_image(pool_photo['image_path'], 'harvests')
+    elif 'image' in request.files:
         image = request.files['image']
         image_path = save_image(image, 'harvests')
         data['image_path'] = image_path
 
     try:
-        Harvest.create(data)
+        harvest_id = Harvest.create(data)
+        if photo_pool_id and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'harvest', harvest_id, data['image_path'])
         flash('収穫記録を登録しました', 'success')
         return redirect(url_for('locations.detail',
                                 location_id=location_crop['location_id']))

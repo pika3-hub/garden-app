@@ -7,7 +7,8 @@ from app.models.diary import DiaryEntry
 from app.models.harvest import Harvest
 from app.models.task import Task
 from app.models.supplement import Supplement
-from app.utils.upload import save_image, delete_image
+from app.models.photo_pool import PhotoPool
+from app.utils.upload import save_image, delete_image, copy_image
 
 bp = Blueprint('locations', __name__, url_prefix='/locations')
 
@@ -77,7 +78,10 @@ def detail(location_id):
 def new():
     """場所登録フォーム"""
     bg_images = Location.get_bg_images()
-    return render_template('locations/form.html', location=None, action='create', bg_images=bg_images)
+    photo_pool_id = request.args.get('photo_pool_id', type=int)
+    preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
+    return render_template('locations/form.html', location=None, action='create', bg_images=bg_images,
+                           preselected_photo=preselected_photo)
 
 
 @bp.route('/create', methods=['POST'])
@@ -97,14 +101,21 @@ def create():
         flash('場所名と場所種類は必須です', 'danger')
         return redirect(url_for('locations.new'))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            data['image_path'] = copy_image(pool_photo['image_path'], 'locations')
+    elif 'image' in request.files:
         image = request.files['image']
         image_path = save_image(image, 'locations')
         data['image_path'] = image_path
 
     try:
         location_id = Location.create(data)
+        if photo_pool_id and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'location', location_id, data['image_path'])
         flash(f'場所「{data["name"]}」を登録しました', 'success')
         return redirect(url_for('locations.detail', location_id=location_id))
     except Exception as e:

@@ -123,6 +123,7 @@ document.querySelectorAll('.dropdown-item').forEach(item => {
 
                     <div class="mb-3">
                         <label for="image" class="form-label">画像</label>
+                        {% include '_photo_pool_preselected.html' %}
                         {% if entry and entry.image_path %}
                         <div class="mb-2">
                             <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}" alt="現在の画像" class="img-thumbnail" style="max-height: 150px;">
@@ -132,8 +133,10 @@ document.querySelectorAll('.dropdown-item').forEach(item => {
                             </div>
                         </div>
                         {% endif %}
+                        {% if not preselected_photo %}
                         <input type="file" class="form-control" id="image" name="image" accept="image/*">
                         <small class="text-muted">対応形式: PNG, JPG, JPEG, GIF, WebP（最大16MB）</small>
+                        {% endif %}
                     </div>
 
                     <hr class="my-4">

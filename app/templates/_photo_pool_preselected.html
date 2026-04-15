@@ -1,0 +1,18 @@
+{# 写真プールから選択された写真を登録フォームに表示する共通部品
+   使用時: {% set preselected_photo = preselected_photo %}{% include '_photo_pool_preselected.html' %}
+#}
+{% if preselected_photo %}
+<div class="alert alert-success alert-permanent d-flex align-items-center mb-2">
+    <img src="{{ url_for('static', filename='uploads/' + preselected_photo.image_path | thumb_path) }}"
+         onerror="this.onerror=null;this.src='{{ url_for('static', filename='uploads/' + preselected_photo.image_path) }}';"
+         alt="選択された写真"
+         style="width: 80px; height: 60px; object-fit: cover;" class="me-3 rounded">
+    <div class="flex-grow-1">
+        <strong><i class="bi bi-images"></i> 写真プールから選択中</strong>
+        {% if preselected_photo.notes %}<div class="small">{{ preselected_photo.notes }}</div>{% endif %}
+        <div class="small text-muted">登録時にこの写真が使用されます</div>
+    </div>
+    <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary">選択解除</a>
+</div>
+<input type="hidden" name="photo_pool_id" value="{{ preselected_photo.id }}">
+{% endif %}

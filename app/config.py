@@ -8,7 +8,7 @@ class Config:
 
     # アップロード設定
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
+    MAX_CONTENT_LENGTH = 256 * 1024 * 1024  # 256MB（写真プールの一括アップロード対応）
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 
