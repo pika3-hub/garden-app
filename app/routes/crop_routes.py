@@ -41,6 +41,7 @@ def detail(crop_id):
     prev_crop, next_crop = Crop.get_adjacent(crop_id)
     related_tasks = Task.get_incomplete_tasks_for_entity('crop', crop_id)
     supplements = Supplement.get_by_entity('crop', crop_id)
+    photo_pool_photos = PhotoPool.get_all()
 
     return render_template('crops/detail.html',
                           crop=crop,
@@ -50,7 +51,8 @@ def detail(crop_id):
                           prev_crop=prev_crop,
                           next_crop=next_crop,
                           related_tasks=related_tasks,
-                          supplements=supplements)
+                          supplements=supplements,
+                          photo_pool_photos=photo_pool_photos)
 
 
 def _get_crop_icon_list():
@@ -63,9 +65,11 @@ def new():
     """作物登録フォーム"""
     photo_pool_id = request.args.get('photo_pool_id', type=int)
     preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
+    photo_pool_photos = PhotoPool.get_all()
     return render_template('crops/form.html', crop=None, action='create',
                            crop_icon_list=_get_crop_icon_list(),
-                           preselected_photo=preselected_photo)
+                           preselected_photo=preselected_photo,
+                           photo_pool_photos=photo_pool_photos)
 
 
 @bp.route('/create', methods=['POST'])
@@ -117,8 +121,10 @@ def edit(crop_id):
     if not crop:
         flash('作物が見つかりません', 'danger')
         return redirect(url_for('crops.list'))
+    photo_pool_photos = PhotoPool.get_all()
     return render_template('crops/form.html', crop=crop, action='update',
-                           crop_icon_list=_get_crop_icon_list())
+                           crop_icon_list=_get_crop_icon_list(),
+                           photo_pool_photos=photo_pool_photos)
 
 
 @bp.route('/<int:crop_id>/update', methods=['POST'])
@@ -147,14 +153,21 @@ def update(crop_id):
         flash('作物名と作物種類は必須です', 'danger')
         return redirect(url_for('crops.edit', crop_id=crop_id))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
-        image = request.files['image']
-        if image and image.filename:
-            # 古い画像を削除
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    replaced_from_pool = False
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
             if crop.get('image_path'):
                 delete_image(crop['image_path'])
-            # 新しい画像を保存
+            data['image_path'] = copy_image(pool_photo['image_path'], 'crops')
+            replaced_from_pool = True
+    elif 'image' in request.files:
+        image = request.files['image']
+        if image and image.filename:
+            if crop.get('image_path'):
+                delete_image(crop['image_path'])
             image_path = save_image(image, 'crops')
             data['image_path'] = image_path
 
@@ -166,6 +179,8 @@ def update(crop_id):
 
     try:
         Crop.update(crop_id, data)
+        if replaced_from_pool and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'crop', crop_id, data['image_path'])
         flash(f'作物「{data["name"]}」を更新しました', 'success')
         return redirect(url_for('crops.detail', crop_id=crop_id))
     except Exception as e:

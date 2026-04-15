@@ -3,7 +3,8 @@ from app.models.supplement import (
     Supplement, extract_youtube_info, format_youtube_content,
     validate_url, VALID_ENTITY_TYPES, VALID_SUPPLEMENT_TYPES,
 )
-from app.utils.upload import save_image, delete_image
+from app.models.photo_pool import PhotoPool
+from app.utils.upload import save_image, delete_image, copy_image
 
 bp = Blueprint('supplements', __name__, url_prefix='/supplements')
 
@@ -44,14 +45,26 @@ def add(entity_type, entity_id):
             return _redirect_to_entity(entity_type, entity_id)
 
     elif supplement_type == 'image':
-        if 'image' not in request.files or not request.files['image'].filename:
-            flash('画像ファイルを選択してください', 'danger')
-            return _redirect_to_entity(entity_type, entity_id)
-        image_path = save_image(request.files['image'], 'supplements')
-        if not image_path:
-            flash('画像のアップロードに失敗しました', 'danger')
-            return _redirect_to_entity(entity_type, entity_id)
-        content = image_path
+        photo_pool_id = request.form.get('photo_pool_id', type=int)
+        if photo_pool_id:
+            pool_photo = PhotoPool.get_by_id(photo_pool_id)
+            if not pool_photo:
+                flash('写真プールの画像が見つかりません', 'danger')
+                return _redirect_to_entity(entity_type, entity_id)
+            image_path = copy_image(pool_photo['image_path'], 'supplements')
+            if not image_path:
+                flash('画像のアップロードに失敗しました', 'danger')
+                return _redirect_to_entity(entity_type, entity_id)
+            content = image_path
+        else:
+            if 'image' not in request.files or not request.files['image'].filename:
+                flash('画像ファイルを選択してください', 'danger')
+                return _redirect_to_entity(entity_type, entity_id)
+            image_path = save_image(request.files['image'], 'supplements')
+            if not image_path:
+                flash('画像のアップロードに失敗しました', 'danger')
+                return _redirect_to_entity(entity_type, entity_id)
+            content = image_path
 
     elif supplement_type == 'url':
         url = request.form.get('content', '').strip()
@@ -68,13 +81,17 @@ def add(entity_type, entity_id):
             return _redirect_to_entity(entity_type, entity_id)
         content = format_youtube_content(video_id, start)
 
-    Supplement.create({
+    supplement_id = Supplement.create({
         'entity_type': entity_type,
         'entity_id': entity_id,
         'supplement_type': supplement_type,
         'title': title,
         'content': content,
     })
+    if supplement_type == 'image':
+        pool_id = request.form.get('photo_pool_id', type=int)
+        if pool_id:
+            PhotoPool.record_usage(pool_id, 'supplement', supplement_id, content)
     flash('補足情報を追加しました', 'success')
     return _redirect_to_entity(entity_type, entity_id)
 
@@ -100,8 +117,17 @@ def update(supplement_id):
             return _redirect_to_entity(entity_type, entity_id)
 
     elif supplement_type == 'image':
-        # 画像の差し替え
-        if 'image' in request.files and request.files['image'].filename:
+        # 画像の差し替え（写真プール優先）
+        pool_id = request.form.get('photo_pool_id', type=int)
+        if pool_id:
+            pool_photo = PhotoPool.get_by_id(pool_id)
+            if pool_photo:
+                delete_image(supplement['content'])
+                image_path = copy_image(pool_photo['image_path'], 'supplements')
+                if image_path:
+                    content = image_path
+                    PhotoPool.record_usage(pool_id, 'supplement', supplement_id, image_path)
+        elif 'image' in request.files and request.files['image'].filename:
             delete_image(supplement['content'])
             image_path = save_image(request.files['image'], 'supplements')
             if image_path:

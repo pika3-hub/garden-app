@@ -4,6 +4,7 @@ from app.models.task import Task
 from app.models.crop import Crop
 from app.models.location import Location
 from app.models.supplement import Supplement
+from app.models.photo_pool import PhotoPool
 from app.utils.upload import delete_image
 
 bp = Blueprint('tasks', __name__, url_prefix='/tasks')
@@ -50,7 +51,8 @@ def detail(task_id):
                           Task=Task,
                           prev_task=prev_task,
                           next_task=next_task,
-                          supplements=supplements)
+                          supplements=supplements,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/new')

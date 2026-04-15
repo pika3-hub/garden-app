@@ -64,8 +64,23 @@
                         <div class="mb-2">
                             <input type="text" name="title" class="form-control form-control-sm" placeholder="キャプション（任意）">
                         </div>
-                        <div class="mb-2">
-                            <input type="file" name="image" class="form-control form-control-sm" accept="image/*" required>
+                        <div class="mb-2" data-photo-pool-container>
+                            <div class="photo-pool-selected-area alert alert-success alert-permanent d-none align-items-center mb-2">
+                                <img class="photo-pool-selected-thumb me-2 rounded" src="" alt="" style="width: 60px; height: 45px; object-fit: cover;">
+                                <div class="flex-grow-1 small">
+                                    <strong><i class="bi bi-images"></i> 写真プールから選択中</strong>
+                                    <div class="photo-pool-selected-notes"></div>
+                                </div>
+                                <button type="button" class="photo-pool-clear-btn btn btn-sm btn-outline-secondary">解除</button>
+                            </div>
+                            <input type="hidden" name="photo_pool_id" class="photo-pool-id-input" value="">
+                            <input type="file" name="image" class="form-control form-control-sm photo-pool-file-input" accept="image/*">
+                            <div class="mt-2 photo-pool-trigger-wrap">
+                                <button type="button" class="photo-pool-trigger btn btn-outline-primary btn-sm"
+                                        data-bs-toggle="modal" data-bs-target="#photoPoolPickerModal">
+                                    <i class="bi bi-images"></i> 写真プールから選択
+                                </button>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> 追加</button>
                     </form>
@@ -180,9 +195,24 @@
                             <textarea name="content" class="form-control" rows="3" required>{{ s.content }}</textarea>
                         </div>
                     {% elif s.supplement_type == 'image' %}
-                        <div class="mb-2">
-                            <input type="file" name="image" class="form-control form-control-sm" accept="image/*">
-                            <div class="form-text">新しい画像を選択すると差し替えます</div>
+                        <div class="mb-2" data-photo-pool-container>
+                            <div class="photo-pool-selected-area alert alert-success alert-permanent d-none align-items-center mb-2">
+                                <img class="photo-pool-selected-thumb me-2 rounded" src="" alt="" style="width: 60px; height: 45px; object-fit: cover;">
+                                <div class="flex-grow-1 small">
+                                    <strong><i class="bi bi-images"></i> 写真プールから選択中</strong>
+                                    <div class="photo-pool-selected-notes"></div>
+                                </div>
+                                <button type="button" class="photo-pool-clear-btn btn btn-sm btn-outline-secondary">解除</button>
+                            </div>
+                            <input type="hidden" name="photo_pool_id" class="photo-pool-id-input" value="">
+                            <input type="file" name="image" class="form-control form-control-sm photo-pool-file-input" accept="image/*">
+                            <div class="form-text photo-pool-file-hint">新しい画像を選択すると差し替えます</div>
+                            <div class="mt-2 photo-pool-trigger-wrap">
+                                <button type="button" class="photo-pool-trigger btn btn-outline-primary btn-sm"
+                                        data-bs-toggle="modal" data-bs-target="#photoPoolPickerModal">
+                                    <i class="bi bi-images"></i> 写真プールから選択
+                                </button>
+                            </div>
                         </div>
                     {% elif s.supplement_type == 'url' %}
                         <div class="mb-2">
@@ -212,3 +242,6 @@
     </div>
     {% endif %}
 </div>
+
+{% include '_photo_pool_picker_modal.html' %}
+<script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>

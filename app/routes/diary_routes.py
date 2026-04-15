@@ -41,13 +41,15 @@ def detail(diary_id):
     relations = DiaryEntry.get_relations(diary_id)
     prev_entry, next_entry = DiaryEntry.get_adjacent(diary_id)
     supplements = Supplement.get_by_entity('diary', diary_id)
+    photo_pool_photos = PhotoPool.get_all()
 
     return render_template('diary/detail.html',
                           entry=entry,
                           relations=relations,
                           prev_entry=prev_entry,
                           next_entry=next_entry,
-                          supplements=supplements)
+                          supplements=supplements,
+                          photo_pool_photos=photo_pool_photos)
 
 
 @bp.route('/new')
@@ -74,7 +76,8 @@ def new():
                           harvests=harvests,
                           selected_relations=None,
                           today=today,
-                          preselected_photo=preselected_photo)
+                          preselected_photo=preselected_photo,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/create', methods=['POST'])
@@ -154,7 +157,8 @@ def edit(diary_id):
                           locations=locations,
                           location_crops=location_crops,
                           harvests=harvests,
-                          selected_relations=selected_relations)
+                          selected_relations=selected_relations,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/<int:diary_id>/update', methods=['POST'])
@@ -179,14 +183,21 @@ def update(diary_id):
         flash('タイトルと日付は必須です', 'danger')
         return redirect(url_for('diary.edit', diary_id=diary_id))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
-        image = request.files['image']
-        if image and image.filename:
-            # 古い画像を削除
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    replaced_from_pool = False
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
             if entry.get('image_path'):
                 delete_image(entry['image_path'])
-            # 新しい画像を保存
+            data['image_path'] = copy_image(pool_photo['image_path'], 'diary')
+            replaced_from_pool = True
+    elif 'image' in request.files:
+        image = request.files['image']
+        if image and image.filename:
+            if entry.get('image_path'):
+                delete_image(entry['image_path'])
             image_path = save_image(image, 'diary')
             data['image_path'] = image_path
 
@@ -198,6 +209,8 @@ def update(diary_id):
 
     try:
         DiaryEntry.update(diary_id, data)
+        if replaced_from_pool and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'diary', diary_id, data['image_path'])
 
         # 関連を保存
         relations = {

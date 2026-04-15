@@ -52,8 +52,10 @@ def detail(location_crop_id):
     related_tasks = Task.get_incomplete_tasks_for_entity('location_crop', location_crop_id)
     related_harvests = Harvest.get_by_location_crop(location_crop_id, limit=10)
     related_diaries = DiaryEntry.get_by_location_crop(location_crop_id, limit=10)
+    photo_pool_photos = PhotoPool.get_all()
 
     return render_template('plantings/detail.html',
+                          photo_pool_photos=photo_pool_photos,
                           records=records,
                           location_crop=location_crop,
                           location=location,
@@ -111,7 +113,8 @@ def record_detail(record_id):
     return render_template('plantings/record_detail.html',
                           record=record,
                           prev_record=prev_record,
-                          next_record=next_record)
+                          next_record=next_record,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/new/<int:location_crop_id>')
@@ -132,7 +135,8 @@ def new(location_crop_id):
                           action='create',
                           location_crop=location_crop,
                           today=today,
-                          preselected_photo=preselected_photo)
+                          preselected_photo=preselected_photo,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/create', methods=['POST'])
@@ -190,7 +194,8 @@ def edit(record_id):
                           record=record,
                           action='update',
                           location_crop=location_crop,
-                          today=None)
+                          today=None,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/record/<int:record_id>/update', methods=['POST'])
@@ -211,7 +216,16 @@ def update(record_id):
         flash('記録日は必須です', 'danger')
         return redirect(url_for('plantings.edit', record_id=record_id))
 
-    if 'image' in request.files:
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    replaced_from_pool = False
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            if record.get('image_path'):
+                delete_image(record['image_path'])
+            data['image_path'] = copy_image(pool_photo['image_path'], 'growth_records')
+            replaced_from_pool = True
+    elif 'image' in request.files:
         image = request.files['image']
         if image and image.filename:
             if record.get('image_path'):
@@ -226,6 +240,8 @@ def update(record_id):
 
     try:
         PlantingRecord.update(record_id, data)
+        if replaced_from_pool and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'planting_record', record_id, data['image_path'])
         flash('栽培記録を更新しました', 'success')
         return redirect(url_for('plantings.record_detail', record_id=record_id))
     except Exception as e:

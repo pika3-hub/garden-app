@@ -148,7 +148,7 @@
 |--------|-----|------|
 | id | INTEGER | 主キー |
 | photo_pool_id | INTEGER | 写真プールID（FK → photo_pool、ON DELETE CASCADE） |
-| entity_type | VARCHAR(20) | 使用先種別（crop/location/diary/harvest/planting_record） |
+| entity_type | VARCHAR(20) | 使用先種別（crop/location/diary/harvest/planting_record/supplement） |
 | entity_id | INTEGER | 使用先エンティティID |
 | copied_image_path | VARCHAR(255) | コピー先の相対パス（追跡用） |
 | created_at | TIMESTAMP | 使用日時 |

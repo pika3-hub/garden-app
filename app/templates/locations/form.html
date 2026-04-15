@@ -56,7 +56,6 @@
 
                     <div class="mb-3">
                         <label for="image" class="form-label">画像</label>
-                        {% include '_photo_pool_preselected.html' %}
                         {% if location and location.image_path %}
                         <div class="mb-2">
                             <img src="{{ url_for('static', filename='uploads/' + location.image_path) }}" alt="現在の画像" class="img-thumbnail" style="max-height: 150px;">
@@ -66,10 +65,7 @@
                             </div>
                         </div>
                         {% endif %}
-                        {% if not preselected_photo %}
-                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                        <small class="text-muted">対応形式: PNG, JPG, JPEG, GIF, WebP（最大16MB）</small>
-                        {% endif %}
+                        {% include '_photo_pool_preselected.html' %}
                     </div>
 
                     <div class="mb-3">
@@ -135,9 +131,11 @@
         </div>
     </div>
 </div>
+{% include '_photo_pool_picker_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>
 <script>
 function selectBgImage(el) {
     document.querySelectorAll('.bg-image-option').forEach(e => e.classList.remove('selected'));

@@ -47,7 +47,8 @@ def detail(harvest_id):
                           next_harvest=next_harvest,
                           related_plantings=related_plantings,
                           related_diaries=related_diaries,
-                          supplements=supplements)
+                          supplements=supplements,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/new')
@@ -77,7 +78,8 @@ def new():
                           filter_types=filter_types,
                           filter_locations=filter_locations,
                           today=today,
-                          preselected_photo=preselected_photo)
+                          preselected_photo=preselected_photo,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/create', methods=['POST'])
@@ -148,7 +150,8 @@ def edit(harvest_id):
                           harvest=harvest,
                           action='update',
                           location_crop=location_crop,
-                          today=None)
+                          today=None,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/<int:harvest_id>/update', methods=['POST'])
@@ -180,8 +183,17 @@ def update(harvest_id):
             flash('収穫量は数値で入力してください', 'danger')
             return redirect(url_for('harvests.edit', harvest_id=harvest_id))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    replaced_from_pool = False
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            if harvest.get('image_path'):
+                delete_image(harvest['image_path'])
+            data['image_path'] = copy_image(pool_photo['image_path'], 'harvests')
+            replaced_from_pool = True
+    elif 'image' in request.files:
         image = request.files['image']
         if image and image.filename:
             if harvest.get('image_path'):
@@ -197,6 +209,8 @@ def update(harvest_id):
 
     try:
         Harvest.update(harvest_id, data)
+        if replaced_from_pool and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'harvest', harvest_id, data['image_path'])
         flash('収穫記録を更新しました', 'success')
         return redirect(url_for('harvests.detail', harvest_id=harvest_id))
     except Exception as e:
