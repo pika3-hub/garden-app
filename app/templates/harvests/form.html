@@ -9,13 +9,11 @@
 {% endif %}
 {% endblock %}
 
-{% block body_bg %}<div class="page-bg-image page-bg-harvest"></div>{% endblock %}
-
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
         <h1>
-            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img icon-img-lg">
+            <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="" class="icon-img icon-img-lg">
             {% if harvest %}収穫記録編集{% else %}収穫を記録{% endif %}
         </h1>
     </div>

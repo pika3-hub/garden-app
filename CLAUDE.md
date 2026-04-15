@@ -364,18 +364,18 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 #### カードヘッダーアイコン
 
-各カードのヘッダーには `images/icon_*.png` を使用する（Bootstrap Icons ではなく）。
+各カードのヘッダーには `images/icon_*.webp` を使用する（Bootstrap Icons ではなく）。
 
 | カード | アイコン | ヘッダー背景色 |
 |--------|---------|--------------|
-| 作物情報 | `icon_crop.png` | `bg-success` |
-| 場所情報 | `icon_location.png` | `bg-info` |
-| タスク | `icon_tasklist.png` | `bg-primary` |
-| 関連する植え付け | `icon_location_crop.png` | `bg-warning` |
-| 関連する収穫 | `icon_harvest.png` | `bg-success` |
-| 関連する日記 | `icon_diary.png` | `bg-primary` |
-| 関連する作物 | `icon_crop.png` | `bg-success` |
-| 関連する場所 | `icon_location.png` | `bg-info` |
+| 作物情報 | `icon_crop.webp` | `bg-success` |
+| 場所情報 | `icon_location.webp` | `bg-info` |
+| タスク | `icon_tasklist.webp` | `bg-primary` |
+| 関連する植え付け | `icon_location_crop.webp` | `bg-warning` |
+| 関連する収穫 | `icon_harvest.webp` | `bg-success` |
+| 関連する日記 | `icon_diary.webp` | `bg-primary` |
+| 関連する作物 | `icon_crop.webp` | `bg-success` |
+| 関連する場所 | `icon_location.webp` | `bg-info` |
 
 #### カード配置順序（統一ルール）
 

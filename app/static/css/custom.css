@@ -556,35 +556,13 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   top: 0; left: 0;
   width: 100%;
   height: 200px;
-  background-image: url("../images/1_sky_clouds.png");
+  background-image: url("../images/bg_sky.webp");
   background-repeat: repeat-x;
   background-position: top center;
   background-size: auto 200px;
   z-index: -1;
   opacity: 0.3;
 }
-
-/* Page background watermark (detail/form pages) */
-.page-bg-image {
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  width: 380px;
-  height: 380px;
-  opacity: 0.09;
-  z-index: -1;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  pointer-events: none;
-}
-.page-bg-crop           { background-image: url('../images/bg_crop.png'); }
-.page-bg-location       { background-image: url('../images/bg_location.png'); }
-.page-bg-location-crop  { background-image: url('../images/bg_location_crop.png'); }
-.page-bg-diary          { background-image: url('../images/bg_diary.png'); }
-.page-bg-harvest        { background-image: url('../images/bg_harvest.png'); }
-.page-bg-calendar       { background-image: url('../images/bg_calendar.png'); }
-.page-bg-tasklist       { background-image: url('../images/bg_tasklist.png'); }
 
 /* Dashboard card background (centered) */
 .dashboard-card-with-bg {
@@ -622,12 +600,12 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   pointer-events: none;
   z-index: 0;
 }
-.card-bg-crop::before          { background-image: url('../images/card_crop.png'); }
-.card-bg-location::before      { background-image: url('../images/card_location.png'); }
-.card-bg-location-crop::before { background-image: url('../images/card_location_crop.png'); }
-.card-bg-diary::before         { background-image: url('../images/card_diary.png'); }
-.card-bg-harvest::before       { background-image: url('../images/card_harvest.png'); }
-.card-bg-tasklist::before      { background-image: url('../images/card_tasklist.png'); }
+.card-bg-crop::before          { background-image: url('../images/card_crop.webp'); }
+.card-bg-location::before      { background-image: url('../images/card_location.webp'); }
+.card-bg-location-crop::before { background-image: url('../images/card_location_crop.webp'); }
+.card-bg-diary::before         { background-image: url('../images/card_diary.webp'); }
+.card-bg-harvest::before       { background-image: url('../images/card_harvest.webp'); }
+.card-bg-tasklist::before      { background-image: url('../images/card_tasklist.webp'); }
 
 /* Bring card content above background image */
 .card-with-bg .card-body,
@@ -678,12 +656,12 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 }
 .card-body-weather > * { position: relative; z-index: 1; }
 
-.weather-bg-sunny::before      { background-image: url('../images/bg_sunny.png'); }
-.weather-bg-cloudy::before     { background-image: url('../images/bg_cloudy.png'); }
-.weather-bg-rain::before       { background-image: url('../images/bg_rain.png'); }
-.weather-bg-snow::before       { background-image: url('../images/bg_snow.png'); }
-.weather-bg-sun-cloud::before  { background-image: url('../images/bg_sun_cloud.png'); }
-.weather-bg-cloud-rain::before { background-image: url('../images/bg_cloud_rain.png'); }
+.weather-bg-sunny::before      { background-image: url('../images/bg_sunny.webp'); }
+.weather-bg-cloudy::before     { background-image: url('../images/bg_cloudy.webp'); }
+.weather-bg-rain::before       { background-image: url('../images/bg_rain.webp'); }
+.weather-bg-snow::before       { background-image: url('../images/bg_snow.webp'); }
+.weather-bg-sun-cloud::before  { background-image: url('../images/bg_sun_cloud.webp'); }
+.weather-bg-cloud-rain::before { background-image: url('../images/bg_cloud_rain.webp'); }
 
 /* ── Card image date overlay ─────────────────────────────── */
 .card-img-wrapper {

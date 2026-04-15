@@ -34,13 +34,11 @@
 </style>
 {% endblock %}
 
-{% block body_bg %}<div class="page-bg-image page-bg-crop"></div>{% endblock %}
-
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
         <h1>
-            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img icon-img-lg">
+            <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="icon-img icon-img-lg">
             {% if crop %}作物編集{% else %}作物登録{% endif %}
         </h1>
     </div>

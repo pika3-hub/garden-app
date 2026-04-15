@@ -17,7 +17,7 @@
     <div class="col-6 col-lg">
         <a href="{{ url_for('crops.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-crop dashboard-stat-link">
             <div class="card-body py-4">
-                <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="stat-icon">
+                <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.crop_count }}</span>
                 <h5 class="card-title mb-1">作物</h5>
                 <p class="card-text text-muted small mb-0">登録済みの作物数</p>
@@ -29,7 +29,7 @@
     <div class="col-6 col-lg">
         <a href="{{ url_for('locations.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location dashboard-stat-link">
             <div class="card-body py-4">
-                <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="stat-icon">
+                <img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.location_count }}</span>
                 <h5 class="card-title mb-1">場所</h5>
                 <p class="card-text text-muted small mb-0">登録済みの場所数</p>
@@ -41,7 +41,7 @@
     <div class="col-6 col-lg">
         <a href="{{ url_for('plantings.index') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location-crop dashboard-stat-link">
             <div class="card-body py-4">
-                <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="stat-icon">
+                <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.active_crop_count }}</span>
                 <h5 class="card-title mb-1">栽培中</h5>
                 <p class="card-text text-muted small mb-0">現在育てている作物数</p>
@@ -53,7 +53,7 @@
     <div class="col-6 col-lg">
         <a href="{{ url_for('harvests.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-harvest dashboard-stat-link">
             <div class="card-body py-4">
-                <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="stat-icon">
+                <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.harvest_count }}</span>
                 <h5 class="card-title mb-1">収穫</h5>
                 <p class="card-text text-muted small mb-0">収穫した作物数</p>
@@ -65,7 +65,7 @@
     <div class="col-6 col-lg">
         <a href="{{ url_for('diary.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-diary dashboard-stat-link">
             <div class="card-body py-4">
-                <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="stat-icon">
+                <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.diary_count }}</span>
                 <h5 class="card-title mb-1">日記</h5>
                 <p class="card-text text-muted small mb-0">記録した日記数</p>
@@ -77,7 +77,7 @@
     <div class="col-6 col-lg">
         <a href="{{ url_for('tasks.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-tasklist dashboard-stat-link">
             <div class="card-body py-4">
-                <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="stat-icon">
+                <img src="{{ url_for('static', filename='images/icon_tasklist.webp') }}" alt="" class="stat-icon">
                 <span class="stat-num">{{ stats.pending_task_count }}</span>
                 <h5 class="card-title mb-1">未完了タスク</h5>
                 <p class="card-text text-muted small mb-0">残りのタスク数</p>
@@ -92,7 +92,7 @@
         <div class="card h-100 dashboard-card-with-bg card-bg-diary">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
-                    <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg"> 最新の日記
+                    <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="" class="icon-img icon-img-lg"> 最新の日記
                 </h5>
             </div>
             <div class="card-body">
@@ -172,7 +172,7 @@
         <div class="card h-100 dashboard-card-with-bg card-bg-tasklist">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0">
-                    <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img icon-img-lg"> 未完了タスク
+                    <img src="{{ url_for('static', filename='images/icon_tasklist.webp') }}" alt="" class="icon-img icon-img-lg"> 未完了タスク
                 </h5>
             </div>
             <div class="card-body">
@@ -209,7 +209,7 @@
         <div class="card h-100 dashboard-card-with-bg card-bg-location-crop">
             <div class="card-header bg-warning">
                 <h5 class="mb-0">
-                    <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img icon-img-lg"> 最近植え付けた作物
+                    <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="" class="icon-img icon-img-lg"> 最近植え付けた作物
                 </h5>
             </div>
             <div class="card-body">
@@ -240,7 +240,7 @@
         <div class="card h-100 dashboard-card-with-bg card-bg-location-crop">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
-                    <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="" class="icon-img icon-img-lg"> 最新の栽培記録
+                    <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="" class="icon-img icon-img-lg"> 最新の栽培記録
                 </h5>
             </div>
             <div class="card-body">
@@ -270,7 +270,7 @@
         <div class="card h-100 dashboard-card-with-bg card-bg-harvest">
             <div class="card-header bg-danger text-white">
                 <h5 class="mb-0">
-                    <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img icon-img-lg"> 最近収穫した作物
+                    <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="" class="icon-img icon-img-lg"> 最近収穫した作物
                 </h5>
             </div>
             <div class="card-body">

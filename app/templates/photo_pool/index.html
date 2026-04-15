@@ -35,7 +35,7 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <h1><i class="bi bi-images"></i> 写真プール</h1>
+        <h1><img src="{{ url_for('static', filename='images/icon_photo.webp') }}" alt="" class="icon-img icon-img-lg"> 写真プール</h1>
         <p class="text-muted mb-0">撮影した複数の写真をまとめてアップロードし、後から各登録画面へ使い回せます。</p>
     </div>
 </div>
@@ -95,12 +95,12 @@
                         <i class="bi bi-plus-circle"></i> この写真で登録
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='diary') }}"><img src="{{ url_for('static', filename='images/icon_diary.png') }}" class="icon-img me-1"> 日記</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='harvest') }}"><img src="{{ url_for('static', filename='images/icon_harvest.png') }}" class="icon-img me-1"> 収穫</a></li>
-                        <li><a class="dropdown-item js-pick-planting" href="#" data-photo-id="{{ photo.id }}"><img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" class="icon-img me-1"> 栽培記録</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='diary') }}"><img src="{{ url_for('static', filename='images/icon_diary.webp') }}" class="icon-img me-1"> 日記</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='harvest') }}"><img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" class="icon-img me-1"> 収穫</a></li>
+                        <li><a class="dropdown-item js-pick-planting" href="#" data-photo-id="{{ photo.id }}"><img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" class="icon-img me-1"> 栽培記録</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='crop') }}"><img src="{{ url_for('static', filename='images/icon_crop.png') }}" class="icon-img me-1"> 作物</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='location') }}"><img src="{{ url_for('static', filename='images/icon_location.png') }}" class="icon-img me-1"> 場所</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='crop') }}"><img src="{{ url_for('static', filename='images/icon_crop.webp') }}" class="icon-img me-1"> 作物</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='location') }}"><img src="{{ url_for('static', filename='images/icon_location.webp') }}" class="icon-img me-1"> 場所</a></li>
                     </ul>
                 </div>
 

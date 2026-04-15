@@ -3,12 +3,10 @@
 
 {% block title %}{{ task.title }} - タスク{% endblock %}
 
-{% block body_bg %}<div class="page-bg-image page-bg-tasklist"></div>{% endblock %}
-
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <h1><img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img icon-img-lg"> {{ task.title }}</h1>
+        <h1><img src="{{ url_for('static', filename='images/icon_tasklist.webp') }}" alt="" class="icon-img icon-img-lg"> {{ task.title }}</h1>
     </div>
     <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('tasks.list') }}" class="btn btn-outline-secondary">

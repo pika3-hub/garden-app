@@ -6,12 +6,10 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/calendar.css') }}">
 {% endblock %}
 
-{% block body_bg %}<div class="page-bg-image page-bg-calendar"></div>{% endblock %}
-
 {% block content %}
 <div class="container-fluid">
     <h1 class="mb-4">
-        <img src="{{ url_for('static', filename='images/icon_calendar.png') }}" alt="" class="icon-img icon-img-lg"> カレンダー
+        <img src="{{ url_for('static', filename='images/icon_calendar.webp') }}" alt="" class="icon-img icon-img-lg"> カレンダー
     </h1>
 
     <!-- ナビゲーション -->
@@ -28,31 +26,31 @@
     <!-- 凡例 -->
     <div class="calendar-legend">
         <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="作物">
+            <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="作物">
             <span>作物</span>
         </div>
         <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="場所">
+            <img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="場所">
             <span>場所</span>
         </div>
         <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="日記">
+            <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="日記">
             <span>日記</span>
         </div>
         <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="植え付け">
+            <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="植え付け">
             <span>植え付け</span>
         </div>
         <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="収穫">
+            <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="収穫">
             <span>収穫</span>
         </div>
         <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="タスク">
+            <img src="{{ url_for('static', filename='images/icon_tasklist.webp') }}" alt="タスク">
             <span>タスク</span>
         </div>
         <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_location_crop.png') }}" alt="栽培記録">
+            <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="栽培記録">
             <span>栽培記録</span>
         </div>
     </div>
@@ -91,13 +89,13 @@
                     <!-- アイコン -->
                     <div class="day-icons">
                         {% set type_defs = [
-                            ('crops',          'icon_crop.png',          '作物',     day_data.get('crops', [])),
-                            ('locations',      'icon_location.png',      '場所',     day_data.get('locations', [])),
-                            ('diaries',        'icon_diary.png',         '日記',     day_data.get('diaries', [])),
-                            ('location_crops', 'icon_location_crop.png', '植え付け', day_data.get('location_crops', [])),
-                            ('harvests',       'icon_harvest.png',       '収穫',     day_data.get('harvests', [])),
-                            ('tasks',          'icon_tasklist.png',      'タスク',   day_data.get('tasks', [])),
-                            ('growth_records', 'icon_location_crop.png', '栽培記録', day_data.get('growth_records', [])),
+                            ('crops',          'icon_crop.webp',          '作物',     day_data.get('crops', [])),
+                            ('locations',      'icon_location.webp',      '場所',     day_data.get('locations', [])),
+                            ('diaries',        'icon_diary.webp',         '日記',     day_data.get('diaries', [])),
+                            ('location_crops', 'icon_location_crop.webp', '植え付け', day_data.get('location_crops', [])),
+                            ('harvests',       'icon_harvest.webp',       '収穫',     day_data.get('harvests', [])),
+                            ('tasks',          'icon_tasklist.webp',      'タスク',   day_data.get('tasks', [])),
+                            ('growth_records', 'icon_location_crop.webp', '栽培記録', day_data.get('growth_records', [])),
                         ] %}
                         {% for type_key, icon, type_label, items in type_defs %}
                         {% if items %}

@@ -2,13 +2,11 @@
 
 {% block title %}{% if task %}タスク編集{% else %}タスク登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
 
-{% block body_bg %}<div class="page-bg-image page-bg-tasklist"></div>{% endblock %}
-
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
         <h1>
-            <img src="{{ url_for('static', filename='images/icon_tasklist.png') }}" alt="" class="icon-img icon-img-lg">
+            <img src="{{ url_for('static', filename='images/icon_tasklist.webp') }}" alt="" class="icon-img icon-img-lg">
             {% if task %}タスク編集{% else %}タスク登録{% endif %}
         </h1>
     </div>

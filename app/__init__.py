@@ -117,11 +117,11 @@ def create_app(config_name='default'):
         carousel_images = [dict(row) for row in carousel_images_raw]
 
         type_config = {
-            'crop': ('crops.detail', 'crop_id', 'icon_crop.png', '作物'),
-            'location': ('locations.detail', 'location_id', 'icon_location.png', '場所'),
-            'diary': ('diary.detail', 'diary_id', 'icon_diary.png', '日記'),
-            'harvest': ('harvests.detail', 'harvest_id', 'icon_harvest.png', '収穫'),
-            'planting_record': ('plantings.record_detail', 'record_id', 'icon_location_crop.png', '栽培記録'),
+            'crop': ('crops.detail', 'crop_id', 'icon_crop.webp', '作物'),
+            'location': ('locations.detail', 'location_id', 'icon_location.webp', '場所'),
+            'diary': ('diary.detail', 'diary_id', 'icon_diary.webp', '日記'),
+            'harvest': ('harvests.detail', 'harvest_id', 'icon_harvest.webp', '収穫'),
+            'planting_record': ('plantings.record_detail', 'record_id', 'icon_location_crop.webp', '栽培記録'),
         }
         for img in carousel_images:
             endpoint, param, icon, type_label = type_config[img['type']]
