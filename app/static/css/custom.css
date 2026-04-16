@@ -229,7 +229,6 @@ a.dashboard-stat-link:hover {
   border-radius: 9px 9px 0 0 !important;
   font-weight: 700;
   font-family: var(--font-serif);
-  padding: 0.7rem 1rem;
 }
 
 /* Card header color overrides */
@@ -621,13 +620,13 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 /* Icon images */
 .icon-img    { width: 1em;     height: 1em;     vertical-align: -0.125em; display: inline-block; }
 .icon-img-sm { width: 0.875em; height: 0.875em; }
-.icon-img-lg { width: 1.5em;   height: 1.5em;     vertical-align: -0.300em; }
-.icon-img-xl { width: 2em;     height: 2em; }
+.icon-img-lg { width: 2.0em;   height: 2.0em;     vertical-align: -0.550em; }
+.icon-img-xl { width: 3.0em;   height: 3.0em; }
 
 /* Navbar icons → warm cream */
 .nav-link .icon-img,
 .navbar-brand-icon {
-  margin-right: 0.25rem;
+  margin-right: 0.1rem;
 }
 
 /* Responsive (background images) */
@@ -691,7 +690,7 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     object-fit: cover;
     border: 2px solid #4CAF50;
     background-color: #fff;
-    vertical-align: text-bottom;
+    vertical-align: -0.35em;
     margin-right: 2px;
 }
 
