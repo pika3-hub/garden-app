@@ -26,7 +26,14 @@ def index():
     task_counts = Task.get_upcoming_task_counts('location_crop', planting_ids)
     filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
     filter_locations = sorted(set(c['location_name'] for c in crops if c['location_name']))
-    return render_template('plantings/list.html', crops=crops, current_status=status, task_counts=task_counts, filter_types=filter_types, filter_locations=filter_locations)
+    filter_type_icons = {}
+    for c in crops:
+        t, icon = c['crop_type'], c['icon_path']
+        if t and icon:
+            icons = filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': c['image_color'] or '#4CAF50'})
+    return render_template('plantings/list.html', crops=crops, current_status=status, task_counts=task_counts, filter_types=filter_types, filter_type_icons=filter_type_icons, filter_locations=filter_locations)
 
 
 @bp.route('/<int:location_crop_id>')
@@ -322,6 +329,13 @@ def plant_new():
     crops = Crop.get_all()
     locations = Location.get_all()
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
+    crop_filter_type_icons = {}
+    for c in crops:
+        t, icon = c['crop_type'], c['icon_path']
+        if t and icon:
+            icons = crop_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': c['image_color'] or '#4CAF50'})
     location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
     today = date.today().isoformat()
     preselected_location_id = request.args.get('location_id', type=int)
@@ -333,6 +347,7 @@ def plant_new():
                            crops=crops,
                            locations=locations,
                            crop_filter_types=crop_filter_types,
+                           crop_filter_type_icons=crop_filter_type_icons,
                            location_filter_types=location_filter_types,
                            today=today,
                            preselected_location=preselected_location,

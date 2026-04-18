@@ -18,7 +18,14 @@ def list():
     harvests = Harvest.get_all()
     filter_types = sorted(set(h['crop_type'] for h in harvests if h['crop_type']))
     filter_locations = sorted(set(h['location_name'] for h in harvests if h['location_name']))
-    return render_template('harvests/list.html', harvests=harvests, filter_types=filter_types, filter_locations=filter_locations)
+    filter_type_icons = {}
+    for h in harvests:
+        t, icon = h['crop_type'], h['icon_path']
+        if t and icon:
+            icons = filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': h['image_color'] or '#4CAF50'})
+    return render_template('harvests/list.html', harvests=harvests, filter_types=filter_types, filter_type_icons=filter_type_icons, filter_locations=filter_locations)
 
 
 @bp.route('/<int:harvest_id>')
@@ -65,6 +72,13 @@ def new():
     active_plantings = Planting.get_all_with_stats(status='active')
     filter_types = sorted(set(p['crop_type'] for p in active_plantings if p.get('crop_type')))
     filter_locations = sorted(set(p['location_name'] for p in active_plantings if p.get('location_name')))
+    filter_type_icons = {}
+    for p in active_plantings:
+        t, icon = p.get('crop_type'), p.get('icon_path')
+        if t and icon:
+            icons = filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': p.get('image_color') or '#4CAF50'})
     today = date.today().isoformat()
 
     photo_pool_id = request.args.get('photo_pool_id', type=int)
@@ -76,6 +90,7 @@ def new():
                           location_crop=location_crop,
                           active_plantings=active_plantings,
                           filter_types=filter_types,
+                          filter_type_icons=filter_type_icons,
                           filter_locations=filter_locations,
                           today=today,
                           preselected_photo=preselected_photo,

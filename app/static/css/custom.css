@@ -350,6 +350,16 @@ a.dashboard-stat-link:hover {
 .badge-filter:hover {
   opacity: 0.85;
 }
+.badge-filter-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #4CAF50;
+  object-fit: cover;
+  vertical-align: middle;
+  margin-right: 1px;
+  background: #fff;
+}
 
 /* ── Multi-group Badge Filters ──────────────────────────── */
 .badge-filter-multi {

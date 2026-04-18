@@ -210,6 +210,28 @@ class Planting:
         return result
 
     @staticmethod
+    def get_active_crop_type_icons():
+        """種類ごとの栽培中作物アイコン一覧を取得"""
+        db = get_db()
+        rows = db.execute(
+            '''SELECT DISTINCT c.crop_type, c.icon_path, c.image_color
+               FROM plantings lc
+               JOIN crops c ON lc.crop_id = c.id
+               WHERE lc.status = 'active'
+                 AND c.crop_type IS NOT NULL AND c.crop_type != ''
+                 AND c.icon_path IS NOT NULL AND c.icon_path != '' '''
+        ).fetchall()
+        result = {}
+        for row in rows:
+            icons = result.setdefault(row['crop_type'], [])
+            if not any(i['icon_path'] == row['icon_path'] for i in icons):
+                icons.append({
+                    'icon_path': row['icon_path'],
+                    'image_color': row['image_color']
+                })
+        return result
+
+    @staticmethod
     def count_active():
         """栽培中の作物数を取得"""
         db = get_db()

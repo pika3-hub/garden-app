@@ -203,7 +203,11 @@
                 {% if crop_filter_types %}
                 <div class="badge-filter-container mb-3" data-scope="crop">
                     {% for t in crop_filter_types %}
-                    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+                    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+                        {%- for icon in crop_filter_type_icons.get(t, []) %}
+                        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
+                        {%- endfor %}
+                        {{ t }}</span>
                     {% endfor %}
                 </div>
                 {% endif %}

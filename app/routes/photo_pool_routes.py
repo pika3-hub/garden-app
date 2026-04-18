@@ -41,10 +41,18 @@ def index():
     active_plantings = Planting.get_all_with_stats(status='active')
     filter_types = sorted(set(p['crop_type'] for p in active_plantings if p.get('crop_type')))
     filter_locations = sorted(set(p['location_name'] for p in active_plantings if p.get('location_name')))
+    filter_type_icons = {}
+    for p in active_plantings:
+        t, icon = p.get('crop_type'), p.get('icon_path')
+        if t and icon:
+            icons = filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': p.get('image_color') or '#4CAF50'})
     return render_template('photo_pool/index.html',
                            photos=photos,
                            active_plantings=active_plantings,
                            filter_types=filter_types,
+                           filter_type_icons=filter_type_icons,
                            filter_locations=filter_locations)
 
 

@@ -17,7 +17,11 @@
 {% if filter_types %}
 <div id="badge-filter-container" class="badge-filter-container">
     {% for t in filter_types %}
-    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+        {%- for icon in filter_type_icons.get(t, []) %}
+        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
+        {%- endfor %}
+        {{ t }}</span>
     {% endfor %}
 </div>
 {% endif %}

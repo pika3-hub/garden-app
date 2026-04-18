@@ -25,8 +25,10 @@ def list():
     for types in crop_types_by_location.values():
         all_crop_types.update(types)
     filter_types = sorted(all_crop_types)
+    filter_type_icons = Planting.get_active_crop_type_icons()
     return render_template('locations/list.html', locations=locations, task_counts=task_counts,
-                           filter_types=filter_types, active_crop_counts=active_crop_counts,
+                           filter_types=filter_types, filter_type_icons=filter_type_icons,
+                           active_crop_counts=active_crop_counts,
                            crop_types_by_location=crop_types_by_location)
 
 
