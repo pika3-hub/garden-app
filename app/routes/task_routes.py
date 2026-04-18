@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.task import Task
 from app.models.crop import Crop
 from app.models.location import Location
+from app.models.planting import Planting
 from app.models.supplement import Supplement
 from app.models.photo_pool import PhotoPool
 from app.utils.upload import delete_image
@@ -60,19 +61,22 @@ def new():
     """タスク登録フォーム"""
     crops = Crop.get_all()
     locations = Location.get_all()
-    location_crops = _get_active_location_crops()
+    active_plantings = Planting.get_all_with_stats(status='active')
 
     today = date.today().isoformat()
+
+    filter_data = _build_filter_data(crops, locations, active_plantings)
 
     return render_template('tasks/form.html',
                           task=None,
                           action='create',
                           crops=crops,
                           locations=locations,
-                          location_crops=location_crops,
+                          active_plantings=active_plantings,
                           selected_relations=None,
                           today=today,
-                          Task=Task)
+                          Task=Task,
+                          **filter_data)
 
 
 @bp.route('/create', methods=['POST'])
@@ -118,7 +122,7 @@ def edit(task_id):
 
     crops = Crop.get_all()
     locations = Location.get_all()
-    location_crops = _get_active_location_crops()
+    active_plantings = Planting.get_all_with_stats(status='active')
     relations = Task.get_relations(task_id)
 
     # 選択済みのIDを抽出
@@ -128,14 +132,20 @@ def edit(task_id):
         'location_crop_ids': [str(r['location_crop_id']) for r in relations['location_crops']]
     }
 
+    filter_data = _build_filter_data(crops, locations, active_plantings)
+
     return render_template('tasks/form.html',
                           task=task,
                           action='update',
                           crops=crops,
                           locations=locations,
-                          location_crops=location_crops,
+                          active_plantings=active_plantings,
                           selected_relations=selected_relations,
-                          Task=Task)
+                          selected_crop_ids=selected_relations['crop_ids'],
+                          selected_location_ids=selected_relations['location_ids'],
+                          selected_location_crop_ids=selected_relations['location_crop_ids'],
+                          Task=Task,
+                          **filter_data)
 
 
 @bp.route('/<int:task_id>/update', methods=['POST'])
@@ -197,17 +207,37 @@ def delete(task_id):
     return redirect(url_for('tasks.list'))
 
 
-def _get_active_location_crops():
-    """栽培中の植え付け場所を取得するヘルパー"""
-    from app.database import get_db
-    db = get_db()
-    location_crops = db.execute(
-        '''SELECT lc.id, lc.planted_date,
-                  c.name as crop_name, c.variety, l.name as location_name
-           FROM plantings lc
-           JOIN crops c ON lc.crop_id = c.id
-           JOIN locations l ON lc.location_id = l.id
-           WHERE lc.status = 'active'
-           ORDER BY lc.planted_date DESC'''
-    ).fetchall()
-    return [dict(lc) for lc in location_crops]
+def _build_filter_data(crops, locations, active_plantings):
+    """モーダル用フィルターデータを構築するヘルパー"""
+    # 作物フィルター
+    crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
+    crop_filter_type_icons = {}
+    for c in crops:
+        t, icon = c['crop_type'], c.get('icon_path')
+        if t and icon:
+            icons = crop_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': c.get('image_color') or '#4CAF50'})
+
+    # 場所フィルター
+    location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
+
+    # 植え付けフィルター
+    planting_filter_types = sorted(set(p['crop_type'] for p in active_plantings if p.get('crop_type')))
+    planting_filter_type_icons = {}
+    for p in active_plantings:
+        t, icon = p.get('crop_type'), p.get('icon_path')
+        if t and icon:
+            icons = planting_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': p.get('image_color') or '#4CAF50'})
+    planting_filter_locations = sorted(set(p['location_name'] for p in active_plantings if p.get('location_name')))
+
+    return {
+        'crop_filter_types': crop_filter_types,
+        'crop_filter_type_icons': crop_filter_type_icons,
+        'location_filter_types': location_filter_types,
+        'planting_filter_types': planting_filter_types,
+        'planting_filter_type_icons': planting_filter_type_icons,
+        'planting_filter_locations': planting_filter_locations,
+    }

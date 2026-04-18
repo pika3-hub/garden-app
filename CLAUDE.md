@@ -18,13 +18,13 @@
 - **見取り図プレビュー:** 場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）、場所詳細では日付スライダーで過去の配置状態を再現可能
 - **栽培記録:** 作物と場所をリンクし、ステータス追跡（栽培中/栽培終了/削除済み）、タブフィルター付き一覧（`/plantings/`）、栽培観察記録の登録・管理
 - **収穫記録:** 複数回の収穫を記録、収穫量・単位・メモ・画像対応、植え付けからの日数自動計算。収穫一覧・植え付け詳細の両方から「収穫を記録」可能で、新規フォームはモーダルから対象の植え付けを選択できる（種類・場所バッジフィルタ付き）
-- **日記システム:** 複数エンティティ（作物、場所、植え付け、収穫）との関連付けと画像添付を持つ栽培日記
+- **日記システム:** 複数エンティティ（作物、場所、植え付け、収穫）との関連付けと画像添付を持つ栽培日記。関連付けはカード型モーダルで複数選択（`entity-select-modal.js`）
 - **画像サポート:** 作物、場所、日記、収穫記録の画像アップロード・管理（最大16MB）、一覧画面はサムネイル（800×600px JPEG）を使用して高速化
 - **スライドショー:** 栽培記録一覧（植え付け詳細内）・収穫記録一覧の画像をフルスクリーンで閲覧（`slideshow.js` + `slideshow.css`）、日付・日数・キャプション表示、キーボード操作対応
 - **検索とフィルター:** 一覧画面（作物・場所・植え付け・収穫）はクライアントサイドの種類バッジフィルター（`badge-filter.js`）、日記・タスクはサーバーサイドのキーワード検索・日付フィルター
 - **ダッシュボード:** 統計情報と最近のアクティビティ概要、画像カルーセル（全データ種別の最近の画像をランダム再生、Bootstrap 5 Carousel使用）
 - **カレンダービュー:** 月別カレンダーで作物・場所・日記・植え付け・収穫・タスクをアイコン表示、詳細ページへのリンク
-- **タスク管理:** 栽培作業タスクのCRUD、ステータス管理（未着手/進行中/完了）、期限日設定、作物・場所・栽培記録との関連付け
+- **タスク管理:** 栽培作業タスクのCRUD、ステータス管理（未着手/進行中/完了）、期限日設定、作物・場所・栽培記録との関連付け。関連付けはカード型モーダルで複数選択（`entity-select-modal.js`）
 - **詳細画面ナビゲーション:** 全詳細画面（作物・場所・植え付け・栽培記録・収穫・日記・タスク）で前後データへの移動ボタンを表示。共通部品 `_detail_nav.html` を使用し、各モデルの `get_adjacent()` メソッドで一覧の表示順に基づく前後を取得
 - **補足情報:** 作物・場所・日記・タスク・収穫の詳細画面に補足テキスト、追加画像、外部URL、YouTube動画埋め込みを複数添付可能。共通テンプレート `_supplements_section.html` + `supplements` テーブルで管理
 - **写真プール:** モバイルで撮影した複数写真を先に一括アップロードし、後から各写真を選んで日記・収穫・栽培記録・作物・場所・補足情報の登録/編集画面へ送り込める機能（`/photo_pool/`）。プール写真は `uploads/photo_pool/` に独立保存し、登録時に対象エンティティのフォルダへコピー（使い回し可）。使用回数は `photo_pool_usages` 中間テーブルで追跡。各登録/編集画面の画像フィールドからは「写真プールから選択」ボタンで共通モーダル（`_photo_pool_picker_modal.html`）を開いて選択可能（ローカルファイル選択と排他UI、使用状況フィルター付き）
@@ -79,6 +79,10 @@ garden-app/
 │   │   ├── _related_diaries_card.html    # 関連する日記カード
 │   │   ├── _related_crops_card.html      # 関連する作物カード
 │   │   ├── _related_locations_card.html  # 関連する場所カード
+│   │   ├── _crop_select_multi_modal.html     # 作物選択モーダル（複数選択、日記・タスク用）
+│   │   ├── _location_select_multi_modal.html # 場所選択モーダル（複数選択、日記・タスク用）
+│   │   ├── _planting_select_multi_modal.html # 植え付け選択モーダル（複数選択、日記・タスク用）
+│   │   ├── _harvest_select_multi_modal.html  # 収穫選択モーダル（複数選択、日記用）
 │   │   ├── _supplements_section.html    # 補足情報セクション共通部品
 │   │   ├── index.html       # ダッシュボード
 │   │   ├── crops/           # 作物テンプレート
@@ -90,7 +94,7 @@ garden-app/
 │   │   └── tasks/           # タスクテンプレート
 │   └── static/              # 静的アセット
 │       ├── css/             # Bootstrap カスタマイズ
-│       ├── js/              # canvas-editor.js, canvas-placement.js, canvas-preview.js, canvas-history.js, slideshow.js, badge-filter.js, ユーティリティ
+│       ├── js/              # canvas-editor.js, canvas-placement.js, canvas-preview.js, canvas-history.js, slideshow.js, badge-filter.js, entity-select-modal.js, ユーティリティ
 │       ├── images/          # UIアイコン・静的画像
 │       │   ├── location_bg_images/  # 見取り図の背景画像（手動配置）
 │       │   │   ├── bg_image_default.png  # デフォルト背景
@@ -524,6 +528,77 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 ```
 
 CSSクラス: `.badge-filter-container`, `.badge-filter-multi`, `.badge-filter-group`, `.badge-filter-group-label`, `.badge-filter`, `.badge-filter-active`, `.badge-filter-inactive`（`custom.css` で定義）
+
+### エンティティ選択モーダル（複数選択）
+
+日記・タスクの登録・編集フォームで、関連エンティティ（作物・場所・植え付け・収穫）をカード型モーダルで複数選択する共通機能。
+
+#### 共通JS
+
+`app/static/js/entity-select-modal.js` — `MultiSelectModal` クラス。
+
+#### 使い方
+
+```js
+new MultiSelectModal({
+    modalId: 'cropMultiSelectModal',        // モーダルのDOM id
+    cardSelector: '.crop-ms-card',          // 選択可能カードのセレクタ
+    idAttribute: 'cropId',                  // card.dataset からID取得するキー
+    inputContainerId: 'crop-hidden-inputs', // hidden input 配置コンテナ
+    inputName: 'crop_ids',                  // hidden input の name 属性
+    displayContainerId: 'selected-crops-display', // バッジチップ表示コンテナ
+    badgeRenderer: function(card) { ... },  // カード→バッジHTML生成コールバック
+    filterMode: 'legacy',                   // 'legacy'（単一グループ）or 'multi'（マルチグループ）
+    filterScope: 'crop-multi',              // legacy用: data-scope 値
+    filterCardAttr: 'data-crop-ms-card',    // legacy用: カードのフィルタ属性
+});
+```
+
+#### 動作
+
+- カードクリック → `.ms-card-selected` トグル（チェックマーク表示）
+- モーダルフッターの「決定」ボタン → hidden inputs 同期 + バッジチップ描画 + モーダルclose
+- バッジチップの「×」→ 選択解除（hidden input 削除、カードハイライト解除）
+- 初期化時に既存 hidden inputs を読み取り pre-selected 状態を復元（編集モード対応）
+
+#### フィルターモード
+
+| モード | 用途 | 仕組み |
+|--------|------|--------|
+| `legacy` | 作物・場所モーダル | `data-scope` + `data-filter-type` による単一グループフィルター |
+| `multi` | 植え付け・収穫モーダル | `data-ms-filter-card` + `data-ms-filter-group-*` によるマルチグループフィルター（AND/OR） |
+
+モーダル内のフィルターは `badge-filter.js` とは独立してスコープされる（同一ページに複数モーダルがあっても干渉しない）。
+
+#### モーダルテンプレート
+
+| テンプレート | Modal ID | 対象画面 | テンプレート変数 |
+|------------|----------|---------|----------------|
+| `_crop_select_multi_modal.html` | `cropMultiSelectModal` | 日記・タスク | `crops`, `crop_filter_types`, `crop_filter_type_icons`, `selected_crop_ids` |
+| `_location_select_multi_modal.html` | `locationMultiSelectModal` | 日記・タスク | `locations`, `location_filter_types`, `selected_location_ids` |
+| `_planting_select_multi_modal.html` | `plantingMultiSelectModal` | 日記・タスク | `active_plantings`, `planting_filter_types`, `planting_filter_type_icons`, `planting_filter_locations`, `selected_location_crop_ids` |
+| `_harvest_select_multi_modal.html` | `harvestMultiSelectModal` | 日記のみ | `harvests`, `harvest_filter_types`, `harvest_filter_type_icons`, `harvest_filter_locations`, `selected_harvest_ids` |
+
+#### ルートでの実装パターン
+
+各ルートでフィルターデータを計算して `render_template` に渡す。`diary_routes.py` と `task_routes.py` にそれぞれ `_build_filter_data()` ヘルパーがある。
+
+```python
+active_plantings = Planting.get_all_with_stats(status='active')
+filter_data = _build_filter_data(crops, locations, active_plantings, harvests)
+render_template('diary/form.html', ..., **filter_data)
+```
+
+編集時は `selected_crop_ids`, `selected_location_ids`, `selected_location_crop_ids`, `selected_harvest_ids`（文字列IDのリスト）も追加で渡す。
+
+#### CSSクラス
+
+| クラス | 役割 |
+|--------|------|
+| `.ms-card-selected` | 選択中カード（チェックマーク付きアウトライン） |
+| `.selected-items-chips` | バッジチップコンテナ（空時は「未選択」表示） |
+| `.selected-item-chip` | 個別バッジチップ（丸型、×ボタン付き） |
+| `.ms-modal-footer` | モーダルフッター（件数 + 決定ボタン） |
 
 ### 詳細画面ナビゲーション
 

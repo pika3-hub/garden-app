@@ -1066,3 +1066,72 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   font-size: 0.85rem;
   padding: 0.4rem 0.5rem;
 }
+
+/* ===== MULTI-SELECT MODAL ===== */
+
+/* Selected card state */
+.ms-card-selected {
+  outline: 3px solid var(--sage);
+  outline-offset: -3px;
+  position: relative;
+}
+.ms-card-selected::after {
+  content: '\f26b'; /* bi-check-circle-fill */
+  font-family: 'bootstrap-icons';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 1.4rem;
+  color: #fff;
+  background: var(--sage);
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+/* Selected item chips (displayed outside modal) */
+.selected-items-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-height: 2rem;
+  align-items: center;
+}
+.selected-items-chips:empty::before {
+  content: '未選択';
+  color: var(--bs-secondary);
+  font-size: 0.875rem;
+}
+.selected-item-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 1rem;
+  background: var(--bs-light);
+  border: 1px solid var(--bs-border-color);
+  font-size: 0.8rem;
+}
+.selected-item-chip .chip-remove {
+  cursor: pointer;
+  opacity: 0.6;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+.selected-item-chip .chip-remove:hover {
+  opacity: 1;
+}
+
+/* Modal footer */
+.ms-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

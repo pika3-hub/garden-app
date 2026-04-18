@@ -1,0 +1,56 @@
+{% from '_macros.html' import crop_label %}
+<!-- 作物選択モーダル（複数選択） -->
+<div class="modal fade" id="cropMultiSelectModal" tabindex="-1" aria-labelledby="cropMultiSelectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cropMultiSelectModalLabel"><i class="bi bi-flower1"></i> 作物を選択</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if crop_filter_types %}
+                <div class="badge-filter-container mb-3" data-scope="crop-multi">
+                    {% for t in crop_filter_types %}
+                    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+                        {%- for icon in crop_filter_type_icons.get(t, []) %}
+                        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
+                        {%- endfor %}
+                        {{ t }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if crops %}
+                <div class="row">
+                    {% for crop in crops %}
+                    <div class="col-6 col-md-4 col-lg-3 mb-3" data-crop-ms-card data-filter-type="{{ crop.crop_type }}">
+                        <div class="card h-100 card-photo card-bg-crop crop-ms-card {{ '' if crop.image_path else 'card-no-image' }} {% if selected_crop_ids and crop.id|string in selected_crop_ids %}ms-card-selected{% endif %}"
+                             role="button"
+                             data-crop-id="{{ crop.id }}"
+                             data-crop-name="{{ crop.name }}"
+                             data-variety="{{ crop.variety or '' }}"
+                             data-icon-path="{{ crop.icon_path or '' }}"
+                             data-image-color="{{ crop.image_color or '' }}">
+                            {% if crop.image_path %}
+                            <img src="{{ url_for('static', filename='uploads/' + (crop.image_path | thumb_path)) }}"
+                                 class="card-photo-img" alt="{{ crop.name }}"
+                                 loading="lazy"
+                                 onerror="this.src='{{ url_for('static', filename='uploads/' + crop.image_path) }}'">
+                            {% endif %}
+                            <div class="card-photo-overlay">
+                                <h5 class="card-title">{{ crop_label(crop.name, crop.variety, crop.icon_path, crop.image_color) }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning mb-0">作物が登録されていません。</div>
+                {% endif %}
+            </div>
+            <div class="modal-footer ms-modal-footer">
+                <span class="ms-selected-count text-muted">未選択</span>
+                <button type="button" class="btn btn-success ms-confirm-btn"><i class="bi bi-check-lg"></i> 決定</button>
+            </div>
+        </div>
+    </div>
+</div>

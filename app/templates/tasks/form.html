@@ -54,37 +54,52 @@
 
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="crop_ids" class="form-label">作物</label>
-                            <select class="form-select" id="crop_ids" name="crop_ids" multiple size="5">
-                                {% for crop in crops %}
-                                <option value="{{ crop.id }}" {% if selected_relations and crop.id|string in selected_relations.crop_ids %}selected{% endif %} title="{{ crop_display_name(crop.name, crop.variety) }}">
-                                    {{ crop_display_name(crop.name, crop.variety) }} ({{ crop.crop_type }})
-                                </option>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">作物</label>
+                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#cropMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-crops-display" class="selected-items-chips"></div>
+                            <div id="crop-hidden-inputs">
+                                {% if selected_relations and selected_relations.crop_ids %}
+                                {% for id in selected_relations.crop_ids %}
+                                <input type="hidden" name="crop_ids" value="{{ id }}">
                                 {% endfor %}
-                            </select>
-                            <small class="text-muted">Ctrlキーで複数選択可</small>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="location_ids" class="form-label">場所</label>
-                            <select class="form-select" id="location_ids" name="location_ids" multiple size="5">
-                                {% for loc in locations %}
-                                <option value="{{ loc.id }}" {% if selected_relations and loc.id|string in selected_relations.location_ids %}selected{% endif %}>
-                                    {{ loc.name }} ({{ loc.location_type }})
-                                </option>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">場所</label>
+                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#locationMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-locations-display" class="selected-items-chips"></div>
+                            <div id="location-hidden-inputs">
+                                {% if selected_relations and selected_relations.location_ids %}
+                                {% for id in selected_relations.location_ids %}
+                                <input type="hidden" name="location_ids" value="{{ id }}">
                                 {% endfor %}
-                            </select>
-                            <small class="text-muted">Ctrlキーで複数選択可</small>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="location_crop_ids" class="form-label">植え付け</label>
-                            <select class="form-select" id="location_crop_ids" name="location_crop_ids" multiple size="5">
-                                {% for lc in location_crops %}
-                                <option value="{{ lc.id }}" {% if selected_relations and lc.id|string in selected_relations.location_crop_ids %}selected{% endif %} title="{{ crop_display_name(lc.crop_name, lc.variety) }} ＠ {{ lc.location_name }}">
-                                    {{ crop_display_name(lc.crop_name, lc.variety) }} ＠ {{ lc.location_name }}
-                                </option>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">植え付け</label>
+                                <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#plantingMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-plantings-display" class="selected-items-chips"></div>
+                            <div id="planting-hidden-inputs">
+                                {% if selected_relations and selected_relations.location_crop_ids %}
+                                {% for id in selected_relations.location_crop_ids %}
+                                <input type="hidden" name="location_crop_ids" value="{{ id }}">
                                 {% endfor %}
-                            </select>
-                            <small class="text-muted">Ctrlキーで複数選択可</small>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
 
@@ -120,10 +135,88 @@
                     <small>タスクの詳細内容を自由に記入できます</small>
                 </p>
                 <p class="mb-0"><strong>関連付け</strong><br>
-                    <small>関連する作物・場所・植え付けを選択できます。Ctrlキーを押しながらクリックで複数選択可能です</small>
+                    <small>関連する作物・場所・植え付けを選択できます。「選択」ボタンからカード形式で複数選択可能です</small>
                 </p>
             </div>
         </div>
     </div>
 </div>
+{% include '_crop_select_multi_modal.html' %}
+{% include '_location_select_multi_modal.html' %}
+{% include '_planting_select_multi_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/entity-select-modal.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var cropIconBaseUrl = '{{ url_for("static", filename="images/crop_icons/") }}';
+
+    function cropBadgeRenderer(card) {
+        var name = card.dataset.cropName;
+        var variety = card.dataset.variety;
+        var iconPath = card.dataset.iconPath;
+        var imageColor = card.dataset.imageColor;
+        var label = variety ? variety + '(' + name + ')' : name;
+        var iconHtml = '';
+        if (iconPath) {
+            iconHtml = '<img src="' + cropIconBaseUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+        }
+        return iconHtml + label;
+    }
+
+    new MultiSelectModal({
+        modalId: 'cropMultiSelectModal',
+        cardSelector: '.crop-ms-card',
+        idAttribute: 'cropId',
+        inputContainerId: 'crop-hidden-inputs',
+        inputName: 'crop_ids',
+        displayContainerId: 'selected-crops-display',
+        badgeRenderer: cropBadgeRenderer,
+        filterMode: 'legacy',
+        filterScope: 'crop-multi',
+        filterCardAttr: 'data-crop-ms-card'
+    });
+
+    new MultiSelectModal({
+        modalId: 'locationMultiSelectModal',
+        cardSelector: '.location-ms-card',
+        idAttribute: 'locationId',
+        inputContainerId: 'location-hidden-inputs',
+        inputName: 'location_ids',
+        displayContainerId: 'selected-locations-display',
+        badgeRenderer: function(card) {
+            var name = card.dataset.locationName;
+            var type = card.dataset.locationType;
+            return '<i class="bi bi-geo-alt"></i> ' + name + (type ? ' (' + type + ')' : '');
+        },
+        filterMode: 'legacy',
+        filterScope: 'location-multi',
+        filterCardAttr: 'data-location-ms-card'
+    });
+
+    new MultiSelectModal({
+        modalId: 'plantingMultiSelectModal',
+        cardSelector: '.planting-ms-card',
+        idAttribute: 'plantingId',
+        inputContainerId: 'planting-hidden-inputs',
+        inputName: 'location_crop_ids',
+        displayContainerId: 'selected-plantings-display',
+        badgeRenderer: function(card) {
+            var name = card.dataset.cropName;
+            var variety = card.dataset.variety;
+            var locationName = card.dataset.locationName;
+            var iconPath = card.dataset.iconPath;
+            var imageColor = card.dataset.imageColor;
+            var label = variety ? variety + '(' + name + ')' : name;
+            var iconHtml = '';
+            if (iconPath) {
+                iconHtml = '<img src="' + cropIconBaseUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+            }
+            return iconHtml + label + ' <small>@ ' + locationName + '</small>';
+        },
+        filterMode: 'multi'
+    });
+});
+</script>
 {% endblock %}
