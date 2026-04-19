@@ -28,6 +28,37 @@
     padding: 1.5rem;
     background: #fafafa;
 }
+.photo-select-overlay {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 2;
+}
+.photo-select-check {
+    width: 1.4rem;
+    height: 1.4rem;
+    cursor: pointer;
+    background-color: rgba(255,255,255,0.9);
+    border: 2px solid #6c757d;
+}
+.photo-pool-card.is-selected {
+    outline: 3px solid var(--forest, #2e7d32);
+    outline-offset: -3px;
+}
+.bulk-action-bar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+    background: #f5faf2;
+    border: 1px solid var(--forest, #2e7d32);
+    border-radius: 0.375rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
 </style>
 {% endblock %}
 
@@ -63,6 +94,25 @@
         <span class="badge badge-filter badge-filter-inactive" data-usage="used">使用済み ({{ photos|rejectattr('usage_count', 'equalto', 0)|list|length }})</span>
     </div>
 </div>
+
+<!-- 一括操作バー -->
+<div id="bulk-action-bar" class="bulk-action-bar" style="display:none;">
+    <span>選択: <strong id="bulk-count">0</strong>枚</span>
+    <button type="button" class="btn btn-sm btn-outline-secondary" id="bulk-select-visible">
+        <i class="bi bi-check2-square"></i> 表示中をすべて選択
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" id="bulk-clear">
+        選択をクリア
+    </button>
+    <form method="POST" action="{{ url_for('photo_pool.bulk_delete') }}" id="bulk-delete-form"
+          class="d-inline"
+          onsubmit="return confirm('選択した ' + document.querySelectorAll('.photo-select-check:checked').length + '枚を削除しますか？（既に登録済みのエンティティ画像は残ります）');">
+        <div id="bulk-delete-inputs"></div>
+        <button type="submit" class="btn btn-sm btn-danger">
+            <i class="bi bi-trash"></i> 一括削除
+        </button>
+    </form>
+</div>
 {% endif %}
 
 <!-- 一覧 -->
@@ -71,6 +121,9 @@
     {% for photo in photos %}
     <div class="col-md-4 col-lg-3 mb-3 photo-item" data-usage-count="{{ photo.usage_count }}">
         <div class="card photo-pool-card h-100">
+            <div class="photo-select-overlay">
+                <input type="checkbox" class="form-check-input photo-select-check" data-photo-id="{{ photo.id }}" aria-label="選択">
+            </div>
             <img src="{{ url_for('static', filename='uploads/' + photo.image_path | thumb_path) }}"
                  onerror="this.onerror=null;this.src='{{ url_for('static', filename='uploads/' + photo.image_path) }}';"
                  class="photo-thumb lightbox-target"
@@ -284,6 +337,71 @@ document.addEventListener('DOMContentLoaded', function() {
             apply();
         });
     });
+});
+</script>
+<script>
+// 複数選択 → 一括削除
+document.addEventListener('DOMContentLoaded', function() {
+    const checks = document.querySelectorAll('.photo-select-check');
+    const bar = document.getElementById('bulk-action-bar');
+    const countEl = document.getElementById('bulk-count');
+    const form = document.getElementById('bulk-delete-form');
+    const inputsContainer = document.getElementById('bulk-delete-inputs');
+    const selectVisibleBtn = document.getElementById('bulk-select-visible');
+    const clearBtn = document.getElementById('bulk-clear');
+
+    if (!checks.length || !bar) return;
+
+    function update() {
+        const selected = document.querySelectorAll('.photo-select-check:checked');
+        if (countEl) countEl.textContent = selected.length;
+        bar.style.display = selected.length > 0 ? '' : 'none';
+    }
+
+    checks.forEach(cb => {
+        cb.addEventListener('change', function() {
+            const card = this.closest('.photo-pool-card');
+            if (card) card.classList.toggle('is-selected', this.checked);
+            update();
+        });
+        // 画像のライトボックスと競合しないように伝播停止
+        cb.addEventListener('click', function(e) { e.stopPropagation(); });
+    });
+
+    if (selectVisibleBtn) {
+        selectVisibleBtn.addEventListener('click', function() {
+            document.querySelectorAll('.photo-item').forEach(item => {
+                if (item.style.display === 'none') return;
+                const cb = item.querySelector('.photo-select-check');
+                if (cb && !cb.checked) {
+                    cb.checked = true;
+                    cb.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            document.querySelectorAll('.photo-select-check:checked').forEach(cb => {
+                cb.checked = false;
+                cb.dispatchEvent(new Event('change'));
+            });
+        });
+    }
+
+    if (form && inputsContainer) {
+        form.addEventListener('submit', function() {
+            inputsContainer.innerHTML = '';
+            document.querySelectorAll('.photo-select-check:checked').forEach(cb => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'photo_ids';
+                input.value = cb.dataset.photoId;
+                inputsContainer.appendChild(input);
+            });
+        });
+    }
 });
 </script>
 {% endblock %}

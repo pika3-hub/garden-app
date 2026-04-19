@@ -117,6 +117,20 @@ def delete(photo_id):
     return redirect(url_for('photo_pool.index'))
 
 
+@bp.route('/bulk-delete', methods=['POST'])
+def bulk_delete():
+    raw_ids = request.form.getlist('photo_ids')
+    ids = [int(x) for x in raw_ids if x.isdigit()]
+    if not ids:
+        flash('写真が選択されていません', 'warning')
+        return redirect(url_for('photo_pool.index'))
+    paths = PhotoPool.delete_many(ids)
+    for p in paths:
+        delete_image(p)
+    flash(f'{len(paths)}枚の写真を削除しました', 'success')
+    return redirect(url_for('photo_pool.index'))
+
+
 @bp.route('/<int:photo_id>/use')
 def use(photo_id):
     """選択した写真で対象エンティティの登録フォームへ遷移"""

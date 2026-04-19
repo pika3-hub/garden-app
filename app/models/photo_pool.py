@@ -64,6 +64,24 @@ class PhotoPool:
         return row['image_path']
 
     @staticmethod
+    def delete_many(photo_ids):
+        """複数写真を削除。戻り値は削除した image_path のリスト（ファイル削除用）"""
+        if not photo_ids:
+            return []
+        db = get_db()
+        placeholders = ','.join('?' * len(photo_ids))
+        ids = tuple(photo_ids)
+        rows = db.execute(
+            f'SELECT image_path FROM photo_pool WHERE id IN ({placeholders})',
+            ids
+        ).fetchall()
+        paths = [r['image_path'] for r in rows]
+        db.execute(f'DELETE FROM photo_pool_usages WHERE photo_pool_id IN ({placeholders})', ids)
+        db.execute(f'DELETE FROM photo_pool WHERE id IN ({placeholders})', ids)
+        db.commit()
+        return paths
+
+    @staticmethod
     def record_usage(photo_id, entity_type, entity_id, copied_image_path):
         db = get_db()
         db.execute(
