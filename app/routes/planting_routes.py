@@ -392,6 +392,13 @@ def planting_edit(location_crop_id):
     crops = Crop.get_all()
     locations = Location.get_all()
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
+    crop_filter_type_icons = {}
+    for c in crops:
+        t, icon = c['crop_type'], c['icon_path']
+        if t and icon:
+            icons = crop_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': c['image_color'] or '#4CAF50'})
     location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
     earliest_child_date = Planting.get_earliest_child_date(location_crop_id)
     preselected_crop = next((c for c in crops if c['id'] == planting['crop_id']), None)
@@ -402,6 +409,7 @@ def planting_edit(location_crop_id):
                            crops=crops,
                            locations=locations,
                            crop_filter_types=crop_filter_types,
+                           crop_filter_type_icons=crop_filter_type_icons,
                            location_filter_types=location_filter_types,
                            earliest_child_date=earliest_child_date,
                            preselected_crop=preselected_crop,
