@@ -337,7 +337,7 @@ a.dashboard-stat-link:hover {
   cursor: pointer;
   transition: opacity 0.15s;
   font-size: 0.85em;
-  padding: 0.35em 0.75em;
+  padding: 0.55em 0.75em;
 }
 .badge-filter-inactive {
   background-color: var(--ink-muted) !important;
@@ -359,6 +359,7 @@ a.dashboard-stat-link:hover {
   vertical-align: middle;
   margin-right: 1px;
   background: #fff;
+  transform: translate(0, -2px); /* icon and text alignment deviation */
 }
 
 /* ── Multi-group Badge Filters ──────────────────────────── */

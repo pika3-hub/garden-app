@@ -21,7 +21,8 @@
       "Bash(find:*)",
       "Bash(ls:*)",
       "Bash(2)",
-      "Bash(uv run python -c \":*)"
+      "Bash(uv run python -c \":*)",
+      "Bash(xargs grep *)"
     ]
   }
 }
