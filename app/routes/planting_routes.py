@@ -1,4 +1,5 @@
 import json
+from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.planting_record import PlantingRecord
 from app.models.planting import Planting
@@ -33,7 +34,14 @@ def index():
             icons = filter_type_icons.setdefault(t, [])
             if not any(i['icon_path'] == icon for i in icons):
                 icons.append({'icon_path': icon, 'image_color': c['image_color'] or '#4CAF50'})
-    return render_template('plantings/list.html', crops=crops, current_status=status, task_counts=task_counts, filter_types=filter_types, filter_type_icons=filter_type_icons, filter_locations=filter_locations)
+
+    def _ym_key(c):
+        d = c.get('planted_date')
+        return str(d)[:7] if d else ''
+
+    grouped_crops = [(k, [item for item in g]) for k, g in groupby(crops, key=_ym_key)]
+
+    return render_template('plantings/list.html', crops=crops, grouped_crops=grouped_crops, current_status=status, task_counts=task_counts, filter_types=filter_types, filter_type_icons=filter_type_icons, filter_locations=filter_locations)
 
 
 @bp.route('/<int:location_crop_id>')

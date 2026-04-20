@@ -1,4 +1,5 @@
 from datetime import date
+from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.task import Task
 from app.models.crop import Crop
@@ -24,8 +25,14 @@ def list():
     years = sorted(set(str(t['due_date'])[:4] for t in tasks if t.get('due_date')), reverse=True)
     filter_statuses = sorted(set(t['status'] for t in tasks if t.get('status')))
 
+    def _status_key(t):
+        return t.get('status') or ''
+
+    grouped_tasks = [(k, [item for item in g]) for k, g in groupby(tasks, key=_status_key)]
+
     return render_template('tasks/list.html',
                           tasks=tasks,
+                          grouped_tasks=grouped_tasks,
                           keyword=keyword,
                           filter_statuses=filter_statuses,
                           years=years,

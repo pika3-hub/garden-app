@@ -30,35 +30,42 @@
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当する場所がありません。
 </div>
-<div class="row">
-    {% for location in locations %}
-    <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ crop_types_by_location.get(location.id, []) | join(',') }}">
-        <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="card h-100 card-photo card-bg-location {{ '' if location.image_path else 'card-no-image' }}">
-            {% if location.image_path %}
-            <img src="{{ url_for('static', filename='uploads/' + (location.image_path | thumb_path)) }}"
-                 class="card-photo-img" alt="{{ location.name }}"
-                 loading="lazy"
-                 onerror="this.src='{{ url_for('static', filename='uploads/' + location.image_path) }}'">
-            {% endif %}
-            {% if task_counts.get(location.id) %}
-            <div class="card-photo-badge-task">
-                <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
-                    <i class="bi bi-bell-fill"></i> {{ task_counts[location.id] }}
-                </span>
-            </div>
-            {% endif %}
-            {% if active_crop_counts.get(location.id) %}
-            <div class="card-photo-badge-top">
-                <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中: {{ active_crop_counts[location.id] }}</span>
-            </div>
-            {% endif %}
-            <div class="card-photo-overlay">
-                <h5 class="card-title">{{ location.name }}</h5>
-            </div>
-        </a>
+{% for lt, group_locations in grouped_locations %}
+<section class="date-group" data-group-key="{{ lt }}">
+    <h3 class="date-group-heading">
+        {{ lt if lt else '種類なし' }}
+    </h3>
+    <div class="row">
+        {% for location in group_locations %}
+        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ crop_types_by_location.get(location.id, []) | join(',') }}">
+            <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="card h-100 card-photo card-bg-location {{ '' if location.image_path else 'card-no-image' }}">
+                {% if location.image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + (location.image_path | thumb_path)) }}"
+                     class="card-photo-img" alt="{{ location.name }}"
+                     loading="lazy"
+                     onerror="this.src='{{ url_for('static', filename='uploads/' + location.image_path) }}'">
+                {% endif %}
+                {% if task_counts.get(location.id) %}
+                <div class="card-photo-badge-task">
+                    <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
+                        <i class="bi bi-bell-fill"></i> {{ task_counts[location.id] }}
+                    </span>
+                </div>
+                {% endif %}
+                {% if active_crop_counts.get(location.id) %}
+                <div class="card-photo-badge-top">
+                    <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中: {{ active_crop_counts[location.id] }}</span>
+                </div>
+                {% endif %}
+                <div class="card-photo-overlay">
+                    <h5 class="card-title">{{ location.name }}</h5>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
+</section>
+{% endfor %}
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>

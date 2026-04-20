@@ -68,6 +68,16 @@ document.addEventListener('DOMContentLoaded', function () {
             if (emptyMsg) {
                 emptyMsg.style.display = visibleCount === 0 ? '' : 'none';
             }
+
+            // グループ見出し: 可視アイテムが0件のセクションを非表示
+            var dateGroups = document.querySelectorAll('.date-group');
+            dateGroups.forEach(function (group) {
+                var visible = false;
+                group.querySelectorAll('[data-filter-type]').forEach(function (item) {
+                    if (item.style.display !== 'none') visible = true;
+                });
+                group.style.display = visible ? '' : 'none';
+            });
         }
     }
 
@@ -129,6 +139,16 @@ document.addEventListener('DOMContentLoaded', function () {
             if (emptyMsg) {
                 emptyMsg.style.display = visibleCount === 0 ? '' : 'none';
             }
+
+            // グループ見出し: 可視アイテムが0件のセクションを非表示
+            var dateGroups = document.querySelectorAll('.date-group');
+            dateGroups.forEach(function (group) {
+                var visible = false;
+                group.querySelectorAll('[data-filter-card]').forEach(function (item) {
+                    if (item.style.display !== 'none') visible = true;
+                });
+                group.style.display = visible ? '' : 'none';
+            });
         }
     }
 });

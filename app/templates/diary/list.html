@@ -55,48 +55,55 @@
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当する日記がありません。
 </div>
-<div class="row">
-    {% for entry in entries %}
-    <div class="col-6 col-md-4 col-lg-3 mb-3"
-         data-filter-year="{{ (entry.entry_date|string)[:4] }}"
-         data-filter-month="{{ (entry.entry_date|string)[5:7]|int }}"
-    >
-        <a href="{{ url_for('diary.detail', diary_id=entry.id) }}" class="card h-100 card-photo card-bg-diary {{ '' if entry.image_path else 'card-no-image' }}">
-            {% if entry.image_path %}
-            <img src="{{ url_for('static', filename='uploads/' + (entry.image_path | thumb_path)) }}"
-                 class="card-photo-img" alt="{{ entry.title }}"
-                 loading="lazy"
-                 onerror="this.src='{{ url_for('static', filename='uploads/' + entry.image_path) }}'">
-            {% endif %}
-            {% if entry.weather %}
-            {% set weather_icons = {
-                '晴れ': 'weather_sunny.png',
-                '曇り': 'weather_cloudy.png',
-                '雨': 'weather_rain.png',
-                '雪': 'weather_snow.png',
-                '晴れ時々曇り': 'weather_sun_cloud.png',
-                '曇り時々雨': 'weather_cloud_rain.png'
-            } %}
-            <div class="card-photo-badge-top">
-                {% if weather_icons.get(entry.weather) %}
-                <img src="{{ url_for('static', filename='images/' + weather_icons[entry.weather]) }}"
-                     alt="{{ entry.weather }}" title="{{ entry.weather }}"
-                     style="width: 32px; height: 32px;">
-                {% else %}
-                <span class="badge bg-info">{{ entry.weather }}</span>
+{% for ym, group_entries in grouped_entries %}
+<section class="date-group" data-group-key="{{ ym }}">
+    <h3 class="date-group-heading">
+        {% if ym %}{{ ym[:4] }}年{{ ym[5:7]|int }}月{% else %}日付なし{% endif %}
+    </h3>
+    <div class="row">
+        {% for entry in group_entries %}
+        <div class="col-6 col-md-4 col-lg-3 mb-3"
+             data-filter-year="{{ (entry.entry_date|string)[:4] }}"
+             data-filter-month="{{ (entry.entry_date|string)[5:7]|int }}"
+        >
+            <a href="{{ url_for('diary.detail', diary_id=entry.id) }}" class="card h-100 card-photo card-bg-diary {{ '' if entry.image_path else 'card-no-image' }}">
+                {% if entry.image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + (entry.image_path | thumb_path)) }}"
+                     class="card-photo-img" alt="{{ entry.title }}"
+                     loading="lazy"
+                     onerror="this.src='{{ url_for('static', filename='uploads/' + entry.image_path) }}'">
                 {% endif %}
-            </div>
-            {% endif %}
-            <div class="card-photo-overlay">
-                <div class="mb-1">
-                    <span class="fw-bold">{{ entry.entry_date }}</span>
+                {% if entry.weather %}
+                {% set weather_icons = {
+                    '晴れ': 'weather_sunny.png',
+                    '曇り': 'weather_cloudy.png',
+                    '雨': 'weather_rain.png',
+                    '雪': 'weather_snow.png',
+                    '晴れ時々曇り': 'weather_sun_cloud.png',
+                    '曇り時々雨': 'weather_cloud_rain.png'
+                } %}
+                <div class="card-photo-badge-top">
+                    {% if weather_icons.get(entry.weather) %}
+                    <img src="{{ url_for('static', filename='images/' + weather_icons[entry.weather]) }}"
+                         alt="{{ entry.weather }}" title="{{ entry.weather }}"
+                         style="width: 32px; height: 32px;">
+                    {% else %}
+                    <span class="badge bg-info">{{ entry.weather }}</span>
+                    {% endif %}
                 </div>
-                <h5 class="card-title">{{ entry.title }}</h5>
-            </div>
-        </a>
+                {% endif %}
+                <div class="card-photo-overlay">
+                    <div class="mb-1">
+                        <span class="fw-bold">{{ entry.entry_date }}</span>
+                    </div>
+                    <h5 class="card-title">{{ entry.title }}</h5>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
+</section>
+{% endfor %}
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>

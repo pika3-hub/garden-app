@@ -1,4 +1,5 @@
 from datetime import date
+from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app.models.location import Location
 from app.models.planting import Planting
@@ -26,7 +27,21 @@ def list():
         all_crop_types.update(types)
     filter_types = sorted(all_crop_types)
     filter_type_icons = Planting.get_active_crop_type_icons()
-    return render_template('locations/list.html', locations=locations, task_counts=task_counts,
+
+    def _type_key(l):
+        return l.get('location_type') or ''
+
+    sorted_locations = sorted(locations, key=_type_key)
+    grouped_locations = [(k, [item for item in g]) for k, g in groupby(sorted_locations, key=_type_key)]
+    grouped_locations.sort(key=lambda kv: len(kv[1]), reverse=True)
+    multi_groups = [kv for kv in grouped_locations if len(kv[1]) > 1]
+    single_items = [items[0] for _, items in grouped_locations if len(items) == 1]
+    if single_items:
+        multi_groups.append(('その他', single_items))
+    grouped_locations = multi_groups
+
+    return render_template('locations/list.html', locations=locations, grouped_locations=grouped_locations,
+                           task_counts=task_counts,
                            filter_types=filter_types, filter_type_icons=filter_type_icons,
                            active_crop_counts=active_crop_counts,
                            crop_types_by_location=crop_types_by_location)

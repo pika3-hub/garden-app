@@ -1136,3 +1136,17 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   justify-content: space-between;
   align-items: center;
 }
+
+/* ==========================================================================
+   Date Group (一覧のグループ見出し — 年月・種類・ステータス等の区切り)
+   ========================================================================== */
+.date-group {
+  margin-bottom: 1rem;
+}
+.date-group-heading {
+  font-size: 1.1rem;
+  color: var(--forest);
+  border-bottom: 2px solid var(--forest);
+  padding-bottom: 0.25rem;
+  margin: 1rem 0 0.75rem;
+}

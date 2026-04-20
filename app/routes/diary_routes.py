@@ -1,4 +1,5 @@
 from datetime import date
+from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.diary import DiaryEntry
 from app.models.crop import Crop
@@ -24,8 +25,15 @@ def list():
 
     years = sorted(set(str(e['entry_date'])[:4] for e in entries if e.get('entry_date')), reverse=True)
 
+    def _ym_key(e):
+        d = e.get('entry_date')
+        return str(d)[:7] if d else ''
+
+    grouped_entries = [(k, [item for item in g]) for k, g in groupby(entries, key=_ym_key)]
+
     return render_template('diary/list.html',
                           entries=entries,
+                          grouped_entries=grouped_entries,
                           keyword=keyword,
                           years=years)
 

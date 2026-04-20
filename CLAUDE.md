@@ -529,6 +529,91 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 CSSクラス: `.badge-filter-container`, `.badge-filter-multi`, `.badge-filter-group`, `.badge-filter-group-label`, `.badge-filter`, `.badge-filter-active`, `.badge-filter-inactive`（`custom.css` で定義）
 
+### 一覧画面のグルーピング表示
+
+主要な一覧画面はサーバー側で `itertools.groupby` を使いセクションごとにグループ化して表示する。各グループは `<section class="date-group">` + `<h3 class="date-group-heading">` で描画し、グループ間の区切りを視覚化する。
+
+#### 各画面のグループ化ルール
+
+| 画面 | ルート変数 | グループキー | グループ順 | 見出し |
+|------|-----------|-------------|----------|--------|
+| 日記一覧 | `grouped_entries` | `entry_date` の `YYYY-MM` | `entry_date DESC`（新しい月が上） | `YYYY年M月` |
+| 植え付け一覧 | `grouped_crops` | `planted_date` の `YYYY-MM` | `planted_date DESC` | `YYYY年M月` |
+| 収穫記録一覧 | `grouped_harvests` | `harvest_date` の `YYYY-MM` | `harvest_date DESC` | `YYYY年M月` |
+| 作物一覧 | `grouped_crops` | `crop_type` | 件数多い順、1件のみは末尾「その他」にまとめる | 作物アイコン（`filter_type_icons`）+ 種類名 |
+| 場所一覧 | `grouped_locations` | `location_type` | 件数多い順、1件のみは末尾「その他」にまとめる | 種類名 |
+| タスク一覧 | `grouped_tasks` | `status` | `進行中 → 未着手 → 完了`（`Task.get_all()` の ORDER BY） | ステータスバッジ + ラベル + 件数 |
+
+#### ルートでの実装パターン
+
+日付グループ（日記・植え付け・収穫）はモデルが既に `{date} DESC` でソート済みのため、そのまま `itertools.groupby` で連続ラン化できる:
+
+```python
+def _ym_key(e):
+    d = e.get('entry_date')
+    return str(d)[:7] if d else ''
+
+grouped_entries = [(k, [item for item in g]) for k, g in groupby(entries, key=_ym_key)]
+```
+
+注意: Flask ルート関数名が `list` の場合、ビルトイン `list` がシャドウされるため `list(g)` は `TypeError` になる。内包表記 `[item for item in g]` を使うこと。
+
+種類グループ（作物・場所）は種類キーでソート → グループ化 → 件数降順 → 1件グループを「その他」にマージする:
+
+```python
+sorted_crops = sorted(crops, key=_type_key)
+grouped_crops = [(k, [item for item in g]) for k, g in groupby(sorted_crops, key=_type_key)]
+grouped_crops.sort(key=lambda kv: len(kv[1]), reverse=True)
+multi_groups = [kv for kv in grouped_crops if len(kv[1]) > 1]
+single_items = [items[0] for _, items in grouped_crops if len(items) == 1]
+if single_items:
+    multi_groups.append(('その他', single_items))
+grouped_crops = multi_groups
+```
+
+Pythonの `sorted` は stable のため、種類内の元順序（`created_at DESC`）は保たれる。
+
+#### テンプレートでの使い方
+
+```html
+{% for key, group_items in grouped_items %}
+<section class="date-group" data-group-key="{{ key }}">
+    <h3 class="date-group-heading">{{ key }}</h3>
+    <div class="row">
+        {% for item in group_items %}
+        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-...>...</div>
+        {% endfor %}
+    </div>
+</section>
+{% endfor %}
+```
+
+作物一覧の見出しはフィルタバッジと同じアイコンを表示するため `filter_type_icons.get(ct, [])` をループして `<img class="badge-filter-icon">` を先頭に並べる。
+
+#### 空グループの自動非表示
+
+フィルターバッジ操作で該当カードが0件になったセクションは見出しごと非表示にする。`badge-filter.js`（マルチグループ・レガシー両モード）と `date-badge-filter.js` の各 `applyFilter()` 末尾に以下を追加している:
+
+```js
+var dateGroups = document.querySelectorAll('.date-group');
+dateGroups.forEach(function (group) {
+    var visible = false;
+    group.querySelectorAll('[data-filter-...]').forEach(function (item) {
+        if (item.style.display !== 'none') visible = true;
+    });
+    group.style.display = visible ? '' : 'none';
+});
+```
+
+対象セレクタは JS ごとに異なる（`[data-filter-year]` / `[data-filter-card]` / `[data-filter-type]`）。
+
+#### CSSクラス
+
+| クラス | 役割 |
+|--------|------|
+| `.date-group` | セクションラッパー（`custom.css` 末尾の `Date Group` セクションで定義） |
+| `.date-group-heading` | 見出し（フォレストグリーン下線、`h3` スタイル） |
+
 ### エンティティ選択モーダル（複数選択）
 
 日記・タスクの登録・編集フォームで、関連エンティティ（作物・場所・植え付け・収穫）をカード型モーダルで複数選択する共通機能。

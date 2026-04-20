@@ -186,5 +186,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (emptyMsg) {
             emptyMsg.style.display = visibleCount === 0 ? '' : 'none';
         }
+
+        // グループ見出し: 可視アイテムが0件のセクションを非表示
+        var groups = document.querySelectorAll('.date-group');
+        groups.forEach(function (group) {
+            var visible = false;
+            group.querySelectorAll('[data-filter-year]').forEach(function (item) {
+                if (item.style.display !== 'none') visible = true;
+            });
+            group.style.display = visible ? '' : 'none';
+        });
     }
 });

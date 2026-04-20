@@ -1,3 +1,4 @@
+from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.harvest import Harvest
 from app.models.planting import Planting
@@ -25,7 +26,14 @@ def list():
             icons = filter_type_icons.setdefault(t, [])
             if not any(i['icon_path'] == icon for i in icons):
                 icons.append({'icon_path': icon, 'image_color': h['image_color'] or '#4CAF50'})
-    return render_template('harvests/list.html', harvests=harvests, filter_types=filter_types, filter_type_icons=filter_type_icons, filter_locations=filter_locations)
+
+    def _ym_key(h):
+        d = h.get('harvest_date')
+        return str(d)[:7] if d else ''
+
+    grouped_harvests = [(k, [item for item in g]) for k, g in groupby(harvests, key=_ym_key)]
+
+    return render_template('harvests/list.html', harvests=harvests, grouped_harvests=grouped_harvests, filter_types=filter_types, filter_type_icons=filter_type_icons, filter_locations=filter_locations)
 
 
 @bp.route('/<int:harvest_id>')

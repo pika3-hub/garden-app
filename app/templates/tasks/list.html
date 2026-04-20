@@ -63,35 +63,43 @@
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当するタスクがありません。
 </div>
-<div class="row">
-    {% for task in tasks %}
-    <div class="col-6 col-md-4 col-lg-3 mb-3"
-         data-filter-year="{{ (task.due_date|string)[:4] if task.due_date else '' }}"
-         data-filter-month="{{ (task.due_date|string)[5:7]|int if task.due_date else '' }}"
-         data-filter-status="{{ task.status }}"
-    >
-        <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="card h-100 card-photo card-no-image card-bg-tasklist card-photo-text-only">
-            <div class="card-photo-badge-top">
-                <span class="badge {{ Task.get_status_badge(task.status) }}">
-                    {{ Task.get_status_label(task.status) }}
-                </span>
-                {% if task.due_date and task.status != 'completed' and task.due_date|string < today|string %}
-                <span class="badge bg-danger">期限切れ</span>
-                {% endif %}
-            </div>
-            <div class="card-photo-text-center">
-                <h5 class="card-title">{{ task.title }}</h5>
-                {% if task.description %}
-                <p class="card-photo-description">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
-                {% endif %}
-                {% if task.due_date %}
-                <small class="card-photo-meta">期限: {{ task.due_date }}</small>
-                {% endif %}
-            </div>
-        </a>
+{% for st, group_tasks in grouped_tasks %}
+<section class="date-group" data-group-key="{{ st }}">
+    <h3 class="date-group-heading">
+        <span class="badge {{ Task.get_status_badge(st) }}">{{ Task.get_status_label(st) if st else '状態なし' }}</span>
+        <small class="text-muted">({{ group_tasks|length }}件)</small>
+    </h3>
+    <div class="row">
+        {% for task in group_tasks %}
+        <div class="col-6 col-md-4 col-lg-3 mb-3"
+             data-filter-year="{{ (task.due_date|string)[:4] if task.due_date else '' }}"
+             data-filter-month="{{ (task.due_date|string)[5:7]|int if task.due_date else '' }}"
+             data-filter-status="{{ task.status }}"
+        >
+            <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="card h-100 card-photo card-no-image card-bg-tasklist card-photo-text-only">
+                <div class="card-photo-badge-top">
+                    <span class="badge {{ Task.get_status_badge(task.status) }}">
+                        {{ Task.get_status_label(task.status) }}
+                    </span>
+                    {% if task.due_date and task.status != 'completed' and task.due_date|string < today|string %}
+                    <span class="badge bg-danger">期限切れ</span>
+                    {% endif %}
+                </div>
+                <div class="card-photo-text-center">
+                    <h5 class="card-title">{{ task.title }}</h5>
+                    {% if task.description %}
+                    <p class="card-photo-description">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
+                    {% endif %}
+                    {% if task.due_date %}
+                    <small class="card-photo-meta">期限: {{ task.due_date }}</small>
+                    {% endif %}
+                </div>
+            </a>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
+</section>
+{% endfor %}
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>
