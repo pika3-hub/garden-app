@@ -1,0 +1,57 @@
+{# 写真プール選択モーダル共通部品
+   変数: photo_pool_photos (list) — ルートで PhotoPool.get_all() を渡す #}
+{% set _pp_list = photo_pool_photos if photo_pool_photos is defined else [] %}
+<div class="modal fade" id="photoPoolPickerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <img src="{{ url_for('static', filename='images/icon_photo.webp') }}" alt="" class="icon-img"> 写真プールから選択
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% if _pp_list %}
+        <div class="mb-3" id="photo-pool-picker-usage-filter">
+          <span class="badge badge-filter badge-filter-active" data-usage="all">すべて ({{ _pp_list|length }})</span>
+          <span class="badge badge-filter badge-filter-inactive" data-usage="unused">未使用 ({{ _pp_list|selectattr('usage_count', 'equalto', 0)|list|length }})</span>
+          <span class="badge badge-filter badge-filter-inactive" data-usage="used">使用済み ({{ _pp_list|rejectattr('usage_count', 'equalto', 0)|list|length }})</span>
+        </div>
+        <div class="row" id="photo-pool-picker-grid">
+          {% for photo in _pp_list %}
+          <div class="col-6 col-md-4 col-lg-3 mb-3 photo-pool-picker-item" data-usage-count="{{ photo.usage_count }}">
+            <div class="card h-100 photo-pool-picker-card position-relative" role="button"
+                 data-photo-id="{{ photo.id }}"
+                 data-thumb-url="{{ url_for('static', filename='uploads/' + photo.image_path | thumb_path) }}"
+                 data-notes="{{ photo.notes or '' }}">
+              <img src="{{ url_for('static', filename='uploads/' + photo.image_path | thumb_path) }}"
+                   onerror="this.onerror=null;this.src='{{ url_for('static', filename='uploads/' + photo.image_path) }}';"
+                   class="card-img-top"
+                   style="aspect-ratio: 4/3; object-fit: cover;" alt="">
+              {% if photo.usage_count > 0 %}
+              <span class="badge bg-success position-absolute" style="top: 0.5rem; right: 0.5rem;">{{ photo.usage_count }}回使用</span>
+              {% else %}
+              <span class="badge bg-secondary position-absolute" style="top: 0.5rem; right: 0.5rem;">未使用</span>
+              {% endif %}
+              <div class="card-body p-2">
+                {% if photo.taken_at %}
+                <small class="text-muted d-block"><i class="bi bi-camera"></i> {{ photo.taken_at }}</small>
+                {% endif %}
+                {% if photo.notes %}
+                <p class="mb-0 small text-truncate" title="{{ photo.notes }}">{{ photo.notes }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-0">
+          <i class="bi bi-info-circle"></i> まだ写真プールに写真がありません。
+          <a href="{{ url_for('photo_pool.index') }}">写真プール画面</a> からアップロードしてください。
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

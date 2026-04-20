@@ -315,7 +315,7 @@
     padding: 0 1px;
     border-radius: 3px;
     white-space: normal;
-    max-width: 65px;
+    max-width: 75px;
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -324,6 +324,16 @@
     word-break: break-all;
     line-height: 1.2;
     pointer-events: none;
+}
+
+.placed-crop-preview[data-location-crop-id]:hover {
+    transform: scale(1.5);
+    z-index: 3;
+}
+
+.placed-crop-preview[data-location-crop-id]:hover img,
+.placed-crop-preview[data-location-crop-id]:hover .placed-crop-preview-fallback {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
 .placed-crop-preview.highlight {

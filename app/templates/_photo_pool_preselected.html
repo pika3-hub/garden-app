@@ -1,0 +1,27 @@
+{# 写真プール選択 + ローカルファイル選択の共通部品（登録/編集フォーム画像フィールド用）
+   変数: preselected_photo (任意) — ?photo_pool_id=N で遷移してきた場合にセット
+   動作: JS (photo-pool-picker.js) が file input とプール選択の排他制御を行う #}
+{% set _pp = preselected_photo if preselected_photo is defined else None %}
+<div data-photo-pool-container>
+    <div class="photo-pool-selected-area alert alert-success alert-permanent {{ 'd-flex' if _pp else 'd-none' }} align-items-center mb-2">
+        <img class="photo-pool-selected-thumb me-3 rounded"
+             src="{% if _pp %}{{ url_for('static', filename='uploads/' + _pp.image_path | thumb_path) }}{% endif %}"
+             alt="選択された写真" style="width: 80px; height: 60px; object-fit: cover;">
+        <div class="flex-grow-1">
+            <strong><i class="bi bi-images"></i> 写真プールから選択中</strong>
+            <div class="photo-pool-selected-notes small">{{ _pp.notes if _pp and _pp.notes else '' }}</div>
+            <div class="small text-muted">登録時にこの写真が使用されます</div>
+        </div>
+        <button type="button" class="photo-pool-clear-btn btn btn-sm btn-outline-secondary">選択解除</button>
+    </div>
+    <input type="hidden" name="photo_pool_id" class="photo-pool-id-input"
+           value="{% if _pp %}{{ _pp.id }}{% endif %}">
+    <input type="file" class="form-control photo-pool-file-input" id="image" name="image" accept="image/*">
+    <small class="text-muted photo-pool-file-hint">対応形式: PNG, JPG, JPEG, GIF, WebP（最大16MB）</small>
+    <div class="mt-2 photo-pool-trigger-wrap">
+        <button type="button" class="photo-pool-trigger btn btn-outline-primary btn-sm"
+                data-bs-toggle="modal" data-bs-target="#photoPoolPickerModal">
+            <i class="bi bi-images"></i> 写真プールから選択
+        </button>
+    </div>
+</div>

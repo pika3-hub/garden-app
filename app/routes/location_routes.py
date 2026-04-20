@@ -1,4 +1,5 @@
 from datetime import date
+from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app.models.location import Location
 from app.models.planting import Planting
@@ -7,7 +8,8 @@ from app.models.diary import DiaryEntry
 from app.models.harvest import Harvest
 from app.models.task import Task
 from app.models.supplement import Supplement
-from app.utils.upload import save_image, delete_image
+from app.models.photo_pool import PhotoPool
+from app.utils.upload import save_image, delete_image, copy_image
 
 bp = Blueprint('locations', __name__, url_prefix='/locations')
 
@@ -24,8 +26,24 @@ def list():
     for types in crop_types_by_location.values():
         all_crop_types.update(types)
     filter_types = sorted(all_crop_types)
-    return render_template('locations/list.html', locations=locations, task_counts=task_counts,
-                           filter_types=filter_types, active_crop_counts=active_crop_counts,
+    filter_type_icons = Planting.get_active_crop_type_icons()
+
+    def _type_key(l):
+        return l.get('location_type') or ''
+
+    sorted_locations = sorted(locations, key=_type_key)
+    grouped_locations = [(k, [item for item in g]) for k, g in groupby(sorted_locations, key=_type_key)]
+    grouped_locations.sort(key=lambda kv: len(kv[1]), reverse=True)
+    multi_groups = [kv for kv in grouped_locations if len(kv[1]) > 1]
+    single_items = [items[0] for _, items in grouped_locations if len(items) == 1]
+    if single_items:
+        multi_groups.append(('その他', single_items))
+    grouped_locations = multi_groups
+
+    return render_template('locations/list.html', locations=locations, grouped_locations=grouped_locations,
+                           task_counts=task_counts,
+                           filter_types=filter_types, filter_type_icons=filter_type_icons,
+                           active_crop_counts=active_crop_counts,
                            crop_types_by_location=crop_types_by_location)
 
 
@@ -57,23 +75,32 @@ def detail(location_id):
     related_tasks = Task.get_incomplete_tasks_for_entity('location', location_id)
     supplements = Supplement.get_by_entity('location', location_id)
 
+    # 栽培中の作物の種類一覧（フィルター用）
+    filter_types = sorted(set(crop['crop_type'] for crop in active_crops if crop.get('crop_type')))
+
     return render_template('locations/detail.html',
                           location=location,
                           active_crops=active_crops,
+                          filter_types=filter_types,
                           related_diaries=related_diaries,
                           related_harvests=related_harvests,
                           today=today,
                           prev_location=prev_location,
                           next_location=next_location,
                           related_tasks=related_tasks,
-                          supplements=supplements)
+                          supplements=supplements,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/new')
 def new():
     """場所登録フォーム"""
     bg_images = Location.get_bg_images()
-    return render_template('locations/form.html', location=None, action='create', bg_images=bg_images)
+    photo_pool_id = request.args.get('photo_pool_id', type=int)
+    preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
+    return render_template('locations/form.html', location=None, action='create', bg_images=bg_images,
+                           preselected_photo=preselected_photo,
+                           photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/create', methods=['POST'])
@@ -93,14 +120,21 @@ def create():
         flash('場所名と場所種類は必須です', 'danger')
         return redirect(url_for('locations.new'))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            data['image_path'] = copy_image(pool_photo['image_path'], 'locations')
+    elif 'image' in request.files:
         image = request.files['image']
         image_path = save_image(image, 'locations')
         data['image_path'] = image_path
 
     try:
         location_id = Location.create(data)
+        if photo_pool_id and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'location', location_id, data['image_path'])
         flash(f'場所「{data["name"]}」を登録しました', 'success')
         return redirect(url_for('locations.detail', location_id=location_id))
     except Exception as e:
@@ -116,7 +150,8 @@ def edit(location_id):
         flash('場所が見つかりません', 'danger')
         return redirect(url_for('locations.list'))
     bg_images = Location.get_bg_images()
-    return render_template('locations/form.html', location=location, action='update', bg_images=bg_images)
+    return render_template('locations/form.html', location=location, action='update', bg_images=bg_images,
+                           photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/<int:location_id>/update', methods=['POST'])
@@ -142,14 +177,21 @@ def update(location_id):
         flash('場所名と場所種類は必須です', 'danger')
         return redirect(url_for('locations.edit', location_id=location_id))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
-        image = request.files['image']
-        if image and image.filename:
-            # 古い画像を削除
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    replaced_from_pool = False
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
             if location.get('image_path'):
                 delete_image(location['image_path'])
-            # 新しい画像を保存
+            data['image_path'] = copy_image(pool_photo['image_path'], 'locations')
+            replaced_from_pool = True
+    elif 'image' in request.files:
+        image = request.files['image']
+        if image and image.filename:
+            if location.get('image_path'):
+                delete_image(location['image_path'])
             image_path = save_image(image, 'locations')
             data['image_path'] = image_path
 
@@ -161,6 +203,8 @@ def update(location_id):
 
     try:
         Location.update(location_id, data)
+        if replaced_from_pool and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'location', location_id, data['image_path'])
         flash(f'場所「{data["name"]}」を更新しました', 'success')
         return redirect(url_for('locations.detail', location_id=location_id))
     except Exception as e:

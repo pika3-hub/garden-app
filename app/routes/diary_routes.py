@@ -1,4 +1,5 @@
 from datetime import date
+from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.diary import DiaryEntry
 from app.models.crop import Crop
@@ -6,7 +7,8 @@ from app.models.location import Location
 from app.models.planting import Planting
 from app.models.harvest import Harvest
 from app.models.supplement import Supplement
-from app.utils.upload import save_image, delete_image
+from app.models.photo_pool import PhotoPool
+from app.utils.upload import save_image, delete_image, copy_image
 
 bp = Blueprint('diary', __name__, url_prefix='/diary')
 
@@ -23,8 +25,15 @@ def list():
 
     years = sorted(set(str(e['entry_date'])[:4] for e in entries if e.get('entry_date')), reverse=True)
 
+    def _ym_key(e):
+        d = e.get('entry_date')
+        return str(d)[:7] if d else ''
+
+    grouped_entries = [(k, [item for item in g]) for k, g in groupby(entries, key=_ym_key)]
+
     return render_template('diary/list.html',
                           entries=entries,
+                          grouped_entries=grouped_entries,
                           keyword=keyword,
                           years=years)
 
@@ -40,13 +49,15 @@ def detail(diary_id):
     relations = DiaryEntry.get_relations(diary_id)
     prev_entry, next_entry = DiaryEntry.get_adjacent(diary_id)
     supplements = Supplement.get_by_entity('diary', diary_id)
+    photo_pool_photos = PhotoPool.get_all()
 
     return render_template('diary/detail.html',
                           entry=entry,
                           relations=relations,
                           prev_entry=prev_entry,
                           next_entry=next_entry,
-                          supplements=supplements)
+                          supplements=supplements,
+                          photo_pool_photos=photo_pool_photos)
 
 
 @bp.route('/new')
@@ -54,22 +65,28 @@ def new():
     """日記登録フォーム"""
     crops = Crop.get_all()
     locations = Location.get_all()
-    # 栽培中の植え付け場所を取得
-    location_crops = _get_active_location_crops()
-    # 収穫記録を取得
+    active_plantings = Planting.get_all_with_stats(status='active')
     harvests = Harvest.get_all()
 
     today = date.today().isoformat()
+
+    photo_pool_id = request.args.get('photo_pool_id', type=int)
+    preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
+
+    filter_data = _build_filter_data(crops, locations, active_plantings, harvests)
 
     return render_template('diary/form.html',
                           entry=None,
                           action='create',
                           crops=crops,
                           locations=locations,
-                          location_crops=location_crops,
+                          active_plantings=active_plantings,
                           harvests=harvests,
                           selected_relations=None,
-                          today=today)
+                          today=today,
+                          preselected_photo=preselected_photo,
+                          photo_pool_photos=PhotoPool.get_all(),
+                          **filter_data)
 
 
 @bp.route('/create', methods=['POST'])
@@ -88,14 +105,21 @@ def create():
         flash('タイトルと日付は必須です', 'danger')
         return redirect(url_for('diary.new'))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            data['image_path'] = copy_image(pool_photo['image_path'], 'diary')
+    elif 'image' in request.files:
         image = request.files['image']
         image_path = save_image(image, 'diary')
         data['image_path'] = image_path
 
     try:
         diary_id = DiaryEntry.create(data)
+        if photo_pool_id and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'diary', diary_id, data['image_path'])
 
         # 関連を保存
         relations = {
@@ -123,7 +147,7 @@ def edit(diary_id):
 
     crops = Crop.get_all()
     locations = Location.get_all()
-    location_crops = _get_active_location_crops()
+    active_plantings = Planting.get_all_with_stats(status='active')
     harvests = Harvest.get_all()
     relations = DiaryEntry.get_relations(diary_id)
 
@@ -135,14 +159,22 @@ def edit(diary_id):
         'harvest_ids': [str(r['harvest_id']) for r in relations['harvests']]
     }
 
+    filter_data = _build_filter_data(crops, locations, active_plantings, harvests)
+
     return render_template('diary/form.html',
                           entry=entry,
                           action='update',
                           crops=crops,
                           locations=locations,
-                          location_crops=location_crops,
+                          active_plantings=active_plantings,
                           harvests=harvests,
-                          selected_relations=selected_relations)
+                          selected_relations=selected_relations,
+                          selected_crop_ids=selected_relations['crop_ids'],
+                          selected_location_ids=selected_relations['location_ids'],
+                          selected_location_crop_ids=selected_relations['location_crop_ids'],
+                          selected_harvest_ids=selected_relations['harvest_ids'],
+                          photo_pool_photos=PhotoPool.get_all(),
+                          **filter_data)
 
 
 @bp.route('/<int:diary_id>/update', methods=['POST'])
@@ -167,14 +199,21 @@ def update(diary_id):
         flash('タイトルと日付は必須です', 'danger')
         return redirect(url_for('diary.edit', diary_id=diary_id))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
-        image = request.files['image']
-        if image and image.filename:
-            # 古い画像を削除
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    replaced_from_pool = False
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
             if entry.get('image_path'):
                 delete_image(entry['image_path'])
-            # 新しい画像を保存
+            data['image_path'] = copy_image(pool_photo['image_path'], 'diary')
+            replaced_from_pool = True
+    elif 'image' in request.files:
+        image = request.files['image']
+        if image and image.filename:
+            if entry.get('image_path'):
+                delete_image(entry['image_path'])
             image_path = save_image(image, 'diary')
             data['image_path'] = image_path
 
@@ -186,6 +225,8 @@ def update(diary_id):
 
     try:
         DiaryEntry.update(diary_id, data)
+        if replaced_from_pool and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'diary', diary_id, data['image_path'])
 
         # 関連を保存
         relations = {
@@ -227,17 +268,51 @@ def delete(diary_id):
     return redirect(url_for('diary.list'))
 
 
-def _get_active_location_crops():
-    """栽培中の植え付け場所を取得するヘルパー"""
-    from app.database import get_db
-    db = get_db()
-    location_crops = db.execute(
-        '''SELECT lc.id, lc.planted_date,
-                  c.name as crop_name, c.variety, l.name as location_name
-           FROM plantings lc
-           JOIN crops c ON lc.crop_id = c.id
-           JOIN locations l ON lc.location_id = l.id
-           WHERE lc.status = 'active'
-           ORDER BY lc.planted_date DESC'''
-    ).fetchall()
-    return [dict(lc) for lc in location_crops]
+def _build_filter_data(crops, locations, active_plantings, harvests):
+    """モーダル用フィルターデータを構築するヘルパー"""
+    # 作物フィルター
+    crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
+    crop_filter_type_icons = {}
+    for c in crops:
+        t, icon = c['crop_type'], c.get('icon_path')
+        if t and icon:
+            icons = crop_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': c.get('image_color') or '#4CAF50'})
+
+    # 場所フィルター
+    location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
+
+    # 植え付けフィルター
+    planting_filter_types = sorted(set(p['crop_type'] for p in active_plantings if p.get('crop_type')))
+    planting_filter_type_icons = {}
+    for p in active_plantings:
+        t, icon = p.get('crop_type'), p.get('icon_path')
+        if t and icon:
+            icons = planting_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': p.get('image_color') or '#4CAF50'})
+    planting_filter_locations = sorted(set(p['location_name'] for p in active_plantings if p.get('location_name')))
+
+    # 収穫フィルター
+    harvest_filter_types = sorted(set(h['crop_type'] for h in harvests if h['crop_type']))
+    harvest_filter_type_icons = {}
+    for h in harvests:
+        t, icon = h['crop_type'], h.get('icon_path')
+        if t and icon:
+            icons = harvest_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': h.get('image_color') or '#4CAF50'})
+    harvest_filter_locations = sorted(set(h['location_name'] for h in harvests if h.get('location_name')))
+
+    return {
+        'crop_filter_types': crop_filter_types,
+        'crop_filter_type_icons': crop_filter_type_icons,
+        'location_filter_types': location_filter_types,
+        'planting_filter_types': planting_filter_types,
+        'planting_filter_type_icons': planting_filter_type_icons,
+        'planting_filter_locations': planting_filter_locations,
+        'harvest_filter_types': harvest_filter_types,
+        'harvest_filter_type_icons': harvest_filter_type_icons,
+        'harvest_filter_locations': harvest_filter_locations,
+    }

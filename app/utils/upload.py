@@ -1,4 +1,5 @@
 import os
+import shutil
 import uuid
 from flask import current_app
 from werkzeug.utils import secure_filename
@@ -75,6 +76,42 @@ def save_image(file, folder):
 
     # 相対パスを返す (uploads/からの相対パス)
     return f"{folder}/{filename}"
+
+
+def copy_image(source_path, dest_folder):
+    """既存の画像を別フォルダへコピーして新しい相対パスを返す
+
+    写真プール機能で、プールの画像を各エンティティ用フォルダへ複製するために使う。
+    新しいUUIDでファイル名を付け直し、サムネイルも再生成する。
+
+    Args:
+        source_path: コピー元の相対パス (例: 'photo_pool/uuid.jpg')
+        dest_folder: コピー先フォルダ名 (例: 'diary', 'crops')
+
+    Returns:
+        コピー先の相対パス (例: 'diary/newuuid.jpg')
+        失敗時は None
+    """
+    if not source_path:
+        return None
+
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    src_full = os.path.join(upload_folder, source_path)
+    if not os.path.exists(src_full):
+        return None
+
+    ext = source_path.rsplit('.', 1)[1].lower() if '.' in source_path else 'jpg'
+    uuid_basename = uuid.uuid4().hex
+    filename = f"{uuid_basename}.{ext}"
+
+    dest_dir = os.path.join(upload_folder, dest_folder)
+    os.makedirs(dest_dir, exist_ok=True)
+    dest_full = os.path.join(dest_dir, filename)
+
+    shutil.copy2(src_full, dest_full)
+    _save_thumbnail(dest_full, upload_folder, dest_folder, uuid_basename)
+
+    return f"{dest_folder}/{filename}"
 
 
 def delete_image(image_path):

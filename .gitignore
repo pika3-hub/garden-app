@@ -33,3 +33,5 @@ Thumbs.db
 # Uploaded files (keep .gitkeep)
 app/static/uploads/**/*
 !app/static/uploads/**/.gitkeep
+
+work/

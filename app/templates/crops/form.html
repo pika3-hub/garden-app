@@ -34,13 +34,11 @@
 </style>
 {% endblock %}
 
-{% block body_bg %}<div class="page-bg-image page-bg-crop"></div>{% endblock %}
-
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
         <h1>
-            <img src="{{ url_for('static', filename='images/icon_crop.png') }}" alt="" class="icon-img icon-img-lg">
+            <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="icon-img icon-img-lg">
             {% if crop %}作物編集{% else %}作物登録{% endif %}
         </h1>
     </div>
@@ -147,8 +145,7 @@
                             </div>
                         </div>
                         {% endif %}
-                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                        <small class="text-muted">対応形式: PNG, JPG, JPEG, GIF, WebP（最大16MB）</small>
+                        {% include '_photo_pool_preselected.html' %}
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -186,9 +183,11 @@
         </div>
     </div>
 </div>
+{% include '_photo_pool_picker_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>
 <script>
 (function() {
   const selectedIconInput = document.getElementById('selectedIcon');

@@ -229,7 +229,6 @@ a.dashboard-stat-link:hover {
   border-radius: 9px 9px 0 0 !important;
   font-weight: 700;
   font-family: var(--font-serif);
-  padding: 0.7rem 1rem;
 }
 
 /* Card header color overrides */
@@ -338,7 +337,7 @@ a.dashboard-stat-link:hover {
   cursor: pointer;
   transition: opacity 0.15s;
   font-size: 0.85em;
-  padding: 0.35em 0.75em;
+  padding: 0.55em 0.75em;
 }
 .badge-filter-inactive {
   background-color: var(--ink-muted) !important;
@@ -350,6 +349,17 @@ a.dashboard-stat-link:hover {
 }
 .badge-filter:hover {
   opacity: 0.85;
+}
+.badge-filter-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #4CAF50;
+  object-fit: cover;
+  vertical-align: middle;
+  margin-right: 1px;
+  background: #fff;
+  transform: translate(0, -2px); /* icon and text alignment deviation */
 }
 
 /* ── Multi-group Badge Filters ──────────────────────────── */
@@ -556,35 +566,13 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   top: 0; left: 0;
   width: 100%;
   height: 200px;
-  background-image: url("../images/1_sky_clouds.png");
+  background-image: url("../images/bg_sky.webp");
   background-repeat: repeat-x;
   background-position: top center;
   background-size: auto 200px;
   z-index: -1;
   opacity: 0.3;
 }
-
-/* Page background watermark (detail/form pages) */
-.page-bg-image {
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  width: 380px;
-  height: 380px;
-  opacity: 0.09;
-  z-index: -1;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  pointer-events: none;
-}
-.page-bg-crop           { background-image: url('../images/bg_crop.png'); }
-.page-bg-location       { background-image: url('../images/bg_location.png'); }
-.page-bg-location-crop  { background-image: url('../images/bg_location_crop.png'); }
-.page-bg-diary          { background-image: url('../images/bg_diary.png'); }
-.page-bg-harvest        { background-image: url('../images/bg_harvest.png'); }
-.page-bg-calendar       { background-image: url('../images/bg_calendar.png'); }
-.page-bg-tasklist       { background-image: url('../images/bg_tasklist.png'); }
 
 /* Dashboard card background (centered) */
 .dashboard-card-with-bg {
@@ -622,12 +610,12 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   pointer-events: none;
   z-index: 0;
 }
-.card-bg-crop::before          { background-image: url('../images/card_crop.png'); }
-.card-bg-location::before      { background-image: url('../images/card_location.png'); }
-.card-bg-location-crop::before { background-image: url('../images/card_location_crop.png'); }
-.card-bg-diary::before         { background-image: url('../images/card_diary.png'); }
-.card-bg-harvest::before       { background-image: url('../images/card_harvest.png'); }
-.card-bg-tasklist::before      { background-image: url('../images/card_tasklist.png'); }
+.card-bg-crop::before          { background-image: url('../images/card_crop.webp'); }
+.card-bg-location::before      { background-image: url('../images/card_location.webp'); }
+.card-bg-location-crop::before { background-image: url('../images/card_location_crop.webp'); }
+.card-bg-diary::before         { background-image: url('../images/card_diary.webp'); }
+.card-bg-harvest::before       { background-image: url('../images/card_harvest.webp'); }
+.card-bg-tasklist::before      { background-image: url('../images/card_tasklist.webp'); }
 
 /* Bring card content above background image */
 .card-with-bg .card-body,
@@ -643,13 +631,13 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 /* Icon images */
 .icon-img    { width: 1em;     height: 1em;     vertical-align: -0.125em; display: inline-block; }
 .icon-img-sm { width: 0.875em; height: 0.875em; }
-.icon-img-lg { width: 1.5em;   height: 1.5em;     vertical-align: -0.300em; }
-.icon-img-xl { width: 2em;     height: 2em; }
+.icon-img-lg { width: 2.0em;   height: 2.0em;     vertical-align: -0.550em; }
+.icon-img-xl { width: 3.0em;   height: 3.0em; }
 
 /* Navbar icons → warm cream */
 .nav-link .icon-img,
 .navbar-brand-icon {
-  margin-right: 0.25rem;
+  margin-right: 0.1rem;
 }
 
 /* Responsive (background images) */
@@ -678,12 +666,12 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 }
 .card-body-weather > * { position: relative; z-index: 1; }
 
-.weather-bg-sunny::before      { background-image: url('../images/bg_sunny.png'); }
-.weather-bg-cloudy::before     { background-image: url('../images/bg_cloudy.png'); }
-.weather-bg-rain::before       { background-image: url('../images/bg_rain.png'); }
-.weather-bg-snow::before       { background-image: url('../images/bg_snow.png'); }
-.weather-bg-sun-cloud::before  { background-image: url('../images/bg_sun_cloud.png'); }
-.weather-bg-cloud-rain::before { background-image: url('../images/bg_cloud_rain.png'); }
+.weather-bg-sunny::before      { background-image: url('../images/bg_sunny.webp'); }
+.weather-bg-cloudy::before     { background-image: url('../images/bg_cloudy.webp'); }
+.weather-bg-rain::before       { background-image: url('../images/bg_rain.webp'); }
+.weather-bg-snow::before       { background-image: url('../images/bg_snow.webp'); }
+.weather-bg-sun-cloud::before  { background-image: url('../images/bg_sun_cloud.webp'); }
+.weather-bg-cloud-rain::before { background-image: url('../images/bg_cloud_rain.webp'); }
 
 /* ── Card image date overlay ─────────────────────────────── */
 .card-img-wrapper {
@@ -713,8 +701,8 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     object-fit: cover;
     border: 2px solid #4CAF50;
     background-color: #fff;
-    vertical-align: text-bottom;
     margin-right: 2px;
+    transform: translate(0, -2px); /* icon and text alignment deviation */
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1078,4 +1066,87 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 #supplementTabs .nav-link {
   font-size: 0.85rem;
   padding: 0.4rem 0.5rem;
+}
+
+/* ===== MULTI-SELECT MODAL ===== */
+
+/* Selected card state */
+.ms-card-selected {
+  outline: 3px solid var(--sage);
+  outline-offset: -3px;
+  position: relative;
+}
+.ms-card-selected::after {
+  content: '\f26b'; /* bi-check-circle-fill */
+  font-family: 'bootstrap-icons';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 1.4rem;
+  color: #fff;
+  background: var(--sage);
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+/* Selected item chips (displayed outside modal) */
+.selected-items-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-height: 2rem;
+  align-items: center;
+}
+.selected-items-chips:empty::before {
+  content: '未選択';
+  color: var(--bs-secondary);
+  font-size: 0.875rem;
+}
+.selected-item-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 1rem;
+  background: var(--bs-light);
+  border: 1px solid var(--bs-border-color);
+  font-size: 0.8rem;
+}
+.selected-item-chip .chip-remove {
+  cursor: pointer;
+  opacity: 0.6;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+.selected-item-chip .chip-remove:hover {
+  opacity: 1;
+}
+
+/* Modal footer */
+.ms-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ==========================================================================
+   Date Group (一覧のグループ見出し — 年月・種類・ステータス等の区切り)
+   ========================================================================== */
+.date-group {
+  margin-bottom: 1rem;
+}
+.date-group-heading {
+  font-size: 1.1rem;
+  color: var(--forest);
+  border-bottom: 2px solid var(--forest);
+  padding-bottom: 0.25rem;
+  margin: 1rem 0 0.75rem;
 }

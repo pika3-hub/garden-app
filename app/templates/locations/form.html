@@ -2,13 +2,11 @@
 
 {% block title %}{% if location %}場所編集{% else %}場所登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
 
-{% block body_bg %}<div class="page-bg-image page-bg-location"></div>{% endblock %}
-
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
         <h1>
-            <img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img icon-img-lg">
+            <img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="" class="icon-img icon-img-lg">
             {% if location %}場所編集{% else %}場所登録{% endif %}
         </h1>
     </div>
@@ -67,8 +65,7 @@
                             </div>
                         </div>
                         {% endif %}
-                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                        <small class="text-muted">対応形式: PNG, JPG, JPEG, GIF, WebP（最大16MB）</small>
+                        {% include '_photo_pool_preselected.html' %}
                     </div>
 
                     <div class="mb-3">
@@ -134,9 +131,11 @@
         </div>
     </div>
 </div>
+{% include '_photo_pool_picker_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>
 <script>
 function selectBgImage(el) {
     document.querySelectorAll('.bg-image-option').forEach(e => e.classList.remove('selected'));

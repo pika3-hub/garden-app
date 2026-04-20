@@ -67,8 +67,7 @@
                             </div>
                         </div>
                         {% endif %}
-                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                        <small class="text-muted">対応形式: PNG, JPG, JPEG, GIF, WebP（最大16MB）</small>
+                        {% include '_photo_pool_preselected.html' %}
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
@@ -103,4 +102,9 @@
         </div>
     </div>
 </div>
+{% include '_photo_pool_picker_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>
 {% endblock %}

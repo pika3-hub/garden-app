@@ -1,4 +1,5 @@
 import json
+from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.planting_record import PlantingRecord
 from app.models.planting import Planting
@@ -7,7 +8,8 @@ from app.models.location import Location
 from app.models.task import Task
 from app.models.harvest import Harvest
 from app.models.diary import DiaryEntry
-from app.utils.upload import save_image, delete_image
+from app.models.photo_pool import PhotoPool
+from app.utils.upload import save_image, delete_image, copy_image
 from datetime import date
 
 bp = Blueprint('plantings', __name__, url_prefix='/plantings')
@@ -25,7 +27,21 @@ def index():
     task_counts = Task.get_upcoming_task_counts('location_crop', planting_ids)
     filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
     filter_locations = sorted(set(c['location_name'] for c in crops if c['location_name']))
-    return render_template('plantings/list.html', crops=crops, current_status=status, task_counts=task_counts, filter_types=filter_types, filter_locations=filter_locations)
+    filter_type_icons = {}
+    for c in crops:
+        t, icon = c['crop_type'], c['icon_path']
+        if t and icon:
+            icons = filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': c['image_color'] or '#4CAF50'})
+
+    def _ym_key(c):
+        d = c.get('planted_date')
+        return str(d)[:7] if d else ''
+
+    grouped_crops = [(k, [item for item in g]) for k, g in groupby(crops, key=_ym_key)]
+
+    return render_template('plantings/list.html', crops=crops, grouped_crops=grouped_crops, current_status=status, task_counts=task_counts, filter_types=filter_types, filter_type_icons=filter_type_icons, filter_locations=filter_locations)
 
 
 @bp.route('/<int:location_crop_id>')
@@ -51,8 +67,10 @@ def detail(location_crop_id):
     related_tasks = Task.get_incomplete_tasks_for_entity('location_crop', location_crop_id)
     related_harvests = Harvest.get_by_location_crop(location_crop_id, limit=10)
     related_diaries = DiaryEntry.get_by_location_crop(location_crop_id, limit=10)
+    photo_pool_photos = PhotoPool.get_all()
 
     return render_template('plantings/detail.html',
+                          photo_pool_photos=photo_pool_photos,
                           records=records,
                           location_crop=location_crop,
                           location=location,
@@ -110,7 +128,8 @@ def record_detail(record_id):
     return render_template('plantings/record_detail.html',
                           record=record,
                           prev_record=prev_record,
-                          next_record=next_record)
+                          next_record=next_record,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/new/<int:location_crop_id>')
@@ -123,11 +142,16 @@ def new(location_crop_id):
 
     today = date.today().isoformat()
 
+    photo_pool_id = request.args.get('photo_pool_id', type=int)
+    preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
+
     return render_template('plantings/form.html',
                           record=None,
                           action='create',
                           location_crop=location_crop,
-                          today=today)
+                          today=today,
+                          preselected_photo=preselected_photo,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/create', methods=['POST'])
@@ -150,13 +174,20 @@ def create():
         flash('記録日は必須です', 'danger')
         return redirect(url_for('plantings.new', location_crop_id=location_crop_id))
 
-    if 'image' in request.files:
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            data['image_path'] = copy_image(pool_photo['image_path'], 'growth_records')
+    elif 'image' in request.files:
         image = request.files['image']
         image_path = save_image(image, 'growth_records')
         data['image_path'] = image_path
 
     try:
-        PlantingRecord.create(data)
+        record_id = PlantingRecord.create(data)
+        if photo_pool_id and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'planting_record', record_id, data['image_path'])
         flash('栽培記録を登録しました', 'success')
         return redirect(url_for('plantings.detail', location_crop_id=location_crop_id))
     except Exception as e:
@@ -178,7 +209,8 @@ def edit(record_id):
                           record=record,
                           action='update',
                           location_crop=location_crop,
-                          today=None)
+                          today=None,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/record/<int:record_id>/update', methods=['POST'])
@@ -199,7 +231,16 @@ def update(record_id):
         flash('記録日は必須です', 'danger')
         return redirect(url_for('plantings.edit', record_id=record_id))
 
-    if 'image' in request.files:
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    replaced_from_pool = False
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            if record.get('image_path'):
+                delete_image(record['image_path'])
+            data['image_path'] = copy_image(pool_photo['image_path'], 'growth_records')
+            replaced_from_pool = True
+    elif 'image' in request.files:
         image = request.files['image']
         if image and image.filename:
             if record.get('image_path'):
@@ -214,6 +255,8 @@ def update(record_id):
 
     try:
         PlantingRecord.update(record_id, data)
+        if replaced_from_pool and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'planting_record', record_id, data['image_path'])
         flash('栽培記録を更新しました', 'success')
         return redirect(url_for('plantings.record_detail', record_id=record_id))
     except Exception as e:
@@ -293,16 +336,30 @@ def plant_new():
     """植え付け登録フォーム"""
     crops = Crop.get_all()
     locations = Location.get_all()
+    crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
+    crop_filter_type_icons = {}
+    for c in crops:
+        t, icon = c['crop_type'], c['icon_path']
+        if t and icon:
+            icons = crop_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': c['image_color'] or '#4CAF50'})
+    location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
     today = date.today().isoformat()
     preselected_location_id = request.args.get('location_id', type=int)
     preselected_crop_id = request.args.get('crop_id', type=int)
+    preselected_crop = next((c for c in crops if c['id'] == preselected_crop_id), None) if preselected_crop_id else None
+    preselected_location = next((l for l in locations if l['id'] == preselected_location_id), None) if preselected_location_id else None
     return render_template('plantings/planting_form.html',
                            planting=None,
                            crops=crops,
                            locations=locations,
+                           crop_filter_types=crop_filter_types,
+                           crop_filter_type_icons=crop_filter_type_icons,
+                           location_filter_types=location_filter_types,
                            today=today,
-                           preselected_location_id=preselected_location_id,
-                           preselected_crop_id=preselected_crop_id)
+                           preselected_location=preselected_location,
+                           preselected_crop=preselected_crop)
 
 
 @bp.route('/plant/create', methods=['POST'])
@@ -342,13 +399,29 @@ def planting_edit(location_crop_id):
 
     crops = Crop.get_all()
     locations = Location.get_all()
+    crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
+    crop_filter_type_icons = {}
+    for c in crops:
+        t, icon = c['crop_type'], c['icon_path']
+        if t and icon:
+            icons = crop_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': c['image_color'] or '#4CAF50'})
+    location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
     earliest_child_date = Planting.get_earliest_child_date(location_crop_id)
+    preselected_crop = next((c for c in crops if c['id'] == planting['crop_id']), None)
+    preselected_location = next((l for l in locations if l['id'] == planting['location_id']), None)
 
     return render_template('plantings/planting_form.html',
                            planting=planting,
                            crops=crops,
                            locations=locations,
+                           crop_filter_types=crop_filter_types,
+                           crop_filter_type_icons=crop_filter_type_icons,
+                           location_filter_types=location_filter_types,
                            earliest_child_date=earliest_child_date,
+                           preselected_crop=preselected_crop,
+                           preselected_location=preselected_location,
                            today=None)
 
 

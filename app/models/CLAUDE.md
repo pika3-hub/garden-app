@@ -131,6 +131,28 @@
 | created_at | TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 更新日時 |
 
+#### photo_pool
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| image_path | VARCHAR(255) | 画像相対パス（例 `photo_pool/uuid.jpg`） |
+| original_filename | VARCHAR(255) | 元ファイル名（参考） |
+| file_size | INTEGER | バイト数 |
+| notes | TEXT | ユーザーメモ |
+| taken_at | TIMESTAMP | EXIFから抽出した撮影日時 |
+| created_at | TIMESTAMP | 登録日時 |
+| updated_at | TIMESTAMP | 更新日時 |
+
+#### photo_pool_usages
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| photo_pool_id | INTEGER | 写真プールID（FK → photo_pool、ON DELETE CASCADE） |
+| entity_type | VARCHAR(20) | 使用先種別（crop/location/diary/harvest/planting_record/supplement） |
+| entity_id | INTEGER | 使用先エンティティID |
+| copied_image_path | VARCHAR(255) | コピー先の相対パス（追跡用） |
+| created_at | TIMESTAMP | 使用日時 |
+
 #### supplements
 | カラム | 型 | 説明 |
 |--------|-----|------|

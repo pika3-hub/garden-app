@@ -3,12 +3,10 @@
 
 {% block title %}{{ entry.title }} - 管理日記{% endblock %}
 
-{% block body_bg %}<div class="page-bg-image page-bg-diary"></div>{% endblock %}
-
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <h1><img src="{{ url_for('static', filename='images/icon_diary.png') }}" alt="" class="icon-img icon-img-lg"> {{ entry.title }}</h1>
+        <h1><img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="" class="icon-img icon-img-lg"> {{ entry.title }}</h1>
     </div>
     <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('diary.list') }}" class="btn btn-outline-secondary">
@@ -37,12 +35,12 @@
             '曇り時々雨': 'weather_cloud_rain.png'
         } %}
         {% set weather_bg_images = {
-            '晴れ': 'bg_sunny.png',
-            '曇り': 'bg_cloudy.png',
-            '雨': 'bg_rain.png',
-            '雪': 'bg_snow.png',
-            '晴れ時々曇り': 'bg_sun_cloud.png',
-            '曇り時々雨': 'bg_cloud_rain.png'
+            '晴れ': 'bg_sunny.webp',
+            '曇り': 'bg_cloudy.webp',
+            '雨': 'bg_rain.webp',
+            '雪': 'bg_snow.webp',
+            '晴れ時々曇り': 'bg_sun_cloud.webp',
+            '曇り時々雨': 'bg_cloud_rain.webp'
         } %}
         <div class="card mb-3 card-photo-detail">
             <div class="card-photo-detail-img-wrapper">
@@ -53,7 +51,7 @@
                 <img src="{{ url_for('static', filename='images/' + weather_bg_images[entry.weather]) }}"
                      class="card-photo-img card-photo-img-fallback" alt="{{ entry.weather }}">
                 {%- else %}
-                <img src="{{ url_for('static', filename='images/card_diary.png') }}"
+                <img src="{{ url_for('static', filename='images/card_diary.webp') }}"
                      class="card-photo-img card-photo-img-fallback card-photo-img-fallback-center" alt="日記">
                 {%- endif %}
             </div>

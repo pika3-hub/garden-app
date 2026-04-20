@@ -1,3 +1,4 @@
+from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.harvest import Harvest
 from app.models.planting import Planting
@@ -5,7 +6,8 @@ from app.models.location import Location
 from app.models.crop import Crop
 from app.models.diary import DiaryEntry
 from app.models.supplement import Supplement
-from app.utils.upload import save_image, delete_image
+from app.models.photo_pool import PhotoPool
+from app.utils.upload import save_image, delete_image, copy_image
 from datetime import date
 
 bp = Blueprint('harvests', __name__, url_prefix='/harvests')
@@ -17,7 +19,21 @@ def list():
     harvests = Harvest.get_all()
     filter_types = sorted(set(h['crop_type'] for h in harvests if h['crop_type']))
     filter_locations = sorted(set(h['location_name'] for h in harvests if h['location_name']))
-    return render_template('harvests/list.html', harvests=harvests, filter_types=filter_types, filter_locations=filter_locations)
+    filter_type_icons = {}
+    for h in harvests:
+        t, icon = h['crop_type'], h['icon_path']
+        if t and icon:
+            icons = filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': h['image_color'] or '#4CAF50'})
+
+    def _ym_key(h):
+        d = h.get('harvest_date')
+        return str(d)[:7] if d else ''
+
+    grouped_harvests = [(k, [item for item in g]) for k, g in groupby(harvests, key=_ym_key)]
+
+    return render_template('harvests/list.html', harvests=harvests, grouped_harvests=grouped_harvests, filter_types=filter_types, filter_type_icons=filter_type_icons, filter_locations=filter_locations)
 
 
 @bp.route('/<int:harvest_id>')
@@ -46,24 +62,47 @@ def detail(harvest_id):
                           next_harvest=next_harvest,
                           related_plantings=related_plantings,
                           related_diaries=related_diaries,
-                          supplements=supplements)
+                          supplements=supplements,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
-@bp.route('/new/<int:location_crop_id>')
-def new(location_crop_id):
+@bp.route('/new')
+def new():
     """収穫記録登録フォーム"""
-    location_crop = Planting.get_by_id(location_crop_id)
-    if not location_crop:
-        flash('栽培記録が見つかりません', 'danger')
-        return redirect(url_for('locations.list'))
+    location_crop_id = request.args.get('location_crop_id', type=int)
+    location_crop = None
+    if location_crop_id:
+        location_crop = Planting.get_by_id(location_crop_id)
+        if not location_crop:
+            flash('栽培記録が見つかりません', 'danger')
+            return redirect(url_for('harvests.list'))
 
+    active_plantings = Planting.get_all_with_stats(status='active')
+    filter_types = sorted(set(p['crop_type'] for p in active_plantings if p.get('crop_type')))
+    filter_locations = sorted(set(p['location_name'] for p in active_plantings if p.get('location_name')))
+    filter_type_icons = {}
+    for p in active_plantings:
+        t, icon = p.get('crop_type'), p.get('icon_path')
+        if t and icon:
+            icons = filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': p.get('image_color') or '#4CAF50'})
     today = date.today().isoformat()
+
+    photo_pool_id = request.args.get('photo_pool_id', type=int)
+    preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
 
     return render_template('harvests/form.html',
                           harvest=None,
                           action='create',
                           location_crop=location_crop,
-                          today=today)
+                          active_plantings=active_plantings,
+                          filter_types=filter_types,
+                          filter_type_icons=filter_type_icons,
+                          filter_locations=filter_locations,
+                          today=today,
+                          preselected_photo=preselected_photo,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/create', methods=['POST'])
@@ -97,14 +136,21 @@ def create():
             flash('収穫量は数値で入力してください', 'danger')
             return redirect(url_for('harvests.new', location_crop_id=location_crop_id))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            data['image_path'] = copy_image(pool_photo['image_path'], 'harvests')
+    elif 'image' in request.files:
         image = request.files['image']
         image_path = save_image(image, 'harvests')
         data['image_path'] = image_path
 
     try:
-        Harvest.create(data)
+        harvest_id = Harvest.create(data)
+        if photo_pool_id and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'harvest', harvest_id, data['image_path'])
         flash('収穫記録を登録しました', 'success')
         return redirect(url_for('locations.detail',
                                 location_id=location_crop['location_id']))
@@ -127,7 +173,8 @@ def edit(harvest_id):
                           harvest=harvest,
                           action='update',
                           location_crop=location_crop,
-                          today=None)
+                          today=None,
+                          photo_pool_photos=PhotoPool.get_all())
 
 
 @bp.route('/<int:harvest_id>/update', methods=['POST'])
@@ -159,8 +206,17 @@ def update(harvest_id):
             flash('収穫量は数値で入力してください', 'danger')
             return redirect(url_for('harvests.edit', harvest_id=harvest_id))
 
-    # 画像アップロード処理
-    if 'image' in request.files:
+    # 画像アップロード処理（写真プール優先）
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    replaced_from_pool = False
+    if photo_pool_id:
+        pool_photo = PhotoPool.get_by_id(photo_pool_id)
+        if pool_photo:
+            if harvest.get('image_path'):
+                delete_image(harvest['image_path'])
+            data['image_path'] = copy_image(pool_photo['image_path'], 'harvests')
+            replaced_from_pool = True
+    elif 'image' in request.files:
         image = request.files['image']
         if image and image.filename:
             if harvest.get('image_path'):
@@ -176,6 +232,8 @@ def update(harvest_id):
 
     try:
         Harvest.update(harvest_id, data)
+        if replaced_from_pool and data.get('image_path'):
+            PhotoPool.record_usage(photo_pool_id, 'harvest', harvest_id, data['image_path'])
         flash('収穫記録を更新しました', 'success')
         return redirect(url_for('harvests.detail', harvest_id=harvest_id))
     except Exception as e:

@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-6">
-        <h1><img src="{{ url_for('static', filename='images/icon_location.png') }}" alt="" class="icon-img icon-img-lg"> 場所一覧 <span class="text-muted fs-6"> - 登録済みの場所 ({{ locations|length }}件)</span></h1>
+        <h1><img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="" class="icon-img icon-img-lg"> 場所一覧 <span class="text-muted fs-6"> - 登録済みの場所 ({{ locations|length }}件)</span></h1>
     </div>
     <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('locations.new') }}" class="btn btn-info text-white">
@@ -17,7 +17,11 @@
 {% if filter_types %}
 <div id="badge-filter-container" class="badge-filter-container">
     {% for t in filter_types %}
-    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+        {%- for icon in filter_type_icons.get(t, []) %}
+        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
+        {%- endfor %}
+        {{ t }}</span>
     {% endfor %}
 </div>
 {% endif %}
@@ -26,35 +30,43 @@
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当する場所がありません。
 </div>
-<div class="row">
-    {% for location in locations %}
-    <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ crop_types_by_location.get(location.id, []) | join(',') }}">
-        <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="card h-100 card-photo card-bg-location {{ '' if location.image_path else 'card-no-image' }}">
-            {% if location.image_path %}
-            <img src="{{ url_for('static', filename='uploads/' + (location.image_path | thumb_path)) }}"
-                 class="card-photo-img" alt="{{ location.name }}"
-                 loading="lazy"
-                 onerror="this.src='{{ url_for('static', filename='uploads/' + location.image_path) }}'">
-            {% endif %}
-            {% if task_counts.get(location.id) %}
-            <div class="card-photo-badge-task">
-                <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
-                    <i class="bi bi-bell-fill"></i> {{ task_counts[location.id] }}
-                </span>
-            </div>
-            {% endif %}
-            {% if active_crop_counts.get(location.id) %}
-            <div class="card-photo-badge-top">
-                <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中: {{ active_crop_counts[location.id] }}</span>
-            </div>
-            {% endif %}
-            <div class="card-photo-overlay">
-                <h5 class="card-title">{{ location.name }}</h5>
-            </div>
-        </a>
+{% for lt, group_locations in grouped_locations %}
+<section class="date-group" data-group-key="{{ lt }}">
+    <h3 class="date-group-heading">
+        {{ lt if lt else '種類なし' }}
+        <small class="text-muted">({{ group_locations|length }}件)</small>
+    </h3>
+    <div class="row">
+        {% for location in group_locations %}
+        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ crop_types_by_location.get(location.id, []) | join(',') }}">
+            <a href="{{ url_for('locations.detail', location_id=location.id) }}" class="card h-100 card-photo card-bg-location {{ '' if location.image_path else 'card-no-image' }}">
+                {% if location.image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + (location.image_path | thumb_path)) }}"
+                     class="card-photo-img" alt="{{ location.name }}"
+                     loading="lazy"
+                     onerror="this.src='{{ url_for('static', filename='uploads/' + location.image_path) }}'">
+                {% endif %}
+                {% if task_counts.get(location.id) %}
+                <div class="card-photo-badge-task">
+                    <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
+                        <i class="bi bi-bell-fill"></i> {{ task_counts[location.id] }}
+                    </span>
+                </div>
+                {% endif %}
+                {% if active_crop_counts.get(location.id) %}
+                <div class="card-photo-badge-top">
+                    <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中: {{ active_crop_counts[location.id] }}</span>
+                </div>
+                {% endif %}
+                <div class="card-photo-overlay">
+                    <h5 class="card-title">{{ location.name }}</h5>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
+</section>
+{% endfor %}
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>

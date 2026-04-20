@@ -11,7 +11,7 @@
 <div class="row mb-4">
     <div class="col-md-8">
         <h1>
-            <img src="{{ url_for('static', filename='images/icon_harvest.png') }}" alt="" class="icon-img icon-img-lg"> 収穫記録一覧
+            <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="" class="icon-img icon-img-lg"> 収穫記録一覧
             <span class="text-muted fs-6"> - 登録済みの収穫記録 ({{ harvests|length }}件)</span>
             {% if harvests|selectattr('image_path')|list|length > 0 %}
             <button id="slideshow-btn" class="btn btn-sm btn-outline-success ms-2">
@@ -19,6 +19,11 @@
             </button>
             {% endif %}
         </h1>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('harvests.new') }}" class="btn btn-success">
+            <i class="bi bi-basket"></i> 収穫を記録
+        </a>
     </div>
 </div>
 
@@ -28,7 +33,11 @@
     <div class="badge-filter-group" data-filter-key="cropType">
         <span class="badge-filter-group-label">種類:</span>
         {% for t in filter_types %}
-        <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+            {%- for icon in filter_type_icons.get(t, []) %}
+            <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
+            {%- endfor %}
+            {{ t }}</span>
         {% endfor %}
     </div>
     {% endif %}
@@ -47,33 +56,41 @@
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当する収穫記録がありません。
 </div>
-<div class="row">
-    {% for harvest in harvests %}
-    <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-card data-filter-group-crop-type="{{ harvest.crop_type }}" data-filter-group-location-name="{{ harvest.location_name }}">
-        <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="card h-100 card-photo card-bg-harvest {{ '' if harvest.image_path else 'card-no-image' }}">
-            {% if harvest.image_path %}
-            <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"
-                 class="card-photo-img slideshow-target" alt="{{ harvest.crop_name }}"
-                 data-slideshow-date="{{ harvest.harvest_date }}"
-                 data-slideshow-days="{{ harvest.days_from_planting }}"
-                 data-slideshow-caption="{{ crop_display_name(harvest.crop_name, harvest.variety) }}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">
-            {% endif %}
-            {% if harvest.days_from_planting is not none %}
-            <div class="card-photo-badge-top">
-                <span class="badge bg-success">{{ harvest.days_from_planting }}日目</span>
-            </div>
-            {% endif %}
-            <div class="card-photo-overlay">
-                <h5 class="card-title">
-                    {{ crop_label(harvest.crop_name, harvest.variety, harvest.icon_path, harvest.image_color) }}
-                    <small>@ {{ harvest.location_name }}</small>
-                </h5>
-                <small>収穫日: {{ harvest.harvest_date }}</small>
-            </div>
-        </a>
+{% for ym, group_harvests in grouped_harvests %}
+<section class="date-group" data-group-key="{{ ym }}">
+    <h3 class="date-group-heading">
+        {% if ym %}{{ ym[:4] }}年{{ ym[5:7]|int }}月{% else %}日付なし{% endif %}
+        <small class="text-muted">({{ group_harvests|length }}件)</small>
+    </h3>
+    <div class="row">
+        {% for harvest in group_harvests %}
+        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-card data-filter-group-crop-type="{{ harvest.crop_type }}" data-filter-group-location-name="{{ harvest.location_name }}">
+            <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="card h-100 card-photo card-bg-harvest {{ '' if harvest.image_path else 'card-no-image' }}">
+                {% if harvest.image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"
+                     class="card-photo-img slideshow-target" alt="{{ harvest.crop_name }}"
+                     data-slideshow-date="{{ harvest.harvest_date }}"
+                     data-slideshow-days="{{ harvest.days_from_planting }}"
+                     data-slideshow-caption="{{ crop_display_name(harvest.crop_name, harvest.variety) }}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">
+                {% endif %}
+                {% if harvest.days_from_planting is not none %}
+                <div class="card-photo-badge-top">
+                    <span class="badge bg-success">{{ harvest.days_from_planting }}日目</span>
+                </div>
+                {% endif %}
+                <div class="card-photo-overlay">
+                    <h5 class="card-title">
+                        {{ crop_label(harvest.crop_name, harvest.variety, harvest.icon_path, harvest.image_color) }}
+                        <small>@ {{ harvest.location_name }}</small>
+                    </h5>
+                    <small>収穫日: {{ harvest.harvest_date }}</small>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
+</section>
+{% endfor %}
 
 {% else %}
 <div class="alert alert-info">
