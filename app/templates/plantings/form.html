@@ -19,7 +19,7 @@
 </div>
 
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-8 mx-auto">
         <div class="card">
             <div class="card-body">
                 <form method="POST" action="{% if record %}{{ url_for('plantings.update', record_id=record.id) }}{% else %}{{ url_for('plantings.create') }}{% endif %}" class="needs-validation" enctype="multipart/form-data" novalidate>
@@ -47,6 +47,7 @@
                         <label for="recorded_at" class="form-label">記録日 <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" id="recorded_at" name="recorded_at"
                                value="{{ record.recorded_at if record else today }}" required>
+                        <div class="form-text">観察した日付を選択します</div>
                         <div class="invalid-feedback">記録日を入力してください</div>
                     </div>
 
@@ -54,6 +55,7 @@
                         <label for="notes" class="form-label">メモ</label>
                         <textarea class="form-control" id="notes" name="notes" rows="5"
                                   placeholder="苗の状態、成長具合、気づいたことなど">{{ record.notes if record else '' }}</textarea>
+                        <div class="form-text">苗の高さ、葉の色、花の数、実の大きさなど成長の様子を記録できます</div>
                     </div>
 
                     <div class="mb-3">
@@ -68,6 +70,7 @@
                         </div>
                         {% endif %}
                         {% include '_photo_pool_preselected.html' %}
+                        <div class="form-text">成長の様子がわかる写真を添付できます</div>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
@@ -79,25 +82,6 @@
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h6 class="mb-0"><i class="bi bi-lightbulb"></i> 入力のヒント</h6>
-            </div>
-            <div class="card-body">
-                <p class="mb-2"><strong>記録日</strong><br>
-                    <small>観察した日付を選択します</small>
-                </p>
-                <p class="mb-2"><strong>メモ</strong><br>
-                    <small>苗の高さ、葉の色、花の数、実の大きさなど成長の様子を記録できます</small>
-                </p>
-                <p class="mb-0"><strong>画像</strong><br>
-                    <small>成長の様子がわかる写真を添付できます</small>
-                </p>
             </div>
         </div>
     </div>

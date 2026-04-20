@@ -6,6 +6,7 @@
 <div class="row mb-4">
     <div class="col-md-6">
         <h1><img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="" class="icon-img icon-img-lg"> 場所一覧 <span class="text-muted fs-6"> - 登録済みの場所 ({{ locations|length }}件)</span></h1>
+        <p class="text-muted mb-0">畑やプランターなどの栽培場所を登録し、見取り図で作物の配置を管理できます。</p>
     </div>
     <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('locations.new') }}" class="btn btn-info text-white">

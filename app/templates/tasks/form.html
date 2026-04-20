@@ -18,7 +18,7 @@
 </div>
 
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-8 mx-auto">
         <div class="card">
             <div class="card-body">
                 <form method="POST" action="{% if task %}{{ url_for('tasks.update', task_id=task.id) }}{% else %}{{ url_for('tasks.create') }}{% endif %}" class="needs-validation" novalidate>
@@ -26,6 +26,7 @@
                         <div class="col-md-8 mb-3">
                             <label for="title" class="form-label">タイトル <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="title" name="title" value="{{ task.title if task else '' }}" required>
+                            <div class="form-text">タスクのタイトルを入力します（例: 追肥作業、支柱立て）</div>
                             <div class="invalid-feedback">タイトルを入力してください</div>
                         </div>
                         <div class="col-md-4 mb-3">
@@ -35,22 +36,25 @@
                                 <option value="in_progress" {% if task and task.status == 'in_progress' %}selected{% endif %}>進行中</option>
                                 <option value="completed" {% if task and task.status == 'completed' %}selected{% endif %}>完了</option>
                             </select>
+                            <div class="form-text">未着手・進行中・完了から選択します</div>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="due_date" class="form-label">期限日</label>
                         <input type="date" class="form-control" id="due_date" name="due_date" value="{{ task.due_date if task and task.due_date else '' }}">
-                        <small class="text-muted">期限がある場合は指定してください</small>
+                        <div class="form-text">期限がある場合は日付を指定します</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="description" class="form-label">説明</label>
                         <textarea class="form-control" id="description" name="description" rows="6" placeholder="タスクの詳細を記入してください">{{ task.description if task else '' }}</textarea>
+                        <div class="form-text">タスクの詳細内容を自由に記入できます</div>
                     </div>
 
                     <hr class="my-4">
-                    <h5 class="mb-3"><i class="bi bi-link-45deg"></i> 関連付け</h5>
+                    <h5 class="mb-1"><i class="bi bi-link-45deg"></i> 関連付け</h5>
+                    <div class="form-text mb-3">関連する作物・場所・植え付けを選択できます。「選択」ボタンからカード形式で複数選択可能です</div>
 
                     <div class="row">
                         <div class="col-md-4 mb-3">
@@ -112,31 +116,6 @@
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h6 class="mb-0"><i class="bi bi-lightbulb"></i> 入力のヒント</h6>
-            </div>
-            <div class="card-body">
-                <p class="mb-2"><strong>タイトル</strong><br>
-                    <small>タスクのタイトルを入力します（例: 追肥作業、支柱立て）</small>
-                </p>
-                <p class="mb-2"><strong>ステータス</strong><br>
-                    <small>未着手・進行中・完了から選択します</small>
-                </p>
-                <p class="mb-2"><strong>期限日</strong><br>
-                    <small>期限がある場合は日付を指定します</small>
-                </p>
-                <p class="mb-2"><strong>説明</strong><br>
-                    <small>タスクの詳細内容を自由に記入できます</small>
-                </p>
-                <p class="mb-0"><strong>関連付け</strong><br>
-                    <small>関連する作物・場所・植え付けを選択できます。「選択」ボタンからカード形式で複数選択可能です</small>
-                </p>
             </div>
         </div>
     </div>

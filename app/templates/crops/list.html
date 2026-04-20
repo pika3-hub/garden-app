@@ -7,6 +7,7 @@
 <div class="row mb-4">
     <div class="col-md-6">
         <h1><img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="icon-img icon-img-lg"> 作物一覧 <span class="text-muted fs-6"> - 登録済みの作物 ({{ crops|length }}件)</span></h1>
+        <p class="text-muted mb-0">育てる作物の種類や品種、特性・栽培時期などを登録・管理できます。</p>
     </div>
     <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('crops.new') }}" class="btn btn-success">

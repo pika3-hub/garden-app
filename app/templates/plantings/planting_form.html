@@ -19,7 +19,7 @@
 </div>
 
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-8 mx-auto">
         <div class="card">
             <div class="card-body">
                 <form method="POST"
@@ -61,6 +61,7 @@
                                 <span class="text-muted">場所を選択してください</span>
                                 {% endif %}
                             </div>
+                            <div class="form-text">作物を植え付けた場所（畑やプランターなど）を選択します</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -76,6 +77,7 @@
                                 <span class="text-muted">作物を選択してください</span>
                                 {% endif %}
                             </div>
+                            <div class="form-text">植え付けた作物を選択します</div>
                         </div>
                     </div>
 
@@ -83,6 +85,7 @@
                         <label for="planted_date" class="form-label">植え付け日</label>
                         <input type="date" class="form-control" id="planted_date" name="planted_date"
                                value="{{ planting.planted_date if planting and planting.planted_date else (today or '') }}">
+                        <div class="form-text">実際に植え付けた日付を入力します</div>
                         {% if planting and earliest_child_date %}
                         <small class="text-warning">
                             <i class="bi bi-exclamation-triangle"></i>
@@ -95,12 +98,14 @@
                         <label for="quantity" class="form-label">株数</label>
                         <input type="number" class="form-control" id="quantity" name="quantity" min="1"
                                value="{{ planting.quantity if planting and planting.quantity else '' }}">
+                        <div class="form-text">植え付けた株数を入力します（任意）</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="notes" class="form-label">メモ</label>
                         <textarea class="form-control" id="notes" name="notes" rows="4"
                                   placeholder="植え付けに関するメモを記入してください">{{ planting.notes if planting and planting.notes else '' }}</textarea>
+                        <div class="form-text">植え付けに関する備考などを自由に記入できます</div>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
@@ -112,31 +117,6 @@
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h6 class="mb-0"><i class="bi bi-lightbulb"></i> 入力のヒント</h6>
-            </div>
-            <div class="card-body">
-                <p class="mb-2"><strong>場所</strong><br>
-                    <small>作物を植え付けた場所（畑やプランターなど）を選択します</small>
-                </p>
-                <p class="mb-2"><strong>作物</strong><br>
-                    <small>植え付けた作物を選択します</small>
-                </p>
-                <p class="mb-2"><strong>植え付け日</strong><br>
-                    <small>実際に植え付けた日付を入力します</small>
-                </p>
-                <p class="mb-2"><strong>株数</strong><br>
-                    <small>植え付けた株数を入力します（任意）</small>
-                </p>
-                <p class="mb-0"><strong>メモ</strong><br>
-                    <small>植え付けに関する備考などを自由に記入できます</small>
-                </p>
             </div>
         </div>
     </div>
