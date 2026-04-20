@@ -34,6 +34,7 @@
 <section class="date-group" data-group-key="{{ lt }}">
     <h3 class="date-group-heading">
         {{ lt if lt else '種類なし' }}
+        <small class="text-muted">({{ group_locations|length }}件)</small>
     </h3>
     <div class="row">
         {% for location in group_locations %}

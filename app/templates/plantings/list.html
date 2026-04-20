@@ -70,6 +70,7 @@
 <section class="date-group" data-group-key="{{ ym }}">
     <h3 class="date-group-heading">
         {% if ym %}{{ ym[:4] }}年{{ ym[5:7]|int }}月{% else %}日付なし{% endif %}
+        <small class="text-muted">({{ group_crops|length }}件)</small>
     </h3>
     <div class="row">
         {% for crop in group_crops %}

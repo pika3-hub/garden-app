@@ -38,6 +38,7 @@
         <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
         {%- endfor %}
         {{ ct if ct else '種類なし' }}
+        <small class="text-muted">({{ group_crops|length }}件)</small>
     </h3>
     <div class="row">
         {% for crop in group_crops %}
