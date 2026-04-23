@@ -12,7 +12,8 @@
 **パッケージ管理:** uv
 
 ### 主な機能
-- **作物管理:** 作物の種類、品種、特徴のCRUD操作
+- **作物管理:** 作物（トマト、なすなど）のCRUD。種類・アイコン・イメージカラー・画像・Markdownメモを持つ
+- **品種管理:** 作物に紐づく品種（アイコ、桃太郎など）のCRUD。1作物：多品種の関係。アイコン・イメージカラー・画像は nullable で、未設定時は親作物から継承
 - **場所管理:** 畑やプランターの場所のCRUD、画像サポート付き
 - **キャンバスエディター:** バニラJSベースのビジュアル菜園レイアウトデザイナー（作物アイコンのドラッグ&ドロップ配置、背景画像選択）。植え付け登録時に見取り図配置ページへ自動遷移（スキップ可能）
 - **見取り図プレビュー:** 場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）、場所詳細では日付スライダーで過去の配置状態を再現可能
@@ -42,9 +43,10 @@ garden-app/
 │   ├── database.py          # SQLite接続管理
 │   ├── schema.sql           # 初期データベーススキーマ
 │   ├── models/              # データモデル（静的メソッドパターン）
-│   │   ├── crop.py
+│   │   ├── crop.py          # 作物モデル（crops テーブル）
+│   │   ├── variety.py       # 品種モデル（varieties テーブル、crops に 1:多）
 │   │   ├── location.py
-│   │   ├── planting.py      # 植え付けモデル（plantings テーブル）
+│   │   ├── planting.py      # 植え付けモデル（plantings テーブル、variety_id nullable）
 │   │   ├── diary.py
 │   │   ├── harvest.py       # 収穫記録モデル
 │   │   ├── calendar.py      # カレンダーデータ取得モデル
@@ -53,6 +55,7 @@ garden-app/
 │   │   └── supplement.py    # 補足情報モデル（supplements テーブル）+ YouTube ID抽出
 │   ├── routes/              # Flask ブループリント
 │   │   ├── crop_routes.py
+│   │   ├── variety_routes.py       # Blueprint名: varieties（品種CRUD）
 │   │   ├── location_routes.py
 │   │   ├── diary_routes.py
 │   │   ├── harvest_routes.py
@@ -63,6 +66,7 @@ garden-app/
 │   ├── utils/               # ユーティリティ
 │   │   ├── upload.py        # 画像アップロードヘルパー（サムネイル自動生成含む）
 │   │   ├── migration.py     # マイグレーションユーティリティ
+│   │   ├── migrate_crops_split.py  # 作物/品種分割の1回限り移行スクリプト
 │   │   ├── generate_thumbnails.py  # 既存画像の一括サムネイル生成スクリプト
 │   │   ├── split_sprite.py  # 作物アイコンスプライトシート分割ユーティリティ
 │   │   └── trim_icons.py    # アイコン余白トリムユーティリティ
@@ -86,6 +90,7 @@ garden-app/
 │   │   ├── _supplements_section.html    # 補足情報セクション共通部品
 │   │   ├── index.html       # ダッシュボード
 │   │   ├── crops/           # 作物テンプレート
+│   │   ├── varieties/       # 品種テンプレート（list/detail/form）
 │   │   ├── locations/       # 場所テンプレート（canvas.html, _canvas_preview.html）
 │   │   ├── diary/           # 日記テンプレート
 │   │   ├── harvests/        # 収穫記録テンプレート
@@ -100,7 +105,7 @@ garden-app/
 │       │   │   ├── bg_image_default.png  # デフォルト背景
 │       │   │   └── bg_image_001.png〜    # 追加背景画像
 │       │   └── crop_icons/  # 作物アイコン（icon_{row:02d}_{col:02d}.png）
-│       └── uploads/         # ユーザーアップロード画像（crops/, locations/, diary/, harvests/, supplements/）
+│       └── uploads/         # ユーザーアップロード画像（crops/, varieties/, locations/, diary/, harvests/, supplements/）
 │                            # 各フォルダに thumbs/ サブフォルダ（サムネイル置き場）
 ├── instance/                # Flask インスタンスフォルダ（garden.db）
 ├── run.py                   # アプリケーション起動スクリプト
@@ -128,6 +133,72 @@ uv run python run.py
 - Pillow（サムネイル生成、Python依存）
 - ※ Fabric.js は削除済み（見取り図はバニラJSで実装）
 
+### 作物と品種のデータモデル
+
+作物（`crops`）と品種（`varieties`）は 1:多 の別テーブルに分離されている。詳しいスキーマ定義は `app/models/CLAUDE.md` を参照。
+
+#### 責務分担
+
+| テーブル | カラム | 備考 |
+|---------|--------|------|
+| `crops` | `name`, `crop_type`, `notes`, `icon_path`, `image_color`, `image_path` | 作物マスタ。`notes` は Markdown 統合形式（植え付け時期・収穫時期・特性・メモ）|
+| `varieties` | `crop_id`, `name`, `notes`, `icon_path`, `image_color`, `image_path` | 品種マスタ。外観3カラムは **nullable** で、未設定時は親作物から継承 |
+| `plantings` | `crop_id`, `variety_id` | `variety_id` は **nullable**（品種を指定せず作物単位で植えた場合 NULL）|
+
+#### VIEW `crop_variety_view`
+
+植え付け・収穫・カレンダーなど「作物と品種を合わせて表示したい」クエリ向けに、次の VIEW を提供する。
+
+```sql
+CREATE VIEW crop_variety_view AS
+-- 品種あり
+SELECT c.id AS crop_id, v.id AS variety_id,
+       c.name AS crop_name, c.crop_type, v.name AS variety,
+       COALESCE(v.notes, c.notes)             AS notes,
+       COALESCE(v.icon_path, c.icon_path)     AS icon_path,
+       COALESCE(v.image_color, c.image_color) AS image_color,
+       COALESCE(v.image_path, c.image_path)   AS image_path
+FROM crops c JOIN varieties v ON v.crop_id = c.id
+UNION ALL
+-- 品種なし（variety_id が NULL の行を必ず返す）
+SELECT c.id AS crop_id, NULL AS variety_id,
+       c.name AS crop_name, c.crop_type, NULL AS variety,
+       c.notes, c.icon_path, c.image_color, c.image_path
+FROM crops c;
+```
+
+- **UNION ALL の理由**: `LEFT JOIN` だと「品種を持つ作物」の variety_id=NULL 行が返らず、`variety_id IS NULL` な植え付けと JOIN できない（IFNULL マッチ失敗）
+- COALESCE により品種の外観が未設定なら親作物の値にフォールバック（継承ロジックはVIEW内で完結）
+
+#### JOIN パターン（`_CV_JOIN` 定数）
+
+植え付け（`plantings` エイリアス `lc`）や収穫（`h`）を VIEW と結合するときは以下の定数を使う。`app/models/planting.py` 等で `_CV_JOIN` として定義済み：
+
+```python
+_CV_JOIN = (
+    'JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id '
+    'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
+)
+```
+
+- `IFNULL(..., -1)` で NULL を仮値に置換してマッチさせる（SQLite は `NULL = NULL` が false のため）
+- `cv.*` を使ってはならない（SQLite Row の重複カラム名問題。詳細は `app/models/CLAUDE.md`）。必要カラムは `cv.crop_name, cv.variety, cv.icon_path, cv.image_color` のように明示する
+
+#### 継承ロジックの実装箇所
+
+| 箇所 | 実装 |
+|------|------|
+| VIEW経由（植え付け・収穫・カレンダー等） | `crop_variety_view` の `COALESCE` で自動継承 |
+| 品種画面（一覧・詳細） | `variety_routes.py` の `_apply_inheritance(variety)` が `effective_icon_path` / `effective_image_color` / `effective_image_path` を付与 |
+| テンプレート側 | `effective_*` または VIEW 由来のカラムをそのまま表示 |
+
+#### 補足情報（supplements）の紐付け
+
+- **作物のみの情報**（種類全体に関する補足） → `entity_type='crop', entity_id=crop.id`
+- **品種固有の情報**（品種ごとの補足） → `entity_type='variety', entity_id=variety.id`
+
+旧データ移行時は「旧 crops レコードに variety があったか否か」で自動振り分けされている。
+
 ### 作物名の表記ルール
 
 作物名・品種名の表示はアプリ全体で統一されたルールに従う。
@@ -143,11 +214,11 @@ uv run python run.py
 
 **1. `crop_display_name` — テキスト専用グローバル関数**
 
-`app/__init__.py` で定義・登録。プレーンテキストを返す。`<option>` タグ、`data-*` 属性、`title` 属性など **HTMLが使えない箇所** で使用する。
+`app/__init__.py` で定義・登録。プレーンテキストを返す。`<option>` タグ、`data-*` 属性、`title` 属性など **HTMLが使えない箇所** で使用する。引数 `variety` は品種名の文字列（または None）。呼び出し側は VIEW 経由で `cv.crop_name` と `cv.variety` を取得して渡す。
 
 ```html
 <!-- プルダウン内（HTMLタグ不可） -->
-<option>{{ crop_display_name(crop.name, crop.variety) }}</option>
+<option>{{ crop_display_name(planting.crop_name, planting.variety) }}</option>
 ```
 
 **2. `crop_label` — アイコン付きHTML用マクロ**
@@ -174,12 +245,19 @@ uv run python run.py
 | `data-*` / `title` 属性 | `crop_display_name` 関数 | テキストのみ |
 | カレンダーモーダル（JS動的生成） | JS側で `item.icon_path` を参照 | `calendar.js` で生成 |
 | 見取り図サイドバー（エディター・配置ページ） | `crop_display_name` 関数 | テキストのみ |
-| 作物一覧（カードタイトル） | `crop_label` マクロ | アイコン＋テキスト |
+| 作物一覧（カードタイトル） | `crop_label` マクロ | アイコン＋テキスト、`variety=None` を渡す |
+| 品種一覧（カードタイトル） | `crop_label` マクロ | アイコン＋テキスト、`effective_icon_path` / `effective_image_color` で継承反映 |
 | 作物エンティティ画面（登録・編集） | アイコン表示なし | `crop_display_name` のみ使用 |
 
 #### クエリ要件
 
-`crop_label` マクロを使用する画面では、モデルのクエリで `c.icon_path, c.image_color` を `crops` テーブルからSELECTする必要がある。新規クエリ追加時は注意すること。
+`crop_label` マクロは `icon_path` / `image_color` を引数に取るので、モデルのクエリで該当カラムを SELECT する必要がある。ソースは画面によって異なる：
+
+- **植え付け・収穫・カレンダー等**: `crop_variety_view cv` から `cv.crop_name, cv.variety, cv.icon_path, cv.image_color`（品種の外観が優先、未設定なら親作物に継承される）
+- **作物一覧・作物詳細**: `crops` テーブルから `c.icon_path, c.image_color`。品種情報は持たないので `crop_label(c.name, None, ...)` の形で呼ぶ
+- **品種一覧・品種詳細**: `variety_routes.py` で `_apply_inheritance()` により付与される `effective_icon_path` / `effective_image_color`
+
+新規クエリ追加時は、`cv.*` のワイルドカード展開ではなくカラムを明示すること（`app/models/CLAUDE.md` の Row 重複カラム名問題を参照）。
 
 ### 画像サムネイル
 
@@ -198,7 +276,7 @@ HOME画面（`index.html`）の統計カード下部に、最近登録された�
 
 #### データ取得
 
-`app/__init__.py` の `index()` ルート内で、5テーブル（`crops`, `locations`, `diary_entries`, `harvests`, `planting_records`）から `image_path` が存在するレコードをUNION ALLクエリで最大20件取得し、`random.shuffle()` でランダム化。各画像に `detail_url`（詳細ページURL）、`icon`（種別アイコン）、`type_label`（種別名）を付与してテンプレートに渡す。
+`app/__init__.py` の `index()` ルート内で、6テーブル（`crops`, `varieties`, `locations`, `diary_entries`, `harvests`, `planting_records`）から `image_path` が存在するレコードをUNION ALLクエリで最大20件取得し、`random.shuffle()` でランダム化。各画像に `detail_url`（詳細ページURL）、`icon`（種別アイコン）、`type_label`（種別名）を付与してテンプレートに渡す。`harvests` / `planting_records` の作物名・品種名は `crop_variety_view` から取得する。
 
 #### 実装
 
@@ -386,6 +464,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 | 画面 | カード順序 |
 |------|-----------|
 | 作物詳細 | タスク → 栽培中の植え付け → 収穫 → 日記 |
+| 品種詳細 | 親作物情報 → この品種の栽培中 → 関連する収穫 |
 | 場所詳細 | タスク → 収穫 → 日記 |
 | 植え付け詳細 | 作物情報 → 場所情報 → タスク → 収穫 → 日記 |
 | 収穫詳細 | 作物情報 → 場所情報 → 植え付け → 日記 |
@@ -396,26 +475,30 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 #### 作物情報カード (`_crop_info_card.html`)
 
-植え付け詳細・収穫詳細の右カラムに配置。作物の登録画像がある場合、カード本体内の右上に縮小表示（`float: right; width: 48%`）。
+植え付け詳細・収穫詳細・品種詳細の右カラムに配置。作物の登録画像がある場合、カード本体内の右上に縮小表示（`float: right; width: 48%`）。植え付け・収穫に品種が設定されている場合は、作物詳細リンクの下に「品種詳細へ」リンクも表示される。
 
 **テンプレート変数**: `crop_info` dict
 
 ```html
 {% set crop_info = {
     'crop_id': location_crop.crop_id,
+    'crop_name': location_crop.crop_name,
+    'variety': location_crop.variety,
+    'variety_id': location_crop.variety_id,
+    'icon_path': location_crop.icon_path,
+    'image_color': location_crop.image_color,
     'crop_type': location_crop.crop_type,
-    'planting_season': location_crop.planting_season,
-    'harvest_season': location_crop.harvest_season,
-    'characteristics': location_crop.characteristics,
     'crop_notes': location_crop.crop_notes,
     'crop_image_path': location_crop.crop_image_path
 } %}
 {% include '_crop_info_card.html' %}
 ```
 
-**表示内容**: 登録画像（右上フロート）、種類（badge）、植え付け時期、収穫時期、特性、メモ、作物詳細リンク。各フィールドは値がある場合のみ表示。
+**表示内容**: 作物名＋品種名（`crop_label` マクロ）、品種詳細リンク（`variety_id` がある場合）、登録画像（右上フロート）、種類（badge）、メモ（Markdown 統合テキスト）、作物詳細リンク。各フィールドは値がある場合のみ表示。
 
-**クエリ要件**: `Planting.get_by_id()` と `Harvest.get_by_id()` で `c.planting_season, c.harvest_season, c.characteristics, c.notes as crop_notes, c.crop_type, c.image_path as crop_image_path` をSELECTしている。`c.notes` は `crop_notes` にエイリアス（植え付けの `notes` との衝突回避）、`c.image_path` は `crop_image_path` にエイリアス。
+**クエリ要件**: `Planting.get_by_id()` と `Harvest.get_by_id()` で `cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.crop_type, cv.notes as crop_notes, c.image_path as crop_image_path, lc.variety_id` を SELECT している（`cv` は `crop_variety_view`）。`cv.notes` は `crop_notes` にエイリアス（植え付けの `notes` との衝突回避）、`c.image_path` は `crop_image_path` にエイリアス。品種固有の画像が必要な場合は `COALESCE(v.image_path, c.image_path)` で取得する VIEW のカラムを使う。
+
+品種詳細画面では親作物を表示するため、`variety_routes.py` の detail() で JOIN した `c.name as crop_name, c.crop_type, c.notes as crop_notes, c.icon_path as crop_icon_path, c.image_color as crop_image_color, c.image_path as crop_image_path` を VIEW を経由せず直接 crop_info に詰める（`variety` は None を渡す）。
 
 #### 場所情報カード (`_location_info_card.html`)
 
@@ -712,7 +795,8 @@ render_template('diary/form.html', ..., **filter_data)
 
 | 画面 | モデルメソッド | 表示順 | ラベル |
 |------|-------------|--------|-------|
-| 作物詳細 | `Crop.get_adjacent(crop_id)` | `created_at DESC` | 作物名（品種） |
+| 作物詳細 | `Crop.get_adjacent(crop_id)` | `created_at DESC` | 作物名 |
+| 品種詳細 | `Variety.get_adjacent(variety_id)` | `crop_id ASC, created_at DESC` | 品種名（作物名） |
 | 場所詳細 | `Location.get_adjacent(location_id)` | `created_at DESC` | 場所名 |
 | 植え付け詳細 | `Planting.get_adjacent(id, status)` | `planted_date DESC`、同じステータス内 | 作物名（品種）- 場所名 |
 | 栽培記録詳細 | `PlantingRecord.get_adjacent(record_id)` | `recorded_at DESC`、同一植え付け内 | 記録日 |
@@ -801,6 +885,7 @@ for img_path in supplement_images:
 | 画面 | entity_type | 配置位置 |
 |------|------------|---------|
 | 作物詳細 | crop | 操作ボタンの下 |
+| 品種詳細 | variety | 操作ボタンの下 |
 | 場所詳細 | location | 操作ボタンの下（見取り図カードの上） |
 | 日記詳細 | diary | 操作ボタンの下 |
 | タスク詳細 | task | 操作ボタンの下 |
@@ -924,6 +1009,8 @@ for img_path in supplement_images:
 ```
 
 - **場所詳細からの植え付け:** 栽培中の作物カード内の「作物を植え付ける」→ `/plantings/plant/new?location_id=<id>`（場所プリセレクト済み）
+- **品種詳細からの植え付け:** 「この品種を植え付ける」ボタン → `/plantings/plant/new?crop_id=<id>&variety_id=<id>`（作物・品種プリセレクト済み）
+- **品種プルダウン:** 作物を選ぶと JS で該当作物の品種のみに絞り込まれる。品種なしでも登録可能（`variety_id` は nullable）。サーバー側で `variety.crop_id == crop_id` を検証する
 - **`canvas-placement.js`:** `canvas-editor.js` の上に載せる薄いラッパー。保存後に植え付け詳細へリダイレクトする動作を追加
 - **`canvas-editor.js`:** `window._canvasEditor` でインスタンスを公開、`buildSaveData()` メソッドで保存データを取得可能
 
@@ -932,6 +1019,7 @@ for img_path in supplement_images:
 | 機能 | Blueprint | 一覧 | 詳細 | 新規 | 編集 |
 |-----|-----------|------|------|------|------|
 | 作物 | crops | /crops/ | /crops/{id} | /crops/new | /crops/{id}/edit |
+| 品種 | varieties | /varieties/ | /varieties/{id} | /varieties/new（`?crop_id={id}` でプリセレクト可） | /varieties/{id}/edit |
 | 場所 | locations | /locations/ | /locations/{id} | /locations/new | /locations/{id}/edit |
 | 日記 | diary | /diary/ | /diary/{id} | /diary/new | /diary/{id}/edit |
 | 収穫 | harvests | /harvests/ | /harvests/{id} | /harvests/new?location_crop_id={id}（任意） | /harvests/{id}/edit |

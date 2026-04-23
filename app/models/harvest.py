@@ -3,6 +3,12 @@ from datetime import datetime
 from app.utils.timezone import get_jst_now
 
 
+_CV_JOIN = (
+    'JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id '
+    'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
+)
+
+
 class Harvest:
     """収穫記録モデル"""
 
@@ -10,13 +16,13 @@ class Harvest:
     def get_all(limit=None, offset=None):
         """全収穫記録を取得（ページネーション対応）"""
         db = get_db()
-        query = '''
-            SELECT h.*, c.name as crop_name, c.variety, c.crop_type,
-                   c.icon_path, c.image_color, l.name as location_name,
+        query = f'''
+            SELECT h.*, cv.crop_name, cv.variety, cv.crop_type,
+                   cv.icon_path, cv.image_color, l.name as location_name,
                    lc.planted_date
             FROM harvests h
             JOIN plantings lc ON h.location_crop_id = lc.id
-            JOIN crops c ON lc.crop_id = c.id
+            {_CV_JOIN}
             JOIN locations l ON lc.location_id = l.id
             ORDER BY h.harvest_date DESC, h.created_at DESC
         '''
@@ -44,19 +50,19 @@ class Harvest:
         """IDで収穫記録を取得"""
         db = get_db()
         harvest = db.execute(
-            '''SELECT h.*, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name,
-                      lc.planted_date, lc.location_id, lc.crop_id,
-                      c.planting_season, c.harvest_season, c.characteristics,
-                      c.notes as crop_notes, c.crop_type,
-                      c.image_path as crop_image_path,
-                      l.location_type, l.area_size, l.sun_exposure,
-                      l.notes as location_notes, l.image_path as location_image_path
-               FROM harvests h
-               JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               WHERE h.id = ?''',
+            f'''SELECT h.*, cv.crop_name, cv.variety,
+                       cv.icon_path, cv.image_color, cv.crop_type,
+                       cv.notes as crop_notes,
+                       cv.image_path as crop_image_path,
+                       l.name as location_name, l.location_type,
+                       l.area_size, l.sun_exposure,
+                       l.notes as location_notes, l.image_path as location_image_path,
+                       lc.planted_date, lc.location_id, lc.crop_id, lc.variety_id
+                FROM harvests h
+                JOIN plantings lc ON h.location_crop_id = lc.id
+                {_CV_JOIN}
+                JOIN locations l ON lc.location_id = l.id
+                WHERE h.id = ?''',
             (harvest_id,)
         ).fetchone()
         if harvest:
@@ -71,15 +77,15 @@ class Harvest:
     def get_by_location_crop(location_crop_id, limit=None):
         """栽培記録に紐付く収穫一覧を取得"""
         db = get_db()
-        query = '''SELECT h.*, lc.planted_date,
-                      c.name as crop_name, c.variety, c.icon_path, c.image_color,
-                      l.name as location_name
-               FROM harvests h
-               JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               WHERE h.location_crop_id = ?
-               ORDER BY h.harvest_date DESC'''
+        query = f'''SELECT h.*, lc.planted_date,
+                          cv.crop_name, cv.variety, cv.icon_path, cv.image_color,
+                          l.name as location_name
+                   FROM harvests h
+                   JOIN plantings lc ON h.location_crop_id = lc.id
+                   {_CV_JOIN}
+                   JOIN locations l ON lc.location_id = l.id
+                   WHERE h.location_crop_id = ?
+                   ORDER BY h.harvest_date DESC'''
         params = [location_crop_id]
         if limit:
             query += ' LIMIT ?'
@@ -98,15 +104,15 @@ class Harvest:
     def get_by_location(location_id, limit=None):
         """場所の全収穫記録を取得"""
         db = get_db()
-        query = '''SELECT h.*, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name,
-                      lc.planted_date
-               FROM harvests h
-               JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               WHERE lc.location_id = ?
-               ORDER BY h.harvest_date DESC'''
+        query = f'''SELECT h.*, cv.crop_name, cv.variety,
+                          cv.icon_path, cv.image_color, l.name as location_name,
+                          lc.planted_date
+                   FROM harvests h
+                   JOIN plantings lc ON h.location_crop_id = lc.id
+                   {_CV_JOIN}
+                   JOIN locations l ON lc.location_id = l.id
+                   WHERE lc.location_id = ?
+                   ORDER BY h.harvest_date DESC'''
         params = [location_id]
         if limit:
             query += ' LIMIT ?'
@@ -125,16 +131,43 @@ class Harvest:
     def get_by_crop(crop_id, limit=None):
         """作物の全収穫記録を取得"""
         db = get_db()
-        query = '''SELECT h.*, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name,
-                      lc.planted_date
-               FROM harvests h
-               JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               WHERE lc.crop_id = ?
-               ORDER BY h.harvest_date DESC'''
+        query = f'''SELECT h.*, cv.crop_name, cv.variety,
+                          cv.icon_path, cv.image_color, l.name as location_name,
+                          lc.planted_date
+                   FROM harvests h
+                   JOIN plantings lc ON h.location_crop_id = lc.id
+                   {_CV_JOIN}
+                   JOIN locations l ON lc.location_id = l.id
+                   WHERE lc.crop_id = ?
+                   ORDER BY h.harvest_date DESC'''
         params = [crop_id]
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+        harvests = db.execute(query, params).fetchall()
+        result = []
+        for h in harvests:
+            harvest_dict = dict(h)
+            harvest_dict['days_from_planting'] = Harvest._calculate_days(
+                h['planted_date'], h['harvest_date']
+            )
+            result.append(harvest_dict)
+        return result
+
+    @staticmethod
+    def get_by_variety(variety_id, limit=None):
+        """品種の全収穫記録を取得"""
+        db = get_db()
+        query = f'''SELECT h.*, cv.crop_name, cv.variety,
+                          cv.icon_path, cv.image_color, l.name as location_name,
+                          lc.planted_date
+                   FROM harvests h
+                   JOIN plantings lc ON h.location_crop_id = lc.id
+                   {_CV_JOIN}
+                   JOIN locations l ON lc.location_id = l.id
+                   WHERE lc.variety_id = ?
+                   ORDER BY h.harvest_date DESC'''
+        params = [variety_id]
         if limit:
             query += ' LIMIT ?'
             params.append(limit)
@@ -166,26 +199,26 @@ class Harvest:
         }
 
         prev_harvest = db.execute(
-            '''SELECT h.id, h.harvest_date, c.name as crop_name
-               FROM harvests h
-               JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               WHERE (h.harvest_date < :harvest_date)
-                  OR (h.harvest_date = :harvest_date AND h.created_at < :created_at)
-                  OR (h.harvest_date = :harvest_date AND h.created_at = :created_at AND h.id < :id)
-               ORDER BY h.harvest_date DESC, h.created_at DESC, h.id DESC LIMIT 1''',
+            f'''SELECT h.id, h.harvest_date, cv.crop_name
+                FROM harvests h
+                JOIN plantings lc ON h.location_crop_id = lc.id
+                {_CV_JOIN}
+                WHERE (h.harvest_date < :harvest_date)
+                   OR (h.harvest_date = :harvest_date AND h.created_at < :created_at)
+                   OR (h.harvest_date = :harvest_date AND h.created_at = :created_at AND h.id < :id)
+                ORDER BY h.harvest_date DESC, h.created_at DESC, h.id DESC LIMIT 1''',
             params
         ).fetchone()
 
         next_harvest = db.execute(
-            '''SELECT h.id, h.harvest_date, c.name as crop_name
-               FROM harvests h
-               JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               WHERE (h.harvest_date > :harvest_date)
-                  OR (h.harvest_date = :harvest_date AND h.created_at > :created_at)
-                  OR (h.harvest_date = :harvest_date AND h.created_at = :created_at AND h.id > :id)
-               ORDER BY h.harvest_date ASC, h.created_at ASC, h.id ASC LIMIT 1''',
+            f'''SELECT h.id, h.harvest_date, cv.crop_name
+                FROM harvests h
+                JOIN plantings lc ON h.location_crop_id = lc.id
+                {_CV_JOIN}
+                WHERE (h.harvest_date > :harvest_date)
+                   OR (h.harvest_date = :harvest_date AND h.created_at > :created_at)
+                   OR (h.harvest_date = :harvest_date AND h.created_at = :created_at AND h.id > :id)
+                ORDER BY h.harvest_date ASC, h.created_at ASC, h.id ASC LIMIT 1''',
             params
         ).fetchone()
 
@@ -233,7 +266,7 @@ class Harvest:
 
     @staticmethod
     def count():
-        """収穫記録の総数を取得（一覧と同じJOIN条件）"""
+        """収穫記録の総数を取得"""
         db = get_db()
         result = db.execute(
             '''SELECT COUNT(*) as count FROM harvests h
@@ -248,15 +281,15 @@ class Harvest:
         """最新の収穫記録を取得"""
         db = get_db()
         harvests = db.execute(
-            '''SELECT h.*, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name,
-                      lc.planted_date
-               FROM harvests h
-               JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               ORDER BY h.harvest_date DESC, h.created_at DESC
-               LIMIT ?''',
+            f'''SELECT h.*, cv.crop_name, cv.variety,
+                       cv.icon_path, cv.image_color, l.name as location_name,
+                       lc.planted_date
+                FROM harvests h
+                JOIN plantings lc ON h.location_crop_id = lc.id
+                {_CV_JOIN}
+                JOIN locations l ON lc.location_id = l.id
+                ORDER BY h.harvest_date DESC, h.created_at DESC
+                LIMIT ?''',
             (limit,)
         ).fetchall()
         result = []
@@ -273,21 +306,21 @@ class Harvest:
                location_id=None, crop_id=None):
         """収穫記録を検索"""
         db = get_db()
-        query = '''
-            SELECT h.*, c.name as crop_name, c.variety,
-                   c.icon_path, c.image_color, l.name as location_name,
+        query = f'''
+            SELECT h.*, cv.crop_name, cv.variety,
+                   cv.icon_path, cv.image_color, l.name as location_name,
                    lc.planted_date
             FROM harvests h
             JOIN plantings lc ON h.location_crop_id = lc.id
-            JOIN crops c ON lc.crop_id = c.id
+            {_CV_JOIN}
             JOIN locations l ON lc.location_id = l.id
             WHERE 1=1
         '''
         params = []
 
         if keyword:
-            query += ' AND (c.name LIKE ? OR l.name LIKE ? OR h.notes LIKE ?)'
-            params.extend([f'%{keyword}%', f'%{keyword}%', f'%{keyword}%'])
+            query += ' AND (cv.crop_name LIKE ? OR cv.variety LIKE ? OR l.name LIKE ? OR h.notes LIKE ?)'
+            params.extend([f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', f'%{keyword}%'])
 
         if date_from:
             query += ' AND h.harvest_date >= ?'

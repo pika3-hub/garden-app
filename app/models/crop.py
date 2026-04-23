@@ -3,7 +3,9 @@ from app.utils.timezone import get_jst_now
 
 
 class Crop:
-    """作物モデル"""
+    """作物モデル（crops テーブル）
+    品種情報は別テーブル varieties に分離されている。
+    """
 
     @staticmethod
     def get_all():
@@ -30,15 +32,12 @@ class Crop:
         db = get_db()
         now = get_jst_now()
         cursor = db.execute(
-            '''INSERT INTO crops (name, crop_type, variety, characteristics,
-               planting_season, harvest_season, notes, image_path, icon_path, image_color,
-               created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-            (data['name'], data['crop_type'], data.get('variety'),
-             data.get('characteristics'), data.get('planting_season'),
-             data.get('harvest_season'), data.get('notes'), data.get('image_path'),
-             data.get('icon_path'), data.get('image_color', '#4CAF50'),
-             now, now)
+            '''INSERT INTO crops (name, crop_type, notes, image_path,
+               icon_path, image_color, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            (data['name'], data['crop_type'], data.get('notes'),
+             data.get('image_path'), data.get('icon_path'),
+             data.get('image_color', '#4CAF50'), now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -48,21 +47,18 @@ class Crop:
         """作物を更新"""
         db = get_db()
         db.execute(
-            '''UPDATE crops SET name = ?, crop_type = ?, variety = ?,
-               characteristics = ?, planting_season = ?, harvest_season = ?,
-               notes = ?, image_path = ?, icon_path = ?, image_color = ?, updated_at = ?
+            '''UPDATE crops SET name = ?, crop_type = ?, notes = ?,
+               image_path = ?, icon_path = ?, image_color = ?, updated_at = ?
                WHERE id = ?''',
-            (data['name'], data['crop_type'], data.get('variety'),
-             data.get('characteristics'), data.get('planting_season'),
-             data.get('harvest_season'), data.get('notes'), data.get('image_path'),
-             data.get('icon_path'), data.get('image_color', '#4CAF50'),
-             get_jst_now(), crop_id)
+            (data['name'], data['crop_type'], data.get('notes'),
+             data.get('image_path'), data.get('icon_path'),
+             data.get('image_color', '#4CAF50'), get_jst_now(), crop_id)
         )
         db.commit()
 
     @staticmethod
     def delete(crop_id):
-        """作物を削除"""
+        """作物を削除（紐づく varieties / plantings は FK で CASCADE される）"""
         db = get_db()
         db.execute('DELETE FROM crops WHERE id = ?', (crop_id,))
         db.commit()
@@ -87,7 +83,7 @@ class Crop:
         params = {'created_at': current['created_at'], 'id': current['id']}
 
         prev_crop = db.execute(
-            '''SELECT id, name, variety, icon_path, image_color FROM crops
+            '''SELECT id, name, icon_path, image_color FROM crops
                WHERE (created_at < :created_at)
                   OR (created_at = :created_at AND id < :id)
                ORDER BY created_at DESC, id DESC LIMIT 1''',
@@ -95,7 +91,7 @@ class Crop:
         ).fetchone()
 
         next_crop = db.execute(
-            '''SELECT id, name, variety, icon_path, image_color FROM crops
+            '''SELECT id, name, icon_path, image_color FROM crops
                WHERE (created_at > :created_at)
                   OR (created_at = :created_at AND id > :id)
                ORDER BY created_at ASC, id ASC LIMIT 1''',
@@ -111,8 +107,19 @@ class Crop:
         db = get_db()
         crops = db.execute(
             '''SELECT * FROM crops
-               WHERE name LIKE ? OR crop_type LIKE ? OR variety LIKE ?
+               WHERE name LIKE ? OR crop_type LIKE ?
                ORDER BY created_at DESC''',
-            (f'%{keyword}%', f'%{keyword}%', f'%{keyword}%')
+            (f'%{keyword}%', f'%{keyword}%')
         ).fetchall()
         return [dict(crop) for crop in crops]
+
+    @staticmethod
+    def get_varieties(crop_id):
+        """作物に紐づく品種一覧を取得"""
+        db = get_db()
+        rows = db.execute(
+            '''SELECT * FROM varieties WHERE crop_id = ?
+               ORDER BY created_at DESC, id DESC''',
+            (crop_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]

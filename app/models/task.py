@@ -163,9 +163,9 @@ class Task:
         """タスクに関連するデータを取得"""
         db = get_db()
 
-        # 関連する作物を取得
+        # 関連する作物を取得（作物レベルの関連のため variety は NULL）
         crops = db.execute(
-            '''SELECT tr.crop_id, c.name as crop_name, c.crop_type, c.variety,
+            '''SELECT tr.crop_id, c.name as crop_name, c.crop_type, NULL as variety,
                       c.icon_path, c.image_color, c.image_path as crop_image_path
                FROM task_relations tr
                JOIN crops c ON tr.crop_id = c.id
@@ -185,15 +185,15 @@ class Task:
 
         # 関連する植え付け場所を取得
         location_crops = db.execute(
-            '''SELECT lc.id as id, lc.id as location_crop_id, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name,
+            '''SELECT lc.id as id, lc.id as location_crop_id, cv.crop_name, cv.variety,
+                      cv.icon_path, cv.image_color, l.name as location_name,
                       lc.location_id, lc.planted_date, lc.status,
                       (SELECT pr.image_path FROM planting_records pr
                        WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
                        ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
                FROM task_relations tr
                JOIN plantings lc ON tr.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
+               JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
                JOIN locations l ON lc.location_id = l.id
                WHERE tr.task_id = ? AND tr.relation_type = 'location_crop' ''',
             (task_id,)

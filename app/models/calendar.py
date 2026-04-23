@@ -3,37 +3,37 @@ import calendar
 from datetime import date
 
 
+_CV_JOIN = (
+    'JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id '
+    'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
+)
+
+
 class Calendar:
     """カレンダー用データ取得モデル"""
 
     @staticmethod
-    def get_month_data(year, month):
-        """指定した年月のカレンダーデータを取得
+    def _empty_date_bucket():
+        return {
+            'crops': [], 'locations': [], 'diaries': [],
+            'location_crops': [], 'harvests': [], 'tasks': [],
+            'growth_records': [], 'varieties': []
+        }
 
-        Returns:
-            dict: 日付をキーとし、その日のデータを含む辞書
-            {
-                '2024-01-15': {
-                    'crops': [{'id': 1, 'name': 'トマト', 'variety': '桃太郎'}, ...],
-                    'locations': [{'id': 1, 'name': '畑A'}, ...],
-                    'diaries': [{'id': 1, 'title': '種まき'}, ...],
-                    'location_crops': [{'id': 1, 'location_id': 1, 'crop_name': 'トマト', ...}, ...],
-                    'harvests': [{'id': 1, 'crop_name': 'トマト', 'quantity': 5, 'unit': '個'}, ...]
-                }, ...
-            }
-        """
+    @staticmethod
+    def get_month_data(year, month):
+        """指定した年月のカレンダーデータを取得"""
         db = get_db()
 
-        # 月の開始日と終了日を取得
         _, last_day = calendar.monthrange(year, month)
         start_date = f'{year:04d}-{month:02d}-01'
         end_date = f'{year:04d}-{month:02d}-{last_day:02d}'
 
         result = {}
 
-        # 作物を取得 (created_atの日付部分で取得)
+        # 作物を取得（created_atの日付部分で取得）
         crops = db.execute(
-            '''SELECT id, name, variety, icon_path, image_color,
+            '''SELECT id, name, icon_path, image_color,
                       DATE(created_at) as date
                FROM crops
                WHERE DATE(created_at) BETWEEN ? AND ?
@@ -43,19 +43,46 @@ class Calendar:
         for crop in crops:
             date_str = crop['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
-            label = f"{crop['variety']}（{crop['name']}）" if crop['variety'] else crop['name']
+                result[date_str] = Calendar._empty_date_bucket()
             result[date_str]['crops'].append({
                 'id': crop['id'],
                 'name': crop['name'],
-                'variety': crop['variety'],
+                'variety': None,
                 'icon_path': crop['icon_path'],
                 'image_color': crop['image_color'],
-                'label': label,
+                'label': crop['name'],
                 'url': f"/crops/{crop['id']}"
             })
 
-        # 場所を取得 (created_atの日付部分で取得)
+        # 品種を取得（created_atの日付部分で取得）
+        varieties = db.execute(
+            '''SELECT v.id, v.name as variety_name,
+                      COALESCE(v.icon_path, c.icon_path) as icon_path,
+                      COALESCE(v.image_color, c.image_color) as image_color,
+                      c.name as crop_name,
+                      DATE(v.created_at) as date
+               FROM varieties v
+               JOIN crops c ON v.crop_id = c.id
+               WHERE DATE(v.created_at) BETWEEN ? AND ?
+               ORDER BY v.created_at''',
+            (start_date, end_date)
+        ).fetchall()
+        for v in varieties:
+            date_str = v['date']
+            if date_str not in result:
+                result[date_str] = Calendar._empty_date_bucket()
+            label = f"{v['variety_name']}（{v['crop_name']}）"
+            result[date_str]['varieties'].append({
+                'id': v['id'],
+                'variety': v['variety_name'],
+                'crop_name': v['crop_name'],
+                'icon_path': v['icon_path'],
+                'image_color': v['image_color'],
+                'label': label,
+                'url': f"/varieties/{v['id']}"
+            })
+
+        # 場所を取得
         locations = db.execute(
             '''SELECT id, name, DATE(created_at) as date
                FROM locations
@@ -66,7 +93,7 @@ class Calendar:
         for location in locations:
             date_str = location['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
+                result[date_str] = Calendar._empty_date_bucket()
             result[date_str]['locations'].append({
                 'id': location['id'],
                 'name': location['name'],
@@ -74,7 +101,7 @@ class Calendar:
                 'url': f"/locations/{location['id']}"
             })
 
-        # 日記を取得 (entry_dateで取得)
+        # 日記を取得
         diaries = db.execute(
             '''SELECT id, title, DATE(entry_date) as date
                FROM diary_entries
@@ -85,7 +112,7 @@ class Calendar:
         for diary in diaries:
             date_str = diary['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
+                result[date_str] = Calendar._empty_date_bucket()
             result[date_str]['diaries'].append({
                 'id': diary['id'],
                 'title': diary['title'],
@@ -93,22 +120,22 @@ class Calendar:
                 'url': f"/diary/{diary['id']}"
             })
 
-        # 栽培中を取得 (planted_dateで取得)
+        # 植え付け（栽培中）を取得
         location_crops = db.execute(
-            '''SELECT lc.id, lc.location_id, DATE(lc.planted_date) as date,
-                      c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name
-               FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               WHERE DATE(lc.planted_date) BETWEEN ? AND ?
-               ORDER BY lc.planted_date''',
+            f'''SELECT lc.id, lc.location_id, DATE(lc.planted_date) as date,
+                       cv.crop_name, cv.variety,
+                       cv.icon_path, cv.image_color, l.name as location_name
+                FROM plantings lc
+                {_CV_JOIN}
+                JOIN locations l ON lc.location_id = l.id
+                WHERE DATE(lc.planted_date) BETWEEN ? AND ?
+                ORDER BY lc.planted_date''',
             (start_date, end_date)
         ).fetchall()
         for lc in location_crops:
             date_str = lc['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
+                result[date_str] = Calendar._empty_date_bucket()
             crop_label = f"{lc['variety']}（{lc['crop_name']}）" if lc['variety'] else lc['crop_name']
             result[date_str]['location_crops'].append({
                 'id': lc['id'],
@@ -122,22 +149,22 @@ class Calendar:
                 'url': f"/plantings/{lc['id']}"
             })
 
-        # 収穫を取得 (harvest_dateで取得)
+        # 収穫を取得
         harvests = db.execute(
-            '''SELECT h.id, h.quantity, h.unit, DATE(h.harvest_date) as date,
-                      c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color
-               FROM harvests h
-               JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               WHERE DATE(h.harvest_date) BETWEEN ? AND ?
-               ORDER BY h.harvest_date''',
+            f'''SELECT h.id, h.quantity, h.unit, DATE(h.harvest_date) as date,
+                       cv.crop_name, cv.variety,
+                       cv.icon_path, cv.image_color
+                FROM harvests h
+                JOIN plantings lc ON h.location_crop_id = lc.id
+                {_CV_JOIN}
+                WHERE DATE(h.harvest_date) BETWEEN ? AND ?
+                ORDER BY h.harvest_date''',
             (start_date, end_date)
         ).fetchall()
         for harvest in harvests:
             date_str = harvest['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
+                result[date_str] = Calendar._empty_date_bucket()
             crop_label = f"{harvest['variety']}（{harvest['crop_name']}）" if harvest['variety'] else harvest['crop_name']
             qty_str = f" {harvest['quantity']}{harvest['unit'] or ''}" if harvest['quantity'] else ''
             result[date_str]['harvests'].append({
@@ -152,7 +179,7 @@ class Calendar:
                 'url': f"/harvests/{harvest['id']}"
             })
 
-        # タスクを取得 (due_dateで取得)
+        # タスクを取得
         tasks = db.execute(
             '''SELECT id, title, status, DATE(due_date) as date
                FROM tasks
@@ -163,7 +190,7 @@ class Calendar:
         for task in tasks:
             date_str = task['date']
             if date_str not in result:
-                result[date_str] = {'crops': [], 'locations': [], 'diaries': [], 'location_crops': [], 'harvests': [], 'tasks': [], 'growth_records': []}
+                result[date_str] = Calendar._empty_date_bucket()
             result[date_str]['tasks'].append({
                 'id': task['id'],
                 'title': task['title'],
@@ -172,27 +199,23 @@ class Calendar:
                 'url': f"/tasks/{task['id']}"
             })
 
-        # 栽培記録を取得 (recorded_atで取得)
+        # 栽培記録を取得
         growth_records = db.execute(
-            '''SELECT gr.id, gr.location_crop_id, DATE(gr.recorded_at) as date,
-                      c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name
-               FROM planting_records gr
-               JOIN plantings lc ON gr.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               WHERE DATE(gr.recorded_at) BETWEEN ? AND ?
-               ORDER BY gr.recorded_at''',
+            f'''SELECT gr.id, gr.location_crop_id, DATE(gr.recorded_at) as date,
+                       cv.crop_name, cv.variety,
+                       cv.icon_path, cv.image_color, l.name as location_name
+                FROM planting_records gr
+                JOIN plantings lc ON gr.location_crop_id = lc.id
+                {_CV_JOIN}
+                JOIN locations l ON lc.location_id = l.id
+                WHERE DATE(gr.recorded_at) BETWEEN ? AND ?
+                ORDER BY gr.recorded_at''',
             (start_date, end_date)
         ).fetchall()
         for gr in growth_records:
             date_str = gr['date']
             if date_str not in result:
-                result[date_str] = {
-                    'crops': [], 'locations': [], 'diaries': [],
-                    'location_crops': [], 'harvests': [], 'tasks': [],
-                    'growth_records': []
-                }
+                result[date_str] = Calendar._empty_date_bucket()
             crop_label = f"{gr['variety']}（{gr['crop_name']}）" if gr['variety'] else gr['crop_name']
             result[date_str]['growth_records'].append({
                 'id': gr['id'],
@@ -210,12 +233,8 @@ class Calendar:
 
     @staticmethod
     def get_calendar_weeks(year, month):
-        """指定した年月のカレンダー週リストを取得（日曜始まり）
-
-        Returns:
-            list: 週ごとの日付リスト（各週は7日分の日付またはNone）
-        """
-        cal = calendar.Calendar(firstweekday=6)  # 日曜始まり
+        """指定した年月のカレンダー週リストを取得（日曜始まり）"""
+        cal = calendar.Calendar(firstweekday=6)
         weeks = []
         for week in cal.monthdayscalendar(year, month):
             week_data = []

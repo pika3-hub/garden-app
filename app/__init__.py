@@ -43,8 +43,13 @@ def create_app(config_name='default'):
     app.jinja_env.globals['crop_display_name'] = _crop_display_name
 
     # ブループリント登録
-    from app.routes import crop_routes, location_routes, diary_routes, harvest_routes, calendar_routes, task_routes, planting_routes, supplement_routes, photo_pool_routes
+    from app.routes import (
+        crop_routes, variety_routes, location_routes, diary_routes,
+        harvest_routes, calendar_routes, task_routes, planting_routes,
+        supplement_routes, photo_pool_routes
+    )
     app.register_blueprint(crop_routes.bp)
+    app.register_blueprint(variety_routes.bp)
     app.register_blueprint(location_routes.bp)
     app.register_blueprint(diary_routes.bp)
     app.register_blueprint(harvest_routes.bp)
@@ -83,11 +88,20 @@ def create_app(config_name='default'):
         recent_growth_records = PlantingRecord.get_recent(5)
 
         # カルーセル用: 最近の画像を全テーブルから取得
+        # crops/varieties は独立、harvests/planting_records は VIEW 経由で表示用情報を取得
         db = get_db()
         carousel_images_raw = db.execute('''
             SELECT 'crop' AS type, id, image_path, name AS label, CAST(created_at AS TEXT) AS sort_date,
-                   name AS crop_name, variety, icon_path, image_color
+                   name AS crop_name, NULL AS variety, icon_path, image_color
             FROM crops WHERE image_path IS NOT NULL AND image_path != ''
+            UNION ALL
+            SELECT 'variety' AS type, v.id, v.image_path,
+                   v.name AS label, CAST(v.created_at AS TEXT) AS sort_date,
+                   c.name AS crop_name, v.name AS variety,
+                   COALESCE(v.icon_path, c.icon_path) AS icon_path,
+                   COALESCE(v.image_color, c.image_color) AS image_color
+            FROM varieties v JOIN crops c ON v.crop_id = c.id
+            WHERE v.image_path IS NOT NULL AND v.image_path != ''
             UNION ALL
             SELECT 'location' AS type, id, image_path, name AS label, CAST(created_at AS TEXT) AS sort_date,
                    NULL, NULL, NULL, NULL
@@ -98,17 +112,19 @@ def create_app(config_name='default'):
             FROM diary_entries WHERE image_path IS NOT NULL AND image_path != ''
             UNION ALL
             SELECT 'harvest' AS type, h.id, h.image_path, '' AS label, CAST(h.harvest_date AS TEXT) AS sort_date,
-                   c.name AS crop_name, c.variety, c.icon_path, c.image_color
+                   cv.crop_name, cv.variety, cv.icon_path, cv.image_color
             FROM harvests h
-            JOIN plantings p ON h.location_crop_id = p.id
-            JOIN crops c ON p.crop_id = c.id
+            JOIN plantings lc ON h.location_crop_id = lc.id
+            JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id
+                                      AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
             WHERE h.image_path IS NOT NULL AND h.image_path != ''
             UNION ALL
             SELECT 'planting_record' AS type, pr.id, pr.image_path, '' AS label, CAST(pr.recorded_at AS TEXT) AS sort_date,
-                   c.name AS crop_name, c.variety, c.icon_path, c.image_color
+                   cv.crop_name, cv.variety, cv.icon_path, cv.image_color
             FROM planting_records pr
-            JOIN plantings p ON pr.location_crop_id = p.id
-            JOIN crops c ON p.crop_id = c.id
+            JOIN plantings lc ON pr.location_crop_id = lc.id
+            JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id
+                                      AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
             WHERE pr.image_path IS NOT NULL AND pr.image_path != ''
             ORDER BY sort_date DESC
             LIMIT 20
@@ -118,6 +134,7 @@ def create_app(config_name='default'):
 
         type_config = {
             'crop': ('crops.detail', 'crop_id', 'icon_crop.webp', '作物'),
+            'variety': ('varieties.detail', 'variety_id', 'icon_crop.webp', '品種'),
             'location': ('locations.detail', 'location_id', 'icon_location.webp', '場所'),
             'diary': ('diary.detail', 'diary_id', 'icon_diary.webp', '日記'),
             'harvest': ('harvests.detail', 'harvest_id', 'icon_harvest.webp', '収穫'),

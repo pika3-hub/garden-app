@@ -3,15 +3,28 @@ CREATE TABLE IF NOT EXISTS crops (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(100) NOT NULL,
     crop_type VARCHAR(50) NOT NULL,
-    variety VARCHAR(100),
-    characteristics TEXT,
-    planting_season VARCHAR(50),
-    harvest_season VARCHAR(50),
     notes TEXT,
+    icon_path TEXT,
+    image_color TEXT DEFAULT '#4CAF50',
     image_path VARCHAR(255),
     created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
     updated_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
 );
+
+-- 品種テーブル（作物:品種 = 1:多）
+CREATE TABLE IF NOT EXISTS varieties (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    crop_id INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    notes TEXT,
+    icon_path TEXT,
+    image_color TEXT,
+    image_path VARCHAR(255),
+    created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
+    updated_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
+    FOREIGN KEY (crop_id) REFERENCES crops(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_varieties_crop ON varieties(crop_id);
 
 -- 場所テーブル
 CREATE TABLE IF NOT EXISTS locations (
@@ -27,11 +40,12 @@ CREATE TABLE IF NOT EXISTS locations (
     updated_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
 );
 
--- 植え付けテーブル（場所-作物関連）
+-- 植え付けテーブル（場所-作物-品種関連）
 CREATE TABLE IF NOT EXISTS plantings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     location_id INTEGER NOT NULL,
     crop_id INTEGER NOT NULL,
+    variety_id INTEGER DEFAULT NULL,
     planted_date DATE,
     quantity INTEGER,
     status VARCHAR(50) DEFAULT 'active',
@@ -41,12 +55,14 @@ CREATE TABLE IF NOT EXISTS plantings (
     created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
     updated_at TIMESTAMP DEFAULT (datetime('now', '+9 hours')),
     FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE,
-    FOREIGN KEY (crop_id) REFERENCES crops(id) ON DELETE CASCADE
+    FOREIGN KEY (crop_id) REFERENCES crops(id) ON DELETE CASCADE,
+    FOREIGN KEY (variety_id) REFERENCES varieties(id) ON DELETE SET NULL
 );
 
 -- インデックス作成
 CREATE INDEX IF NOT EXISTS idx_plantings_location ON plantings(location_id);
 CREATE INDEX IF NOT EXISTS idx_plantings_crop ON plantings(crop_id);
+CREATE INDEX IF NOT EXISTS idx_plantings_variety ON plantings(variety_id);
 CREATE INDEX IF NOT EXISTS idx_plantings_status ON plantings(status);
 
 -- 栽培観察記録テーブル
@@ -62,3 +78,32 @@ CREATE TABLE IF NOT EXISTS planting_records (
 );
 CREATE INDEX IF NOT EXISTS idx_planting_records_location_crop ON planting_records(location_crop_id);
 CREATE INDEX IF NOT EXISTS idx_planting_records_date ON planting_records(recorded_at DESC);
+
+-- 作物×品種ビュー（品種なし行と品種あり行の UNION ALL）
+-- 使用例: JOIN crop_variety_view cv ON cv.crop_id = p.crop_id AND IFNULL(cv.variety_id, -1) = IFNULL(p.variety_id, -1)
+-- 注意: SELECT cv.* は使わず、必要カラムを明示する（SQLite Row の重複カラム名対策）
+CREATE VIEW IF NOT EXISTS crop_variety_view AS
+SELECT
+    c.id AS crop_id,
+    v.id AS variety_id,
+    c.name AS crop_name,
+    c.crop_type,
+    v.name AS variety,
+    COALESCE(v.notes, c.notes) AS notes,
+    COALESCE(v.icon_path, c.icon_path) AS icon_path,
+    COALESCE(v.image_color, c.image_color) AS image_color,
+    COALESCE(v.image_path, c.image_path) AS image_path
+FROM crops c
+JOIN varieties v ON v.crop_id = c.id
+UNION ALL
+SELECT
+    c.id AS crop_id,
+    NULL AS variety_id,
+    c.name AS crop_name,
+    c.crop_type,
+    NULL AS variety,
+    c.notes,
+    c.icon_path,
+    c.image_color,
+    c.image_path
+FROM crops c;

@@ -5,8 +5,16 @@ from app.database import get_db
 from app.utils.timezone import get_jst_now
 
 
+# 作物×品種ビューを plantings に結合するJOIN句（変動しないので定数化）
+# 使用時は SELECT 側で必要カラムを明示する（cv.* は使わない — SQLite Row 重複カラム対策）
+_CV_JOIN = (
+    'JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id '
+    'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
+)
+
+
 class Planting:
-    """場所-作物関連モデル"""
+    """場所-作物関連モデル（plantings テーブル）"""
 
     @staticmethod
     def _calculate_days(planted_date, target_date):
@@ -24,14 +32,15 @@ class Planting:
     def get_by_location(location_id, status='active'):
         """場所に紐付く作物を取得"""
         db = get_db()
-        query = '''
-            SELECT lc.*, c.name as crop_name, c.crop_type, c.variety,
-                   c.icon_path, c.image_color,
+        query = f'''
+            SELECT lc.*,
+                   cv.crop_name, cv.crop_type, cv.variety,
+                   cv.icon_path, cv.image_color,
                    (SELECT pr.image_path FROM planting_records pr
                     WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
                     ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
             FROM plantings lc
-            JOIN crops c ON lc.crop_id = c.id
+            {_CV_JOIN}
             WHERE lc.location_id = ?
         '''
         params = [location_id]
@@ -42,25 +51,29 @@ class Planting:
 
         query += ' ORDER BY lc.planted_date DESC'
 
-        location_crops = db.execute(query, params).fetchall()
-        return [dict(lc) for lc in location_crops]
+        rows = db.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
 
     @staticmethod
-    def get_by_crop(crop_id, status='active'):
-        """作物に紐付く場所を取得"""
+    def get_by_crop(crop_id, status='active', variety_id=None):
+        """作物（または作物+品種）に紐付く植え付けを取得"""
         db = get_db()
-        query = '''
+        query = f'''
             SELECT lc.*, l.name as location_name, l.location_type,
-                   c.name as crop_name, c.variety, c.icon_path, c.image_color,
+                   cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.crop_type,
                    (SELECT pr.image_path FROM planting_records pr
                     WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
                     ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
             FROM plantings lc
             JOIN locations l ON lc.location_id = l.id
-            JOIN crops c ON lc.crop_id = c.id
+            {_CV_JOIN}
             WHERE lc.crop_id = ?
         '''
         params = [crop_id]
+
+        if variety_id is not None:
+            query += ' AND lc.variety_id = ?'
+            params.append(variety_id)
 
         if status:
             query += ' AND lc.status = ?'
@@ -68,32 +81,56 @@ class Planting:
 
         query += ' ORDER BY lc.planted_date DESC'
 
-        location_crops = db.execute(query, params).fetchall()
-        return [dict(lc) for lc in location_crops]
+        rows = db.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def get_by_variety(variety_id, status='active'):
+        """品種に紐付く植え付けを取得"""
+        db = get_db()
+        query = f'''
+            SELECT lc.*, l.name as location_name, l.location_type,
+                   cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.crop_type,
+                   (SELECT pr.image_path FROM planting_records pr
+                    WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                    ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
+            FROM plantings lc
+            JOIN locations l ON lc.location_id = l.id
+            {_CV_JOIN}
+            WHERE lc.variety_id = ?
+        '''
+        params = [variety_id]
+        if status:
+            query += ' AND lc.status = ?'
+            params.append(status)
+        query += ' ORDER BY lc.planted_date DESC'
+        rows = db.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
 
     @staticmethod
     def get_by_id(location_crop_id):
         """IDで場所-作物関連を取得"""
         db = get_db()
-        location_crop = db.execute(
-            '''SELECT lc.*, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name,
-                      c.planting_season, c.harvest_season, c.characteristics,
-                      c.notes as crop_notes, c.crop_type,
-                      c.image_path as crop_image_path,
-                      l.location_type, l.area_size, l.sun_exposure,
-                      l.notes as location_notes, l.image_path as location_image_path,
-                      (SELECT pr.image_path FROM planting_records pr
-                       WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
-                       ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
+        row = db.execute(
+            f'''SELECT lc.*,
+                       cv.crop_name, cv.crop_type, cv.variety,
+                       cv.icon_path, cv.image_color,
+                       cv.notes as crop_notes,
+                       cv.image_path as crop_image_path,
+                       l.name as location_name, l.location_type,
+                       l.area_size, l.sun_exposure,
+                       l.notes as location_notes, l.image_path as location_image_path,
+                       (SELECT pr.image_path FROM planting_records pr
+                        WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                        ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
                FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
+               {_CV_JOIN}
                JOIN locations l ON lc.location_id = l.id
                WHERE lc.id = ?''',
             (location_crop_id,)
         ).fetchone()
-        if location_crop:
-            result = dict(location_crop)
+        if row:
+            result = dict(row)
             if result.get('status') == 'active':
                 today = get_jst_now()[:10]
                 result['days_from_planting'] = Planting._calculate_days(
@@ -110,10 +147,13 @@ class Planting:
         db = get_db()
         now = get_jst_now()
         cursor = db.execute(
-            '''INSERT INTO plantings (location_id, crop_id, planted_date, quantity, notes, status, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, 'active', ?, ?)''',
-            (data['location_id'], data['crop_id'], data.get('planted_date'),
-             data.get('quantity'), data.get('notes'), now, now)
+            '''INSERT INTO plantings
+               (location_id, crop_id, variety_id, planted_date, quantity, notes,
+                status, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)''',
+            (data['location_id'], data['crop_id'], data.get('variety_id'),
+             data.get('planted_date'), data.get('quantity'),
+             data.get('notes'), now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -185,6 +225,16 @@ class Planting:
         return set(row['crop_id'] for row in rows)
 
     @staticmethod
+    def get_active_variety_ids():
+        """栽培中の品種IDセットを取得"""
+        db = get_db()
+        rows = db.execute(
+            '''SELECT DISTINCT variety_id FROM plantings
+               WHERE status = 'active' AND variety_id IS NOT NULL'''
+        ).fetchall()
+        return set(row['variety_id'] for row in rows)
+
+    @staticmethod
     def get_active_counts_by_location():
         """場所ごとの栽培中作物数を取得"""
         db = get_db()
@@ -211,15 +261,15 @@ class Planting:
 
     @staticmethod
     def get_active_crop_type_icons():
-        """種類ごとの栽培中作物アイコン一覧を取得"""
+        """種類ごとの栽培中作物アイコン一覧を取得（継承考慮）"""
         db = get_db()
         rows = db.execute(
-            '''SELECT DISTINCT c.crop_type, c.icon_path, c.image_color
-               FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
-               WHERE lc.status = 'active'
-                 AND c.crop_type IS NOT NULL AND c.crop_type != ''
-                 AND c.icon_path IS NOT NULL AND c.icon_path != '' '''
+            f'''SELECT DISTINCT cv.crop_type, cv.icon_path, cv.image_color
+                FROM plantings lc
+                {_CV_JOIN}
+                WHERE lc.status = 'active'
+                  AND cv.crop_type IS NOT NULL AND cv.crop_type != ''
+                  AND cv.icon_path IS NOT NULL AND cv.icon_path != '' '''
         ).fetchall()
         result = {}
         for row in rows:
@@ -269,36 +319,36 @@ class Planting:
         }
 
         prev_planting = db.execute(
-            '''SELECT lc.id, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name
-               FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               WHERE lc.status = :status
-                 AND ((lc.planted_date < :planted_date)
-                   OR (lc.planted_date = :planted_date AND lc.created_at < :created_at)
-                   OR (lc.planted_date = :planted_date AND lc.created_at = :created_at AND lc.id < :id)
-                   OR (lc.planted_date IS NULL AND :planted_date IS NOT NULL)
-                   OR (lc.planted_date IS NULL AND :planted_date IS NULL AND lc.created_at < :created_at)
-                   OR (lc.planted_date IS NULL AND :planted_date IS NULL AND lc.created_at = :created_at AND lc.id < :id))
-               ORDER BY lc.planted_date DESC, lc.created_at DESC, lc.id DESC LIMIT 1''',
+            f'''SELECT lc.id, cv.crop_name, cv.variety,
+                       cv.icon_path, cv.image_color, l.name as location_name
+                FROM plantings lc
+                {_CV_JOIN}
+                JOIN locations l ON lc.location_id = l.id
+                WHERE lc.status = :status
+                  AND ((lc.planted_date < :planted_date)
+                    OR (lc.planted_date = :planted_date AND lc.created_at < :created_at)
+                    OR (lc.planted_date = :planted_date AND lc.created_at = :created_at AND lc.id < :id)
+                    OR (lc.planted_date IS NULL AND :planted_date IS NOT NULL)
+                    OR (lc.planted_date IS NULL AND :planted_date IS NULL AND lc.created_at < :created_at)
+                    OR (lc.planted_date IS NULL AND :planted_date IS NULL AND lc.created_at = :created_at AND lc.id < :id))
+                ORDER BY lc.planted_date DESC, lc.created_at DESC, lc.id DESC LIMIT 1''',
             params
         ).fetchone()
 
         next_planting = db.execute(
-            '''SELECT lc.id, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name
-               FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               WHERE lc.status = :status
-                 AND ((lc.planted_date > :planted_date)
-                   OR (lc.planted_date = :planted_date AND lc.created_at > :created_at)
-                   OR (lc.planted_date = :planted_date AND lc.created_at = :created_at AND lc.id > :id)
-                   OR (:planted_date IS NULL AND lc.planted_date IS NOT NULL)
-                   OR (:planted_date IS NULL AND lc.planted_date IS NULL AND lc.created_at > :created_at)
-                   OR (:planted_date IS NULL AND lc.planted_date IS NULL AND lc.created_at = :created_at AND lc.id > :id))
-               ORDER BY lc.planted_date ASC, lc.created_at ASC, lc.id ASC LIMIT 1''',
+            f'''SELECT lc.id, cv.crop_name, cv.variety,
+                       cv.icon_path, cv.image_color, l.name as location_name
+                FROM plantings lc
+                {_CV_JOIN}
+                JOIN locations l ON lc.location_id = l.id
+                WHERE lc.status = :status
+                  AND ((lc.planted_date > :planted_date)
+                    OR (lc.planted_date = :planted_date AND lc.created_at > :created_at)
+                    OR (lc.planted_date = :planted_date AND lc.created_at = :created_at AND lc.id > :id)
+                    OR (:planted_date IS NULL AND lc.planted_date IS NOT NULL)
+                    OR (:planted_date IS NULL AND lc.planted_date IS NULL AND lc.created_at > :created_at)
+                    OR (:planted_date IS NULL AND lc.planted_date IS NULL AND lc.created_at = :created_at AND lc.id > :id))
+                ORDER BY lc.planted_date ASC, lc.created_at ASC, lc.id ASC LIMIT 1''',
             params
         ).fetchone()
 
@@ -309,15 +359,15 @@ class Planting:
     def get_all_with_stats(status=None):
         """全ての作物を取得（作物・場所情報付き、栽培記録の件数・最新画像含む）。statusで絞り込み可能"""
         db = get_db()
-        query = '''SELECT lc.*,
-                      c.name as crop_name, c.crop_type, c.variety,
-                      c.icon_path, c.image_color,
+        query = f'''SELECT lc.*,
+                      cv.crop_name, cv.crop_type, cv.variety,
+                      cv.icon_path, cv.image_color,
                       l.name as location_name, l.location_type,
                       COALESCE(gr_stats.record_count, 0) as growth_record_count,
                       gr_img.image_path as latest_growth_image,
                       gr_img.latest_growth_image_date
                FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
+               {_CV_JOIN}
                JOIN locations l ON lc.location_id = l.id
                LEFT JOIN (
                    SELECT location_crop_id, COUNT(*) as record_count
@@ -380,7 +430,6 @@ class Planting:
                 [now, location_id] + list(location_crop_ids)
             )
         else:
-            # リストが空の場合、この場所の全ての作物の位置をクリア
             db.execute(
                 '''UPDATE plantings SET position_x = NULL, position_y = NULL,
                    updated_at = ?
@@ -393,28 +442,28 @@ class Planting:
     def get_crops_with_position(location_id):
         """場所の作物を位置情報付きで取得"""
         db = get_db()
-        crops = db.execute(
-            '''SELECT lc.*, c.name as crop_name, c.crop_type,
-               c.icon_path, c.image_color, c.variety,
-               lc.position_x, lc.position_y
-               FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
-               WHERE lc.location_id = ? AND lc.status = 'active'
-               ORDER BY lc.planted_date DESC''',
+        rows = db.execute(
+            f'''SELECT lc.*, cv.crop_name, cv.crop_type,
+                       cv.icon_path, cv.image_color, cv.variety,
+                       lc.position_x, lc.position_y
+                FROM plantings lc
+                {_CV_JOIN}
+                WHERE lc.location_id = ? AND lc.status = 'active'
+                ORDER BY lc.planted_date DESC''',
             (location_id,)
         ).fetchall()
-        return [dict(crop) for crop in crops]
+        return [dict(r) for r in rows]
 
     @staticmethod
     def update_all(location_crop_id, data):
-        """植え付けデータを全フィールド更新（location_id, crop_id含む）"""
+        """植え付けデータを全フィールド更新（location_id, crop_id, variety_id含む）"""
         db = get_db()
         db.execute(
             '''UPDATE plantings
-               SET location_id = ?, crop_id = ?, planted_date = ?,
+               SET location_id = ?, crop_id = ?, variety_id = ?, planted_date = ?,
                    quantity = ?, notes = ?, updated_at = ?
                WHERE id = ?''',
-            (data['location_id'], data['crop_id'],
+            (data['location_id'], data['crop_id'], data.get('variety_id'),
              data.get('planted_date'), data.get('quantity'),
              data.get('notes'), get_jst_now(), location_crop_id)
         )
@@ -474,10 +523,8 @@ class Planting:
             (location_id,)
         ).fetchall()
 
-        # active 作物用: locations.canvas_data から位置マップを取得
         canvas_map = Planting._get_canvas_placement_map(location_id)
 
-        # 位置情報を持つ（プレビュー再現可能な）植え付けのみ抽出
         renderable = []
         for r in rows:
             if r['status'] == 'active':
@@ -491,7 +538,6 @@ class Planting:
         if not renderable:
             return None
 
-        # 候補日付を収集
         candidate_dates = set()
         for p in renderable:
             if p['planted']:
@@ -499,7 +545,6 @@ class Planting:
             if p['ended']:
                 candidate_dates.add(p['ended'])
 
-        # 各候補日付について、再現可能な植え付けが1つでも表示されるか確認
         valid_dates = []
         for d in sorted(candidate_dates):
             for p in renderable:
@@ -510,12 +555,10 @@ class Planting:
         if not valid_dates:
             return None
 
-        # 左端: 最初の植え付け日の1日前を追加（何もない状態）
         first_date = valid_dates[0]
         day_before = (datetime.strptime(first_date, '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')
         valid_dates.insert(0, day_before)
 
-        # 右端: 今日の日付を追加（重複は除く）
         today = get_jst_now()[:10]
         if valid_dates[-1] != today:
             valid_dates.append(today)
@@ -523,25 +566,21 @@ class Planting:
 
     @staticmethod
     def get_historical_canvas_data(location_id, target_date):
-        """指定日付の見取り図配置データを返す（version 2.0形式）
-        - active 作物: locations.canvas_data から位置取得（複数配置対応）
-        - harvested 作物: plantings.canvas_snapshot から位置取得
-        """
+        """指定日付の見取り図配置データを返す（version 2.0形式）"""
         db = get_db()
         rows = db.execute(
-            '''SELECT lc.id as location_crop_id, lc.crop_id, lc.status,
-                      lc.canvas_snapshot,
-                      c.name as crop_name, c.variety, c.icon_path, c.image_color
-               FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
-               WHERE lc.location_id = ? AND lc.planted_date IS NOT NULL
-                 AND DATE(lc.planted_date) <= ?
-                 AND NOT (lc.end_date IS NULL AND lc.status = 'harvested')
-                 AND (lc.end_date IS NULL OR DATE(lc.end_date) >= ?)''',
+            f'''SELECT lc.id as location_crop_id, lc.crop_id, lc.status,
+                       lc.canvas_snapshot,
+                       cv.crop_name, cv.variety, cv.icon_path, cv.image_color
+                FROM plantings lc
+                {_CV_JOIN}
+                WHERE lc.location_id = ? AND lc.planted_date IS NOT NULL
+                  AND DATE(lc.planted_date) <= ?
+                  AND NOT (lc.end_date IS NULL AND lc.status = 'harvested')
+                  AND (lc.end_date IS NULL OR DATE(lc.end_date) >= ?)''',
             (location_id, target_date, target_date)
         ).fetchall()
 
-        # active 作物用: locations.canvas_data から位置マップを取得
         canvas_map = Planting._get_canvas_placement_map(location_id)
 
         placements = []
@@ -557,7 +596,6 @@ class Planting:
             }
 
             if r['status'] == 'active':
-                # active: locations.canvas_data から取得（複数配置対応）
                 for p in canvas_map.get(lc_id, []):
                     placements.append({
                         **base,
@@ -566,7 +604,6 @@ class Planting:
                         'y': p.get('y', 0),
                     })
             else:
-                # harvested: canvas_snapshot から取得
                 for p in Planting._get_snapshot_placements(
                         r['canvas_snapshot'], lc_id):
                     placements.append({
@@ -582,16 +619,16 @@ class Planting:
     def get_recent(limit=5):
         """最近植え付けた作物を取得（作物・場所情報付き）"""
         db = get_db()
-        crops = db.execute(
-            '''SELECT lc.*,
-                      c.name as crop_name, c.crop_type, c.variety,
-                      c.icon_path, c.image_color,
-                      l.name as location_name, l.location_type
-               FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               ORDER BY lc.planted_date DESC, lc.created_at DESC
-               LIMIT ?''',
+        rows = db.execute(
+            f'''SELECT lc.*,
+                       cv.crop_name, cv.crop_type, cv.variety,
+                       cv.icon_path, cv.image_color,
+                       l.name as location_name, l.location_type
+                FROM plantings lc
+                {_CV_JOIN}
+                JOIN locations l ON lc.location_id = l.id
+                ORDER BY lc.planted_date DESC, lc.created_at DESC
+                LIMIT ?''',
             (limit,)
         ).fetchall()
-        return [dict(crop) for crop in crops]
+        return [dict(r) for r in rows]

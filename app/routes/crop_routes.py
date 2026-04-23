@@ -2,6 +2,7 @@ import os
 from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from app.models.crop import Crop
+from app.models.variety import Variety
 from app.models.planting import Planting
 from app.models.diary import DiaryEntry
 from app.models.harvest import Harvest
@@ -41,7 +42,9 @@ def list():
         multi_groups.append(('その他', single_items))
     grouped_crops = multi_groups
 
-    return render_template('crops/list.html', crops=crops, grouped_crops=grouped_crops, task_counts=task_counts, filter_types=filter_types, filter_type_icons=filter_type_icons, active_crop_ids=active_crop_ids)
+    return render_template('crops/list.html', crops=crops, grouped_crops=grouped_crops,
+                           task_counts=task_counts, filter_types=filter_types,
+                           filter_type_icons=filter_type_icons, active_crop_ids=active_crop_ids)
 
 
 @bp.route('/<int:crop_id>')
@@ -52,6 +55,8 @@ def detail(crop_id):
         flash('作物が見つかりません', 'danger')
         return redirect(url_for('crops.list'))
 
+    # 紐づく品種一覧
+    varieties = Crop.get_varieties(crop_id)
     # 栽培中の植え付けを取得
     related_plantings = Planting.get_by_crop(crop_id, status='active')
     # 関連する収穫を取得
@@ -66,6 +71,7 @@ def detail(crop_id):
 
     return render_template('crops/detail.html',
                           crop=crop,
+                          varieties=varieties,
                           related_plantings=related_plantings,
                           related_harvests=related_harvests,
                           related_diaries=related_diaries,
@@ -99,21 +105,15 @@ def create():
     data = {
         'name': request.form.get('name'),
         'crop_type': request.form.get('crop_type'),
-        'variety': request.form.get('variety'),
-        'characteristics': request.form.get('characteristics'),
-        'planting_season': request.form.get('planting_season'),
-        'harvest_season': request.form.get('harvest_season'),
         'notes': request.form.get('notes'),
         'icon_path': request.form.get('icon_path') or None,
         'image_color': request.form.get('image_color') or '#4CAF50',
     }
 
-    # バリデーション
     if not data['name'] or not data['crop_type']:
         flash('作物名と作物種類は必須です', 'danger')
         return redirect(url_for('crops.new'))
 
-    # 画像アップロード処理（写真プール優先）
     photo_pool_id = request.form.get('photo_pool_id', type=int)
     if photo_pool_id:
         pool_photo = PhotoPool.get_by_id(photo_pool_id)
@@ -159,22 +159,16 @@ def update(crop_id):
     data = {
         'name': request.form.get('name'),
         'crop_type': request.form.get('crop_type'),
-        'variety': request.form.get('variety'),
-        'characteristics': request.form.get('characteristics'),
-        'planting_season': request.form.get('planting_season'),
-        'harvest_season': request.form.get('harvest_season'),
         'notes': request.form.get('notes'),
-        'image_path': crop.get('image_path'),  # 既存の画像パスを保持
+        'image_path': crop.get('image_path'),
         'icon_path': request.form.get('icon_path') or None,
         'image_color': request.form.get('image_color') or '#4CAF50',
     }
 
-    # バリデーション
     if not data['name'] or not data['crop_type']:
         flash('作物名と作物種類は必須です', 'danger')
         return redirect(url_for('crops.edit', crop_id=crop_id))
 
-    # 画像アップロード処理（写真プール優先）
     photo_pool_id = request.form.get('photo_pool_id', type=int)
     replaced_from_pool = False
     if photo_pool_id:
@@ -192,7 +186,6 @@ def update(crop_id):
             image_path = save_image(image, 'crops')
             data['image_path'] = image_path
 
-    # 画像削除チェック
     if request.form.get('delete_image') == '1':
         if crop.get('image_path'):
             delete_image(crop['image_path'])
@@ -211,18 +204,25 @@ def update(crop_id):
 
 @bp.route('/<int:crop_id>/delete', methods=['POST'])
 def delete(crop_id):
-    """作物削除処理"""
+    """作物削除処理（紐づく varieties と plantings は FK で CASCADE される）"""
     crop = Crop.get_by_id(crop_id)
     if not crop:
         flash('作物が見つかりません', 'danger')
         return redirect(url_for('crops.list'))
 
     try:
-        # 補足情報の画像を削除
+        # 紐づく全品種の画像と補足情報をクリーンアップ
+        for v in Crop.get_varieties(crop_id):
+            if v.get('image_path'):
+                delete_image(v['image_path'])
+            v_sup_images = Supplement.delete_by_entity('variety', v['id'])
+            for img_path in v_sup_images:
+                delete_image(img_path)
+        # 作物自体の補足情報の画像を削除
         supplement_images = Supplement.delete_by_entity('crop', crop_id)
         for img_path in supplement_images:
             delete_image(img_path)
-        # 画像を削除
+        # 作物画像を削除
         if crop.get('image_path'):
             delete_image(crop['image_path'])
         Crop.delete(crop_id)

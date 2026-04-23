@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
+
+{% block title %}{{ variety.name }} - 品種詳細{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="icon-img icon-img-lg"> {{ variety.name }}</h1>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('varieties.list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-list"></i> 一覧に戻る
+        </a>
+    </div>
+</div>
+
+{% set prev_item = {'url': url_for('varieties.detail', variety_id=prev_variety.id),
+                    'button_text': '前の品種',
+                    'label': prev_variety.variety_name ~ '（' ~ prev_variety.crop_name ~ '）'} if prev_variety else None %}
+{% set next_item = {'url': url_for('varieties.detail', variety_id=next_variety.id),
+                    'button_text': '次の品種',
+                    'label': next_variety.variety_name ~ '（' ~ next_variety.crop_name ~ '）'} if next_variety else None %}
+{% set nav_label = '品種ナビゲーション' %}
+{% include '_detail_nav.html' %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3 card-photo-detail card-bg-crop {{ '' if variety.effective_image_path else 'card-no-image' }}">
+            {% if variety.effective_image_path %}
+            <div class="card-photo-detail-img-wrapper">
+                <img src="{{ url_for('static', filename='uploads/' + variety.effective_image_path) }}"
+                     class="card-photo-img lightbox-target" alt="{{ variety.name }}">
+            </div>
+            {% endif %}
+            <div class="card-photo-detail-overlay">
+                <h4 class="card-photo-detail-title">{{ crop_label(variety.crop_name, variety.name, variety.effective_icon_path, variety.effective_image_color) }}</h4>
+                <div class="detail-fields">
+                    <div class="detail-field">
+                        <span class="detail-field-label">親作物:</span>
+                        <span class="detail-field-value">
+                            <a href="{{ url_for('crops.detail', crop_id=variety.crop_id) }}" class="text-decoration-none">
+                                {{ variety.crop_name }}
+                            </a>
+                        </span>
+                    </div>
+                    <div class="detail-field">
+                        <span class="detail-field-label">種類:</span>
+                        <span class="detail-field-value"><span class="badge bg-success">{{ variety.crop_type }}</span></span>
+                    </div>
+                    {% if not variety.icon_path and not variety.image_color and not variety.image_path %}
+                    <div class="detail-field">
+                        <span class="detail-field-label text-muted">外観:</span>
+                        <span class="detail-field-value text-muted">親作物から継承</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if variety.notes %}
+                <div class="detail-notes">{{ variety.notes }}</div>
+                {% endif %}
+                <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
+                    <a href="{{ url_for('plantings.plant_new', crop_id=variety.crop_id, variety_id=variety.id) }}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> この品種を植え付ける
+                    </a>
+                </div>
+                <div class="detail-timestamps">
+                    登録日時: {{ variety.created_at }} / 更新日時: {{ variety.updated_at }}
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group-action">
+            <a href="{{ url_for('varieties.edit', variety_id=variety.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 品種を編集
+            </a>
+            <form method="POST" action="{{ url_for('varieties.delete', variety_id=variety.id) }}" class="d-inline" onsubmit="return confirm('品種「{{ variety.name }}」を削除してよろしいですか？\n（この品種を使っている植え付けは、作物のみの紐付けに戻ります）');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> 品種を削除
+                </button>
+            </form>
+        </div>
+
+        {% set supplement_entity_type = 'variety' %}
+        {% set supplement_entity_id = variety.id %}
+        {% include '_supplements_section.html' %}
+    </div>
+
+    <div class="col-md-4">
+        {% set crop_info = {
+            'crop_id': variety.crop_id,
+            'crop_name': variety.crop_name,
+            'variety': None,
+            'icon_path': variety.crop_icon_path,
+            'image_color': variety.crop_image_color or '#4CAF50',
+            'crop_type': variety.crop_type,
+            'crop_notes': variety.crop_notes,
+            'crop_image_path': variety.crop_image_path
+        } %}
+        {% include '_crop_info_card.html' %}
+
+        {% set related_plantings_title = 'この品種の栽培中' %}
+        {% include '_related_plantings_card.html' %}
+
+        {% include '_related_harvests_card.html' %}
+    </div>
+</div>
+{% endblock %}

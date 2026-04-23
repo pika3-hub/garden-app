@@ -1,5 +1,5 @@
 {# 作物情報カード（植え付け詳細・収穫詳細サイドバー用） #}
-{# 必要な変数: crop_info (dict with crop_id, crop_name, variety, icon_path, image_color, planting_season, harvest_season, characteristics, crop_notes, crop_type, crop_image_path) #}
+{# 必要な変数: crop_info (dict with crop_id, crop_name, variety, variety_id, icon_path, image_color, crop_notes, crop_type, crop_image_path) #}
 {% from '_macros.html' import crop_label %}
 {% if crop_info %}
 <div class="card mb-3">
@@ -11,6 +11,13 @@
             <a href="{{ url_for('crops.detail', crop_id=crop_info.crop_id) }}" class="fw-bold text-decoration-none">
                 {{ crop_label(crop_info.crop_name, crop_info.variety, crop_info.icon_path, crop_info.image_color) }}
             </a>
+            {% if crop_info.variety_id %}
+            <div class="small mt-1">
+                <a href="{{ url_for('varieties.detail', variety_id=crop_info.variety_id) }}" class="text-muted">
+                    <i class="bi bi-arrow-right"></i> 品種詳細へ
+                </a>
+            </div>
+            {% endif %}
         </div>
         {% if crop_info.crop_image_path %}
         <a href="{{ url_for('crops.detail', crop_id=crop_info.crop_id) }}">
@@ -24,24 +31,6 @@
         <div class="mb-2">
             <small class="text-muted d-block">種類</small>
             <span class="badge bg-success">{{ crop_info.crop_type }}</span>
-        </div>
-        {% endif %}
-        {% if crop_info.planting_season %}
-        <div class="mb-2">
-            <small class="text-muted d-block">植え付け時期</small>
-            <span>{{ crop_info.planting_season }}</span>
-        </div>
-        {% endif %}
-        {% if crop_info.harvest_season %}
-        <div class="mb-2">
-            <small class="text-muted d-block">収穫時期</small>
-            <span>{{ crop_info.harvest_season }}</span>
-        </div>
-        {% endif %}
-        {% if crop_info.characteristics %}
-        <div class="mb-2">
-            <small class="text-muted d-block">特性</small>
-            <div class="small" style="white-space: pre-wrap;">{{ crop_info.characteristics }}</div>
         </div>
         {% endif %}
         {% if crop_info.crop_notes %}

@@ -116,9 +116,9 @@ class DiaryEntry:
         """日記に関連するデータを取得"""
         db = get_db()
 
-        # 関連する作物を取得
+        # 関連する作物を取得（作物レベルの関連のため variety は NULL）
         crops = db.execute(
-            '''SELECT dr.crop_id, c.name as crop_name, c.crop_type, c.variety,
+            '''SELECT dr.crop_id, c.name as crop_name, c.crop_type, NULL as variety,
                       c.icon_path, c.image_color, c.image_path as crop_image_path
                FROM diary_relations dr
                JOIN crops c ON dr.crop_id = c.id
@@ -138,15 +138,15 @@ class DiaryEntry:
 
         # 関連する植え付け場所を取得
         location_crops = db.execute(
-            '''SELECT lc.id as id, lc.id as location_crop_id, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name,
+            '''SELECT lc.id as id, lc.id as location_crop_id, cv.crop_name, cv.variety,
+                      cv.icon_path, cv.image_color, l.name as location_name,
                       lc.location_id, lc.planted_date, lc.status,
                       (SELECT pr.image_path FROM planting_records pr
                        WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
                        ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
                FROM diary_relations dr
                JOIN plantings lc ON dr.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
+               JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
                JOIN locations l ON lc.location_id = l.id
                WHERE dr.diary_id = ? AND dr.relation_type = 'location_crop' ''',
             (diary_id,)
@@ -156,12 +156,12 @@ class DiaryEntry:
         harvests = db.execute(
             '''SELECT h.id as id, h.id as harvest_id, h.harvest_date, h.quantity, h.unit,
                       h.image_path,
-                      c.name as crop_name, c.variety, c.icon_path, c.image_color,
+                      cv.crop_name, cv.variety, cv.icon_path, cv.image_color,
                       l.name as location_name
                FROM diary_relations dr
                JOIN harvests h ON dr.harvest_id = h.id
                JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
+               JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
                JOIN locations l ON lc.location_id = l.id
                WHERE dr.diary_id = ? AND dr.relation_type = 'harvest' ''',
             (diary_id,)

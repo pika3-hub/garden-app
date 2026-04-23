@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.planting_record import PlantingRecord
 from app.models.planting import Planting
 from app.models.crop import Crop
+from app.models.variety import Variety
 from app.models.location import Location
 from app.models.task import Task
 from app.models.harvest import Harvest
@@ -335,6 +336,7 @@ def place(location_crop_id):
 def plant_new():
     """植え付け登録フォーム"""
     crops = Crop.get_all()
+    varieties = Variety.get_all()
     locations = Location.get_all()
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
     crop_filter_type_icons = {}
@@ -348,18 +350,22 @@ def plant_new():
     today = date.today().isoformat()
     preselected_location_id = request.args.get('location_id', type=int)
     preselected_crop_id = request.args.get('crop_id', type=int)
+    preselected_variety_id = request.args.get('variety_id', type=int)
     preselected_crop = next((c for c in crops if c['id'] == preselected_crop_id), None) if preselected_crop_id else None
     preselected_location = next((l for l in locations if l['id'] == preselected_location_id), None) if preselected_location_id else None
+    preselected_variety = next((v for v in varieties if v['id'] == preselected_variety_id), None) if preselected_variety_id else None
     return render_template('plantings/planting_form.html',
                            planting=None,
                            crops=crops,
+                           varieties=varieties,
                            locations=locations,
                            crop_filter_types=crop_filter_types,
                            crop_filter_type_icons=crop_filter_type_icons,
                            location_filter_types=location_filter_types,
                            today=today,
                            preselected_location=preselected_location,
-                           preselected_crop=preselected_crop)
+                           preselected_crop=preselected_crop,
+                           preselected_variety=preselected_variety)
 
 
 @bp.route('/plant/create', methods=['POST'])
@@ -367,14 +373,23 @@ def plant_create():
     """植え付け登録処理"""
     location_id = request.form.get('location_id')
     crop_id = request.form.get('crop_id')
+    variety_id = request.form.get('variety_id', type=int) or None
 
     if not location_id or not crop_id:
         flash('場所と作物は必須です', 'danger')
         return redirect(url_for('plantings.plant_new'))
 
+    # variety_id が指定されていれば、その作物に紐づく品種であることを確認
+    if variety_id:
+        variety = Variety.get_by_id(variety_id)
+        if not variety or variety['crop_id'] != int(crop_id):
+            flash('選択された品種は指定の作物に属していません', 'danger')
+            return redirect(url_for('plantings.plant_new'))
+
     data = {
         'location_id': location_id,
         'crop_id': crop_id,
+        'variety_id': variety_id,
         'planted_date': request.form.get('planted_date') or None,
         'quantity': request.form.get('quantity') or None,
         'notes': request.form.get('notes') or None,
@@ -398,6 +413,7 @@ def planting_edit(location_crop_id):
         return redirect(url_for('plantings.index'))
 
     crops = Crop.get_all()
+    varieties = Variety.get_all()
     locations = Location.get_all()
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
     crop_filter_type_icons = {}
@@ -410,17 +426,20 @@ def planting_edit(location_crop_id):
     location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
     earliest_child_date = Planting.get_earliest_child_date(location_crop_id)
     preselected_crop = next((c for c in crops if c['id'] == planting['crop_id']), None)
+    preselected_variety = next((v for v in varieties if v['id'] == planting.get('variety_id')), None) if planting.get('variety_id') else None
     preselected_location = next((l for l in locations if l['id'] == planting['location_id']), None)
 
     return render_template('plantings/planting_form.html',
                            planting=planting,
                            crops=crops,
+                           varieties=varieties,
                            locations=locations,
                            crop_filter_types=crop_filter_types,
                            crop_filter_type_icons=crop_filter_type_icons,
                            location_filter_types=location_filter_types,
                            earliest_child_date=earliest_child_date,
                            preselected_crop=preselected_crop,
+                           preselected_variety=preselected_variety,
                            preselected_location=preselected_location,
                            today=None)
 
@@ -435,10 +454,17 @@ def planting_update(location_crop_id):
 
     location_id = request.form.get('location_id')
     crop_id = request.form.get('crop_id')
+    variety_id = request.form.get('variety_id', type=int) or None
 
     if not location_id or not crop_id:
         flash('場所と作物は必須です', 'danger')
         return redirect(url_for('plantings.planting_edit', location_crop_id=location_crop_id))
+
+    if variety_id:
+        variety = Variety.get_by_id(variety_id)
+        if not variety or variety['crop_id'] != int(crop_id):
+            flash('選択された品種は指定の作物に属していません', 'danger')
+            return redirect(url_for('plantings.planting_edit', location_crop_id=location_crop_id))
 
     planted_date = request.form.get('planted_date') or None
     if planted_date:
@@ -450,6 +476,7 @@ def planting_update(location_crop_id):
     data = {
         'location_id': location_id,
         'crop_id': crop_id,
+        'variety_id': variety_id,
         'planted_date': planted_date,
         'quantity': request.form.get('quantity') or None,
         'notes': request.form.get('notes') or None,
