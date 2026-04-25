@@ -193,7 +193,7 @@ class Task:
                        ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
                FROM task_relations tr
                JOIN plantings lc ON tr.location_crop_id = lc.id
-               JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
+               JOIN crop_variety_view cv ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
                JOIN locations l ON lc.location_id = l.id
                WHERE tr.task_id = ? AND tr.relation_type = 'location_crop' ''',
             (task_id,)

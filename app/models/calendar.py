@@ -4,7 +4,8 @@ from datetime import date
 
 
 _CV_JOIN = (
-    'JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id '
+    'JOIN crop_variety_view cv ON '
+    'IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) '
     'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
 )
 

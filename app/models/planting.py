@@ -6,9 +6,11 @@ from app.utils.timezone import get_jst_now
 
 
 # 作物×品種ビューを plantings に結合するJOIN句（変動しないので定数化）
+# plantings は (crop_id, variety_id) = (X, NULL) または (NULL, Y) の排他形式のため、両側IFNULL化でNULL同士もマッチ
 # 使用時は SELECT 側で必要カラムを明示する（cv.* は使わない — SQLite Row 重複カラム対策）
 _CV_JOIN = (
-    'JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id '
+    'JOIN crop_variety_view cv ON '
+    'IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) '
     'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
 )
 
@@ -56,24 +58,39 @@ class Planting:
 
     @staticmethod
     def get_by_crop(crop_id, status='active', variety_id=None):
-        """作物（または作物+品種）に紐付く植え付けを取得"""
-        db = get_db()
-        query = f'''
-            SELECT lc.*, l.name as location_name, l.location_type,
-                   cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.crop_type,
-                   (SELECT pr.image_path FROM planting_records pr
-                    WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
-                    ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
-            FROM plantings lc
-            JOIN locations l ON lc.location_id = l.id
-            {_CV_JOIN}
-            WHERE lc.crop_id = ?
-        '''
-        params = [crop_id]
+        """作物に紐付く植え付けを取得（品種経由の植え付けも含む）
 
+        - `variety_id` 指定時: その品種の植え付けのみ（`lc.variety_id = ?`）
+        - `variety_id` 未指定時: 作物Xの植え付け（品種なし）+ 作物X配下の全品種の植え付け
+          → `cv.effective_crop_id = ?` で一括取得
+        """
+        db = get_db()
         if variety_id is not None:
-            query += ' AND lc.variety_id = ?'
-            params.append(variety_id)
+            query = f'''
+                SELECT lc.*, l.name as location_name, l.location_type,
+                       cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.crop_type,
+                       (SELECT pr.image_path FROM planting_records pr
+                        WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                        ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
+                FROM plantings lc
+                JOIN locations l ON lc.location_id = l.id
+                {_CV_JOIN}
+                WHERE lc.variety_id = ?
+            '''
+            params = [variety_id]
+        else:
+            query = f'''
+                SELECT lc.*, l.name as location_name, l.location_type,
+                       cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.crop_type,
+                       (SELECT pr.image_path FROM planting_records pr
+                        WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                        ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
+                FROM plantings lc
+                JOIN locations l ON lc.location_id = l.id
+                {_CV_JOIN}
+                WHERE cv.effective_crop_id = ?
+            '''
+            params = [crop_id]
 
         if status:
             query += ' AND lc.status = ?'
@@ -117,6 +134,7 @@ class Planting:
                        cv.icon_path, cv.image_color,
                        cv.notes as crop_notes,
                        cv.image_path as crop_image_path,
+                       cv.effective_crop_id,
                        l.name as location_name, l.location_type,
                        l.area_size, l.sun_exposure,
                        l.notes as location_notes, l.image_path as location_image_path,
@@ -142,16 +160,32 @@ class Planting:
         return None
 
     @staticmethod
+    def _normalize_crop_variety(data):
+        """crop_id と variety_id の排他性を保証して (crop_id, variety_id) を返す
+
+        - variety_id が指定されていれば crop_id=None に強制（CHECK 制約対応）
+        - 両方 NULL は ValueError
+        """
+        crop_id = data.get('crop_id') or None
+        variety_id = data.get('variety_id') or None
+        if variety_id:
+            crop_id = None
+        if not crop_id and not variety_id:
+            raise ValueError('crop_id または variety_id のいずれかを指定してください')
+        return crop_id, variety_id
+
+    @staticmethod
     def plant(data):
         """作物を場所に植え付け"""
         db = get_db()
         now = get_jst_now()
+        crop_id, variety_id = Planting._normalize_crop_variety(data)
         cursor = db.execute(
             '''INSERT INTO plantings
                (location_id, crop_id, variety_id, planted_date, quantity, notes,
                 status, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)''',
-            (data['location_id'], data['crop_id'], data.get('variety_id'),
+            (data['location_id'], crop_id, variety_id,
              data.get('planted_date'), data.get('quantity'),
              data.get('notes'), now, now)
         )
@@ -217,12 +251,15 @@ class Planting:
 
     @staticmethod
     def get_active_crop_ids():
-        """栽培中の作物IDセットを取得"""
+        """栽培中の作物IDセットを取得（品種経由の植え付けは親作物IDを解決）"""
         db = get_db()
         rows = db.execute(
-            "SELECT DISTINCT crop_id FROM plantings WHERE status = 'active'"
+            f'''SELECT DISTINCT cv.effective_crop_id AS crop_id
+                FROM plantings lc
+                {_CV_JOIN}
+                WHERE lc.status = 'active' '''
         ).fetchall()
-        return set(row['crop_id'] for row in rows)
+        return set(row['crop_id'] for row in rows if row['crop_id'] is not None)
 
     @staticmethod
     def get_active_variety_ids():
@@ -245,14 +282,14 @@ class Planting:
 
     @staticmethod
     def get_active_crop_types_by_location():
-        """場所ごとの栽培中作物の種類セットを取得"""
+        """場所ごとの栽培中作物の種類セットを取得（品種経由も解決）"""
         db = get_db()
         rows = db.execute(
-            '''SELECT lc.location_id, c.crop_type
-               FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
-               WHERE lc.status = 'active' AND c.crop_type IS NOT NULL AND c.crop_type != ''
-               GROUP BY lc.location_id, c.crop_type'''
+            f'''SELECT lc.location_id, cv.crop_type
+                FROM plantings lc
+                {_CV_JOIN}
+                WHERE lc.status = 'active' AND cv.crop_type IS NOT NULL AND cv.crop_type != ''
+                GROUP BY lc.location_id, cv.crop_type'''
         ).fetchall()
         result = {}
         for row in rows:
@@ -288,7 +325,6 @@ class Planting:
         result = db.execute(
             '''SELECT COUNT(*) as count
                FROM plantings lc
-               JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id
                WHERE lc.status = 'active' '''
         ).fetchone()
@@ -445,6 +481,7 @@ class Planting:
         rows = db.execute(
             f'''SELECT lc.*, cv.crop_name, cv.crop_type,
                        cv.icon_path, cv.image_color, cv.variety,
+                       cv.effective_crop_id,
                        lc.position_x, lc.position_y
                 FROM plantings lc
                 {_CV_JOIN}
@@ -458,12 +495,13 @@ class Planting:
     def update_all(location_crop_id, data):
         """植え付けデータを全フィールド更新（location_id, crop_id, variety_id含む）"""
         db = get_db()
+        crop_id, variety_id = Planting._normalize_crop_variety(data)
         db.execute(
             '''UPDATE plantings
                SET location_id = ?, crop_id = ?, variety_id = ?, planted_date = ?,
                    quantity = ?, notes = ?, updated_at = ?
                WHERE id = ?''',
-            (data['location_id'], data['crop_id'], data.get('variety_id'),
+            (data['location_id'], crop_id, variety_id,
              data.get('planted_date'), data.get('quantity'),
              data.get('notes'), get_jst_now(), location_crop_id)
         )
@@ -569,7 +607,7 @@ class Planting:
         """指定日付の見取り図配置データを返す（version 2.0形式）"""
         db = get_db()
         rows = db.execute(
-            f'''SELECT lc.id as location_crop_id, lc.crop_id, lc.status,
+            f'''SELECT lc.id as location_crop_id, cv.effective_crop_id, lc.status,
                        lc.canvas_snapshot,
                        cv.crop_name, cv.variety, cv.icon_path, cv.image_color
                 FROM plantings lc
@@ -588,7 +626,7 @@ class Planting:
             r = dict(row)
             lc_id = r['location_crop_id']
             base = {
-                'cropId': r['crop_id'],
+                'cropId': r['effective_crop_id'],
                 'iconPath': r['icon_path'],
                 'imageColor': r['image_color'],
                 'cropName': r['crop_name'],

@@ -5,7 +5,8 @@ from app.utils.timezone import get_jst_now
 
 
 _CV_JOIN = (
-    'JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id '
+    'JOIN crop_variety_view cv ON '
+    'IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) '
     'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
 )
 
@@ -31,7 +32,8 @@ class PlantingRecord:
         db = get_db()
         records = db.execute(
             f'''SELECT gr.*, cv.crop_name, cv.variety, l.name as location_name,
-                       lc.location_id, lc.crop_id, lc.variety_id, lc.planted_date
+                       lc.location_id, lc.crop_id, lc.variety_id, lc.planted_date,
+                       cv.effective_crop_id
                 FROM planting_records gr
                 JOIN plantings lc ON gr.location_crop_id = lc.id
                 {_CV_JOIN}
@@ -56,7 +58,8 @@ class PlantingRecord:
         records = db.execute(
             f'''SELECT gr.*, cv.crop_name, cv.variety,
                        cv.icon_path, cv.image_color, l.name as location_name,
-                       lc.location_id, lc.crop_id, lc.variety_id, lc.planted_date
+                       lc.location_id, lc.crop_id, lc.variety_id, lc.planted_date,
+                       cv.effective_crop_id
                 FROM planting_records gr
                 JOIN plantings lc ON gr.location_crop_id = lc.id
                 {_CV_JOIN}
@@ -79,6 +82,7 @@ class PlantingRecord:
                        cv.icon_path, cv.image_color, cv.crop_type,
                        cv.notes as crop_notes,
                        cv.image_path as crop_image_path,
+                       cv.effective_crop_id,
                        l.name as location_name, lc.location_id,
                        l.location_type, l.area_size, l.sun_exposure,
                        l.notes as location_notes,

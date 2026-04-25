@@ -145,32 +145,60 @@ uv run python run.py
 |---------|--------|------|
 | `crops` | `name`, `crop_type`, `notes`, `icon_path`, `image_color`, `image_path` | 作物マスタ。`notes` は Markdown 統合形式（植え付け時期・収穫時期・特性・メモ）|
 | `varieties` | `crop_id`, `name`, `notes`, `icon_path`, `image_color`, `image_path` | 品種マスタ。外観3カラムは **nullable** で、未設定時は親作物から継承 |
-| `plantings` | `crop_id`, `variety_id` | `variety_id` は **nullable**（品種を指定せず作物単位で植えた場合 NULL）|
+| `plantings` | `crop_id`, `variety_id` | **排他関係**: 作物として植えた場合は `crop_id` のみ、品種として植えた場合は `variety_id` のみがセットされ、両方同時にセットされることはない（CHECK制約で強制） |
+
+### plantings の排他ルール（重要）
+
+- 「作物として植えた」→ `crop_id=X, variety_id=NULL`
+- 「品種として植えた」→ `crop_id=NULL, variety_id=Y`（作物情報は品種の親を辿って解決）
+- この排他性は DB 側の `CHECK` 制約 + `Planting._normalize_crop_variety()` で二重に保証
+- 理由: 二重管理を排除し、「品種の親作物を変更しても植え付け側の作物ID（古いキャッシュ）がズレない」を保証する
+
+### 品種削除時の挙動（重要）
+
+`varieties` に対する `BEFORE DELETE` トリガー `trg_promote_variety_plantings_before_delete` により、品種単独削除時には関連する植え付けが「親作物の植え付け（品種なし）」に**昇格**する。
+
+```sql
+CREATE TRIGGER trg_promote_variety_plantings_before_delete
+BEFORE DELETE ON varieties
+FOR EACH ROW
+BEGIN
+    UPDATE plantings
+       SET crop_id = OLD.crop_id, variety_id = NULL
+     WHERE variety_id = OLD.id;
+END;
+```
+
+- 品種単独削除 → 植え付けは親作物のものとして残る
+- 作物削除（`plantings.crop_id ON DELETE CASCADE`、`varieties.crop_id ON DELETE CASCADE`、`plantings.variety_id ON DELETE CASCADE`）→ 変化した植え付けも含め連鎖削除
 
 ### VIEW `crop_variety_view`
 
-植え付け・収穫・カレンダーなど「作物と品種を合わせて表示したい」クエリ向けに、次の VIEW を提供する。
+植え付け・収穫・カレンダーなど「作物と品種を合わせて表示したい」クエリ向けに、次の VIEW を提供する。plantings の排他形式 `(crop_id, variety_id) = (X, NULL)` または `(NULL, Y)` に対応するよう **品種行は `crop_id=NULL`**、**作物行は `variety_id=NULL`** を返す。
 
 ```sql
 CREATE VIEW crop_variety_view AS
--- 品種あり
-SELECT c.id AS crop_id, v.id AS variety_id,
+-- 品種行（plantings の variety-only 行とマッチ）
+SELECT NULL AS crop_id, v.id AS variety_id,
+       c.id AS effective_crop_id,            -- 常に作物ID（集計用）
        c.name AS crop_name, c.crop_type, v.name AS variety,
        COALESCE(v.notes, c.notes)             AS notes,
        COALESCE(v.icon_path, c.icon_path)     AS icon_path,
        COALESCE(v.image_color, c.image_color) AS image_color,
        COALESCE(v.image_path, c.image_path)   AS image_path
-FROM crops c JOIN varieties v ON v.crop_id = c.id
+FROM varieties v JOIN crops c ON v.crop_id = c.id
 UNION ALL
--- 品種なし（variety_id が NULL の行を必ず返す）
+-- 作物行（plantings の crop-only 行とマッチ）
 SELECT c.id AS crop_id, NULL AS variety_id,
+       c.id AS effective_crop_id,
        c.name AS crop_name, c.crop_type, NULL AS variety,
        c.notes, c.icon_path, c.image_color, c.image_path
 FROM crops c;
 ```
 
-- **UNION ALL の理由**: `LEFT JOIN` だと「品種を持つ作物」の variety_id=NULL 行が返らず、`variety_id IS NULL` な植え付けと JOIN できない（IFNULL マッチ失敗）
-- COALESCE により品種の外観が未設定なら親作物の値にフォールバック（継承ロジックはVIEW内で完結）
+- **`effective_crop_id`**: 常に作物ID（品種行なら親作物ID、作物行なら自身）。「作物Xの植え付け一覧（品種経由も含む）」は `WHERE cv.effective_crop_id = ?` で書く。品種の親作物変更が自動反映されるのはこの列のおかげ。
+- **UNION ALL の理由**: 排他形式の plantings と NULL 同士でマッチさせるため、両辺を IFNULL 化した JOIN が必要。VIEW 側も正しい NULL パターンで列挙する必要がある。
+- **COALESCE** により品種の外観が未設定なら親作物の値にフォールバック（継承ロジックはVIEW内で完結）
 
 ### JOIN パターン（`_CV_JOIN` 定数）
 
@@ -178,13 +206,28 @@ FROM crops c;
 
 ```python
 _CV_JOIN = (
-    'JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id '
+    'JOIN crop_variety_view cv ON '
+    'IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) '
     'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
 )
 ```
 
-- `IFNULL(..., -1)` で NULL を仮値に置換してマッチさせる（SQLite は `NULL = NULL` が false のため）
-- `cv.*` を使ってはならない（SQLite Row の重複カラム名問題。詳細は `app/models/CLAUDE.md`）。必要カラムは `cv.crop_name, cv.variety, cv.icon_path, cv.image_color` のように明示する
+- **両側 IFNULL 必須**: plantings 側は `crop_id` または `variety_id` の片側が NULL のため、VIEW 側の NULL と等価比較するには両辺を `IFNULL(..., -1)` で揃える必要がある（SQLite は `NULL = NULL` が false のため）
+- `cv.*` を使ってはならない（SQLite Row の重複カラム名問題。詳細は `app/models/CLAUDE.md`）。必要カラムは `cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.effective_crop_id` のように明示する
+
+### 「作物Xの植え付け/収穫」を取得するクエリ
+
+品種経由の植え付けも含めて取得するには `cv.effective_crop_id` で絞り込む:
+
+```python
+# Good（品種経由も含む）
+f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
+
+# Bad（品種経由が漏れる）
+'SELECT ... FROM plantings lc WHERE lc.crop_id = ?'
+```
+
+既に `Planting.get_by_crop()` / `Harvest.get_by_crop()` / `Harvest.search()` / `DiaryEntry.get_by_crop()` は `effective_crop_id` 経由に移行済み。
 
 ### 継承ロジックの実装箇所
 
@@ -200,6 +243,12 @@ _CV_JOIN = (
 - **品種固有の情報**（品種ごとの補足） → `entity_type='variety', entity_id=variety.id`
 
 旧データ移行時は「旧 crops レコードに variety があったか否か」で自動振り分けされている。
+
+---
+
+## DBを使った検証作業
+
+`instance/garden.db` はユーザーの**実データ**である。マイグレーション・スキーマ変更・SQLの動作確認など、DBに対して検証を行う前に必ず [`docs/db-validation-safety.md`](docs/db-validation-safety.md) を参照すること。バックアップ手順、`WHERE`句必須ルール、テーブル再作成時の注意点などを記載している（過去のデータ消失事故を踏まえたガイドライン）。
 
 ---
 

@@ -80,40 +80,42 @@ with app.app_context():
         location_ids.append(location_id)
         print(f"[OK] 場所「{data['name']}」を登録しました (ID: {location_id})")
 
-    # 作物を植え付け（品種指定あり/なし 混在）
+    # 作物を植え付け（crop_id または variety_id のどちらか一方のみ指定）
     print("\n=== 作物を植え付け中 ===")
     planting_data = [
         {
+            # 品種を植え付ける場合は variety_id のみ（crop_id は指定しない）
             'location_id': location_ids[0],
-            'crop_id': crop_ids['トマト'],
             'variety_id': variety_ids['アイコ'],
             'planted_date': '2024-05-15',
             'quantity': 5,
-            'notes': '苗から植え付け'
+            'notes': '苗から植え付け',
+            '_label': 'アイコ（トマト）',
         },
         {
             'location_id': location_ids[0],
-            'crop_id': crop_ids['なす'],
             'variety_id': variety_ids['千両二号'],
             'planted_date': '2024-05-20',
             'quantity': 3,
-            'notes': '苗から植え付け'
+            'notes': '苗から植え付け',
+            '_label': '千両二号（なす）',
         },
         {
+            # 品種を指定しない場合は crop_id のみ
             'location_id': location_ids[1],
             'crop_id': crop_ids['きゅうり'],
-            'variety_id': None,  # 品種未指定も可能
             'planted_date': '2024-05-25',
             'quantity': 2,
-            'notes': 'プランター栽培（品種未指定）'
+            'notes': 'プランター栽培（品種未指定）',
+            '_label': 'きゅうり',
         }
     ]
 
     for data in planting_data:
+        label = data.pop('_label')
         lc_id = Planting.plant(data)
-        crop = Crop.get_by_id(data['crop_id'])
         location = Location.get_by_id(data['location_id'])
-        print(f"[OK] 「{location['name']}」に「{crop['name']}」を植え付けました")
+        print(f"[OK] 「{location['name']}」に「{label}」を植え付けました")
 
     # 統計情報を表示
     print("\n=== 統計情報 ===")

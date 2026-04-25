@@ -115,7 +115,7 @@ def create_app(config_name='default'):
                    cv.crop_name, cv.variety, cv.icon_path, cv.image_color
             FROM harvests h
             JOIN plantings lc ON h.location_crop_id = lc.id
-            JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id
+            JOIN crop_variety_view cv ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1)
                                       AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
             WHERE h.image_path IS NOT NULL AND h.image_path != ''
             UNION ALL
@@ -123,7 +123,7 @@ def create_app(config_name='default'):
                    cv.crop_name, cv.variety, cv.icon_path, cv.image_color
             FROM planting_records pr
             JOIN plantings lc ON pr.location_crop_id = lc.id
-            JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id
+            JOIN crop_variety_view cv ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1)
                                       AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
             WHERE pr.image_path IS NOT NULL AND pr.image_path != ''
             ORDER BY sort_date DESC

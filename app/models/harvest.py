@@ -4,7 +4,8 @@ from app.utils.timezone import get_jst_now
 
 
 _CV_JOIN = (
-    'JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id '
+    'JOIN crop_variety_view cv ON '
+    'IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) '
     'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
 )
 
@@ -54,6 +55,7 @@ class Harvest:
                        cv.icon_path, cv.image_color, cv.crop_type,
                        cv.notes as crop_notes,
                        cv.image_path as crop_image_path,
+                       cv.effective_crop_id,
                        l.name as location_name, l.location_type,
                        l.area_size, l.sun_exposure,
                        l.notes as location_notes, l.image_path as location_image_path,
@@ -129,7 +131,7 @@ class Harvest:
 
     @staticmethod
     def get_by_crop(crop_id, limit=None):
-        """作物の全収穫記録を取得"""
+        """作物の全収穫記録を取得（品種経由の植え付けの収穫も含む）"""
         db = get_db()
         query = f'''SELECT h.*, cv.crop_name, cv.variety,
                           cv.icon_path, cv.image_color, l.name as location_name,
@@ -138,7 +140,7 @@ class Harvest:
                    JOIN plantings lc ON h.location_crop_id = lc.id
                    {_CV_JOIN}
                    JOIN locations l ON lc.location_id = l.id
-                   WHERE lc.crop_id = ?
+                   WHERE cv.effective_crop_id = ?
                    ORDER BY h.harvest_date DESC'''
         params = [crop_id]
         if limit:
@@ -271,7 +273,6 @@ class Harvest:
         result = db.execute(
             '''SELECT COUNT(*) as count FROM harvests h
                JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
                JOIN locations l ON lc.location_id = l.id'''
         ).fetchone()
         return result['count'] if result else 0
@@ -335,7 +336,7 @@ class Harvest:
             params.append(location_id)
 
         if crop_id:
-            query += ' AND lc.crop_id = ?'
+            query += ' AND cv.effective_crop_id = ?'
             params.append(crop_id)
 
         query += ' ORDER BY h.harvest_date DESC, h.created_at DESC'

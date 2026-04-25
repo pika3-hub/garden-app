@@ -16,6 +16,16 @@ from datetime import date
 bp = Blueprint('plantings', __name__, url_prefix='/plantings')
 
 
+def _apply_variety_inheritance(variety):
+    """品種のアイコン/カラー/画像が未設定なら親作物の値を継承した表示用フィールドを付加"""
+    if variety is None:
+        return None
+    variety['effective_icon_path'] = variety.get('icon_path') or variety.get('crop_icon_path')
+    variety['effective_image_color'] = variety.get('image_color') or variety.get('crop_image_color') or '#4CAF50'
+    variety['effective_image_path'] = variety.get('image_path') or variety.get('crop_image_path')
+    return variety
+
+
 @bp.route('/')
 def index():
     """栽培記録一覧（タブフィルター付き）"""
@@ -336,7 +346,7 @@ def place(location_crop_id):
 def plant_new():
     """植え付け登録フォーム"""
     crops = Crop.get_all()
-    varieties = Variety.get_all()
+    varieties = [_apply_variety_inheritance(v) for v in Variety.get_all()]
     locations = Location.get_all()
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
     crop_filter_type_icons = {}
@@ -372,19 +382,12 @@ def plant_new():
 def plant_create():
     """植え付け登録処理"""
     location_id = request.form.get('location_id')
-    crop_id = request.form.get('crop_id')
+    crop_id = request.form.get('crop_id', type=int) or None
     variety_id = request.form.get('variety_id', type=int) or None
 
-    if not location_id or not crop_id:
-        flash('場所と作物は必須です', 'danger')
+    if not location_id or (not crop_id and not variety_id):
+        flash('場所と作物（または品種）は必須です', 'danger')
         return redirect(url_for('plantings.plant_new'))
-
-    # variety_id が指定されていれば、その作物に紐づく品種であることを確認
-    if variety_id:
-        variety = Variety.get_by_id(variety_id)
-        if not variety or variety['crop_id'] != int(crop_id):
-            flash('選択された品種は指定の作物に属していません', 'danger')
-            return redirect(url_for('plantings.plant_new'))
 
     data = {
         'location_id': location_id,
@@ -413,7 +416,7 @@ def planting_edit(location_crop_id):
         return redirect(url_for('plantings.index'))
 
     crops = Crop.get_all()
-    varieties = Variety.get_all()
+    varieties = [_apply_variety_inheritance(v) for v in Variety.get_all()]
     locations = Location.get_all()
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
     crop_filter_type_icons = {}
@@ -425,7 +428,7 @@ def planting_edit(location_crop_id):
                 icons.append({'icon_path': icon, 'image_color': c['image_color'] or '#4CAF50'})
     location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
     earliest_child_date = Planting.get_earliest_child_date(location_crop_id)
-    preselected_crop = next((c for c in crops if c['id'] == planting['crop_id']), None)
+    preselected_crop = next((c for c in crops if c['id'] == planting.get('crop_id')), None) if planting.get('crop_id') else None
     preselected_variety = next((v for v in varieties if v['id'] == planting.get('variety_id')), None) if planting.get('variety_id') else None
     preselected_location = next((l for l in locations if l['id'] == planting['location_id']), None)
 
@@ -453,18 +456,12 @@ def planting_update(location_crop_id):
         return redirect(url_for('plantings.index'))
 
     location_id = request.form.get('location_id')
-    crop_id = request.form.get('crop_id')
+    crop_id = request.form.get('crop_id', type=int) or None
     variety_id = request.form.get('variety_id', type=int) or None
 
-    if not location_id or not crop_id:
-        flash('場所と作物は必須です', 'danger')
+    if not location_id or (not crop_id and not variety_id):
+        flash('場所と作物（または品種）は必須です', 'danger')
         return redirect(url_for('plantings.planting_edit', location_crop_id=location_crop_id))
-
-    if variety_id:
-        variety = Variety.get_by_id(variety_id)
-        if not variety or variety['crop_id'] != int(crop_id):
-            flash('選択された品種は指定の作物に属していません', 'danger')
-            return redirect(url_for('plantings.planting_edit', location_crop_id=location_crop_id))
 
     planted_date = request.form.get('planted_date') or None
     if planted_date:

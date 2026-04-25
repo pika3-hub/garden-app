@@ -146,7 +146,7 @@ class DiaryEntry:
                        ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
                FROM diary_relations dr
                JOIN plantings lc ON dr.location_crop_id = lc.id
-               JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
+               JOIN crop_variety_view cv ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
                JOIN locations l ON lc.location_id = l.id
                WHERE dr.diary_id = ? AND dr.relation_type = 'location_crop' ''',
             (diary_id,)
@@ -161,7 +161,7 @@ class DiaryEntry:
                FROM diary_relations dr
                JOIN harvests h ON dr.harvest_id = h.id
                JOIN plantings lc ON h.location_crop_id = lc.id
-               JOIN crop_variety_view cv ON cv.crop_id = lc.crop_id AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
+               JOIN crop_variety_view cv ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
                JOIN locations l ON lc.location_id = l.id
                WHERE dr.diary_id = ? AND dr.relation_type = 'harvest' ''',
             (diary_id,)
@@ -256,14 +256,17 @@ class DiaryEntry:
     def get_by_crop(crop_id, limit=None):
         """作物に関連する日記を取得"""
         db = get_db()
+        # 作物に紐づく日記 = 直接 dr.crop_id 紐づけ OR 植え付け経由（作物直接 + 品種経由）
         query = '''SELECT DISTINCT de.*
                FROM diary_entries de
                JOIN diary_relations dr ON de.id = dr.diary_id
                WHERE dr.crop_id = ? OR dr.location_crop_id IN (
-                   SELECT id FROM plantings WHERE crop_id = ?
+                   SELECT lc.id FROM plantings lc
+                   LEFT JOIN varieties v ON v.id = lc.variety_id
+                   WHERE lc.crop_id = ? OR v.crop_id = ?
                )
                ORDER BY de.entry_date DESC'''
-        params = [crop_id, crop_id]
+        params = [crop_id, crop_id, crop_id]
         if limit:
             query += ' LIMIT ?'
             params.append(limit)

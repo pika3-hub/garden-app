@@ -70,9 +70,9 @@
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | INTEGER | 主キー |
-| location_id | INTEGER | 場所ID（FK） |
-| crop_id | INTEGER | 作物ID（FK、必須） |
-| variety_id | INTEGER | 品種ID（FK → varieties、nullable、品種未指定可） |
+| location_id | INTEGER | 場所ID（FK、必須） |
+| crop_id | INTEGER | 作物ID（FK → crops、ON DELETE CASCADE、**nullable**） |
+| variety_id | INTEGER | 品種ID（FK → varieties、ON DELETE CASCADE、**nullable**） |
 | planted_date | DATE | 植え付け日 |
 | end_date | DATE | 栽培終了日（harvested 時に自動セット、任意） |
 | status | TEXT | 状態（active/harvested/removed） |
@@ -80,6 +80,14 @@
 | position_y | DECIMAL | キャンバスY座標 |
 | canvas_snapshot | TEXT | 栽培終了時の見取り図スナップショット（version 2.0 JSON） |
 | created_at | DATETIME | 作成日時 |
+
+**制約（重要）**: `CHECK ((crop_id IS NOT NULL AND variety_id IS NULL) OR (crop_id IS NULL AND variety_id IS NOT NULL))`
+- 作物として植えた場合: `crop_id=X, variety_id=NULL`
+- 品種として植えた場合: `crop_id=NULL, variety_id=Y`（作物情報は品種の親を辿って解決）
+- 両方同時セット・両方NULL は禁止
+- `Planting.plant()` / `update_all()` は `_normalize_crop_variety()` で自動正規化（variety_id 指定時は crop_id を NULL に強制）
+
+**品種削除時の挙動**: `trg_promote_variety_plantings_before_delete` トリガーにより、品種単独削除時は植え付けが「親作物の植え付け（品種なし）」に昇格する（`crop_id = OLD.crop_id, variety_id = NULL` への付け替え）。
 
 #### diary_entries
 | カラム | 型 | 説明 |
@@ -186,15 +194,16 @@
 
 ## crop_variety_view（VIEW）の使い方
 
-plantings 系クエリで作物・品種情報を取得する際は、このビューを JOIN する:
+plantings は排他形式 `(crop_id=X, variety_id=NULL)` または `(crop_id=NULL, variety_id=Y)` で保存されているため、VIEW 側も品種行では `crop_id=NULL`、作物行では `variety_id=NULL` を返す。JOIN は **両側 IFNULL 化** が必須:
 
 ```sql
 JOIN crop_variety_view cv
-  ON cv.crop_id = lc.crop_id
+  ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1)
   AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
 ```
 
-- ビューは「品種あり行」と「品種なし行（variety_id=NULL）」を UNION ALL で返す
+- ビューは「品種行（`crop_id=NULL`, `variety_id=Y`）」と「作物行（`crop_id=X`, `variety_id=NULL`）」を UNION ALL で返す
+- `cv.effective_crop_id` は常に作物ID（品種行なら親作物ID、作物行なら自身）— 「作物Xの植え付け一覧（品種経由含む）」は `WHERE cv.effective_crop_id = ?` で書く
 - `cv.icon_path`, `cv.image_color`, `cv.image_path`, `cv.notes` は `COALESCE(v.*, c.*)` で品種→作物の継承を表現
 - `cv.*` は使わない（SQLite Row 重複カラム名対策） — 必要カラムを明示する
 

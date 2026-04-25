@@ -44,6 +44,7 @@
 
                     <input type="hidden" id="location_id" name="location_id" value="{{ preselected_location.id if preselected_location else '' }}">
                     <input type="hidden" id="crop_id" name="crop_id" value="{{ preselected_crop.id if preselected_crop else '' }}">
+                    <input type="hidden" id="variety_id" name="variety_id" value="{{ preselected_variety.id if preselected_variety else '' }}">
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -65,34 +66,22 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label mb-0">作物 <span class="text-danger">*</span></label>
-                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#cropSelectModal">
-                                    <i class="bi bi-list-check"></i> 作物を選択
+                                <label class="form-label mb-0">作物・品種 <span class="text-danger">*</span></label>
+                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#cropVarietySelectModal">
+                                    <i class="bi bi-list-check"></i> 作物・品種を選択
                                 </button>
                             </div>
                             <div id="selected-crop-display" class="alert alert-info alert-permanent mb-0 py-2">
-                                {% if preselected_crop %}
+                                {% if preselected_variety %}
+                                {{ crop_label(preselected_variety.crop_name, preselected_variety.name, preselected_variety.effective_icon_path, preselected_variety.effective_image_color) }}
+                                {% elif preselected_crop %}
                                 {{ crop_label(preselected_crop.name, None, preselected_crop.icon_path, preselected_crop.image_color) }}
                                 {% else %}
-                                <span class="text-muted">作物を選択してください</span>
+                                <span class="text-muted">作物または品種を選択してください</span>
                                 {% endif %}
                             </div>
-                            <div class="form-text">植え付けた作物を選択します</div>
+                            <div class="form-text">作物または品種のいずれか一つを選択します</div>
                         </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="variety_id" class="form-label">品種 <small class="text-muted">（任意）</small></label>
-                        <select class="form-select" id="variety_id" name="variety_id">
-                            <option value="">（指定なし）</option>
-                            {% for v in varieties %}
-                            <option value="{{ v.id }}" data-crop-id="{{ v.crop_id }}"
-                                {% if preselected_variety and preselected_variety.id == v.id %}selected{% endif %}>
-                                {{ v.name }}（{{ v.crop_name }}）
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <div class="form-text">作物を選択すると、その作物の品種のみに絞り込まれます</div>
                     </div>
 
                     <div class="mb-3">
@@ -185,12 +174,12 @@
     </div>
 </div>
 
-<!-- 作物選択モーダル -->
-<div class="modal fade" id="cropSelectModal" tabindex="-1" aria-labelledby="cropSelectModalLabel" aria-hidden="true">
+<!-- 作物・品種統合選択モーダル -->
+<div class="modal fade" id="cropVarietySelectModal" tabindex="-1" aria-labelledby="cropVarietySelectModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="cropSelectModalLabel"><i class="bi bi-flower1"></i> 作物を選択</h5>
+                <h5 class="modal-title" id="cropVarietySelectModalLabel"><i class="bi bi-flower1"></i> 作物・品種を選択</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -205,14 +194,17 @@
                     {% endfor %}
                 </div>
                 {% endif %}
-                {% if crops %}
+                {% if crops or varieties %}
                 <div class="row">
+                    {# 作物カード #}
                     {% for crop in crops %}
                     <div class="col-6 col-md-4 col-lg-3 mb-3" data-crop-card data-filter-type="{{ crop.crop_type }}">
-                        <div class="card h-100 card-photo card-bg-crop crop-select-card {{ '' if crop.image_path else 'card-no-image' }}"
+                        <div class="card h-100 card-photo card-bg-crop crop-variety-select-card {{ '' if crop.image_path else 'card-no-image' }}"
                              role="button"
+                             data-kind="crop"
                              data-crop-id="{{ crop.id }}"
-                             data-crop-name="{{ crop.name }}"
+                             data-variety-id=""
+                             data-display-name="{{ crop.name }}"
                              data-icon-path="{{ crop.icon_path or '' }}"
                              data-image-color="{{ crop.image_color or '' }}">
                             {% if crop.image_path %}
@@ -227,9 +219,33 @@
                         </div>
                     </div>
                     {% endfor %}
+
+                    {# 品種カード #}
+                    {% for v in varieties %}
+                    <div class="col-6 col-md-4 col-lg-3 mb-3" data-crop-card data-filter-type="{{ v.crop_type }}">
+                        <div class="card h-100 card-photo card-bg-crop crop-variety-select-card {{ '' if v.effective_image_path else 'card-no-image' }}"
+                             role="button"
+                             data-kind="variety"
+                             data-crop-id=""
+                             data-variety-id="{{ v.id }}"
+                             data-display-name="{{ crop_display_name(v.crop_name, v.name) }}"
+                             data-icon-path="{{ v.effective_icon_path or '' }}"
+                             data-image-color="{{ v.effective_image_color or '' }}">
+                            {% if v.effective_image_path %}
+                            <img src="{{ url_for('static', filename='uploads/' + (v.effective_image_path | thumb_path)) }}"
+                                 class="card-photo-img" alt="{{ v.name }}"
+                                 loading="lazy"
+                                 onerror="this.src='{{ url_for('static', filename='uploads/' + v.effective_image_path) }}'">
+                            {% endif %}
+                            <div class="card-photo-overlay">
+                                <h5 class="card-title">{{ crop_label(v.crop_name, v.name, v.effective_icon_path, v.effective_image_color) }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
                 {% else %}
-                <div class="alert alert-warning mb-0">作物が登録されていません。</div>
+                <div class="alert alert-warning mb-0">作物・品種が登録されていません。</div>
                 {% endif %}
             </div>
         </div>
@@ -244,13 +260,15 @@
         form.addEventListener('submit', function (event) {
             var locId = document.getElementById('location_id').value;
             var cropId = document.getElementById('crop_id').value;
-            if (!locId || !cropId || !form.checkValidity()) {
+            var varietyId = document.getElementById('variety_id').value;
+            var hasCropOrVariety = cropId || varietyId;
+            if (!locId || !hasCropOrVariety || !form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
                 if (!locId) {
                     document.getElementById('selected-location-display').classList.add('border', 'border-danger');
                 }
-                if (!cropId) {
+                if (!hasCropOrVariety) {
                     document.getElementById('selected-crop-display').classList.add('border', 'border-danger');
                 }
             }
@@ -304,46 +322,40 @@
         });
     });
 
-    // 作物選択 + 品種ドロップダウン絞り込み
-    var varietySelect = document.getElementById('variety_id');
+    // 作物・品種選択（排他: crop_id と variety_id のどちらか一方のみセット）
+    var cropIdInput = document.getElementById('crop_id');
+    var varietyIdInput = document.getElementById('variety_id');
+    var cropIconsUrl = '{{ url_for("static", filename="images/crop_icons/") }}';
 
-    function filterVarietyOptions(cropId) {
-        if (!varietySelect) return;
-        var selectedVal = varietySelect.value;
-        var stillValid = false;
-        Array.from(varietySelect.options).forEach(function (opt) {
-            if (!opt.value) { opt.hidden = false; return; }
-            var optCrop = opt.dataset.cropId;
-            var match = !cropId || optCrop === String(cropId);
-            opt.hidden = !match;
-            if (match && opt.value === selectedVal) stillValid = true;
-        });
-        if (!stillValid) varietySelect.value = '';
-    }
-
-    document.querySelectorAll('.crop-select-card').forEach(function (card) {
+    document.querySelectorAll('.crop-variety-select-card').forEach(function (card) {
         card.addEventListener('click', function () {
-            var id = card.dataset.cropId;
-            var cropName = card.dataset.cropName;
+            var kind = card.dataset.kind;
+            var cropId = card.dataset.cropId;
+            var varietyId = card.dataset.varietyId;
+            var displayName = card.dataset.displayName;
             var iconPath = card.dataset.iconPath;
             var imageColor = card.dataset.imageColor;
-            document.getElementById('crop_id').value = id;
+
+            if (kind === 'variety') {
+                cropIdInput.value = '';
+                varietyIdInput.value = varietyId;
+            } else {
+                cropIdInput.value = cropId;
+                varietyIdInput.value = '';
+            }
+
             var iconHtml = '';
             if (iconPath) {
                 var borderColor = imageColor || '#4CAF50';
-                iconHtml = '<img src="{{ url_for("static", filename="images/crop_icons/") }}' + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + borderColor + ';"> ';
+                iconHtml = '<img src="' + cropIconsUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + borderColor + ';"> ';
             }
-            document.getElementById('selected-crop-display').innerHTML = iconHtml + cropName;
-            filterVarietyOptions(id);
-            var modalEl = document.getElementById('cropSelectModal');
+            document.getElementById('selected-crop-display').innerHTML = iconHtml + displayName;
+
+            var modalEl = document.getElementById('cropVarietySelectModal');
             var inst = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
             inst.hide();
         });
     });
-
-    // 初期表示で作物が選択済みなら品種を絞り込む
-    var initialCropId = document.getElementById('crop_id').value;
-    if (initialCropId) filterVarietyOptions(initialCropId);
 })();
 </script>
 {% endblock %}

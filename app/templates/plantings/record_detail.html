@@ -80,7 +80,8 @@
 
     <div class="col-md-4">
         {% set crop_info = {
-            'crop_id': record.crop_id,
+            'crop_id': record.effective_crop_id,
+            'variety_id': record.variety_id,
             'crop_name': record.crop_name,
             'variety': record.variety,
             'icon_path': record.icon_path,

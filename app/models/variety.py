@@ -81,7 +81,12 @@ class Variety:
 
     @staticmethod
     def delete(variety_id):
-        """品種を削除（関連 plantings.variety_id は FK で SET NULL される）"""
+        """品種を削除
+
+        BEFORE DELETE トリガー `trg_promote_variety_plantings_before_delete` により、
+        この品種を参照する plantings は crop_id = OLD.crop_id, variety_id = NULL に付け替えられ、
+        親作物の植え付けとして残る。
+        """
         db = get_db()
         db.execute('DELETE FROM varieties WHERE id = ?', (variety_id,))
         db.commit()
