@@ -134,7 +134,7 @@ def create_app(config_name='default'):
 
         type_config = {
             'crop': ('crops.detail', 'crop_id', 'icon_crop.webp', '作物'),
-            'variety': ('varieties.detail', 'variety_id', 'icon_crop.webp', '品種'),
+            'variety': ('varieties.detail', 'variety_id', 'icon_variety.webp', '品種'),
             'location': ('locations.detail', 'location_id', 'icon_location.webp', '場所'),
             'diary': ('diary.detail', 'diary_id', 'icon_diary.webp', '日記'),
             'harvest': ('harvests.detail', 'harvest_id', 'icon_harvest.webp', '収穫'),

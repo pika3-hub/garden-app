@@ -51,7 +51,7 @@
                     <li class="nav-item">
                         {% set is_varieties = request.endpoint and request.endpoint.startswith('varieties.') %}
                         <a class="nav-link {% if is_varieties %}active{% endif %}" href="{{ url_for('varieties.list') }}" {% if is_varieties %}aria-current="page"{% endif %}>
-                            <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="icon-img icon-img-lg"> 品種
+                            <img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="icon-img icon-img-lg"> 品種
                         </a>
                     </li>
                     <li class="nav-item">
