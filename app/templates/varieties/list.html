@@ -16,16 +16,32 @@
     </div>
 </div>
 
+{% if filter_types %}
+<div id="badge-filter-container" class="badge-filter-container">
+    {% for t in filter_types %}
+    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+        {%- for icon in filter_type_icons.get(t, []) %}
+        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
+        {%- endfor %}
+        {{ t }}</span>
+    {% endfor %}
+</div>
+{% endif %}
+
 {% if varieties %}
-{% for crop_name, group_varieties in grouped_varieties %}
-<section class="date-group" data-group-key="{{ crop_name }}">
+<div id="filter-empty-msg" class="alert alert-info" style="display:none;">
+    <i class="bi bi-info-circle"></i> 該当する品種がありません。
+</div>
+{% for crop_id, group_varieties in grouped_varieties %}
+{% set parent = group_varieties[0] %}
+<section class="date-group" data-group-key="{{ crop_id }}">
     <h3 class="date-group-heading">
-        {{ crop_name }}
+        {{ crop_label(parent.crop_name, None, parent.crop_icon_path, parent.crop_image_color) }}
         <small class="text-muted">({{ group_varieties|length }}件)</small>
     </h3>
     <div class="row">
         {% for v in group_varieties %}
-        <div class="col-6 col-md-4 col-lg-3 mb-3">
+        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ v.crop_type }}">
             <a href="{{ url_for('varieties.detail', variety_id=v.id) }}" class="card h-100 card-photo card-bg-crop {{ '' if v.effective_image_path else 'card-no-image' }}">
                 {% if v.effective_image_path %}
                 <img src="{{ url_for('static', filename='uploads/' + (v.effective_image_path | thumb_path)) }}"
@@ -53,4 +69,8 @@
     まだ品種が登録されていません。<a href="{{ url_for('varieties.new') }}" class="alert-link">新規登録</a>から追加してください。
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/badge-filter.js') }}"></script>
 {% endblock %}
