@@ -145,3 +145,13 @@ class Variety:
         if not variety.get('image_path'):
             variety['image_path'] = variety.get('crop_image_path')
         return variety
+
+    @staticmethod
+    def apply_inheritance(variety):
+        """品種に effective_* フィールドを付加（オーバーライド有無の情報を残しつつ表示用の継承値を提供）"""
+        if variety is None:
+            return None
+        variety['effective_icon_path'] = variety.get('icon_path') or variety.get('crop_icon_path')
+        variety['effective_image_color'] = variety.get('image_color') or variety.get('crop_image_color') or '#4CAF50'
+        variety['effective_image_path'] = variety.get('image_path') or variety.get('crop_image_path')
+        return variety

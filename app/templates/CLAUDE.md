@@ -72,7 +72,7 @@ Jinja2 テンプレートと関連フロントエンド部品（Bootstrap カス
 
 - **植え付け・収穫・カレンダー等**: `crop_variety_view cv` から `cv.crop_name, cv.variety, cv.icon_path, cv.image_color`（品種の外観が優先、未設定なら親作物に継承される）
 - **作物一覧・作物詳細**: `crops` テーブルから `c.icon_path, c.image_color`。品種情報は持たないので `crop_label(c.name, None, ...)` の形で呼ぶ
-- **品種一覧・品種詳細**: `variety_routes.py` で `_apply_inheritance()` により付与される `effective_icon_path` / `effective_image_color`
+- **品種一覧・品種詳細**: `Variety.apply_inheritance()` により付与される `effective_icon_path` / `effective_image_color`
 
 新規クエリ追加時は、`cv.*` のワイルドカード展開ではなくカラムを明示すること（`app/models/CLAUDE.md` の Row 重複カラム名問題を参照）。
 
@@ -268,6 +268,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 | カード | アイコン | ヘッダー背景色 |
 |--------|---------|--------------|
 | 作物情報 | `icon_crop.webp` | `bg-success` |
+| 品種情報 | `icon_variety.webp` | `bg-success` |
 | 場所情報 | `icon_location.webp` | `bg-info` |
 | タスク | `icon_tasklist.webp` | `bg-primary` |
 | 関連する植え付け | `icon_location_crop.webp` | `bg-warning` |
@@ -283,8 +284,9 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 | 作物詳細 | タスク → 栽培中の植え付け → 収穫 → 日記 |
 | 品種詳細 | 親作物情報 → この品種の栽培中 → 関連する収穫 |
 | 場所詳細 | タスク → 収穫 → 日記 |
-| 植え付け詳細 | 作物情報 → 場所情報 → タスク → 収穫 → 日記 |
-| 収穫詳細 | 作物情報 → 場所情報 → 植え付け → 日記 |
+| 植え付け詳細 | 作物情報 → 品種情報（variety_id があれば） → 場所情報 → タスク → 収穫 → 日記 |
+| 収穫詳細 | 作物情報 → 品種情報（variety_id があれば） → 場所情報 → 植え付け → 日記 |
+| 栽培記録詳細 | 作物情報 → 品種情報（variety_id があれば） → 場所情報 |
 | 日記詳細 | 作物 → 場所 → 植え付け → 収穫 |
 | タスク詳細 | 作物 → 場所 → 植え付け |
 
@@ -292,30 +294,57 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 ### 作物情報カード (`_crop_info_card.html`)
 
-植え付け詳細・収穫詳細・品種詳細の右カラムに配置。作物の登録画像がある場合、カード本体内の右上に縮小表示（`float: right; width: 48%`）。植え付け・収穫に品種が設定されている場合は、作物詳細リンクの下に「品種詳細へ」リンクも表示される。
+植え付け詳細・収穫詳細・栽培記録詳細・品種詳細の右カラムに配置。作物の登録画像がある場合、カード本体内の右上に縮小表示（`float: right; width: 48%`）。`variety_id` を渡せば作物詳細リンクの下に「品種詳細へ」リンクが表示されるが、植え付け・収穫・栽培記録の各詳細では「品種情報カード」を別途表示する方針のため `variety_id: None` を渡す。
 
 **テンプレート変数**: `crop_info` dict
 
 ```html
 {% set crop_info = {
-    'crop_id': location_crop.crop_id,
-    'crop_name': location_crop.crop_name,
-    'variety': location_crop.variety,
-    'variety_id': location_crop.variety_id,
-    'icon_path': location_crop.icon_path,
-    'image_color': location_crop.image_color,
-    'crop_type': location_crop.crop_type,
-    'crop_notes': location_crop.crop_notes,
-    'crop_image_path': location_crop.crop_image_path
+    'crop_id': parent_crop.id,
+    'crop_name': parent_crop.name,
+    'variety': None,
+    'variety_id': None,
+    'icon_path': parent_crop.icon_path,
+    'image_color': parent_crop.image_color,
+    'crop_type': parent_crop.crop_type,
+    'crop_notes': parent_crop.notes,
+    'crop_image_path': parent_crop.image_path
 } %}
 {% include '_crop_info_card.html' %}
 ```
 
-**表示内容**: 作物名＋品種名（`crop_label` マクロ）、品種詳細リンク（`variety_id` がある場合）、登録画像（右上フロート）、種類（badge）、メモ（Markdown 統合テキスト）、作物詳細リンク。各フィールドは値がある場合のみ表示。
+**表示内容**: 作物名＋品種名（`crop_label` マクロ、`variety` が渡された場合のみ品種を表記）、品種詳細リンク（`variety_id` がある場合のみ）、登録画像（右上フロート）、種類（badge）、メモ（Markdown 統合テキスト）、作物詳細リンク。各フィールドは値がある場合のみ表示。
 
-**クエリ要件**: `Planting.get_by_id()` と `Harvest.get_by_id()` で `cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.crop_type, cv.notes as crop_notes, c.image_path as crop_image_path, lc.variety_id` を SELECT している（`cv` は `crop_variety_view`）。`cv.notes` は `crop_notes` にエイリアス（植え付けの `notes` との衝突回避）、`c.image_path` は `crop_image_path` にエイリアス。品種固有の画像が必要な場合は `COALESCE(v.image_path, c.image_path)` で取得する VIEW のカラムを使う。
+**データソース**: `Planting.get_by_id()` / `Harvest.get_by_id()` / `PlantingRecord.get_by_id()` 由来の `cv.*` は **品種オーバーライド込みの継承後値** のため作物の素の値を見せたいケースには使わない。各ルート（`planting_routes.detail/record_detail`、`harvest_routes.detail`、`variety_routes.detail`）で **`Crop.get_by_id(effective_crop_id)` を別途呼び出して `parent_crop` をテンプレートに渡す**。`variety_routes.detail()` も同様に `Variety.get_by_id()` で JOIN 取得した `crop_*` フィールドから親作物情報を組み立てる（VIEW を経由しない）。
 
-品種詳細画面では親作物を表示するため、`variety_routes.py` の detail() で JOIN した `c.name as crop_name, c.crop_type, c.notes as crop_notes, c.icon_path as crop_icon_path, c.image_color as crop_image_color, c.image_path as crop_image_path` を VIEW を経由せず直接 crop_info に詰める（`variety` は None を渡す）。
+### 品種情報カード (`_variety_info_card.html`)
+
+植え付け詳細・収穫詳細・栽培記録詳細の右カラムに、品種が紐づく植え付け（`variety_id` あり）のときだけ作物情報カードの直後に表示する。品種独自のオーバーライドが何もない場合は「※ 外観・メモは親作物から継承」のヒントを表示する。
+
+**テンプレート変数**: `variety_info` dict
+
+```html
+{% if variety %}
+{% set variety_info = {
+    'variety_id': variety.id,
+    'variety_name': variety.name,
+    'parent_crop_id': variety.crop_id,
+    'parent_crop_name': variety.crop_name,
+    'icon_path': variety.effective_icon_path,
+    'image_color': variety.effective_image_color,
+    'variety_notes': variety.notes,
+    'variety_image_path': variety.effective_image_path,
+    'has_overrides': variety.icon_path or variety.image_color or variety.image_path or variety.notes
+} %}
+{% include '_variety_info_card.html' %}
+{% endif %}
+```
+
+**表示内容**: 品種名（作物名）の `crop_label`（品種詳細へリンク）、品種画像（オーバーライドがあれば品種独自、なければ親作物継承、右上フロート）、品種メモ（オーバーライド時のみ）、継承ヒント（オーバーライドが一つも無い場合のみ）。種類バッジは作物情報カードと重複するため省略。
+
+**データソース**: 各ルート（`planting_routes.detail/record_detail`、`harvest_routes.detail`）で `location_crop['variety_id']` または `record['variety_id']` が NULL でないとき `Variety.get_by_id(variety_id)` で取得し、`Variety.apply_inheritance(variety)` で `effective_icon_path` / `effective_image_color` / `effective_image_path` を付与してテンプレートに渡す。
+
+**`Variety.apply_inheritance(variety)` (`app/models/variety.py`)**: 品種に `effective_*` フィールドを付加する静的メソッド。元の `icon_path` / `image_color` / `image_path` は保持されるため、テンプレート側で「品種独自のオーバーライドがあるか」を判定できる（`has_overrides`）。同モデルの `get_effective_display()` は元フィールドを上書きする破壊的バージョンなので用途が異なる。
 
 ### 場所情報カード (`_location_info_card.html`)
 

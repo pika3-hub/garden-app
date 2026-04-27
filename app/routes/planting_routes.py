@@ -16,16 +16,6 @@ from datetime import date
 bp = Blueprint('plantings', __name__, url_prefix='/plantings')
 
 
-def _apply_variety_inheritance(variety):
-    """品種のアイコン/カラー/画像が未設定なら親作物の値を継承した表示用フィールドを付加"""
-    if variety is None:
-        return None
-    variety['effective_icon_path'] = variety.get('icon_path') or variety.get('crop_icon_path')
-    variety['effective_image_color'] = variety.get('image_color') or variety.get('crop_image_color') or '#4CAF50'
-    variety['effective_image_path'] = variety.get('image_path') or variety.get('crop_image_path')
-    return variety
-
-
 @bp.route('/')
 def index():
     """栽培記録一覧（タブフィルター付き）"""
@@ -80,6 +70,11 @@ def detail(location_crop_id):
     related_diaries = DiaryEntry.get_by_location_crop(location_crop_id, limit=10)
     photo_pool_photos = PhotoPool.get_all()
 
+    parent_crop = Crop.get_by_id(location_crop['effective_crop_id'])
+    variety = None
+    if location_crop.get('variety_id'):
+        variety = Variety.apply_inheritance(Variety.get_by_id(location_crop['variety_id']))
+
     return render_template('plantings/detail.html',
                           photo_pool_photos=photo_pool_photos,
                           records=records,
@@ -91,7 +86,9 @@ def detail(location_crop_id):
                           next_planting=next_planting,
                           related_tasks=related_tasks,
                           related_harvests=related_harvests,
-                          related_diaries=related_diaries)
+                          related_diaries=related_diaries,
+                          parent_crop=parent_crop,
+                          variety=variety)
 
 
 @bp.route('/<int:location_crop_id>/end', methods=['POST'])
@@ -136,10 +133,17 @@ def record_detail(record_id):
 
     prev_record, next_record = PlantingRecord.get_adjacent(record_id)
 
+    parent_crop = Crop.get_by_id(record['effective_crop_id'])
+    variety = None
+    if record.get('variety_id'):
+        variety = Variety.apply_inheritance(Variety.get_by_id(record['variety_id']))
+
     return render_template('plantings/record_detail.html',
                           record=record,
                           prev_record=prev_record,
                           next_record=next_record,
+                          parent_crop=parent_crop,
+                          variety=variety,
                           photo_pool_photos=PhotoPool.get_all())
 
 
@@ -346,7 +350,7 @@ def place(location_crop_id):
 def plant_new():
     """植え付け登録フォーム"""
     crops = Crop.get_all()
-    varieties = [_apply_variety_inheritance(v) for v in Variety.get_all()]
+    varieties = [Variety.apply_inheritance(v) for v in Variety.get_all()]
     locations = Location.get_all()
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
     crop_filter_type_icons = {}
@@ -416,7 +420,7 @@ def planting_edit(location_crop_id):
         return redirect(url_for('plantings.index'))
 
     crops = Crop.get_all()
-    varieties = [_apply_variety_inheritance(v) for v in Variety.get_all()]
+    varieties = [Variety.apply_inheritance(v) for v in Variety.get_all()]
     locations = Location.get_all()
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
     crop_filter_type_icons = {}

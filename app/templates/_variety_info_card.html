@@ -1,0 +1,34 @@
+{# 品種情報カード（植え付け詳細・収穫詳細・栽培記録詳細サイドバー用） #}
+{# 必要な変数: variety_info (dict with variety_id, variety_name, parent_crop_id, parent_crop_name, icon_path, image_color, variety_notes, variety_image_path, has_overrides) #}
+{% from '_macros.html' import crop_label %}
+{% if variety_info %}
+<div class="card mb-3">
+    <div class="card-header bg-success text-white">
+        <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="icon-img"> 品種情報</h6>
+    </div>
+    <div class="card-body">
+        <div class="mb-2">
+            <a href="{{ url_for('varieties.detail', variety_id=variety_info.variety_id) }}" class="fw-bold text-decoration-none">
+                {{ crop_label(variety_info.parent_crop_name, variety_info.variety_name, variety_info.icon_path, variety_info.image_color) }}
+            </a>
+        </div>
+        {% if variety_info.variety_image_path %}
+        <a href="{{ url_for('varieties.detail', variety_id=variety_info.variety_id) }}">
+            <img src="{{ url_for('static', filename='uploads/' + (variety_info.variety_image_path | thumb_path)) }}"
+                 alt="品種画像"
+                 style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                 onerror="this.src='{{ url_for('static', filename='uploads/' + variety_info.variety_image_path) }}'">
+        </a>
+        {% endif %}
+        {% if variety_info.variety_notes %}
+        <div class="mb-2">
+            <small class="text-muted d-block">メモ</small>
+            <div class="small" style="white-space: pre-wrap;">{{ variety_info.variety_notes }}</div>
+        </div>
+        {% endif %}
+        {% if not variety_info.has_overrides %}
+        <div class="small text-muted fst-italic">※ 外観・メモは親作物から継承</div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

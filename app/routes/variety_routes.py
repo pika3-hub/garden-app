@@ -19,22 +19,12 @@ def _get_crop_icon_list():
     return sorted(os.listdir(icon_dir))
 
 
-def _apply_inheritance(variety):
-    """品種のアイコン/カラー/画像が未設定なら親作物の値を継承した表示用フィールドを付加"""
-    if variety is None:
-        return None
-    variety['effective_icon_path'] = variety.get('icon_path') or variety.get('crop_icon_path')
-    variety['effective_image_color'] = variety.get('image_color') or variety.get('crop_image_color') or '#4CAF50'
-    variety['effective_image_path'] = variety.get('image_path') or variety.get('crop_image_path')
-    return variety
-
-
 @bp.route('/')
 def list():
     """品種一覧（親作物でグルーピング表示、品種数の多い順）"""
     varieties = Variety.get_all()
     for v in varieties:
-        _apply_inheritance(v)
+        Variety.apply_inheritance(v)
 
     active_variety_ids = Planting.get_active_variety_ids()
 
@@ -74,7 +64,7 @@ def detail(variety_id):
     if not variety:
         flash('品種が見つかりません', 'danger')
         return redirect(url_for('varieties.list'))
-    _apply_inheritance(variety)
+    Variety.apply_inheritance(variety)
 
     related_plantings = Planting.get_by_variety(variety_id, status='active')
     related_harvests = Harvest.get_by_variety(variety_id, limit=10)

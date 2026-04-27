@@ -4,6 +4,7 @@ from app.models.harvest import Harvest
 from app.models.planting import Planting
 from app.models.location import Location
 from app.models.crop import Crop
+from app.models.variety import Variety
 from app.models.diary import DiaryEntry
 from app.models.supplement import Supplement
 from app.models.photo_pool import PhotoPool
@@ -56,6 +57,11 @@ def detail(harvest_id):
     # 補足情報
     supplements = Supplement.get_by_entity('harvest', harvest_id)
 
+    parent_crop = Crop.get_by_id(harvest['effective_crop_id'])
+    variety = None
+    if harvest.get('variety_id'):
+        variety = Variety.apply_inheritance(Variety.get_by_id(harvest['variety_id']))
+
     return render_template('harvests/detail.html',
                           harvest=harvest,
                           prev_harvest=prev_harvest,
@@ -63,6 +69,8 @@ def detail(harvest_id):
                           related_plantings=related_plantings,
                           related_diaries=related_diaries,
                           supplements=supplements,
+                          parent_crop=parent_crop,
+                          variety=variety,
                           photo_pool_photos=PhotoPool.get_all())
 
 

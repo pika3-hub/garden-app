@@ -80,20 +80,32 @@
 
     <div class="col-md-4">
         {% set crop_info = {
-            'crop_id': record.effective_crop_id,
-            'variety_id': record.variety_id,
-            'crop_name': record.crop_name,
-            'variety': record.variety,
-            'icon_path': record.icon_path,
-            'image_color': record.image_color,
-            'crop_type': record.crop_type,
-            'planting_season': record.planting_season,
-            'harvest_season': record.harvest_season,
-            'characteristics': record.characteristics,
-            'crop_notes': record.crop_notes,
-            'crop_image_path': record.crop_image_path
+            'crop_id': parent_crop.id,
+            'variety_id': None,
+            'crop_name': parent_crop.name,
+            'variety': None,
+            'icon_path': parent_crop.icon_path,
+            'image_color': parent_crop.image_color,
+            'crop_type': parent_crop.crop_type,
+            'crop_notes': parent_crop.notes,
+            'crop_image_path': parent_crop.image_path
         } %}
         {% include '_crop_info_card.html' %}
+
+        {% if variety %}
+        {% set variety_info = {
+            'variety_id': variety.id,
+            'variety_name': variety.name,
+            'parent_crop_id': variety.crop_id,
+            'parent_crop_name': variety.crop_name,
+            'icon_path': variety.effective_icon_path,
+            'image_color': variety.effective_image_color,
+            'variety_notes': variety.notes,
+            'variety_image_path': variety.effective_image_path,
+            'has_overrides': variety.icon_path or variety.image_color or variety.image_path or variety.notes
+        } %}
+        {% include '_variety_info_card.html' %}
+        {% endif %}
 
         {% set location_info = {
             'location_id': record.location_id,
