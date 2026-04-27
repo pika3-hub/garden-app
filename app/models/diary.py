@@ -126,6 +126,20 @@ class DiaryEntry:
             (diary_id,)
         ).fetchall()
 
+        # 関連する品種を取得（外観・メモは親作物から継承）
+        varieties = db.execute(
+            '''SELECT dr.variety_id, v.name as variety,
+                      c.id as crop_id, c.name as crop_name, c.crop_type,
+                      COALESCE(v.icon_path, c.icon_path) as icon_path,
+                      COALESCE(v.image_color, c.image_color) as image_color,
+                      COALESCE(v.image_path, c.image_path) as variety_image_path
+               FROM diary_relations dr
+               JOIN varieties v ON dr.variety_id = v.id
+               JOIN crops c ON v.crop_id = c.id
+               WHERE dr.diary_id = ? AND dr.relation_type = 'variety' ''',
+            (diary_id,)
+        ).fetchall()
+
         # 関連する場所を取得
         locations = db.execute(
             '''SELECT dr.location_id, l.name as location_name, l.location_type,
@@ -169,6 +183,7 @@ class DiaryEntry:
 
         return {
             'crops': [dict(c) for c in crops],
+            'varieties': [dict(v) for v in varieties],
             'locations': [dict(l) for l in locations],
             'location_crops': [dict(lc) for lc in location_crops],
             'harvests': [dict(h) for h in harvests]
@@ -188,6 +203,14 @@ class DiaryEntry:
                 '''INSERT INTO diary_relations (diary_id, relation_type, crop_id)
                    VALUES (?, 'crop', ?)''',
                 (diary_id, crop_id)
+            )
+
+        # 品種の関連を保存
+        for variety_id in relations.get('variety_ids', []):
+            db.execute(
+                '''INSERT INTO diary_relations (diary_id, relation_type, variety_id)
+                   VALUES (?, 'variety', ?)''',
+                (diary_id, variety_id)
             )
 
         # 場所の関連を保存
@@ -256,17 +279,39 @@ class DiaryEntry:
     def get_by_crop(crop_id, limit=None):
         """作物に関連する日記を取得"""
         db = get_db()
-        # 作物に紐づく日記 = 直接 dr.crop_id 紐づけ OR 植え付け経由（作物直接 + 品種経由）
+        # 作物に紐づく日記 = 直接 dr.crop_id 紐づけ
+        #                OR 品種経由（dr.variety_id が当作物の品種を指す）
+        #                OR 植え付け経由（作物直接 + 品種経由）
         query = '''SELECT DISTINCT de.*
                FROM diary_entries de
                JOIN diary_relations dr ON de.id = dr.diary_id
-               WHERE dr.crop_id = ? OR dr.location_crop_id IN (
-                   SELECT lc.id FROM plantings lc
-                   LEFT JOIN varieties v ON v.id = lc.variety_id
-                   WHERE lc.crop_id = ? OR v.crop_id = ?
-               )
+               WHERE dr.crop_id = ?
+                  OR dr.variety_id IN (SELECT id FROM varieties WHERE crop_id = ?)
+                  OR dr.location_crop_id IN (
+                       SELECT lc.id FROM plantings lc
+                       LEFT JOIN varieties v ON v.id = lc.variety_id
+                       WHERE lc.crop_id = ? OR v.crop_id = ?
+                   )
                ORDER BY de.entry_date DESC'''
-        params = [crop_id, crop_id, crop_id]
+        params = [crop_id, crop_id, crop_id, crop_id]
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+        entries = db.execute(query, params).fetchall()
+        return [dict(entry) for entry in entries]
+
+    @staticmethod
+    def get_by_variety(variety_id, limit=None):
+        """品種に関連する日記を取得"""
+        db = get_db()
+        # 品種に紐づく日記 = dr.variety_id 直接紐づけ OR 植え付け（variety_id一致）経由
+        query = '''SELECT DISTINCT de.*
+               FROM diary_entries de
+               JOIN diary_relations dr ON de.id = dr.diary_id
+               WHERE dr.variety_id = ?
+                  OR dr.location_crop_id IN (SELECT id FROM plantings WHERE variety_id = ?)
+               ORDER BY de.entry_date DESC'''
+        params = [variety_id, variety_id]
         if limit:
             query += ' LIMIT ?'
             params.append(limit)

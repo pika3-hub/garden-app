@@ -3,6 +3,7 @@ from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.task import Task
 from app.models.crop import Crop
+from app.models.variety import Variety
 from app.models.location import Location
 from app.models.planting import Planting
 from app.models.supplement import Supplement
@@ -67,17 +68,21 @@ def detail(task_id):
 def new():
     """タスク登録フォーム"""
     crops = Crop.get_all()
+    varieties = Variety.get_all()
+    for v in varieties:
+        Variety.apply_inheritance(v)
     locations = Location.get_all()
     active_plantings = Planting.get_all_with_stats(status='active')
 
     today = date.today().isoformat()
 
-    filter_data = _build_filter_data(crops, locations, active_plantings)
+    filter_data = _build_filter_data(crops, varieties, locations, active_plantings)
 
     return render_template('tasks/form.html',
                           task=None,
                           action='create',
                           crops=crops,
+                          varieties=varieties,
                           locations=locations,
                           active_plantings=active_plantings,
                           selected_relations=None,
@@ -107,6 +112,7 @@ def create():
         # 関連を保存
         relations = {
             'crop_ids': request.form.getlist('crop_ids'),
+            'variety_ids': request.form.getlist('variety_ids'),
             'location_ids': request.form.getlist('location_ids'),
             'location_crop_ids': request.form.getlist('location_crop_ids')
         }
@@ -128,6 +134,9 @@ def edit(task_id):
         return redirect(url_for('tasks.list'))
 
     crops = Crop.get_all()
+    varieties = Variety.get_all()
+    for v in varieties:
+        Variety.apply_inheritance(v)
     locations = Location.get_all()
     active_plantings = Planting.get_all_with_stats(status='active')
     relations = Task.get_relations(task_id)
@@ -135,20 +144,23 @@ def edit(task_id):
     # 選択済みのIDを抽出
     selected_relations = {
         'crop_ids': [str(r['crop_id']) for r in relations['crops']],
+        'variety_ids': [str(r['variety_id']) for r in relations['varieties']],
         'location_ids': [str(r['location_id']) for r in relations['locations']],
         'location_crop_ids': [str(r['location_crop_id']) for r in relations['location_crops']]
     }
 
-    filter_data = _build_filter_data(crops, locations, active_plantings)
+    filter_data = _build_filter_data(crops, varieties, locations, active_plantings)
 
     return render_template('tasks/form.html',
                           task=task,
                           action='update',
                           crops=crops,
+                          varieties=varieties,
                           locations=locations,
                           active_plantings=active_plantings,
                           selected_relations=selected_relations,
                           selected_crop_ids=selected_relations['crop_ids'],
+                          selected_variety_ids=selected_relations['variety_ids'],
                           selected_location_ids=selected_relations['location_ids'],
                           selected_location_crop_ids=selected_relations['location_crop_ids'],
                           Task=Task,
@@ -181,6 +193,7 @@ def update(task_id):
         # 関連を保存
         relations = {
             'crop_ids': request.form.getlist('crop_ids'),
+            'variety_ids': request.form.getlist('variety_ids'),
             'location_ids': request.form.getlist('location_ids'),
             'location_crop_ids': request.form.getlist('location_crop_ids')
         }
@@ -214,7 +227,7 @@ def delete(task_id):
     return redirect(url_for('tasks.list'))
 
 
-def _build_filter_data(crops, locations, active_plantings):
+def _build_filter_data(crops, varieties, locations, active_plantings):
     """モーダル用フィルターデータを構築するヘルパー"""
     # 作物フィルター
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
@@ -225,6 +238,18 @@ def _build_filter_data(crops, locations, active_plantings):
             icons = crop_filter_type_icons.setdefault(t, [])
             if not any(i['icon_path'] == icon for i in icons):
                 icons.append({'icon_path': icon, 'image_color': c.get('image_color') or '#4CAF50'})
+
+    # 品種フィルター（親作物の crop_type、品種一覧と同じ規約）
+    variety_filter_types = sorted({v['crop_type'] for v in varieties if v.get('crop_type')})
+    variety_filter_type_icons = {}
+    for v in varieties:
+        t = v.get('crop_type')
+        icon = v.get('crop_icon_path')
+        color = v.get('crop_image_color') or '#4CAF50'
+        if t and icon:
+            icons = variety_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': color})
 
     # 場所フィルター
     location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
@@ -243,6 +268,8 @@ def _build_filter_data(crops, locations, active_plantings):
     return {
         'crop_filter_types': crop_filter_types,
         'crop_filter_type_icons': crop_filter_type_icons,
+        'variety_filter_types': variety_filter_types,
+        'variety_filter_type_icons': variety_filter_type_icons,
         'location_filter_types': location_filter_types,
         'planting_filter_types': planting_filter_types,
         'planting_filter_type_icons': planting_filter_type_icons,

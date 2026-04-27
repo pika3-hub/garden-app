@@ -128,8 +128,9 @@
 |--------|-----|------|
 | id | INTEGER | 主キー |
 | task_id | INTEGER | タスクID（FK） |
-| relation_type | VARCHAR(20) | 関連タイプ（crop/location/location_crop） |
+| relation_type | VARCHAR(20) | 関連タイプ（crop/variety/location/location_crop） |
 | crop_id | INTEGER | 作物ID（FK、任意） |
+| variety_id | INTEGER | 品種ID（FK → varieties、ON DELETE CASCADE、任意） |
 | location_id | INTEGER | 場所ID（FK、任意） |
 | location_crop_id | INTEGER | 栽培記録ID（FK、任意） |
 | created_at | DATETIME | 作成日時 |
@@ -139,8 +140,9 @@
 |--------|-----|------|
 | id | INTEGER | 主キー |
 | diary_id | INTEGER | 日記ID（FK） |
-| relation_type | VARCHAR(20) | 関連タイプ（crop/location/location_crop/harvest） |
+| relation_type | VARCHAR(20) | 関連タイプ（crop/variety/location/location_crop/harvest） |
 | crop_id | INTEGER | 作物ID（FK、任意） |
+| variety_id | INTEGER | 品種ID（FK → varieties、ON DELETE CASCADE、任意） |
 | location_id | INTEGER | 場所ID（FK、任意） |
 | location_crop_id | INTEGER | 植え付けID（FK、任意） |
 | harvest_id | INTEGER | 収穫ID（FK、任意） |

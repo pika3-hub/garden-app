@@ -54,10 +54,10 @@
 
                     <hr class="my-4">
                     <h5 class="mb-1"><i class="bi bi-link-45deg"></i> 関連付け</h5>
-                    <div class="form-text mb-3">関連する作物・場所・植え付けを選択できます。「選択」ボタンからカード形式で複数選択可能です</div>
+                    <div class="form-text mb-3">関連する作物・品種・場所・植え付けを選択できます。「選択」ボタンからカード形式で複数選択可能です</div>
 
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label class="form-label mb-0">作物</label>
                                 <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#cropMultiSelectModal">
@@ -73,7 +73,23 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">品種</label>
+                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#varietyMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-varieties-display" class="selected-items-chips"></div>
+                            <div id="variety-hidden-inputs">
+                                {% if selected_relations and selected_relations.variety_ids %}
+                                {% for id in selected_relations.variety_ids %}
+                                <input type="hidden" name="variety_ids" value="{{ id }}">
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label class="form-label mb-0">場所</label>
                                 <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#locationMultiSelectModal">
@@ -89,7 +105,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label class="form-label mb-0">植え付け</label>
                                 <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#plantingMultiSelectModal">
@@ -121,6 +137,7 @@
     </div>
 </div>
 {% include '_crop_select_multi_modal.html' %}
+{% include '_variety_select_multi_modal.html' %}
 {% include '_location_select_multi_modal.html' %}
 {% include '_planting_select_multi_modal.html' %}
 {% endblock %}
@@ -155,6 +172,32 @@ document.addEventListener('DOMContentLoaded', function() {
         filterMode: 'legacy',
         filterScope: 'crop-multi',
         filterCardAttr: 'data-crop-ms-card'
+    });
+
+    function varietyBadgeRenderer(card) {
+        var name = card.dataset.cropName;
+        var variety = card.dataset.varietyName;
+        var iconPath = card.dataset.iconPath;
+        var imageColor = card.dataset.imageColor;
+        var label = variety + '(' + name + ')';
+        var iconHtml = '';
+        if (iconPath) {
+            iconHtml = '<img src="' + cropIconBaseUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+        }
+        return iconHtml + label;
+    }
+
+    new MultiSelectModal({
+        modalId: 'varietyMultiSelectModal',
+        cardSelector: '.variety-ms-card',
+        idAttribute: 'varietyId',
+        inputContainerId: 'variety-hidden-inputs',
+        inputName: 'variety_ids',
+        displayContainerId: 'selected-varieties-display',
+        badgeRenderer: varietyBadgeRenderer,
+        filterMode: 'legacy',
+        filterScope: 'variety-multi',
+        filterCardAttr: 'data-variety-ms-card'
     });
 
     new MultiSelectModal({

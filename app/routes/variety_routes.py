@@ -68,6 +68,8 @@ def detail(variety_id):
 
     related_plantings = Planting.get_by_variety(variety_id, status='active')
     related_harvests = Harvest.get_by_variety(variety_id, limit=10)
+    related_diaries = DiaryEntry.get_by_variety(variety_id, limit=10)
+    related_tasks = Task.get_incomplete_tasks_for_entity('variety', variety_id)
     prev_v, next_v = Variety.get_adjacent(variety_id)
     supplements = Supplement.get_by_entity('variety', variety_id)
     photo_pool_photos = PhotoPool.get_all()
@@ -76,6 +78,8 @@ def detail(variety_id):
                            variety=variety,
                            related_plantings=related_plantings,
                            related_harvests=related_harvests,
+                           related_diaries=related_diaries,
+                           related_tasks=related_tasks,
                            prev_variety=prev_v,
                            next_variety=next_v,
                            supplements=supplements,

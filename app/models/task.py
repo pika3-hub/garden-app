@@ -173,6 +173,20 @@ class Task:
             (task_id,)
         ).fetchall()
 
+        # 関連する品種を取得（外観・メモは親作物から継承）
+        varieties = db.execute(
+            '''SELECT tr.variety_id, v.name as variety,
+                      c.id as crop_id, c.name as crop_name, c.crop_type,
+                      COALESCE(v.icon_path, c.icon_path) as icon_path,
+                      COALESCE(v.image_color, c.image_color) as image_color,
+                      COALESCE(v.image_path, c.image_path) as variety_image_path
+               FROM task_relations tr
+               JOIN varieties v ON tr.variety_id = v.id
+               JOIN crops c ON v.crop_id = c.id
+               WHERE tr.task_id = ? AND tr.relation_type = 'variety' ''',
+            (task_id,)
+        ).fetchall()
+
         # 関連する場所を取得
         locations = db.execute(
             '''SELECT tr.location_id, l.name as location_name, l.location_type,
@@ -201,6 +215,7 @@ class Task:
 
         return {
             'crops': [dict(c) for c in crops],
+            'varieties': [dict(v) for v in varieties],
             'locations': [dict(l) for l in locations],
             'location_crops': [dict(lc) for lc in location_crops]
         }
@@ -219,6 +234,14 @@ class Task:
                 '''INSERT INTO task_relations (task_id, relation_type, crop_id)
                    VALUES (?, 'crop', ?)''',
                 (task_id, crop_id)
+            )
+
+        # 品種の関連を保存
+        for variety_id in relations.get('variety_ids', []):
+            db.execute(
+                '''INSERT INTO task_relations (task_id, relation_type, variety_id)
+                   VALUES (?, 'variety', ?)''',
+                (task_id, variety_id)
             )
 
         # 場所の関連を保存
@@ -298,6 +321,7 @@ class Task:
         db = get_db()
         col_map = {
             'crop': 'crop_id',
+            'variety': 'variety_id',
             'location': 'location_id',
             'location_crop': 'location_crop_id'
         }
@@ -324,6 +348,7 @@ class Task:
         db = get_db()
         col_map = {
             'crop': 'crop_id',
+            'variety': 'variety_id',
             'location': 'location_id',
             'location_crop': 'location_crop_id'
         }

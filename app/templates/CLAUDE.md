@@ -589,6 +589,7 @@ new MultiSelectModal({
 | テンプレート | Modal ID | 対象画面 | テンプレート変数 |
 |------------|----------|---------|----------------|
 | `_crop_select_multi_modal.html` | `cropMultiSelectModal` | 日記・タスク | `crops`, `crop_filter_types`, `crop_filter_type_icons`, `selected_crop_ids` |
+| `_variety_select_multi_modal.html` | `varietyMultiSelectModal` | 日記・タスク | `varieties`（`apply_inheritance` 適用済み）, `variety_filter_types`, `variety_filter_type_icons`, `selected_variety_ids` |
 | `_location_select_multi_modal.html` | `locationMultiSelectModal` | 日記・タスク | `locations`, `location_filter_types`, `selected_location_ids` |
 | `_planting_select_multi_modal.html` | `plantingMultiSelectModal` | 日記・タスク | `active_plantings`, `planting_filter_types`, `planting_filter_type_icons`, `planting_filter_locations`, `selected_location_crop_ids` |
 | `_harvest_select_multi_modal.html` | `harvestMultiSelectModal` | 日記のみ | `harvests`, `harvest_filter_types`, `harvest_filter_type_icons`, `harvest_filter_locations`, `selected_harvest_ids` |
