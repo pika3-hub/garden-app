@@ -77,11 +77,13 @@ def detail(location_id):
 
     # 栽培中の作物の種類一覧（フィルター用）
     filter_types = sorted(set(crop['crop_type'] for crop in active_crops if crop.get('crop_type')))
+    filter_type_icons = Planting.get_active_crop_type_icons()
 
     return render_template('locations/detail.html',
                           location=location,
                           active_crops=active_crops,
                           filter_types=filter_types,
+                          filter_type_icons=filter_type_icons,
                           related_diaries=related_diaries,
                           related_harvests=related_harvests,
                           today=today,
