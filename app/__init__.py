@@ -63,6 +63,7 @@ def create_app(config_name='default'):
     @app.route('/')
     def index():
         from app.models.crop import Crop
+        from app.models.variety import Variety
         from app.models.location import Location
         from app.models.planting import Planting
         from app.models.diary import DiaryEntry
@@ -73,6 +74,7 @@ def create_app(config_name='default'):
         # 統計情報を取得
         stats = {
             'crop_count': Crop.count(),
+            'variety_count': Variety.count(),
             'location_count': Location.count(),
             'active_crop_count': Planting.count_active(),
             'diary_count': DiaryEntry.count(),

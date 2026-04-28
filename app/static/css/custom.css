@@ -583,7 +583,7 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   content: '';
   position: absolute;
   top: 50%; left: 50%;
-  width: 170px; height: 170px;
+  width: 120px; height: 120px;
   transform: translate(-50%, -50%);
   opacity: 0.08;
   background-size: contain;
@@ -1039,6 +1039,37 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     border-radius: 10px;
     font-size: 0.75rem;
     pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD STATS GRID (7カード レスポンシブレイアウト)
+   ══════════════════════════════════════════════════════════ */
+
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1rem;
+}
+
+/* デスクトップ版: 7列表示 */
+@media (min-width: 1400px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}
+
+/* タブレット版: 2-3列表示 */
+@media (max-width: 1399px) and (min-width: 768px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+/* モバイル版: 1列表示 */
+@media (max-width: 767px) {
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
