@@ -1,5 +1,4 @@
 import os
-from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from app.models.crop import Crop
 from app.models.variety import Variety
@@ -29,20 +28,9 @@ def list():
             if not any(i['icon_path'] == icon for i in icons):
                 icons.append({'icon_path': icon, 'image_color': c['image_color'] or '#4CAF50'})
     active_crop_ids = Planting.get_active_crop_ids()
+    sorted_crops = sorted(crops, key=lambda c: c.get('name') or '')
 
-    def _type_key(c):
-        return c.get('crop_type') or ''
-
-    sorted_crops = sorted(crops, key=_type_key)
-    grouped_crops = [(k, [item for item in g]) for k, g in groupby(sorted_crops, key=_type_key)]
-    grouped_crops.sort(key=lambda kv: len(kv[1]), reverse=True)
-    multi_groups = [kv for kv in grouped_crops if len(kv[1]) > 1]
-    single_items = [items[0] for _, items in grouped_crops if len(items) == 1]
-    if single_items:
-        multi_groups.append(('その他', single_items))
-    grouped_crops = multi_groups
-
-    return render_template('crops/list.html', crops=crops, grouped_crops=grouped_crops,
+    return render_template('crops/list.html', sorted_crops=sorted_crops,
                            task_counts=task_counts, filter_types=filter_types,
                            filter_type_icons=filter_type_icons, active_crop_ids=active_crop_ids)
 
