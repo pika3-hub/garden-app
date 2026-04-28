@@ -1065,10 +1065,10 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   }
 }
 
-/* モバイル版: 1列表示 */
+/* モバイル版: 2列表示 */
 @media (max-width: 767px) {
   .dashboard-stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
