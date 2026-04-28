@@ -78,11 +78,12 @@ def new():
     preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
 
     filter_data = _build_filter_data(crops, varieties, locations, active_plantings, harvests)
+    sorted_crops = filter_data.pop('modal_sorted_crops')
 
     return render_template('diary/form.html',
                           entry=None,
                           action='create',
-                          crops=crops,
+                          crops=sorted_crops,
                           varieties=varieties,
                           locations=locations,
                           active_plantings=active_plantings,
@@ -170,11 +171,12 @@ def edit(diary_id):
     }
 
     filter_data = _build_filter_data(crops, varieties, locations, active_plantings, harvests)
+    sorted_crops = filter_data.pop('modal_sorted_crops')
 
     return render_template('diary/form.html',
                           entry=entry,
                           action='update',
-                          crops=crops,
+                          crops=sorted_crops,
                           varieties=varieties,
                           locations=locations,
                           active_plantings=active_plantings,
@@ -330,6 +332,32 @@ def _build_filter_data(crops, varieties, locations, active_plantings, harvests):
                 icons.append({'icon_path': icon, 'image_color': h.get('image_color') or '#4CAF50'})
     harvest_filter_locations = sorted(set(h['location_name'] for h in harvests if h.get('location_name')))
 
+    # モーダル表示用グルーピング
+    modal_sorted_crops = sorted(crops, key=lambda c: c.get('name') or '')
+
+    _v_sorted = sorted(varieties, key=lambda v: v.get('crop_id') or 0)
+    grouped_varieties = [(k, [item for item in g]) for k, g in groupby(_v_sorted, key=lambda v: v.get('crop_id'))]
+    grouped_varieties.sort(key=lambda kv: len(kv[1]), reverse=True)
+
+    _l_sorted = sorted(locations, key=lambda l: l.get('location_type') or '')
+    grouped_locations = [(k, [item for item in g]) for k, g in groupby(_l_sorted, key=lambda l: l.get('location_type') or '')]
+    grouped_locations.sort(key=lambda kv: len(kv[1]), reverse=True)
+    _multi = [kv for kv in grouped_locations if len(kv[1]) > 1]
+    _singles = [items[0] for _, items in grouped_locations if len(items) == 1]
+    if _singles:
+        _multi.append(('その他', _singles))
+    grouped_locations = _multi
+
+    def _ym_p(p):
+        d = p.get('planted_date')
+        return str(d)[:7] if d else ''
+    grouped_plantings = [(k, [item for item in g]) for k, g in groupby(active_plantings, key=_ym_p)]
+
+    def _ym_h(h):
+        d = h.get('harvest_date')
+        return str(d)[:7] if d else ''
+    grouped_harvests = [(k, [item for item in g]) for k, g in groupby(harvests, key=_ym_h)]
+
     return {
         'crop_filter_types': crop_filter_types,
         'crop_filter_type_icons': crop_filter_type_icons,
@@ -342,4 +370,9 @@ def _build_filter_data(crops, varieties, locations, active_plantings, harvests):
         'harvest_filter_types': harvest_filter_types,
         'harvest_filter_type_icons': harvest_filter_type_icons,
         'harvest_filter_locations': harvest_filter_locations,
+        'modal_sorted_crops': modal_sorted_crops,
+        'grouped_varieties': grouped_varieties,
+        'grouped_locations': grouped_locations,
+        'grouped_plantings': grouped_plantings,
+        'grouped_harvests': grouped_harvests,
     }

@@ -77,11 +77,12 @@ def new():
     today = date.today().isoformat()
 
     filter_data = _build_filter_data(crops, varieties, locations, active_plantings)
+    sorted_crops = filter_data.pop('modal_sorted_crops')
 
     return render_template('tasks/form.html',
                           task=None,
                           action='create',
-                          crops=crops,
+                          crops=sorted_crops,
                           varieties=varieties,
                           locations=locations,
                           active_plantings=active_plantings,
@@ -150,11 +151,12 @@ def edit(task_id):
     }
 
     filter_data = _build_filter_data(crops, varieties, locations, active_plantings)
+    sorted_crops = filter_data.pop('modal_sorted_crops')
 
     return render_template('tasks/form.html',
                           task=task,
                           action='update',
-                          crops=crops,
+                          crops=sorted_crops,
                           varieties=varieties,
                           locations=locations,
                           active_plantings=active_plantings,
@@ -265,6 +267,27 @@ def _build_filter_data(crops, varieties, locations, active_plantings):
                 icons.append({'icon_path': icon, 'image_color': p.get('image_color') or '#4CAF50'})
     planting_filter_locations = sorted(set(p['location_name'] for p in active_plantings if p.get('location_name')))
 
+    # モーダル表示用グルーピング
+    modal_sorted_crops = sorted(crops, key=lambda c: c.get('name') or '')
+
+    _v_sorted = sorted(varieties, key=lambda v: v.get('crop_id') or 0)
+    grouped_varieties = [(k, [item for item in g]) for k, g in groupby(_v_sorted, key=lambda v: v.get('crop_id'))]
+    grouped_varieties.sort(key=lambda kv: len(kv[1]), reverse=True)
+
+    _l_sorted = sorted(locations, key=lambda l: l.get('location_type') or '')
+    grouped_locations = [(k, [item for item in g]) for k, g in groupby(_l_sorted, key=lambda l: l.get('location_type') or '')]
+    grouped_locations.sort(key=lambda kv: len(kv[1]), reverse=True)
+    _multi = [kv for kv in grouped_locations if len(kv[1]) > 1]
+    _singles = [items[0] for _, items in grouped_locations if len(items) == 1]
+    if _singles:
+        _multi.append(('その他', _singles))
+    grouped_locations = _multi
+
+    def _ym_p(p):
+        d = p.get('planted_date')
+        return str(d)[:7] if d else ''
+    grouped_plantings = [(k, [item for item in g]) for k, g in groupby(active_plantings, key=_ym_p)]
+
     return {
         'crop_filter_types': crop_filter_types,
         'crop_filter_type_icons': crop_filter_type_icons,
@@ -274,4 +297,8 @@ def _build_filter_data(crops, varieties, locations, active_plantings):
         'planting_filter_types': planting_filter_types,
         'planting_filter_type_icons': planting_filter_type_icons,
         'planting_filter_locations': planting_filter_locations,
+        'modal_sorted_crops': modal_sorted_crops,
+        'grouped_varieties': grouped_varieties,
+        'grouped_locations': grouped_locations,
+        'grouped_plantings': grouped_plantings,
     }

@@ -4,7 +4,7 @@
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="plantingMultiSelectModalLabel"><i class="bi bi-list-check"></i> 植え付けを選択</h5>
+                <h5 class="modal-title" id="plantingMultiSelectModalLabel"><img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="" class="icon-img"> 植え付けを選択</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -37,43 +37,51 @@
                 </div>
                 {% endif %}
                 {% if active_plantings %}
-                <div class="row">
-                    {% for p in active_plantings %}
-                    <div class="col-6 col-md-4 col-lg-3 mb-3" data-ms-filter-card data-ms-filter-group-crop-type="{{ p.crop_type }}" data-ms-filter-group-location-name="{{ p.location_name }}">
-                        <div class="card h-100 card-photo card-bg-location-crop planting-ms-card {{ '' if p.latest_growth_image else 'card-no-image' }} {% if selected_location_crop_ids and p.id|string in selected_location_crop_ids %}ms-card-selected{% endif %}"
-                             role="button"
-                             data-planting-id="{{ p.id }}"
-                             data-crop-name="{{ p.crop_name }}"
-                             data-variety="{{ p.variety or '' }}"
-                             data-icon-path="{{ p.icon_path or '' }}"
-                             data-image-color="{{ p.image_color or '' }}"
-                             data-location-name="{{ p.location_name }}">
-                            {% if p.latest_growth_image %}
-                            <img src="{{ url_for('static', filename='uploads/' + (p.latest_growth_image | thumb_path)) }}"
-                                 class="card-photo-img" alt="{{ p.crop_name }}"
-                                 loading="lazy"
-                                 onerror="this.src='{{ url_for('static', filename='uploads/' + p.latest_growth_image) }}'">
-                            {% if p.latest_growth_image_date %}
-                            <span class="card-img-date-overlay">{{ p.latest_growth_image_date }}</span>
-                            {% endif %}
-                            {% endif %}
-                            <div class="card-photo-badge-top">
-                                <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
-                                {% if p.days_from_planting is not none %}
-                                <span class="badge bg-success">{{ p.days_from_planting }}日目</span>
+                {% for ym, group_items in grouped_plantings %}
+                <section class="date-group" data-group-key="{{ ym }}">
+                    <h3 class="date-group-heading">
+                        {% if ym %}{{ ym[:4] }}年{{ ym[5:7]|int }}月{% else %}日付なし{% endif %}
+                        <small class="text-muted">({{ group_items|length }}件)</small>
+                    </h3>
+                    <div class="row">
+                        {% for p in group_items %}
+                        <div class="col-6 col-md-4 col-lg-3 mb-3" data-ms-filter-card data-ms-filter-group-crop-type="{{ p.crop_type }}" data-ms-filter-group-location-name="{{ p.location_name }}">
+                            <div class="card h-100 card-photo card-bg-location-crop planting-ms-card {{ '' if p.latest_growth_image else 'card-no-image' }} {% if selected_location_crop_ids and p.id|string in selected_location_crop_ids %}ms-card-selected{% endif %}"
+                                 role="button"
+                                 data-planting-id="{{ p.id }}"
+                                 data-crop-name="{{ p.crop_name }}"
+                                 data-variety="{{ p.variety or '' }}"
+                                 data-icon-path="{{ p.icon_path or '' }}"
+                                 data-image-color="{{ p.image_color or '' }}"
+                                 data-location-name="{{ p.location_name }}">
+                                {% if p.latest_growth_image %}
+                                <img src="{{ url_for('static', filename='uploads/' + (p.latest_growth_image | thumb_path)) }}"
+                                     class="card-photo-img" alt="{{ p.crop_name }}"
+                                     loading="lazy"
+                                     onerror="this.src='{{ url_for('static', filename='uploads/' + p.latest_growth_image) }}'">
+                                {% if p.latest_growth_image_date %}
+                                <span class="card-img-date-overlay">{{ p.latest_growth_image_date }}</span>
                                 {% endif %}
-                            </div>
-                            <div class="card-photo-overlay">
-                                <h5 class="card-title">
-                                    {{ crop_label(p.crop_name, p.variety, p.icon_path, p.image_color) }}
-                                    <small>@ {{ p.location_name }}</small>
-                                </h5>
-                                <small>植え付け日: {{ p.planted_date or '未設定' }}</small>
+                                {% endif %}
+                                <div class="card-photo-badge-top">
+                                    <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
+                                    {% if p.days_from_planting is not none %}
+                                    <span class="badge bg-success">{{ p.days_from_planting }}日目</span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-photo-overlay">
+                                    <h5 class="card-title">
+                                        {{ crop_label(p.crop_name, p.variety, p.icon_path, p.image_color) }}
+                                        <small>@ {{ p.location_name }}</small>
+                                    </h5>
+                                    <small>植え付け日: {{ p.planted_date or '未設定' }}</small>
+                                </div>
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
+                </section>
+                {% endfor %}
                 {% else %}
                 <div class="alert alert-warning mb-0">栽培中の植え付けがありません。</div>
                 {% endif %}

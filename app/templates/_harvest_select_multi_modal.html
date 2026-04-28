@@ -4,7 +4,7 @@
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="harvestMultiSelectModalLabel"><i class="bi bi-basket"></i> 収穫を選択</h5>
+                <h5 class="modal-title" id="harvestMultiSelectModalLabel"><img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="" class="icon-img"> 収穫を選択</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -37,42 +37,50 @@
                 </div>
                 {% endif %}
                 {% if harvests %}
-                <div class="row">
-                    {% for harvest in harvests %}
-                    <div class="col-6 col-md-4 col-lg-3 mb-3" data-ms-filter-card data-ms-filter-group-crop-type="{{ harvest.crop_type }}" data-ms-filter-group-location-name="{{ harvest.location_name }}">
-                        <div class="card h-100 card-photo card-bg-harvest harvest-ms-card {{ '' if harvest.image_path else 'card-no-image' }} {% if selected_harvest_ids and harvest.id|string in selected_harvest_ids %}ms-card-selected{% endif %}"
-                             role="button"
-                             data-harvest-id="{{ harvest.id }}"
-                             data-crop-name="{{ harvest.crop_name }}"
-                             data-variety="{{ harvest.variety or '' }}"
-                             data-icon-path="{{ harvest.icon_path or '' }}"
-                             data-image-color="{{ harvest.image_color or '' }}"
-                             data-location-name="{{ harvest.location_name }}"
-                             data-harvest-date="{{ harvest.harvest_date }}"
-                             data-quantity="{{ harvest.quantity or '' }}"
-                             data-unit="{{ harvest.unit or '' }}">
-                            {% if harvest.image_path %}
-                            <img src="{{ url_for('static', filename='uploads/' + (harvest.image_path | thumb_path)) }}"
-                                 class="card-photo-img" alt="{{ harvest.crop_name }}"
-                                 loading="lazy"
-                                 onerror="this.src='{{ url_for('static', filename='uploads/' + harvest.image_path) }}'">
-                            {% endif %}
-                            {% if harvest.days_from_planting is not none %}
-                            <div class="card-photo-badge-top">
-                                <span class="badge bg-success">{{ harvest.days_from_planting }}日目</span>
-                            </div>
-                            {% endif %}
-                            <div class="card-photo-overlay">
-                                <h5 class="card-title">
-                                    {{ crop_label(harvest.crop_name, harvest.variety, harvest.icon_path, harvest.image_color) }}
-                                    <small>@ {{ harvest.location_name }}</small>
-                                </h5>
-                                <small>収穫日: {{ harvest.harvest_date }}{% if harvest.quantity %} / {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}</small>
+                {% for ym, group_items in grouped_harvests %}
+                <section class="date-group" data-group-key="{{ ym }}">
+                    <h3 class="date-group-heading">
+                        {% if ym %}{{ ym[:4] }}年{{ ym[5:7]|int }}月{% else %}日付なし{% endif %}
+                        <small class="text-muted">({{ group_items|length }}件)</small>
+                    </h3>
+                    <div class="row">
+                        {% for harvest in group_items %}
+                        <div class="col-6 col-md-4 col-lg-3 mb-3" data-ms-filter-card data-ms-filter-group-crop-type="{{ harvest.crop_type }}" data-ms-filter-group-location-name="{{ harvest.location_name }}">
+                            <div class="card h-100 card-photo card-bg-harvest harvest-ms-card {{ '' if harvest.image_path else 'card-no-image' }} {% if selected_harvest_ids and harvest.id|string in selected_harvest_ids %}ms-card-selected{% endif %}"
+                                 role="button"
+                                 data-harvest-id="{{ harvest.id }}"
+                                 data-crop-name="{{ harvest.crop_name }}"
+                                 data-variety="{{ harvest.variety or '' }}"
+                                 data-icon-path="{{ harvest.icon_path or '' }}"
+                                 data-image-color="{{ harvest.image_color or '' }}"
+                                 data-location-name="{{ harvest.location_name }}"
+                                 data-harvest-date="{{ harvest.harvest_date }}"
+                                 data-quantity="{{ harvest.quantity or '' }}"
+                                 data-unit="{{ harvest.unit or '' }}">
+                                {% if harvest.image_path %}
+                                <img src="{{ url_for('static', filename='uploads/' + (harvest.image_path | thumb_path)) }}"
+                                     class="card-photo-img" alt="{{ harvest.crop_name }}"
+                                     loading="lazy"
+                                     onerror="this.src='{{ url_for('static', filename='uploads/' + harvest.image_path) }}'">
+                                {% endif %}
+                                {% if harvest.days_from_planting is not none %}
+                                <div class="card-photo-badge-top">
+                                    <span class="badge bg-success">{{ harvest.days_from_planting }}日目</span>
+                                </div>
+                                {% endif %}
+                                <div class="card-photo-overlay">
+                                    <h5 class="card-title">
+                                        {{ crop_label(harvest.crop_name, harvest.variety, harvest.icon_path, harvest.image_color) }}
+                                        <small>@ {{ harvest.location_name }}</small>
+                                    </h5>
+                                    <small>収穫日: {{ harvest.harvest_date }}{% if harvest.quantity %} / {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}</small>
+                                </div>
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
+                </section>
+                {% endfor %}
                 {% else %}
                 <div class="alert alert-warning mb-0">収穫記録がありません。</div>
                 {% endif %}
