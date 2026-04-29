@@ -1,9 +1,11 @@
 {% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
 
 {% block title %}{% if variety %}品種編集{% else %}品種登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
 
 {% block extra_css %}
 <style>
+#cropMultiSelectModal .ms-modal-footer { display: none !important; }
 .crop-icon-circle-preview {
   width: 56px;
   height: 56px;
@@ -55,21 +57,26 @@
             <div class="card-body">
                 <form method="POST" action="{% if variety %}{{ url_for('varieties.update', variety_id=variety.id) }}{% else %}{{ url_for('varieties.create') }}{% endif %}" class="needs-validation" enctype="multipart/form-data" novalidate>
                     <div class="mb-3">
-                        <label for="crop_id" class="form-label">親作物 <span class="text-danger">*</span></label>
-                        <select class="form-select" id="crop_id" name="crop_id" required>
-                            <option value="">作物を選択してください</option>
-                            {% for c in crops %}
-                            <option value="{{ c.id }}"
-                                {% if variety and variety.crop_id == c.id %}selected{% endif %}
-                                {% if preselected_crop and preselected_crop.id == c.id %}selected{% endif %}
-                                data-icon-path="{{ c.icon_path or '' }}"
-                                data-image-color="{{ c.image_color or '#4CAF50' }}">
-                                {{ c.name }}（{{ c.crop_type }}）
-                            </option>
-                            {% endfor %}
-                        </select>
+                        <input type="hidden" id="crop_id_hidden" name="crop_id" value="{% if variety %}{{ variety.crop_id }}{% elif preselected_crop %}{{ preselected_crop.id }}{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">親作物 <span class="text-danger">*</span></label>
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#cropMultiSelectModal">
+                                <i class="bi bi-list-check"></i> 作物を選択
+                            </button>
+                        </div>
+                        <div id="selected-crop-display" class="alert alert-info alert-permanent mb-0 py-2">
+                            {% if variety %}
+                            {{ crop_label(variety.crop_name, None, variety.crop_icon_path, variety.crop_image_color) }}
+                            {% elif preselected_crop %}
+                            {{ crop_label(preselected_crop.name, None, preselected_crop.icon_path, preselected_crop.image_color) }}
+                            {% else %}
+                            <span class="text-muted">作物を選択してください</span>
+                            {% endif %}
+                        </div>
+                        <div id="crop-select-error" class="text-danger small mt-1" style="display:none;">
+                            親作物を選択してください
+                        </div>
                         <div class="form-text">この品種が属する親作物を選択します</div>
-                        <div class="invalid-feedback">親作物を選択してください</div>
                     </div>
 
                     <div class="mb-3">
@@ -156,10 +163,83 @@
     </div>
 </div>
 {% include '_photo_pool_picker_modal.html' %}
+{% include '_crop_select_multi_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>
+<script>
+(function() {
+    var cropIconsUrl = "{{ url_for('static', filename='images/crop_icons/') }}";
+    var cropIdInput = document.getElementById('crop_id_hidden');
+    var displayEl = document.getElementById('selected-crop-display');
+    var errorEl = document.getElementById('crop-select-error');
+
+    // バッジフィルター（モーダル内スコープ）
+    var filterContainer = document.querySelector('.badge-filter-container[data-scope="crop-multi"]');
+    if (filterContainer) {
+        var badges = filterContainer.querySelectorAll('.badge-filter');
+        var cards = document.querySelectorAll('[data-crop-ms-card]');
+        var selected = new Set();
+        badges.forEach(function(badge) {
+            badge.addEventListener('click', function() {
+                var type = this.dataset.type;
+                if (selected.has(type)) {
+                    selected.delete(type);
+                    this.classList.remove('badge-filter-active');
+                    this.classList.add('badge-filter-inactive');
+                } else {
+                    selected.add(type);
+                    this.classList.add('badge-filter-active');
+                    this.classList.remove('badge-filter-inactive');
+                }
+                cards.forEach(function(item) {
+                    var types = item.dataset.filterType ? item.dataset.filterType.split(',') : [];
+                    var show = selected.size === 0 || types.some(function(t) { return selected.has(t); });
+                    item.style.display = show ? '' : 'none';
+                });
+            });
+        });
+    }
+
+    // 作物カードクリック → 即選択＆モーダルを閉じる
+    document.querySelectorAll('.crop-ms-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            var id = card.dataset.cropId;
+            var name = card.dataset.cropName || '';
+            var iconPath = card.dataset.iconPath;
+            var imageColor = card.dataset.imageColor;
+
+            cropIdInput.value = id;
+
+            var iconHtml = '';
+            if (iconPath) {
+                iconHtml = '<img src="' + cropIconsUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+            }
+            displayEl.innerHTML = iconHtml + name;
+            errorEl.style.display = 'none';
+            displayEl.classList.remove('border', 'border-danger');
+
+            var modalEl = document.getElementById('cropMultiSelectModal');
+            var inst = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            inst.hide();
+        });
+    });
+
+    // フォーム送信バリデーション
+    document.querySelector('form.needs-validation').addEventListener('submit', function(e) {
+        if (!cropIdInput.value) {
+            e.preventDefault();
+            e.stopPropagation();
+            errorEl.style.display = '';
+            displayEl.classList.add('border', 'border-danger');
+        } else {
+            errorEl.style.display = 'none';
+            displayEl.classList.remove('border', 'border-danger');
+        }
+    });
+})();
+</script>
 <script>
 (function() {
   const selectedIconInput = document.getElementById('selectedIcon');

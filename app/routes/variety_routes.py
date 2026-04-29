@@ -86,6 +86,20 @@ def detail(variety_id):
                            photo_pool_photos=photo_pool_photos)
 
 
+def _build_crop_filter_data(crops):
+    crop_filter_types = sorted(set(c['crop_type'] for c in crops if c.get('crop_type')))
+    crop_filter_type_icons = {}
+    for c in crops:
+        t = c.get('crop_type')
+        icon = c.get('icon_path')
+        color = c.get('image_color') or '#4CAF50'
+        if t and icon:
+            icons = crop_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': color})
+    return crop_filter_types, crop_filter_type_icons
+
+
 @bp.route('/new')
 def new():
     """品種登録フォーム"""
@@ -94,13 +108,17 @@ def new():
     preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
     crops = Crop.get_all()
     preselected_crop = next((c for c in crops if c['id'] == preselected_crop_id), None) if preselected_crop_id else None
+    crop_filter_types, crop_filter_type_icons = _build_crop_filter_data(crops)
     photo_pool_photos = PhotoPool.get_all()
     return render_template('varieties/form.html', variety=None, action='create',
                            crops=crops,
                            preselected_crop=preselected_crop,
                            crop_icon_list=_get_crop_icon_list(),
                            preselected_photo=preselected_photo,
-                           photo_pool_photos=photo_pool_photos)
+                           photo_pool_photos=photo_pool_photos,
+                           crop_filter_types=crop_filter_types,
+                           crop_filter_type_icons=crop_filter_type_icons,
+                           selected_crop_ids=[str(preselected_crop_id)] if preselected_crop_id else [])
 
 
 @bp.route('/create', methods=['POST'])
@@ -153,12 +171,16 @@ def edit(variety_id):
         flash('品種が見つかりません', 'danger')
         return redirect(url_for('varieties.list'))
     crops = Crop.get_all()
+    crop_filter_types, crop_filter_type_icons = _build_crop_filter_data(crops)
     photo_pool_photos = PhotoPool.get_all()
     return render_template('varieties/form.html', variety=variety, action='update',
                            crops=crops,
                            preselected_crop=None,
                            crop_icon_list=_get_crop_icon_list(),
-                           photo_pool_photos=photo_pool_photos)
+                           photo_pool_photos=photo_pool_photos,
+                           crop_filter_types=crop_filter_types,
+                           crop_filter_type_icons=crop_filter_type_icons,
+                           selected_crop_ids=[str(variety['crop_id'])] if variety.get('crop_id') else [])
 
 
 @bp.route('/<int:variety_id>/update', methods=['POST'])

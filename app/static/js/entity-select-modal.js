@@ -36,6 +36,7 @@
         this.filterCardAttr = opts.filterCardAttr || '';
 
         this.selectedIds = new Set();
+        this.singleSelect = opts.singleSelect || false;
 
         this._init();
     }
@@ -70,6 +71,12 @@
                     self.selectedIds.delete(id);
                     card.classList.remove('ms-card-selected');
                 } else {
+                    if (self.singleSelect) {
+                        self.selectedIds.clear();
+                        self.modalEl.querySelectorAll(self.cardSelector).forEach(function (c) {
+                            c.classList.remove('ms-card-selected');
+                        });
+                    }
                     self.selectedIds.add(id);
                     card.classList.add('ms-card-selected');
                 }
@@ -163,7 +170,11 @@
         var countEl = this.modalEl.querySelector('.ms-selected-count');
         if (countEl) {
             var n = this.selectedIds.size;
-            countEl.textContent = n > 0 ? n + '件選択中' : '未選択';
+            if (this.singleSelect) {
+                countEl.textContent = n > 0 ? '選択済み' : '未選択';
+            } else {
+                countEl.textContent = n > 0 ? n + '件選択中' : '未選択';
+            }
         }
     };
 
