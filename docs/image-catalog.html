@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>画像カタログ — garden-app</title>
+  <style>
+    body {
+      background: #fff;
+      color: #222;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 24px 32px;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 16px; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .toggle-btn {
+      padding: 6px 16px;
+      border: 1px solid #888;
+      border-radius: 4px;
+      background: #f0f0f0;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .toggle-btn:hover { background: #e0e0e0; }
+    .mode-label { font-size: 0.85rem; color: #666; }
+
+    h2 {
+      font-size: 1.1rem;
+      margin: 40px 0 12px;
+      padding: 6px 12px;
+      background: #f0f0f0;
+      border-left: 4px solid #888;
+    }
+
+    /* --- フィットモード（デフォルト） --- */
+    body:not(.raw) .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+    body:not(.raw) .grid.large {
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+    body:not(.raw) figure {
+      margin: 0;
+      padding: 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background: #fafafa;
+    }
+    body:not(.raw) .img-box {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    body:not(.raw) .img-box.sm { height: 80px; }
+    body:not(.raw) .img-box.lg { height: 160px; }
+    body:not(.raw) .img-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    body:not(.raw) figcaption {
+      font-size: 0.7rem;
+      color: #555;
+      word-break: break-all;
+      text-align: center;
+    }
+
+    /* --- 原寸モード --- */
+    body.raw .grid { display: flex; flex-wrap: wrap; gap: 16px; }
+    body.raw figure { margin: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    body.raw .img-box { display: contents; }
+    body.raw figcaption { font-size: 0.7rem; color: #555; }
+  </style>
+</head>
+<body>
+
+<h1>画像カタログ — app/static/images/</h1>
+<div class="toolbar">
+  <button class="toggle-btn" onclick="toggleMode(this)">原寸表示に切り替え</button>
+  <span class="mode-label" id="mode-label">現在: フィット表示</span>
+</div>
+<script>
+  function toggleMode(btn) {
+    const raw = document.body.classList.toggle('raw');
+    btn.textContent = raw ? 'フィット表示に切り替え' : '原寸表示に切り替え';
+    document.getElementById('mode-label').textContent = raw ? '現在: 原寸表示' : '現在: フィット表示';
+  }
+</script>
+
+<!-- エンティティアイコン画像 -->
+<h2>エンティティアイコン画像</h2>
+<div class="grid">
+  <figure><div class="img-box sm"><img src="../app/static/images/icon_calendar.webp" alt=""></div><figcaption>icon_calendar.webp</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/icon_crop.webp" alt=""></div><figcaption>icon_crop.webp</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/icon_diary.webp" alt=""></div><figcaption>icon_diary.webp</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/icon_harvest.webp" alt=""></div><figcaption>icon_harvest.webp</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/icon_home.webp" alt=""></div><figcaption>icon_home.webp</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/icon_location.webp" alt=""></div><figcaption>icon_location.webp</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/icon_location_crop.webp" alt=""></div><figcaption>icon_location_crop.webp</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/icon_photo.webp" alt=""></div><figcaption>icon_photo.webp</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/icon_tasklist.webp" alt=""></div><figcaption>icon_tasklist.webp</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/icon_variety.webp" alt=""></div><figcaption>icon_variety.webp</figcaption></figure>
+</div>
+
+<!-- エンティティカード画像 -->
+<h2>エンティティカード画像</h2>
+<div class="grid large">
+  <figure><div class="img-box lg"><img src="../app/static/images/card_calendar.webp" alt=""></div><figcaption>card_calendar.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/card_crop.webp" alt=""></div><figcaption>card_crop.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/card_diary.webp" alt=""></div><figcaption>card_diary.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/card_harvest.webp" alt=""></div><figcaption>card_harvest.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/card_location.webp" alt=""></div><figcaption>card_location.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/card_location_crop.webp" alt=""></div><figcaption>card_location_crop.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/card_tasklist.webp" alt=""></div><figcaption>card_tasklist.webp</figcaption></figure>
+</div>
+
+<!-- エンティティ背景画像 -->
+<h2>エンティティ背景画像</h2>
+<div class="grid large">
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_crop.webp" alt=""></div><figcaption>bg_crop.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_location.webp" alt=""></div><figcaption>bg_location.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_location_crop.webp" alt=""></div><figcaption>bg_location_crop.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_harvest.webp" alt=""></div><figcaption>bg_harvest.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_tasklist.webp" alt=""></div><figcaption>bg_tasklist.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_diary.webp" alt=""></div><figcaption>bg_diary.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_calendar.webp" alt=""></div><figcaption>bg_calendar.webp</figcaption></figure>
+</div>
+
+<!-- 天気背景画像 -->
+<h2>天気背景画像</h2>
+<div class="grid large">
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_sunny.webp" alt=""></div><figcaption>bg_sunny.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_cloudy.webp" alt=""></div><figcaption>bg_cloudy.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_sun_cloud.webp" alt=""></div><figcaption>bg_sun_cloud.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_cloud_rain.webp" alt=""></div><figcaption>bg_cloud_rain.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_rain.webp" alt=""></div><figcaption>bg_rain.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/bg_snow.webp" alt=""></div><figcaption>bg_snow.webp</figcaption></figure>
+</div>
+
+<!-- 天気アイコン画像 -->
+<h2>天気アイコン画像</h2>
+<div class="grid">
+  <figure><div class="img-box sm"><img src="../app/static/images/weather_sunny.png" alt=""></div><figcaption>weather_sunny.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/weather_cloudy.png" alt=""></div><figcaption>weather_cloudy.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/weather_sun_cloud.png" alt=""></div><figcaption>weather_sun_cloud.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/weather_cloud_rain.png" alt=""></div><figcaption>weather_cloud_rain.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/weather_rain.png" alt=""></div><figcaption>weather_rain.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/weather_snow.png" alt=""></div><figcaption>weather_snow.png</figcaption></figure>
+</div>
+
+<!-- 作物アイコン画像 -->
+<h2>作物アイコン画像</h2>
+<div class="grid">
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_001.png" alt=""></div><figcaption>icon_001.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_002.png" alt=""></div><figcaption>icon_002.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_003.png" alt=""></div><figcaption>icon_003.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_004.png" alt=""></div><figcaption>icon_004.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_005.png" alt=""></div><figcaption>icon_005.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_006.png" alt=""></div><figcaption>icon_006.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_007.png" alt=""></div><figcaption>icon_007.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_008.png" alt=""></div><figcaption>icon_008.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_009.png" alt=""></div><figcaption>icon_009.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_010.png" alt=""></div><figcaption>icon_010.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_011.png" alt=""></div><figcaption>icon_011.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_012.png" alt=""></div><figcaption>icon_012.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_013.png" alt=""></div><figcaption>icon_013.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_014.png" alt=""></div><figcaption>icon_014.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_015.png" alt=""></div><figcaption>icon_015.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_016.png" alt=""></div><figcaption>icon_016.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_017.png" alt=""></div><figcaption>icon_017.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_018.png" alt=""></div><figcaption>icon_018.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_019.png" alt=""></div><figcaption>icon_019.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_020.png" alt=""></div><figcaption>icon_020.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_021.png" alt=""></div><figcaption>icon_021.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_022.png" alt=""></div><figcaption>icon_022.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_023.png" alt=""></div><figcaption>icon_023.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_024.png" alt=""></div><figcaption>icon_024.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_025.png" alt=""></div><figcaption>icon_025.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_026.png" alt=""></div><figcaption>icon_026.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_027.png" alt=""></div><figcaption>icon_027.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_028.png" alt=""></div><figcaption>icon_028.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_029.png" alt=""></div><figcaption>icon_029.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_030.png" alt=""></div><figcaption>icon_030.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_031.png" alt=""></div><figcaption>icon_031.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_032.png" alt=""></div><figcaption>icon_032.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_033.png" alt=""></div><figcaption>icon_033.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_034.png" alt=""></div><figcaption>icon_034.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_035.png" alt=""></div><figcaption>icon_035.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_036.png" alt=""></div><figcaption>icon_036.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_037.png" alt=""></div><figcaption>icon_037.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_038.png" alt=""></div><figcaption>icon_038.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_039.png" alt=""></div><figcaption>icon_039.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_040.png" alt=""></div><figcaption>icon_040.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_041.png" alt=""></div><figcaption>icon_041.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_042.png" alt=""></div><figcaption>icon_042.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_043.png" alt=""></div><figcaption>icon_043.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_044.png" alt=""></div><figcaption>icon_044.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_045.png" alt=""></div><figcaption>icon_045.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_046.png" alt=""></div><figcaption>icon_046.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_047.png" alt=""></div><figcaption>icon_047.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_048.png" alt=""></div><figcaption>icon_048.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_049.png" alt=""></div><figcaption>icon_049.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_050.png" alt=""></div><figcaption>icon_050.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_051.png" alt=""></div><figcaption>icon_051.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_052.png" alt=""></div><figcaption>icon_052.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_053.png" alt=""></div><figcaption>icon_053.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_054.png" alt=""></div><figcaption>icon_054.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_055.png" alt=""></div><figcaption>icon_055.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_056.png" alt=""></div><figcaption>icon_056.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_057.png" alt=""></div><figcaption>icon_057.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_058.png" alt=""></div><figcaption>icon_058.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_059.png" alt=""></div><figcaption>icon_059.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_060.png" alt=""></div><figcaption>icon_060.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_061.png" alt=""></div><figcaption>icon_061.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_062.png" alt=""></div><figcaption>icon_062.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_063.png" alt=""></div><figcaption>icon_063.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_064.png" alt=""></div><figcaption>icon_064.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_065.png" alt=""></div><figcaption>icon_065.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_066.png" alt=""></div><figcaption>icon_066.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_067.png" alt=""></div><figcaption>icon_067.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_068.png" alt=""></div><figcaption>icon_068.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_069.png" alt=""></div><figcaption>icon_069.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_070.png" alt=""></div><figcaption>icon_070.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_071.png" alt=""></div><figcaption>icon_071.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_072.png" alt=""></div><figcaption>icon_072.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_073.png" alt=""></div><figcaption>icon_073.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_074.png" alt=""></div><figcaption>icon_074.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_075.png" alt=""></div><figcaption>icon_075.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_076.png" alt=""></div><figcaption>icon_076.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_077.png" alt=""></div><figcaption>icon_077.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_078.png" alt=""></div><figcaption>icon_078.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_079.png" alt=""></div><figcaption>icon_079.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_080.png" alt=""></div><figcaption>icon_080.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_081.png" alt=""></div><figcaption>icon_081.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_082.png" alt=""></div><figcaption>icon_082.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_083.png" alt=""></div><figcaption>icon_083.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_084.png" alt=""></div><figcaption>icon_084.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_085.png" alt=""></div><figcaption>icon_085.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_086.png" alt=""></div><figcaption>icon_086.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_087.png" alt=""></div><figcaption>icon_087.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_088.png" alt=""></div><figcaption>icon_088.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_089.png" alt=""></div><figcaption>icon_089.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_090.png" alt=""></div><figcaption>icon_090.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_091.png" alt=""></div><figcaption>icon_091.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_092.png" alt=""></div><figcaption>icon_092.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_093.png" alt=""></div><figcaption>icon_093.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_094.png" alt=""></div><figcaption>icon_094.png</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/crop_icons/icon_095.png" alt=""></div><figcaption>icon_095.png</figcaption></figure>
+</div>
+
+<!-- 見取り図背景画像 -->
+<h2>見取り図背景画像</h2>
+<div class="grid large">
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_default.webp" alt=""></div><figcaption>bg_image_default.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_001.webp" alt=""></div><figcaption>bg_image_001.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_002.webp" alt=""></div><figcaption>bg_image_002.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_003.webp" alt=""></div><figcaption>bg_image_003.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_004.webp" alt=""></div><figcaption>bg_image_004.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_005.webp" alt=""></div><figcaption>bg_image_005.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_006.webp" alt=""></div><figcaption>bg_image_006.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_007.webp" alt=""></div><figcaption>bg_image_007.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_008.webp" alt=""></div><figcaption>bg_image_008.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_009.webp" alt=""></div><figcaption>bg_image_009.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_010.webp" alt=""></div><figcaption>bg_image_010.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_011.webp" alt=""></div><figcaption>bg_image_011.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_012.webp" alt=""></div><figcaption>bg_image_012.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_013.webp" alt=""></div><figcaption>bg_image_013.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_014.webp" alt=""></div><figcaption>bg_image_014.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_015.webp" alt=""></div><figcaption>bg_image_015.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_016.webp" alt=""></div><figcaption>bg_image_016.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_017.webp" alt=""></div><figcaption>bg_image_017.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_018.webp" alt=""></div><figcaption>bg_image_018.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_019.webp" alt=""></div><figcaption>bg_image_019.webp</figcaption></figure>
+  <figure><div class="img-box lg"><img src="../app/static/images/location_bg_images/bg_image_020.webp" alt=""></div><figcaption>bg_image_020.webp</figcaption></figure>
+</div>
+
+<!-- その他画像 -->
+<h2>その他画像</h2>
+<div class="grid">
+  <figure><div class="img-box sm"><img src="../app/static/images/bg_sky.webp" alt=""></div><figcaption>bg_sky.webp</figcaption></figure>
+  <figure><div class="img-box sm"><img src="../app/static/images/favicon.ico" alt=""></div><figcaption>favicon.ico</figcaption></figure>
+</div>
+
+</body>
+</html>
