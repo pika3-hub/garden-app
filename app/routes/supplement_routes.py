@@ -11,6 +11,7 @@ bp = Blueprint('supplements', __name__, url_prefix='/supplements')
 # エンティティ詳細ページへのリダイレクト設定
 ENTITY_DETAIL_ROUTES = {
     'crop': ('crops.detail', 'crop_id'),
+    'variety': ('varieties.detail', 'variety_id'),
     'location': ('locations.detail', 'location_id'),
     'diary': ('diary.detail', 'diary_id'),
     'task': ('tasks.detail', 'task_id'),
