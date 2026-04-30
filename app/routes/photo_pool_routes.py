@@ -11,6 +11,7 @@ TARGET_ENDPOINTS = {
     'diary': 'diary.new',
     'harvest': 'harvests.new',
     'crop': 'crops.new',
+    'variety': 'varieties.new',
     'location': 'locations.new',
 }
 

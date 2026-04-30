@@ -143,19 +143,11 @@
                 <p class="mb-2 small">{{ photo.notes }}</p>
                 {% endif %}
 
-                <div class="btn-group btn-group-sm w-100 mb-2" role="group">
-                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
-                        <i class="bi bi-plus-circle"></i> この写真で登録
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='diary') }}"><img src="{{ url_for('static', filename='images/icon_diary.webp') }}" class="icon-img me-1"> 日記</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='harvest') }}"><img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" class="icon-img me-1"> 収穫</a></li>
-                        <li><a class="dropdown-item js-pick-planting" href="#" data-photo-id="{{ photo.id }}"><img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" class="icon-img me-1"> 栽培記録</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='crop') }}"><img src="{{ url_for('static', filename='images/icon_crop.webp') }}" class="icon-img me-1"> 作物</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('photo_pool.use', photo_id=photo.id, target='location') }}"><img src="{{ url_for('static', filename='images/icon_location.webp') }}" class="icon-img me-1"> 場所</a></li>
-                    </ul>
-                </div>
+                <button type="button"
+                        class="btn btn-success btn-sm w-100 mb-2 js-open-entity-modal"
+                        data-photo-id="{{ photo.id }}">
+                    <i class="bi bi-plus-circle"></i> この写真で登録
+                </button>
 
                 <div class="d-flex gap-1">
                     <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" data-bs-toggle="modal" data-bs-target="#editModal{{ photo.id }}">
@@ -198,6 +190,47 @@
     <i class="bi bi-info-circle"></i> まだ写真がプールにありません。上のフォームからアップロードしてください。
 </div>
 {% endif %}
+
+<!-- 登録先エンティティ選択モーダル -->
+<div class="modal fade" id="entitySelectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> 登録先を選択</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="list-group list-group-flush">
+                    <a href="#" class="list-group-item list-group-item-action" data-target="diary">
+                        <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" class="icon-img me-2" alt=""> 日記
+                        <i class="bi bi-chevron-right float-end mt-1"></i>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-target="harvest">
+                        <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" class="icon-img me-2" alt=""> 収穫
+                        <i class="bi bi-chevron-right float-end mt-1"></i>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" id="entity-pick-planting">
+                        <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" class="icon-img me-2" alt=""> 栽培記録
+                        <i class="bi bi-chevron-right float-end mt-1"></i>
+                    </a>
+                    <hr class="my-0">
+                    <a href="#" class="list-group-item list-group-item-action" data-target="crop">
+                        <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" class="icon-img me-2" alt=""> 作物
+                        <i class="bi bi-chevron-right float-end mt-1"></i>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-target="variety">
+                        <img src="{{ url_for('static', filename='images/icon_variety.webp') }}" class="icon-img me-2" alt=""> 品種
+                        <i class="bi bi-chevron-right float-end mt-1"></i>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-target="location">
+                        <img src="{{ url_for('static', filename='images/icon_location.webp') }}" class="icon-img me-2" alt=""> 場所
+                        <i class="bi bi-chevron-right float-end mt-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- 栽培記録: 植え付け選択モーダル（収穫フォームと同じUIを流用） -->
 <div class="modal fade" id="plantingSelectModal" tabindex="-1" aria-hidden="true">
@@ -281,20 +314,36 @@
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/badge-filter.js') }}"></script>
 <script>
-// 栽培記録: 植え付け選択モーダル連携
+// 「この写真で登録」エンティティ選択モーダル連携
 document.addEventListener('DOMContentLoaded', function() {
     let currentPhotoId = null;
-    const modalEl = document.getElementById('plantingSelectModal');
-    const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+    const entityModalEl = document.getElementById('entitySelectModal');
+    const entityModal = entityModalEl ? new bootstrap.Modal(entityModalEl) : null;
+    const plantingModalEl = document.getElementById('plantingSelectModal');
+    const plantingModal = plantingModalEl ? new bootstrap.Modal(plantingModalEl) : null;
 
-    document.querySelectorAll('.js-pick-planting').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
+    // 「この写真で登録」ボタン → エンティティ選択モーダルを開く
+    document.querySelectorAll('.js-open-entity-modal').forEach(function(btn) {
+        btn.addEventListener('click', function() {
             currentPhotoId = this.dataset.photoId;
-            if (modal) modal.show();
+            entityModalEl.querySelectorAll('[data-target]').forEach(function(link) {
+                link.href = '/photo_pool/' + currentPhotoId + '/use?target=' + link.dataset.target;
+            });
+            if (entityModal) entityModal.show();
         });
     });
 
+    // 栽培記録アイテム → エンティティモーダルを閉じて植え付け選択モーダルへ
+    const plantingPickItem = document.getElementById('entity-pick-planting');
+    if (plantingPickItem) {
+        plantingPickItem.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (entityModalEl) bootstrap.Modal.getInstance(entityModalEl)?.hide();
+            if (plantingModal) plantingModal.show();
+        });
+    }
+
+    // 植え付けカード選択 → 栽培記録登録フォームへ遷移
     document.querySelectorAll('#plantingSelectModal .planting-select-card').forEach(function(card) {
         card.addEventListener('click', function() {
             const lcId = card.dataset.lcId;
