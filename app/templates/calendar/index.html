@@ -50,6 +50,10 @@
             <span>収穫</span>
         </div>
         <div class="legend-item">
+            <img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="料理">
+            <span>料理</span>
+        </div>
+        <div class="legend-item">
             <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="日記">
             <span>日記</span>
         </div>
@@ -101,6 +105,7 @@
                             ('harvests',       'icon_harvest.webp',       '収穫',     day_data.get('harvests', [])),
                             ('diaries',        'icon_diary.webp',         '日記',     day_data.get('diaries', [])),
                             ('tasks',          'icon_tasklist.webp',      'タスク',   day_data.get('tasks', [])),
+                            ('cooking',        'icon_cooking.webp',       '料理',     day_data.get('cooking', [])),
                         ] %}
                         {% for type_key, icon, type_label, items in type_defs %}
                         {% if items %}

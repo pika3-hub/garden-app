@@ -10,6 +10,7 @@ bp = Blueprint('photo_pool', __name__, url_prefix='/photo_pool')
 TARGET_ENDPOINTS = {
     'diary': 'diary.new',
     'harvest': 'harvests.new',
+    'cooking': 'cooking.new',
     'crop': 'crops.new',
     'variety': 'varieties.new',
     'location': 'locations.new',

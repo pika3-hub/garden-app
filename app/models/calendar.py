@@ -18,7 +18,7 @@ class Calendar:
         return {
             'crops': [], 'locations': [], 'diaries': [],
             'location_crops': [], 'harvests': [], 'tasks': [],
-            'growth_records': [], 'varieties': []
+            'growth_records': [], 'varieties': [], 'cooking': []
         }
 
     @staticmethod
@@ -178,6 +178,29 @@ class Calendar:
                 'unit': harvest['unit'],
                 'label': f"{crop_label}{qty_str}",
                 'url': f"/harvests/{harvest['id']}"
+            })
+
+        # 料理を取得
+        cooking_items = db.execute(
+            '''SELECT id, title, category, DATE(cooked_date) as date
+               FROM cooking
+               WHERE DATE(cooked_date) BETWEEN ? AND ?
+               ORDER BY cooked_date''',
+            (start_date, end_date)
+        ).fetchall()
+        for c in cooking_items:
+            date_str = c['date']
+            if date_str not in result:
+                result[date_str] = Calendar._empty_date_bucket()
+            label = c['title']
+            if c['category']:
+                label += f"（{c['category']}）"
+            result[date_str]['cooking'].append({
+                'id': c['id'],
+                'title': c['title'],
+                'category': c['category'] or '',
+                'label': label,
+                'url': f"/cooking/{c['id']}"
             })
 
         # タスクを取得
