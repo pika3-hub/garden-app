@@ -1180,3 +1180,85 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   padding-bottom: 0.25rem;
   margin: 1rem 0 0.75rem;
 }
+
+/* ==========================================================================
+   Dashboard Timeline (ホーム画面の日付グループ型タイムライン)
+   ========================================================================== */
+.timeline-date-header {
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: .4rem .75rem .3rem;
+  background: #f8f5f0;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.02em;
+}
+.timeline-item {
+  color: var(--ink);
+  transition: background .12s;
+}
+.timeline-item:last-child {
+  border-bottom: none !important;
+}
+.timeline-item:hover {
+  background: #f8f5f0;
+  color: var(--forest);
+}
+.timeline-item-title {
+  font-size: .875rem;
+  font-weight: 500;
+}
+.timeline-crop-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.timeline-type-emoji {
+  font-size: 1rem;
+  width: 22px;
+  text-align: center;
+}
+
+.timeline-badge-diary           { background-color: var(--cobalt); }
+.timeline-badge-planting        { background-color: #198754; }
+.timeline-badge-planting_record { background-color: #0a8484; }
+.timeline-badge-harvest         { background-color: var(--terracotta); }
+.timeline-badge-cooking         { background-color: var(--terracotta-light); }
+
+/* デスクトップ: 種別行 */
+.tl-type-row { min-height: 2.25rem; }
+.tl-type-badge { min-width: 64px; text-align: center; margin-top: 2px; }
+
+/* デスクトップ: チップ */
+.tl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: .8125rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s;
+}
+.tl-chip:hover {
+  background: var(--cream);
+  border-color: var(--forest-light);
+  color: var(--forest);
+}
+/* 期限区分バッジ (order 0=期限切れ 1=今日 2=明日 3=X日後) */
+.tl-urgency-0 { background-color: var(--terracotta); }          /* 期限切れ: 赤 */
+.tl-urgency-1 { background-color: var(--amber); color: #fff; }  /* 今日: 琥珀 */
+.tl-urgency-2 { background-color: var(--teal);  color: #fff; }  /* 明日: ティール */
+.tl-urgency-3 { background-color: var(--ink-muted); }           /* X日後: グレー */
+
+.tl-chip-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.tl-chip-emoji { font-size: .875rem; line-height: 1; }
