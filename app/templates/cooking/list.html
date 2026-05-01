@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}料理一覧 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="icon-img icon-img-lg"> 料理<span class="text-muted fs-6"> - 登録済みの料理 ({{ items|length }}件)</span></h1>
+        <p class="text-muted mb-0">収穫した野菜を使った料理を記録できます。</p>
+    </div>
+    <div class="col-md-6 text-end d-flex justify-content-end align-items-center gap-2">
+        <form method="GET" action="{{ url_for('cooking.list') }}" class="d-flex gap-2">
+            <input type="text" name="keyword" class="form-control form-control-sm" placeholder="タイトル、メモで検索" value="{{ keyword }}" style="width: 160px;">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-search"></i>
+            </button>
+            {% if keyword or category %}
+            <a href="{{ url_for('cooking.list') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x-circle"></i>
+            </a>
+            {% endif %}
+        </form>
+        <a href="{{ url_for('cooking.new') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> 料理を追加
+        </a>
+    </div>
+</div>
+
+{% if categories %}
+<div class="mb-3">
+    <div id="badge-filter-container" class="badge-filter-container">
+        {% for cat in categories %}
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ cat }}">{{ cat }}</span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if items %}
+<p class="text-muted mb-3"><span id="filter-count" data-suffix="件の料理">{{ items|length }}件の料理</span></p>
+<div id="filter-empty-msg" class="alert alert-info" style="display:none;">
+    <i class="bi bi-info-circle"></i> 該当する料理がありません。
+</div>
+{% for ym, group_items in grouped_items %}
+<section class="date-group" data-group-key="{{ ym }}">
+    <h3 class="date-group-heading">
+        {% if ym %}{{ ym[:4] }}年{{ ym[5:7]|int }}月{% else %}日付なし{% endif %}
+        <small class="text-muted">({{ group_items|length }}件)</small>
+    </h3>
+    <div class="row">
+        {% for cooking in group_items %}
+        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ cooking.category or '' }}">
+            <a href="{{ url_for('cooking.detail', cooking_id=cooking.id) }}" class="card h-100 card-photo card-bg-cooking {{ '' if cooking.image_path else 'card-no-image' }}">
+                {% if cooking.image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + (cooking.image_path | thumb_path)) }}"
+                     class="card-photo-img" alt="{{ cooking.title }}"
+                     loading="lazy"
+                     onerror="this.src='{{ url_for('static', filename='uploads/' + cooking.image_path) }}'">
+                {% else %}
+                <img src="{{ url_for('static', filename='images/card_cooking.webp') }}"
+                     class="card-photo-img card-photo-img-fallback card-photo-img-fallback-center" alt="料理">
+                {% endif %}
+                {% if cooking.category %}
+                <div class="card-photo-badge-top">
+                    <span class="badge bg-warning text-dark">{{ cooking.category }}</span>
+                </div>
+                {% endif %}
+                <div class="card-photo-overlay">
+                    <div class="mb-1">
+                        <span class="fw-bold">{{ cooking.cooked_date }}</span>
+                    </div>
+                    <h5 class="card-title">{{ cooking.title }}</h5>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endfor %}
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    {% if keyword or category %}
+    検索条件に一致する料理が見つかりませんでした。
+    {% else %}
+    まだ料理が登録されていません。<a href="{{ url_for('cooking.new') }}" class="alert-link">新規登録</a>から追加してください。
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/badge-filter.js') }}"></script>
+{% endblock %}

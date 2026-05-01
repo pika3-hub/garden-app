@@ -46,7 +46,7 @@ def create_app(config_name='default'):
     from app.routes import (
         crop_routes, variety_routes, location_routes, diary_routes,
         harvest_routes, calendar_routes, task_routes, planting_routes,
-        supplement_routes, photo_pool_routes
+        supplement_routes, photo_pool_routes, cooking_routes
     )
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(variety_routes.bp)
@@ -58,6 +58,7 @@ def create_app(config_name='default'):
     app.register_blueprint(planting_routes.bp)
     app.register_blueprint(supplement_routes.bp)
     app.register_blueprint(photo_pool_routes.bp)
+    app.register_blueprint(cooking_routes.bp)
 
     # ホームページルート
     @app.route('/')

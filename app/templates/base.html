@@ -73,6 +73,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        {% set is_cooking = request.endpoint and request.endpoint.startswith('cooking.') %}
+                        <a class="nav-link {% if is_cooking %}active{% endif %}" href="{{ url_for('cooking.list') }}" {% if is_cooking %}aria-current="page"{% endif %}>
+                            <img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="icon-img icon-img-lg"> 料理
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         {% set is_diary = request.endpoint and request.endpoint.startswith('diary.') %}
                         <a class="nav-link {% if is_diary %}active{% endif %}" href="{{ url_for('diary.list') }}" {% if is_diary %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="" class="icon-img icon-img-lg"> 日記

@@ -16,6 +16,8 @@
 | tasks | タスク | id |
 | task_relations | タスク×関連エンティティ（多対多） | id |
 | planting_records | 栽培観察記録（植え付けに紐づく） | id |
+| cooking | 料理記録 | id |
+| cooking_relations | 料理×関連エンティティ（多対多、relation_type で区別） | id |
 
 ### ビュー
 
@@ -185,7 +187,7 @@
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | INTEGER | 主キー |
-| entity_type | VARCHAR(20) | エンティティ種別（crop/variety/location/diary/task/harvest） |
+| entity_type | VARCHAR(20) | エンティティ種別（crop/variety/location/diary/task/harvest/cooking） |
 | entity_id | INTEGER | 親エンティティのID |
 | supplement_type | VARCHAR(20) | 補足種別（text/image/url/youtube） |
 | title | VARCHAR(200) | 表示ラベル（任意） |

@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}{% if item %}料理編集{% else %}料理登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="icon-img icon-img-lg">
+            {% if item %}料理編集{% else %}料理登録{% endif %}
+        </h1>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{% if item %}{{ url_for('cooking.update', cooking_id=item.id) }}{% else %}{{ url_for('cooking.create') }}{% endif %}" class="needs-validation" enctype="multipart/form-data" novalidate>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="title" class="form-label">タイトル <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ item.title if item else '' }}" required>
+                            <div class="invalid-feedback">タイトルを入力してください</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="cooked_date" class="form-label">調理日 <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="cooked_date" name="cooked_date" value="{{ item.cooked_date if item else today }}" required>
+                            <div class="invalid-feedback">調理日を入力してください</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="category" class="form-label">カテゴリ</label>
+                        <input type="text" class="form-control" id="category" name="category"
+                               value="{{ item.category if item else '' }}"
+                               list="category-suggestions"
+                               placeholder="例: サラダ、炒め物、スープ">
+                        {% if categories %}
+                        <datalist id="category-suggestions">
+                            {% for cat in categories %}
+                            <option value="{{ cat }}">
+                            {% endfor %}
+                        </datalist>
+                        {% endif %}
+                        <div class="form-text">料理の種類・カテゴリを入力できます</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">メモ</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="6" placeholder="レシピ、食材のメモ、食べた感想など">{{ item.notes if item else '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image" class="form-label">画像</label>
+                        {% if item and item.image_path %}
+                        <div class="mb-2">
+                            <img src="{{ url_for('static', filename='uploads/' + item.image_path) }}" alt="現在の画像" class="img-thumbnail" style="max-height: 150px;">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="delete_image" name="delete_image" value="1">
+                                <label class="form-check-label" for="delete_image">画像を削除する</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% include '_photo_pool_preselected.html' %}
+                    </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-1"><i class="bi bi-link-45deg"></i> 関連付け</h5>
+                    <div class="form-text mb-3">関連する作物・品種・植え付け・収穫を選択できます。「選択」ボタンからカード形式で複数選択可能です</div>
+
+                    <div class="row">
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">作物</label>
+                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#cropMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-crops-display" class="selected-items-chips"></div>
+                            <div id="crop-hidden-inputs">
+                                {% if selected_relations and selected_relations.crop_ids %}
+                                {% for id in selected_relations.crop_ids %}
+                                <input type="hidden" name="crop_ids" value="{{ id }}">
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">品種</label>
+                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#varietyMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-varieties-display" class="selected-items-chips"></div>
+                            <div id="variety-hidden-inputs">
+                                {% if selected_relations and selected_relations.variety_ids %}
+                                {% for id in selected_relations.variety_ids %}
+                                <input type="hidden" name="variety_ids" value="{{ id }}">
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">植え付け</label>
+                                <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#plantingMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-plantings-display" class="selected-items-chips"></div>
+                            <div id="planting-hidden-inputs">
+                                {% if selected_relations and selected_relations.location_crop_ids %}
+                                {% for id in selected_relations.location_crop_ids %}
+                                <input type="hidden" name="location_crop_ids" value="{{ id }}">
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">収穫</label>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#harvestMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-harvests-display" class="selected-items-chips"></div>
+                            <div id="harvest-hidden-inputs">
+                                {% if selected_relations and selected_relations.harvest_ids %}
+                                {% for id in selected_relations.harvest_ids %}
+                                <input type="hidden" name="harvest_ids" value="{{ id }}">
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('cooking.list') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> {% if item %}料理を更新{% else %}料理を追加{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% include '_photo_pool_picker_modal.html' %}
+{% include '_crop_select_multi_modal.html' %}
+{% include '_variety_select_multi_modal.html' %}
+{% include '_planting_select_multi_modal.html' %}
+{% include '_harvest_select_multi_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/entity-select-modal.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var cropIconBaseUrl = '{{ url_for("static", filename="images/crop_icons/") }}';
+
+    function cropBadgeRenderer(card) {
+        var name = card.dataset.cropName;
+        var variety = card.dataset.variety;
+        var iconPath = card.dataset.iconPath;
+        var imageColor = card.dataset.imageColor;
+        var label = variety ? variety + '(' + name + ')' : name;
+        var iconHtml = '';
+        if (iconPath) {
+            iconHtml = '<img src="' + cropIconBaseUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+        }
+        return iconHtml + label;
+    }
+
+    new MultiSelectModal({
+        modalId: 'cropMultiSelectModal',
+        cardSelector: '.crop-ms-card',
+        idAttribute: 'cropId',
+        inputContainerId: 'crop-hidden-inputs',
+        inputName: 'crop_ids',
+        displayContainerId: 'selected-crops-display',
+        badgeRenderer: cropBadgeRenderer,
+        filterMode: 'legacy',
+        filterScope: 'crop-multi',
+        filterCardAttr: 'data-crop-ms-card'
+    });
+
+    function varietyBadgeRenderer(card) {
+        var name = card.dataset.cropName;
+        var variety = card.dataset.varietyName;
+        var iconPath = card.dataset.iconPath;
+        var imageColor = card.dataset.imageColor;
+        var label = variety + '(' + name + ')';
+        var iconHtml = '';
+        if (iconPath) {
+            iconHtml = '<img src="' + cropIconBaseUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+        }
+        return iconHtml + label;
+    }
+
+    new MultiSelectModal({
+        modalId: 'varietyMultiSelectModal',
+        cardSelector: '.variety-ms-card',
+        idAttribute: 'varietyId',
+        inputContainerId: 'variety-hidden-inputs',
+        inputName: 'variety_ids',
+        displayContainerId: 'selected-varieties-display',
+        badgeRenderer: varietyBadgeRenderer,
+        filterMode: 'legacy',
+        filterScope: 'variety-multi',
+        filterCardAttr: 'data-variety-ms-card'
+    });
+
+    new MultiSelectModal({
+        modalId: 'plantingMultiSelectModal',
+        cardSelector: '.planting-ms-card',
+        idAttribute: 'plantingId',
+        inputContainerId: 'planting-hidden-inputs',
+        inputName: 'location_crop_ids',
+        displayContainerId: 'selected-plantings-display',
+        badgeRenderer: function(card) {
+            var name = card.dataset.cropName;
+            var variety = card.dataset.variety;
+            var locationName = card.dataset.locationName;
+            var iconPath = card.dataset.iconPath;
+            var imageColor = card.dataset.imageColor;
+            var label = variety ? variety + '(' + name + ')' : name;
+            var iconHtml = '';
+            if (iconPath) {
+                iconHtml = '<img src="' + cropIconBaseUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+            }
+            return iconHtml + label + ' <small>@ ' + locationName + '</small>';
+        },
+        filterMode: 'multi'
+    });
+
+    new MultiSelectModal({
+        modalId: 'harvestMultiSelectModal',
+        cardSelector: '.harvest-ms-card',
+        idAttribute: 'harvestId',
+        inputContainerId: 'harvest-hidden-inputs',
+        inputName: 'harvest_ids',
+        displayContainerId: 'selected-harvests-display',
+        badgeRenderer: function(card) {
+            var name = card.dataset.cropName;
+            var variety = card.dataset.variety;
+            var harvestDate = card.dataset.harvestDate;
+            var quantity = card.dataset.quantity;
+            var unit = card.dataset.unit;
+            var iconPath = card.dataset.iconPath;
+            var imageColor = card.dataset.imageColor;
+            var label = variety ? variety + '(' + name + ')' : name;
+            var iconHtml = '';
+            if (iconPath) {
+                iconHtml = '<img src="' + cropIconBaseUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+            }
+            var extra = harvestDate || '';
+            if (quantity) extra += ' ' + quantity + (unit || '');
+            return iconHtml + label + (extra ? ' <small>' + extra + '</small>' : '');
+        },
+        filterMode: 'multi'
+    });
+});
+</script>
+{% endblock %}

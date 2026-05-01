@@ -17,7 +17,7 @@ _YOUTUBE_PATTERNS = [
 # タイムスタンプ抽出パターン
 _TIME_PATTERN = re.compile(r'[?&](?:t|start)=(\d+)')
 
-VALID_ENTITY_TYPES = {'crop', 'variety', 'location', 'diary', 'task', 'harvest'}
+VALID_ENTITY_TYPES = {'crop', 'variety', 'location', 'diary', 'task', 'harvest', 'cooking'}
 VALID_SUPPLEMENT_TYPES = {'text', 'image', 'url', 'youtube'}
 
 
