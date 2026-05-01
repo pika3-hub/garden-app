@@ -194,9 +194,11 @@ small, .small { font-size: 0.84em; }
 }
 
 .dashboard-card-with-bg.card-bg-crop       { border-top: 3px solid var(--sage); }
+.dashboard-card-with-bg.card-bg-variety    { border-top: 3px solid var(--sage); }
 .dashboard-card-with-bg.card-bg-location   { border-top: 3px solid var(--teal); }
 .dashboard-card-with-bg.card-bg-location-crop { border-top: 3px solid var(--amber); }
 .dashboard-card-with-bg.card-bg-harvest    { border-top: 3px solid var(--terracotta); }
+.dashboard-card-with-bg.card-bg-cooking    { border-top: 3px solid var(--terracotta); }
 .dashboard-card-with-bg.card-bg-diary      { border-top: 3px solid var(--cobalt); }
 .dashboard-card-with-bg.card-bg-tasklist   { border-top: 3px solid var(--ink-muted); }
 
@@ -611,10 +613,12 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   z-index: 0;
 }
 .card-bg-crop::before          { background-image: url('../images/card_crop.webp'); }
+.card-bg-variety::before       { background-image: url('../images/card_variety.webp'); }
 .card-bg-location::before      { background-image: url('../images/card_location.webp'); }
 .card-bg-location-crop::before { background-image: url('../images/card_location_crop.webp'); }
 .card-bg-diary::before         { background-image: url('../images/card_diary.webp'); }
 .card-bg-harvest::before       { background-image: url('../images/card_harvest.webp'); }
+.card-bg-cooking::before       { background-image: url('../images/card_cooking.webp'); }
 .card-bg-tasklist::before      { background-image: url('../images/card_tasklist.webp'); }
 
 /* Bring card content above background image */
@@ -976,16 +980,24 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 #dashboardCarousel {
     border-radius: 10px;
     overflow: hidden;
+    height: 360px;
 }
 #dashboardCarousel:hover {
     transform: none;
 }
+/* carousel-inner/item/a をコンテナいっぱいに伸ばし、overflow:hidden の角丸を4隅に適用する */
+#dashboardCarousel .carousel-inner,
+#dashboardCarousel .carousel-item,
+#dashboardCarousel .carousel-item > a {
+    height: 100%;
+}
 .carousel-dashboard-img {
-    height: 360px;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
 }
 @media (max-width: 767.98px) {
-    .carousel-dashboard-img {
+    #dashboardCarousel {
         height: 300px;
     }
 }
@@ -1045,7 +1057,7 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
    DASHBOARD STATS GRID (8カード 2行×4列 レスポンシブレイアウト)
    ══════════════════════════════════════════════════════════ */
 
-/* デスクトップ・タブレット: 4列（2行×4列） */
+/* デスクトップ・タブレット: 4列（2行×4列、col-md-8内に収める） */
 .dashboard-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

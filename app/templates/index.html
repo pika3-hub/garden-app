@@ -12,120 +12,11 @@
     </div>
 </div>
 
-<div class="dashboard-stats-grid mb-4">
-    <!-- 上段: 作物、品種、場所、植え付け -->
-    <a href="{{ url_for('crops.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-crop dashboard-stat-link">
-        <div class="card-body py-4">
-            <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="stat-icon">
-            <span class="stat-num">{{ stats.crop_count }}</span>
-            <h5 class="card-title mb-1">作物</h5>
-            <p class="card-text text-muted small mb-0">登録済みの作物数</p>
-        </div>
-    </a>
-
-    <a href="{{ url_for('varieties.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-crop dashboard-stat-link">
-        <div class="card-body py-4">
-            <img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="stat-icon">
-            <span class="stat-num">{{ stats.variety_count }}</span>
-            <h5 class="card-title mb-1">品種</h5>
-            <p class="card-text text-muted small mb-0">登録済みの品種数</p>
-        </div>
-    </a>
-
-    <a href="{{ url_for('locations.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location dashboard-stat-link">
-        <div class="card-body py-4">
-            <img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="" class="stat-icon">
-            <span class="stat-num">{{ stats.location_count }}</span>
-            <h5 class="card-title mb-1">場所</h5>
-            <p class="card-text text-muted small mb-0">登録済みの場所数</p>
-        </div>
-    </a>
-
-    <a href="{{ url_for('plantings.index') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location-crop dashboard-stat-link">
-        <div class="card-body py-4">
-            <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="" class="stat-icon">
-            <span class="stat-num">{{ stats.active_crop_count }}</span>
-            <h5 class="card-title mb-1">栽培中</h5>
-            <p class="card-text text-muted small mb-0">現在育てている作物数</p>
-        </div>
-    </a>
-
-    <!-- 下段: 収穫、料理、日記、タスク -->
-    <a href="{{ url_for('harvests.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-harvest dashboard-stat-link">
-        <div class="card-body py-4">
-            <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="" class="stat-icon">
-            <span class="stat-num">{{ stats.harvest_count }}</span>
-            <h5 class="card-title mb-1">収穫</h5>
-            <p class="card-text text-muted small mb-0">収穫した作物数</p>
-        </div>
-    </a>
-
-    <a href="{{ url_for('cooking.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-harvest dashboard-stat-link">
-        <div class="card-body py-4">
-            <img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="stat-icon">
-            <span class="stat-num">{{ stats.cooking_count }}</span>
-            <h5 class="card-title mb-1">料理</h5>
-            <p class="card-text text-muted small mb-0">記録した料理数</p>
-        </div>
-    </a>
-
-    <a href="{{ url_for('diary.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-diary dashboard-stat-link">
-        <div class="card-body py-4">
-            <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="" class="stat-icon">
-            <span class="stat-num">{{ stats.diary_count }}</span>
-            <h5 class="card-title mb-1">日記</h5>
-            <p class="card-text text-muted small mb-0">記録した日記数</p>
-        </div>
-    </a>
-
-    <a href="{{ url_for('tasks.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-tasklist dashboard-stat-link">
-        <div class="card-body py-4">
-            <img src="{{ url_for('static', filename='images/icon_tasklist.webp') }}" alt="" class="stat-icon">
-            <span class="stat-num">{{ stats.pending_task_count }}</span>
-            <h5 class="card-title mb-1">タスク</h5>
-            <p class="card-text text-muted small mb-0">残りのタスク数</p>
-        </div>
-    </a>
-</div>
-
-<div class="row g-4">
-    <!-- 最新の日記 -->
-    <div class="col-md-4">
-        <div class="card h-100 dashboard-card-with-bg card-bg-diary">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="" class="icon-img icon-img-lg"> 最新の日記
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if recent_diaries %}
-                <div class="list-group list-group-flush list-group-transparent">
-                    {% for diary in recent_diaries %}
-                    <a href="{{ url_for('diary.detail', diary_id=diary.id) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ diary.title }}</h6>
-                            <small class="text-muted">{{ diary.entry_date }}</small>
-                        </div>
-                        {% if diary.content %}
-                        <small class="text-muted dashboard-list-excerpt">{{ diary.content|truncate(60, True) }}</small>
-                        {% endif %}
-                    </a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-muted text-center mb-0">
-                    まだ日記が登録されていません。<br>
-                    <a href="{{ url_for('diary.new') }}">日記を登録</a>してください。
-                </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- カルーセル画像 -->
-    <div class="col-md-4">
+<div class="row g-4 mb-4">
+    <!-- カルーセル画像（最上段・先頭） -->
+    <div class="col-12 col-md-4">
         {% if carousel_images %}
-        <div id="dashboardCarousel" class="carousel slide h-100" data-bs-ride="carousel" data-bs-interval="4000" data-bs-touch="true">
+        <div id="dashboardCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000" data-bs-touch="true">
             <div class="carousel-inner">
                 {% for img in carousel_images %}
                 <div class="carousel-item {% if loop.first %}active{% endif %}">
@@ -169,8 +60,122 @@
         {% endif %}
     </div>
 
+    <!-- 統計情報グリッド（4列×2行） -->
+    <div class="col-12 col-md-8">
+        <div class="dashboard-stats-grid">
+            <!-- 上段: 作物、品種、場所、植え付け -->
+            <a href="{{ url_for('crops.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-crop dashboard-stat-link">
+                <div class="card-body py-4">
+                    <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="stat-icon">
+                    <span class="stat-num">{{ stats.crop_count }}</span>
+                    <h5 class="card-title mb-1">作物</h5>
+                    <p class="card-text text-muted small mb-0">登録済みの作物数</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('varieties.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-variety dashboard-stat-link">
+                <div class="card-body py-4">
+                    <img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="stat-icon">
+                    <span class="stat-num">{{ stats.variety_count }}</span>
+                    <h5 class="card-title mb-1">品種</h5>
+                    <p class="card-text text-muted small mb-0">登録済みの品種数</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('locations.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location dashboard-stat-link">
+                <div class="card-body py-4">
+                    <img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="" class="stat-icon">
+                    <span class="stat-num">{{ stats.location_count }}</span>
+                    <h5 class="card-title mb-1">場所</h5>
+                    <p class="card-text text-muted small mb-0">登録済みの場所数</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('plantings.index') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location-crop dashboard-stat-link">
+                <div class="card-body py-4">
+                    <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="" class="stat-icon">
+                    <span class="stat-num">{{ stats.active_crop_count }}</span>
+                    <h5 class="card-title mb-1">栽培中</h5>
+                    <p class="card-text text-muted small mb-0">現在育てている作物数</p>
+                </div>
+            </a>
+
+            <!-- 下段: 収穫、料理、日記、タスク -->
+            <a href="{{ url_for('harvests.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-harvest dashboard-stat-link">
+                <div class="card-body py-4">
+                    <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="" class="stat-icon">
+                    <span class="stat-num">{{ stats.harvest_count }}</span>
+                    <h5 class="card-title mb-1">収穫</h5>
+                    <p class="card-text text-muted small mb-0">収穫した作物数</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('cooking.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-cooking dashboard-stat-link">
+                <div class="card-body py-4">
+                    <img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="stat-icon">
+                    <span class="stat-num">{{ stats.cooking_count }}</span>
+                    <h5 class="card-title mb-1">料理</h5>
+                    <p class="card-text text-muted small mb-0">記録した料理数</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('diary.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-diary dashboard-stat-link">
+                <div class="card-body py-4">
+                    <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="" class="stat-icon">
+                    <span class="stat-num">{{ stats.diary_count }}</span>
+                    <h5 class="card-title mb-1">日記</h5>
+                    <p class="card-text text-muted small mb-0">記録した日記数</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('tasks.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-tasklist dashboard-stat-link">
+                <div class="card-body py-4">
+                    <img src="{{ url_for('static', filename='images/icon_tasklist.webp') }}" alt="" class="stat-icon">
+                    <span class="stat-num">{{ stats.pending_task_count }}</span>
+                    <h5 class="card-title mb-1">タスク</h5>
+                    <p class="card-text text-muted small mb-0">残りのタスク数</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- 最新の日記 -->
+    <div class="col-12 col-md-4">
+        <div class="card h-100 dashboard-card-with-bg card-bg-diary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="" class="icon-img icon-img-lg"> 最新の日記
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_diaries %}
+                <div class="list-group list-group-flush list-group-transparent">
+                    {% for diary in recent_diaries %}
+                    <a href="{{ url_for('diary.detail', diary_id=diary.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ diary.title }}</h6>
+                            <small class="text-muted">{{ diary.entry_date }}</small>
+                        </div>
+                        {% if diary.content %}
+                        <small class="text-muted dashboard-list-excerpt">{{ diary.content|truncate(60, True) }}</small>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    まだ日記が登録されていません。<br>
+                    <a href="{{ url_for('diary.new') }}">日記を登録</a>してください。
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
     <!-- 未完了タスク -->
-    <div class="col-md-4">
+    <div class="col-12 col-md-4">
         <div class="card h-100 dashboard-card-with-bg card-bg-tasklist">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0">
@@ -203,11 +208,9 @@
             </div>
         </div>
     </div>
-</div>
 
-<div class="row g-4 mt-2">
     <!-- 最近植え付けた作物 -->
-    <div class="col-md-4">
+    <div class="col-12 col-md-4">
         <div class="card h-100 dashboard-card-with-bg card-bg-location-crop">
             <div class="card-header bg-warning">
                 <h5 class="mb-0">
@@ -238,7 +241,7 @@
     </div>
 
     <!-- 最新の栽培記録（個別記録） -->
-    <div class="col-md-4">
+    <div class="col-12 col-md-4">
         <div class="card h-100 dashboard-card-with-bg card-bg-location-crop">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
@@ -268,7 +271,7 @@
     </div>
 
     <!-- 最近収穫した作物 -->
-    <div class="col-md-4">
+    <div class="col-12 col-md-4">
         <div class="card h-100 dashboard-card-with-bg card-bg-harvest">
             <div class="card-header bg-danger text-white">
                 <h5 class="mb-0">
@@ -299,9 +302,9 @@
     </div>
 
     <!-- 最近の料理 -->
-    <div class="col-md-4">
-        <div class="card h-100 dashboard-card-with-bg card-bg-harvest">
-            <div class="card-header" style="background-color: var(--bs-orange, #fd7e14);">
+    <div class="col-12 col-md-4">
+        <div class="card h-100 dashboard-card-with-bg card-bg-cooking">
+            <div class="card-header" style="background-color: var(--terracotta-light); color: #F0EBE0; border-bottom-color: rgba(255,255,255,0.12);">
                 <h5 class="mb-0">
                     <img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="icon-img icon-img-lg"> 最近の料理
                 </h5>
