@@ -8,6 +8,7 @@ from app.models.diary import DiaryEntry
 from app.models.harvest import Harvest
 from app.models.task import Task
 from app.models.supplement import Supplement
+from app.models.cooking import Cooking
 from app.models.photo_pool import PhotoPool
 from app.utils.upload import save_image, delete_image, copy_image
 
@@ -69,6 +70,7 @@ def detail(variety_id):
     related_plantings = Planting.get_by_variety(variety_id, status='active')
     related_harvests = Harvest.get_by_variety(variety_id, limit=10)
     related_diaries = DiaryEntry.get_by_variety(variety_id, limit=10)
+    related_cookings = Cooking.get_by_variety(variety_id, limit=10)
     related_tasks = Task.get_incomplete_tasks_for_entity('variety', variety_id)
     prev_v, next_v = Variety.get_adjacent(variety_id)
     supplements = Supplement.get_by_entity('variety', variety_id)
@@ -79,6 +81,7 @@ def detail(variety_id):
                            related_plantings=related_plantings,
                            related_harvests=related_harvests,
                            related_diaries=related_diaries,
+                           related_cookings=related_cookings,
                            related_tasks=related_tasks,
                            prev_variety=prev_v,
                            next_variety=next_v,

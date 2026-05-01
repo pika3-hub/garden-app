@@ -1,0 +1,32 @@
+{# 関連する料理カード（詳細画面サイドバー用） #}
+{# 変数: related_cookings (list of dict: id, title, category, cooked_date, image_path) #}
+{% if related_cookings %}
+<div class="card mb-3">
+    <div class="card-header bg-warning text-dark">
+        <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="icon-img"> 関連する料理</h6>
+    </div>
+    <div class="card-body">
+        <ul class="list-group list-group-flush">
+            {% for c in related_cookings %}
+            <li class="list-group-item">
+                {% if c.image_path %}
+                <a href="{{ url_for('cooking.detail', cooking_id=c.id) }}">
+                    <img src="{{ url_for('static', filename='uploads/' + (c.image_path | thumb_path)) }}"
+                         alt="料理画像"
+                         style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                         onerror="this.src='{{ url_for('static', filename='uploads/' + c.image_path) }}'">
+                </a>
+                {% endif %}
+                <a href="{{ url_for('cooking.detail', cooking_id=c.id) }}">{{ c.title }}</a>
+                <div class="text-muted small">
+                    {{ c.cooked_date }}
+                    {% if c.category %}
+                    <span class="badge bg-warning text-dark ms-1">{{ c.category }}</span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}

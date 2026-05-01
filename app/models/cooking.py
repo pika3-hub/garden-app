@@ -205,6 +205,66 @@ class Cooking:
         db.commit()
 
     @staticmethod
+    def get_by_crop(crop_id, limit=10):
+        """作物IDに直接関連付けられた料理を取得"""
+        db = get_db()
+        rows = db.execute(
+            '''SELECT c.id, c.title, c.category, c.cooked_date, c.image_path
+               FROM cooking_relations cr
+               JOIN cooking c ON cr.cooking_id = c.id
+               WHERE cr.relation_type = 'crop' AND cr.crop_id = ?
+               ORDER BY c.cooked_date DESC, c.created_at DESC
+               LIMIT ?''',
+            (crop_id, limit)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def get_by_variety(variety_id, limit=10):
+        """品種IDに関連付けられた料理を取得"""
+        db = get_db()
+        rows = db.execute(
+            '''SELECT c.id, c.title, c.category, c.cooked_date, c.image_path
+               FROM cooking_relations cr
+               JOIN cooking c ON cr.cooking_id = c.id
+               WHERE cr.relation_type = 'variety' AND cr.variety_id = ?
+               ORDER BY c.cooked_date DESC, c.created_at DESC
+               LIMIT ?''',
+            (variety_id, limit)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def get_by_planting(location_crop_id, limit=10):
+        """植え付けIDに関連付けられた料理を取得"""
+        db = get_db()
+        rows = db.execute(
+            '''SELECT c.id, c.title, c.category, c.cooked_date, c.image_path
+               FROM cooking_relations cr
+               JOIN cooking c ON cr.cooking_id = c.id
+               WHERE cr.relation_type = 'location_crop' AND cr.location_crop_id = ?
+               ORDER BY c.cooked_date DESC, c.created_at DESC
+               LIMIT ?''',
+            (location_crop_id, limit)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def get_by_harvest(harvest_id, limit=10):
+        """収穫IDに関連付けられた料理を取得"""
+        db = get_db()
+        rows = db.execute(
+            '''SELECT c.id, c.title, c.category, c.cooked_date, c.image_path
+               FROM cooking_relations cr
+               JOIN cooking c ON cr.cooking_id = c.id
+               WHERE cr.relation_type = 'harvest' AND cr.harvest_id = ?
+               ORDER BY c.cooked_date DESC, c.created_at DESC
+               LIMIT ?''',
+            (harvest_id, limit)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    @staticmethod
     def get_adjacent(cooking_id):
         """現在の料理の前後の料理を取得"""
         db = get_db()
