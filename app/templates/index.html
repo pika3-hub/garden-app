@@ -13,7 +13,7 @@
 </div>
 
 <div class="dashboard-stats-grid mb-4">
-    <!-- 作物 -->
+    <!-- 上段: 作物、品種、場所、植え付け -->
     <a href="{{ url_for('crops.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-crop dashboard-stat-link">
         <div class="card-body py-4">
             <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="stat-icon">
@@ -23,7 +23,6 @@
         </div>
     </a>
 
-    <!-- 品種 -->
     <a href="{{ url_for('varieties.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-crop dashboard-stat-link">
         <div class="card-body py-4">
             <img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="stat-icon">
@@ -33,7 +32,6 @@
         </div>
     </a>
 
-    <!-- 場所 -->
     <a href="{{ url_for('locations.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location dashboard-stat-link">
         <div class="card-body py-4">
             <img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="" class="stat-icon">
@@ -43,7 +41,6 @@
         </div>
     </a>
 
-    <!-- 栽培中 -->
     <a href="{{ url_for('plantings.index') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-location-crop dashboard-stat-link">
         <div class="card-body py-4">
             <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="" class="stat-icon">
@@ -53,7 +50,7 @@
         </div>
     </a>
 
-    <!-- 収穫 -->
+    <!-- 下段: 収穫、料理、日記、タスク -->
     <a href="{{ url_for('harvests.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-harvest dashboard-stat-link">
         <div class="card-body py-4">
             <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="" class="stat-icon">
@@ -63,7 +60,15 @@
         </div>
     </a>
 
-    <!-- 日記 -->
+    <a href="{{ url_for('cooking.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-harvest dashboard-stat-link">
+        <div class="card-body py-4">
+            <img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="stat-icon">
+            <span class="stat-num">{{ stats.cooking_count }}</span>
+            <h5 class="card-title mb-1">料理</h5>
+            <p class="card-text text-muted small mb-0">記録した料理数</p>
+        </div>
+    </a>
+
     <a href="{{ url_for('diary.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-diary dashboard-stat-link">
         <div class="card-body py-4">
             <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="" class="stat-icon">
@@ -73,7 +78,6 @@
         </div>
     </a>
 
-    <!-- タスク -->
     <a href="{{ url_for('tasks.list') }}" class="card text-center h-100 dashboard-card-with-bg card-bg-tasklist dashboard-stat-link">
         <div class="card-body py-4">
             <img src="{{ url_for('static', filename='images/icon_tasklist.webp') }}" alt="" class="stat-icon">
@@ -288,6 +292,39 @@
                 <p class="text-muted text-center mb-0">
                     まだ収穫記録がありません。<br>
                     <a href="{{ url_for('harvests.list') }}">収穫を記録</a>してください。
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近の料理 -->
+    <div class="col-md-4">
+        <div class="card h-100 dashboard-card-with-bg card-bg-harvest">
+            <div class="card-header" style="background-color: var(--bs-orange, #fd7e14);">
+                <h5 class="mb-0">
+                    <img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="icon-img icon-img-lg"> 最近の料理
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_cookings %}
+                <div class="list-group list-group-flush list-group-transparent">
+                    {% for cooking in recent_cookings %}
+                    <a href="{{ url_for('cooking.detail', cooking_id=cooking.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ cooking.title }}</h6>
+                            <small class="text-muted">{{ cooking.cooked_date }}</small>
+                        </div>
+                        {% if cooking.category %}
+                        <small class="text-muted"><i class="bi bi-tag"></i> {{ cooking.category }}</small>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    まだ料理記録がありません。<br>
+                    <a href="{{ url_for('cooking.new') }}">料理を記録</a>してください。
                 </p>
                 {% endif %}
             </div>

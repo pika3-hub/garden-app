@@ -1042,31 +1042,18 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 }
 
 /* ══════════════════════════════════════════════════════════
-   DASHBOARD STATS GRID (7カード レスポンシブレイアウト)
+   DASHBOARD STATS GRID (8カード 2行×4列 レスポンシブレイアウト)
    ══════════════════════════════════════════════════════════ */
 
+/* デスクトップ・タブレット: 4列（2行×4列） */
 .dashboard-stats-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
 }
 
-/* デスクトップ版: 7列表示 */
-@media (min-width: 1400px) {
-  .dashboard-stats-grid {
-    grid-template-columns: repeat(7, 1fr);
-  }
-}
-
-/* タブレット版: 2-3列表示 */
-@media (max-width: 1399px) and (min-width: 768px) {
-  .dashboard-stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  }
-}
-
-/* モバイル版: 2列表示 */
-@media (max-width: 767px) {
+/* モバイル版: 2列（4行×2列） */
+@media (max-width: 575px) {
   .dashboard-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }

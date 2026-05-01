@@ -71,6 +71,7 @@ def create_app(config_name='default'):
         from app.models.harvest import Harvest
         from app.models.task import Task
         from app.models.planting_record import PlantingRecord
+        from app.models.cooking import Cooking
 
         # 統計情報を取得
         stats = {
@@ -80,7 +81,8 @@ def create_app(config_name='default'):
             'active_crop_count': Planting.count_active(),
             'diary_count': DiaryEntry.count(),
             'harvest_count': Harvest.count(),
-            'pending_task_count': Task.count(Task.STATUS_PENDING) + Task.count(Task.STATUS_IN_PROGRESS)
+            'pending_task_count': Task.count(Task.STATUS_PENDING) + Task.count(Task.STATUS_IN_PROGRESS),
+            'cooking_count': Cooking.count(),
         }
 
         # 最新データを取得
@@ -89,6 +91,7 @@ def create_app(config_name='default'):
         recent_harvests = Harvest.get_recent(5)
         pending_tasks = Task.get_pending(5)
         recent_growth_records = PlantingRecord.get_recent(5)
+        recent_cookings = Cooking.get_recent(5)
 
         # カルーセル用: 最近の画像を全テーブルから取得
         # crops/varieties は独立、harvests/planting_records は VIEW 経由で表示用情報を取得
@@ -129,6 +132,10 @@ def create_app(config_name='default'):
             JOIN crop_variety_view cv ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1)
                                       AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
             WHERE pr.image_path IS NOT NULL AND pr.image_path != ''
+            UNION ALL
+            SELECT 'cooking' AS type, id, image_path, title AS label, CAST(cooked_date AS TEXT) AS sort_date,
+                   NULL, NULL, NULL, NULL
+            FROM cooking WHERE image_path IS NOT NULL AND image_path != ''
             ORDER BY sort_date DESC
             LIMIT 20
         ''').fetchall()
@@ -142,6 +149,7 @@ def create_app(config_name='default'):
             'diary': ('diary.detail', 'diary_id', 'icon_diary.webp', '日記'),
             'harvest': ('harvests.detail', 'harvest_id', 'icon_harvest.webp', '収穫'),
             'planting_record': ('plantings.record_detail', 'record_id', 'icon_location_crop.webp', '栽培記録'),
+            'cooking': ('cooking.detail', 'cooking_id', 'icon_cooking.webp', '料理'),
         }
         for img in carousel_images:
             endpoint, param, icon, type_label = type_config[img['type']]
@@ -159,6 +167,7 @@ def create_app(config_name='default'):
                              recent_harvests=recent_harvests,
                              pending_tasks=pending_tasks,
                              recent_growth_records=recent_growth_records,
+                             recent_cookings=recent_cookings,
                              carousel_images=carousel_images,
                              Task=Task)
 
