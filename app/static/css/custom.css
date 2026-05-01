@@ -1185,13 +1185,14 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
    Dashboard Timeline (ホーム画面の日付グループ型タイムライン)
    ========================================================================== */
 .timeline-date-header {
-  font-size: .75rem;
+  font-size: .85rem;
   font-weight: 600;
   color: var(--ink-soft);
   padding: .4rem .75rem .3rem;
-  background: #f8f5f0;
+  background: #ede8e1;
   border-bottom: 1px solid var(--border);
   letter-spacing: 0.02em;
+  text-align: center;
 }
 .timeline-item {
   color: var(--ink);
