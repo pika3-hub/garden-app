@@ -195,8 +195,12 @@
                 </div>
                 {% endif %}
                 {% if crops or varieties %}
-                <div class="row">
-                    {# 作物カード #}
+                {# 作物グループ #}
+                {% if crops %}
+                <h6 class="text-muted border-bottom pb-1 mb-2 mt-1">
+                    <i class="bi bi-flower1"></i> 作物
+                </h6>
+                <div class="row mb-3">
                     {% for crop in crops %}
                     <div class="col-6 col-md-4 col-lg-3 mb-3" data-crop-card data-filter-type="{{ crop.crop_type }}">
                         <div class="card h-100 card-photo card-bg-crop crop-variety-select-card {{ '' if crop.image_path else 'card-no-image' }}"
@@ -219,8 +223,15 @@
                         </div>
                     </div>
                     {% endfor %}
+                </div>
+                {% endif %}
 
-                    {# 品種カード #}
+                {# 品種グループ #}
+                {% if varieties %}
+                <h6 class="text-muted border-bottom pb-1 mb-2">
+                    <i class="bi bi-tags"></i> 品種
+                </h6>
+                <div class="row">
                     {% for v in varieties %}
                     <div class="col-6 col-md-4 col-lg-3 mb-3" data-crop-card data-filter-type="{{ v.crop_type }}">
                         <div class="card h-100 card-photo card-bg-crop crop-variety-select-card {{ '' if v.effective_image_path else 'card-no-image' }}"
@@ -244,6 +255,7 @@
                     </div>
                     {% endfor %}
                 </div>
+                {% endif %}
                 {% else %}
                 <div class="alert alert-warning mb-0">作物・品種が登録されていません。</div>
                 {% endif %}
