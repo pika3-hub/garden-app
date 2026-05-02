@@ -9,7 +9,14 @@ class Cooking:
     def get_all(limit=None, offset=None):
         """全料理を取得（ページネーション対応）"""
         db = get_db()
-        query = 'SELECT * FROM cooking ORDER BY cooked_date DESC, created_at DESC'
+        query = (
+            "SELECT c.*, "
+            "(SELECT s.ogp_image FROM supplements s "
+            " WHERE s.entity_type = 'cooking' AND s.entity_id = c.id "
+            " AND s.supplement_type = 'url' AND s.ogp_image IS NOT NULL "
+            " ORDER BY s.sort_order, s.created_at LIMIT 1) AS supplement_ogp_image "
+            "FROM cooking c ORDER BY c.cooked_date DESC, c.created_at DESC"
+        )
         params = []
 
         if limit:
@@ -75,7 +82,14 @@ class Cooking:
     def search(keyword=None, category=None):
         """料理を検索"""
         db = get_db()
-        query = 'SELECT * FROM cooking WHERE 1=1'
+        query = (
+            "SELECT c.*, "
+            "(SELECT s.ogp_image FROM supplements s "
+            " WHERE s.entity_type = 'cooking' AND s.entity_id = c.id "
+            " AND s.supplement_type = 'url' AND s.ogp_image IS NOT NULL "
+            " ORDER BY s.sort_order, s.created_at LIMIT 1) AS supplement_ogp_image "
+            "FROM cooking c WHERE 1=1"
+        )
         params = []
 
         if keyword:
