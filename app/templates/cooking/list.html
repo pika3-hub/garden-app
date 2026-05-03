@@ -65,9 +65,22 @@
                 <img src="{{ url_for('static', filename='images/card_cooking.webp') }}"
                      class="card-photo-img card-photo-img-fallback card-photo-img-fallback-center" alt="料理">
                 {% endif %}
-                {% if cooking.category %}
+                {% set cooking_icons = crop_icons_map.get(cooking.id, []) %}
+                {% if cooking.category or cooking_icons %}
                 <div class="card-photo-badge-top">
+                    {% if cooking.category %}
                     <span class="badge bg-warning text-dark">{{ cooking.category }}</span>
+                    {% endif %}
+                    {% if cooking_icons %}
+                    <div class="d-flex gap-1 flex-wrap justify-content-end">
+                        {% for icon in cooking_icons %}
+                        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}"
+                             class="crop-icon-inline"
+                             style="{{ 'border-color: ' ~ icon.image_color ~ ';' if icon.image_color else '' }}"
+                             alt="">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
                 {% endif %}
                 <div class="card-photo-overlay">

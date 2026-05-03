@@ -32,12 +32,16 @@ def list():
 
     grouped_items = [(k, [item for item in g]) for k, g in groupby(items, key=_ym_key)]
 
+    cooking_ids = [item['id'] for item in items]
+    crop_icons_map = Cooking.get_crop_icons_batch(cooking_ids) if cooking_ids else {}
+
     return render_template('cooking/list.html',
                            items=items,
                            grouped_items=grouped_items,
                            keyword=keyword,
                            category=category,
-                           categories=categories)
+                           categories=categories,
+                           crop_icons_map=crop_icons_map)
 
 
 @bp.route('/<int:cooking_id>')
