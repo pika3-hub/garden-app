@@ -58,7 +58,7 @@
                      onerror="this.src='{{ url_for('static', filename='uploads/' + cooking.image_path) }}'">
                 {% elif cooking.supplement_ogp_image %}
                 <img src="{{ cooking.supplement_ogp_image }}"
-                     class="card-photo-img" alt="{{ cooking.title }}"
+                     class="card-photo-img card-photo-img-contain" alt="{{ cooking.title }}"
                      loading="lazy"
                      onerror="this.src='{{ url_for('static', filename='images/card_cooking.webp') }}'">
                 {% else %}

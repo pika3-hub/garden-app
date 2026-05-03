@@ -738,6 +738,12 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     object-fit: cover;
 }
 
+/* 補足画像など：アスペクト比を保ったまま枠内に収める */
+.card-photo-img-contain {
+    object-fit: contain;
+    background-color: #f8f9f8;
+}
+
 /* 画像なし時のフォールバック背景 */
 .card-photo.card-no-image::before {
     content: '';
