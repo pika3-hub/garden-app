@@ -35,13 +35,32 @@ def list():
     cooking_ids = [item['id'] for item in items]
     crop_icons_map = Cooking.get_crop_icons_batch(cooking_ids) if cooking_ids else {}
 
+    crop_type_data = Cooking.get_crop_types_batch(cooking_ids) if cooking_ids else {}
+    crop_types_str_map = {}
+    filter_crop_type_icons = {}
+    for cid, type_items in crop_type_data.items():
+        types = []
+        for ti in type_items:
+            t, icon, color = ti['crop_type'], ti['icon_path'], ti['image_color']
+            if t:
+                types.append(t)
+                if icon:
+                    icons = filter_crop_type_icons.setdefault(t, [])
+                    if not any(i['icon_path'] == icon for i in icons):
+                        icons.append({'icon_path': icon, 'image_color': color or '#4CAF50'})
+        crop_types_str_map[cid] = ','.join(types)
+    filter_crop_types = sorted(filter_crop_type_icons.keys())
+
     return render_template('cooking/list.html',
                            items=items,
                            grouped_items=grouped_items,
                            keyword=keyword,
                            category=category,
                            categories=categories,
-                           crop_icons_map=crop_icons_map)
+                           crop_icons_map=crop_icons_map,
+                           crop_types_str_map=crop_types_str_map,
+                           filter_crop_types=filter_crop_types,
+                           filter_crop_type_icons=filter_crop_type_icons)
 
 
 @bp.route('/<int:cooking_id>')

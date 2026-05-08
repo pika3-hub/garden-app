@@ -249,6 +249,69 @@ class Cooking:
         return {cid: data['icons'] for cid, data in result.items()}
 
     @staticmethod
+    def get_crop_types_batch(cooking_ids):
+        """料理IDリストに対して関連作物の種類（crop_type）とアイコンを一括取得（effective_crop_idで重複排除）"""
+        if not cooking_ids:
+            return {}
+        db = get_db()
+        ph = ','.join('?' * len(cooking_ids))
+        ids = list(cooking_ids)
+        rows = db.execute(f'''
+            SELECT cooking_id, effective_crop_id, crop_type, icon_path, image_color, rel_id
+            FROM (
+                SELECT cr.cooking_id, c.id AS effective_crop_id, c.crop_type,
+                       c.icon_path, c.image_color, cr.id AS rel_id
+                FROM cooking_relations cr
+                JOIN crops c ON cr.crop_id = c.id
+                WHERE cr.cooking_id IN ({ph}) AND cr.relation_type = 'crop'
+                UNION ALL
+                SELECT cr.cooking_id, c.id AS effective_crop_id, c.crop_type,
+                       COALESCE(v.icon_path, c.icon_path) AS icon_path,
+                       COALESCE(v.image_color, c.image_color) AS image_color,
+                       cr.id AS rel_id
+                FROM cooking_relations cr
+                JOIN varieties v ON cr.variety_id = v.id
+                JOIN crops c ON v.crop_id = c.id
+                WHERE cr.cooking_id IN ({ph}) AND cr.relation_type = 'variety'
+                UNION ALL
+                SELECT cr.cooking_id, cv.effective_crop_id, cv.crop_type,
+                       cv.icon_path, cv.image_color, cr.id AS rel_id
+                FROM cooking_relations cr
+                JOIN plantings lc ON cr.location_crop_id = lc.id
+                JOIN crop_variety_view cv
+                  ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1)
+                  AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
+                WHERE cr.cooking_id IN ({ph}) AND cr.relation_type = 'location_crop'
+                UNION ALL
+                SELECT cr.cooking_id, cv.effective_crop_id, cv.crop_type,
+                       cv.icon_path, cv.image_color, cr.id AS rel_id
+                FROM cooking_relations cr
+                JOIN harvests h ON cr.harvest_id = h.id
+                JOIN plantings lc ON h.location_crop_id = lc.id
+                JOIN crop_variety_view cv
+                  ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1)
+                  AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
+                WHERE cr.cooking_id IN ({ph}) AND cr.relation_type = 'harvest'
+            )
+            ORDER BY cooking_id, rel_id
+        ''', ids * 4).fetchall()
+
+        result = {}
+        for row in rows:
+            cid = row['cooking_id']
+            ecid = row['effective_crop_id']
+            if cid not in result:
+                result[cid] = {'seen': set(), 'items': []}
+            if ecid not in result[cid]['seen']:
+                result[cid]['seen'].add(ecid)
+                result[cid]['items'].append({
+                    'crop_type': row['crop_type'],
+                    'icon_path': row['icon_path'],
+                    'image_color': row['image_color']
+                })
+        return {cid: data['items'] for cid, data in result.items()}
+
+    @staticmethod
     def save_relations(cooking_id, relations):
         """料理の関連を保存"""
         db = get_db()

@@ -26,13 +26,31 @@
     </div>
 </div>
 
-{% if categories %}
-<div class="mb-3">
-    <div id="badge-filter-container" class="badge-filter-container">
+{% if filter_crop_types or categories %}
+<div class="badge-filter-multi mb-3">
+    {% if filter_crop_types %}
+    <div class="badge-filter-group" data-filter-key="cropType">
+        <span class="badge-filter-group-label">種類:</span>
+        {% for t in filter_crop_types %}
+        <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+            {%- for icon in filter_crop_type_icons.get(t, []) %}
+            <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}"
+                 class="badge-filter-icon"
+                 style="{{ 'border-color: ' ~ icon.image_color ~ ';' if icon.image_color else '' }}"
+                 alt="">
+            {%- endfor %}
+            {{ t }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if categories %}
+    <div class="badge-filter-group" data-filter-key="category">
+        <span class="badge-filter-group-label">カテゴリ:</span>
         {% for cat in categories %}
         <span class="badge badge-filter badge-filter-inactive" data-type="{{ cat }}">{{ cat }}</span>
         {% endfor %}
     </div>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -49,7 +67,10 @@
     </h3>
     <div class="row">
         {% for cooking in group_items %}
-        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ cooking.category or '' }}">
+        <div class="col-6 col-md-4 col-lg-3 mb-3"
+             data-filter-card
+             data-filter-group-crop-type="{{ crop_types_str_map.get(cooking.id, '') }}"
+             data-filter-group-category="{{ cooking.category or '' }}">
             <a href="{{ url_for('cooking.detail', cooking_id=cooking.id) }}" class="card h-100 card-photo card-bg-cooking {{ '' if (cooking.image_path or cooking.supplement_ogp_image) else 'card-no-image' }}">
                 {% if cooking.image_path %}
                 <img src="{{ url_for('static', filename='uploads/' + (cooking.image_path | thumb_path)) }}"

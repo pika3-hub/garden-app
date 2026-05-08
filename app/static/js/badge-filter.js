@@ -124,8 +124,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 for (var key in selectedByGroup) {
                     var selected = selectedByGroup[key];
                     if (selected.size === 0) continue;
-                    var value = item.dataset[datasetAttrMap[key]] || '';
-                    if (!selected.has(value)) {
+                    var rawValue = item.dataset[datasetAttrMap[key]] || '';
+                    var values = rawValue ? rawValue.split(',') : [];
+                    if (!values.some(function(v) { return selected.has(v); })) {
                         show = false;
                         break;
                     }
