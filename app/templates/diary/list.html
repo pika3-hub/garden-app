@@ -75,7 +75,7 @@
                      loading="lazy"
                      onerror="this.src='{{ url_for('static', filename='uploads/' + entry.image_path) }}'">
                 {% endif %}
-                {% if entry.weather %}
+                {% set diary_icons = crop_icons_map.get(entry.id, []) %}
                 {% set weather_icons = {
                     '晴れ': 'weather_sunny.png',
                     '曇り': 'weather_cloudy.png',
@@ -84,13 +84,26 @@
                     '晴れ時々曇り': 'weather_sun_cloud.png',
                     '曇り時々雨': 'weather_cloud_rain.png'
                 } %}
+                {% if entry.weather or diary_icons %}
                 <div class="card-photo-badge-top">
+                    {% if diary_icons %}
+                    <div class="d-flex gap-1 flex-wrap justify-content-end">
+                        {% for icon in diary_icons %}
+                        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}"
+                             class="crop-icon-inline"
+                             style="{{ 'border-color: ' ~ icon.image_color ~ ';' if icon.image_color else '' }}"
+                             alt="">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if entry.weather %}
                     {% if weather_icons.get(entry.weather) %}
                     <img src="{{ url_for('static', filename='images/' + weather_icons[entry.weather]) }}"
                          alt="{{ entry.weather }}" title="{{ entry.weather }}"
                          style="width: 32px; height: 32px;">
                     {% else %}
                     <span class="badge bg-info">{{ entry.weather }}</span>
+                    {% endif %}
                     {% endif %}
                 </div>
                 {% endif %}

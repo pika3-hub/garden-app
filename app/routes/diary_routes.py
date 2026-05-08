@@ -32,11 +32,15 @@ def list():
 
     grouped_entries = [(k, [item for item in g]) for k, g in groupby(entries, key=_ym_key)]
 
+    diary_ids = [e['id'] for e in entries]
+    crop_icons_map = DiaryEntry.get_crop_icons_batch(diary_ids) if diary_ids else {}
+
     return render_template('diary/list.html',
                           entries=entries,
                           grouped_entries=grouped_entries,
                           keyword=keyword,
-                          years=years)
+                          years=years,
+                          crop_icons_map=crop_icons_map)
 
 
 @bp.route('/<int:diary_id>')

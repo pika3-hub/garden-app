@@ -159,6 +159,58 @@ class Task:
         return [dict(task) for task in tasks]
 
     @staticmethod
+    def get_crop_icons_batch(task_ids):
+        """タスクIDリストに対して関連作物アイコンを一括取得（effective_crop_idで重複排除）"""
+        if not task_ids:
+            return {}
+        db = get_db()
+        ph = ','.join('?' * len(task_ids))
+        ids = list(task_ids)
+        rows = db.execute(f'''
+            SELECT task_id, effective_crop_id, icon_path, image_color, rel_id
+            FROM (
+                SELECT tr.task_id, c.id AS effective_crop_id,
+                       c.icon_path, c.image_color, tr.id AS rel_id
+                FROM task_relations tr
+                JOIN crops c ON tr.crop_id = c.id
+                WHERE tr.task_id IN ({ph}) AND tr.relation_type = 'crop'
+                UNION ALL
+                SELECT tr.task_id, c.id AS effective_crop_id,
+                       COALESCE(v.icon_path, c.icon_path) AS icon_path,
+                       COALESCE(v.image_color, c.image_color) AS image_color,
+                       tr.id AS rel_id
+                FROM task_relations tr
+                JOIN varieties v ON tr.variety_id = v.id
+                JOIN crops c ON v.crop_id = c.id
+                WHERE tr.task_id IN ({ph}) AND tr.relation_type = 'variety'
+                UNION ALL
+                SELECT tr.task_id, cv.effective_crop_id,
+                       cv.icon_path, cv.image_color, tr.id AS rel_id
+                FROM task_relations tr
+                JOIN plantings lc ON tr.location_crop_id = lc.id
+                JOIN crop_variety_view cv
+                  ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1)
+                  AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
+                WHERE tr.task_id IN ({ph}) AND tr.relation_type = 'location_crop'
+            )
+            ORDER BY task_id, rel_id
+        ''', ids * 3).fetchall()
+
+        result = {}
+        for row in rows:
+            tid = row['task_id']
+            ecid = row['effective_crop_id']
+            if tid not in result:
+                result[tid] = {'seen': set(), 'icons': []}
+            if ecid not in result[tid]['seen'] and row['icon_path']:
+                result[tid]['seen'].add(ecid)
+                result[tid]['icons'].append({
+                    'icon_path': row['icon_path'],
+                    'image_color': row['image_color']
+                })
+        return {tid: data['icons'] for tid, data in result.items()}
+
+    @staticmethod
     def get_relations(task_id):
         """タスクに関連するデータを取得"""
         db = get_db()

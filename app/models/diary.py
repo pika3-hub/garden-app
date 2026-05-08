@@ -276,6 +276,68 @@ class DiaryEntry:
                 dict(next_entry) if next_entry else None)
 
     @staticmethod
+    def get_crop_icons_batch(diary_ids):
+        """日記IDリストに対して関連作物アイコンを一括取得（effective_crop_idで重複排除）"""
+        if not diary_ids:
+            return {}
+        db = get_db()
+        ph = ','.join('?' * len(diary_ids))
+        ids = list(diary_ids)
+        rows = db.execute(f'''
+            SELECT diary_id, effective_crop_id, icon_path, image_color, rel_id
+            FROM (
+                SELECT dr.diary_id, c.id AS effective_crop_id,
+                       c.icon_path, c.image_color, dr.id AS rel_id
+                FROM diary_relations dr
+                JOIN crops c ON dr.crop_id = c.id
+                WHERE dr.diary_id IN ({ph}) AND dr.relation_type = 'crop'
+                UNION ALL
+                SELECT dr.diary_id, c.id AS effective_crop_id,
+                       COALESCE(v.icon_path, c.icon_path) AS icon_path,
+                       COALESCE(v.image_color, c.image_color) AS image_color,
+                       dr.id AS rel_id
+                FROM diary_relations dr
+                JOIN varieties v ON dr.variety_id = v.id
+                JOIN crops c ON v.crop_id = c.id
+                WHERE dr.diary_id IN ({ph}) AND dr.relation_type = 'variety'
+                UNION ALL
+                SELECT dr.diary_id, cv.effective_crop_id,
+                       cv.icon_path, cv.image_color, dr.id AS rel_id
+                FROM diary_relations dr
+                JOIN plantings lc ON dr.location_crop_id = lc.id
+                JOIN crop_variety_view cv
+                  ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1)
+                  AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
+                WHERE dr.diary_id IN ({ph}) AND dr.relation_type = 'location_crop'
+                UNION ALL
+                SELECT dr.diary_id, cv.effective_crop_id,
+                       cv.icon_path, cv.image_color, dr.id AS rel_id
+                FROM diary_relations dr
+                JOIN harvests h ON dr.harvest_id = h.id
+                JOIN plantings lc ON h.location_crop_id = lc.id
+                JOIN crop_variety_view cv
+                  ON IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1)
+                  AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)
+                WHERE dr.diary_id IN ({ph}) AND dr.relation_type = 'harvest'
+            )
+            ORDER BY diary_id, rel_id
+        ''', ids * 4).fetchall()
+
+        result = {}
+        for row in rows:
+            did = row['diary_id']
+            ecid = row['effective_crop_id']
+            if did not in result:
+                result[did] = {'seen': set(), 'icons': []}
+            if ecid not in result[did]['seen'] and row['icon_path']:
+                result[did]['seen'].add(ecid)
+                result[did]['icons'].append({
+                    'icon_path': row['icon_path'],
+                    'image_color': row['image_color']
+                })
+        return {did: data['icons'] for did, data in result.items()}
+
+    @staticmethod
     def get_by_crop(crop_id, limit=None):
         """作物に関連する日記を取得"""
         db = get_db()

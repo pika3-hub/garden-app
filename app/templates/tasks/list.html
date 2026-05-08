@@ -85,6 +85,17 @@
                     {% if task.due_date and task.status != 'completed' and task.due_date|string < today|string %}
                     <span class="badge bg-danger">期限切れ</span>
                     {% endif %}
+                    {% set task_icons = crop_icons_map.get(task.id, []) %}
+                    {% if task_icons %}
+                    <div class="d-flex gap-1 flex-wrap justify-content-end">
+                        {% for icon in task_icons %}
+                        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}"
+                             class="crop-icon-inline"
+                             style="{{ 'border-color: ' ~ icon.image_color ~ ';' if icon.image_color else '' }}"
+                             alt="">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="card-photo-text-center">
                     <h5 class="card-title">{{ task.title }}</h5>

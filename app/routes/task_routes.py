@@ -31,6 +31,9 @@ def list():
 
     grouped_tasks = [(k, [item for item in g]) for k, g in groupby(tasks, key=_status_key)]
 
+    task_ids = [t['id'] for t in tasks]
+    crop_icons_map = Task.get_crop_icons_batch(task_ids) if task_ids else {}
+
     return render_template('tasks/list.html',
                           tasks=tasks,
                           grouped_tasks=grouped_tasks,
@@ -38,7 +41,8 @@ def list():
                           filter_statuses=filter_statuses,
                           years=years,
                           today=date.today(),
-                          Task=Task)
+                          Task=Task,
+                          crop_icons_map=crop_icons_map)
 
 
 @bp.route('/<int:task_id>')
