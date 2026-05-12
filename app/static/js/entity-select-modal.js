@@ -36,6 +36,7 @@
         this.filterCardAttr = opts.filterCardAttr || '';
 
         this.selectedIds = new Set();
+        this.singleSelect = opts.singleSelect || false;
 
         this._init();
     }
@@ -70,6 +71,12 @@
                     self.selectedIds.delete(id);
                     card.classList.remove('ms-card-selected');
                 } else {
+                    if (self.singleSelect) {
+                        self.selectedIds.clear();
+                        self.modalEl.querySelectorAll(self.cardSelector).forEach(function (c) {
+                            c.classList.remove('ms-card-selected');
+                        });
+                    }
                     self.selectedIds.add(id);
                     card.classList.add('ms-card-selected');
                 }
@@ -163,19 +170,24 @@
         var countEl = this.modalEl.querySelector('.ms-selected-count');
         if (countEl) {
             var n = this.selectedIds.size;
-            countEl.textContent = n > 0 ? n + '件選択中' : '未選択';
+            if (this.singleSelect) {
+                countEl.textContent = n > 0 ? '選択済み' : '未選択';
+            } else {
+                countEl.textContent = n > 0 ? n + '件選択中' : '未選択';
+            }
         }
     };
 
     /** Legacy single-group filter (scoped to modal) */
     MultiSelectModal.prototype._initLegacyFilter = function () {
         if (!this.filterScope) return;
-        var container = this.modalEl.querySelector('.badge-filter-container[data-scope="' + this.filterScope + '"]');
+        var modalEl = this.modalEl;
+        var container = modalEl.querySelector('.badge-filter-container[data-scope="' + this.filterScope + '"]');
         if (!container) return;
 
         var badges = container.querySelectorAll('.badge-filter');
         var cardAttr = this.filterCardAttr;
-        var items = this.modalEl.querySelectorAll('[' + cardAttr + ']');
+        var items = modalEl.querySelectorAll('[' + cardAttr + ']');
         var selected = new Set();
 
         badges.forEach(function (badge) {
@@ -195,19 +207,27 @@
                     var show = selected.size === 0 || types.some(function (t) { return selected.has(t); });
                     item.style.display = show ? '' : 'none';
                 });
+                modalEl.querySelectorAll('.date-group').forEach(function (group) {
+                    var visible = false;
+                    group.querySelectorAll('[' + cardAttr + ']').forEach(function (item) {
+                        if (item.style.display !== 'none') visible = true;
+                    });
+                    group.style.display = visible ? '' : 'none';
+                });
             });
         });
     };
 
     /** Multi-group filter (scoped to modal, AND between groups, OR within) */
     MultiSelectModal.prototype._initMultiGroupFilter = function () {
-        var groups = this.modalEl.querySelectorAll('.badge-filter-group[data-filter-key]');
+        var modalEl = this.modalEl;
+        var groups = modalEl.querySelectorAll('.badge-filter-group[data-filter-key]');
         if (groups.length === 0) return;
 
-        var items = this.modalEl.querySelectorAll('[data-ms-filter-card]');
-        var countEl = this.modalEl.querySelector('.ms-filter-count');
+        var items = modalEl.querySelectorAll('[data-ms-filter-card]');
+        var countEl = modalEl.querySelector('.ms-filter-count');
         var suffix = countEl ? (countEl.dataset.suffix || '') : '';
-        var emptyMsg = this.modalEl.querySelector('.ms-filter-empty-msg');
+        var emptyMsg = modalEl.querySelector('.ms-filter-empty-msg');
 
         var selectedByGroup = {};
         var datasetAttrMap = {};
@@ -257,6 +277,13 @@
             if (emptyMsg) {
                 emptyMsg.style.display = visibleCount === 0 ? '' : 'none';
             }
+            modalEl.querySelectorAll('.date-group').forEach(function (group) {
+                var visible = false;
+                group.querySelectorAll('[data-ms-filter-card]').forEach(function (item) {
+                    if (item.style.display !== 'none') visible = true;
+                });
+                group.style.display = visible ? '' : 'none';
+            });
         }
     };
 

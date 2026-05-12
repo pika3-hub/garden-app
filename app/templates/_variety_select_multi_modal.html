@@ -1,0 +1,64 @@
+{% from '_macros.html' import crop_label %}
+<!-- 品種選択モーダル（複数選択） -->
+<div class="modal fade" id="varietyMultiSelectModal" tabindex="-1" aria-labelledby="varietyMultiSelectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="varietyMultiSelectModalLabel"><img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="icon-img"> 品種を選択</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if variety_filter_types %}
+                <div class="badge-filter-container mb-3" data-scope="variety-multi">
+                    {% for t in variety_filter_types %}
+                    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+                        {%- for icon in variety_filter_type_icons.get(t, []) %}
+                        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
+                        {%- endfor %}
+                        {{ t }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if varieties %}
+                {% for crop_id, group_vars in grouped_varieties %}
+                <section class="date-group" data-group-key="{{ crop_id }}">
+                    <h3 class="date-group-heading">
+                        {{ crop_label(group_vars[0].crop_name, None, group_vars[0].crop_icon_path, group_vars[0].crop_image_color) }}
+                        <small class="text-muted">({{ group_vars|length }}件)</small>
+                    </h3>
+                    <div class="row">
+                        {% for v in group_vars %}
+                        <div class="col-6 col-md-4 col-lg-3 mb-3" data-variety-ms-card data-filter-type="{{ v.crop_type }}">
+                            <div class="card h-100 card-photo card-bg-crop variety-ms-card {{ '' if v.effective_image_path else 'card-no-image' }} {% if selected_variety_ids and v.id|string in selected_variety_ids %}ms-card-selected{% endif %}"
+                                 role="button"
+                                 data-variety-id="{{ v.id }}"
+                                 data-variety-name="{{ v.name }}"
+                                 data-crop-name="{{ v.crop_name }}"
+                                 data-icon-path="{{ v.effective_icon_path or '' }}"
+                                 data-image-color="{{ v.effective_image_color or '' }}">
+                                {% if v.effective_image_path %}
+                                <img src="{{ url_for('static', filename='uploads/' + (v.effective_image_path | thumb_path)) }}"
+                                     class="card-photo-img" alt="{{ v.name }}"
+                                     loading="lazy"
+                                     onerror="this.src='{{ url_for('static', filename='uploads/' + v.effective_image_path) }}'">
+                                {% endif %}
+                                <div class="card-photo-overlay">
+                                    <h5 class="card-title">{{ crop_label(v.crop_name, v.name, v.effective_icon_path, v.effective_image_color) }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endfor %}
+                {% else %}
+                <div class="alert alert-warning mb-0">品種が登録されていません。</div>
+                {% endif %}
+            </div>
+            <div class="modal-footer ms-modal-footer">
+                <span class="ms-selected-count text-muted">未選択</span>
+                <button type="button" class="btn btn-success ms-confirm-btn"><i class="bi bi-check-lg"></i> 決定</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -49,6 +49,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        {% set is_varieties = request.endpoint and request.endpoint.startswith('varieties.') %}
+                        <a class="nav-link {% if is_varieties %}active{% endif %}" href="{{ url_for('varieties.list') }}" {% if is_varieties %}aria-current="page"{% endif %}>
+                            <img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="icon-img icon-img-lg"> 品種
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         {% set is_locations = request.endpoint and request.endpoint.startswith('locations.') %}
                         <a class="nav-link {% if is_locations %}active{% endif %}" href="{{ url_for('locations.list') }}" {% if is_locations %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="" class="icon-img icon-img-lg"> 場所
@@ -64,6 +70,12 @@
                         {% set is_harvests = request.endpoint and request.endpoint.startswith('harvests.') %}
                         <a class="nav-link {% if is_harvests %}active{% endif %}" href="{{ url_for('harvests.list') }}" {% if is_harvests %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="" class="icon-img icon-img-lg"> 収穫
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        {% set is_cooking = request.endpoint and request.endpoint.startswith('cooking.') %}
+                        <a class="nav-link {% if is_cooking %}active{% endif %}" href="{{ url_for('cooking.list') }}" {% if is_cooking %}aria-current="page"{% endif %}>
+                            <img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="icon-img icon-img-lg"> 料理
                         </a>
                     </li>
                     <li class="nav-item">

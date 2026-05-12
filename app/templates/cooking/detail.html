@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
+
+{% block title %}{{ item.title }} - 料理{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="icon-img icon-img-lg"> {{ item.title }}</h1>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('cooking.list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-list"></i> 一覧に戻る
+        </a>
+    </div>
+</div>
+
+{% set prev_nav = {'url': url_for('cooking.detail', cooking_id=prev_item.id),
+                   'button_text': '前の料理',
+                   'label': prev_item.cooked_date ~ ' ' ~ prev_item.title} if prev_item else None %}
+{% set next_nav = {'url': url_for('cooking.detail', cooking_id=next_item.id),
+                   'button_text': '次の料理',
+                   'label': next_item.cooked_date ~ ' ' ~ next_item.title} if next_item else None %}
+{% set nav_label = '料理ナビゲーション' %}
+{% with prev_item = prev_nav, next_item = next_nav %}
+{% include '_detail_nav.html' %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3 card-photo-detail">
+            <div class="card-photo-detail-img-wrapper">
+                {%- if item.image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + item.image_path) }}"
+                     class="card-photo-img lightbox-target" alt="{{ item.title }}">
+                {%- else %}
+                <img src="{{ url_for('static', filename='images/card_cooking.webp') }}"
+                     class="card-photo-img card-photo-img-fallback card-photo-img-fallback-center" alt="料理">
+                {%- endif %}
+            </div>
+            <div class="card-photo-detail-overlay">
+                <h4 class="card-photo-detail-title">{{ item.title }}</h4>
+                <div class="detail-fields">
+                    <div class="detail-field">
+                        <span class="detail-field-label">調理日:</span>
+                        <span class="detail-field-value">{{ item.cooked_date }}</span>
+                    </div>
+                    {% if item.category %}
+                    <div class="detail-field">
+                        <span class="detail-field-label">カテゴリ:</span>
+                        <span class="detail-field-value"><span class="badge bg-warning text-dark">{{ item.category }}</span></span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if item.notes %}
+                <div class="detail-notes">{{ item.notes }}</div>
+                {% endif %}
+                <div class="detail-timestamps">
+                    登録日時: {{ item.created_at }} / 更新日時: {{ item.updated_at }}
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group-action">
+            <a href="{{ url_for('cooking.edit', cooking_id=item.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 料理を編集
+            </a>
+            <form method="POST" action="{{ url_for('cooking.delete', cooking_id=item.id) }}" class="d-inline" onsubmit="return confirmDelete('{{ item.title }}');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> 料理を削除
+                </button>
+            </form>
+        </div>
+
+        {% set supplement_entity_type = 'cooking' %}
+        {% set supplement_entity_id = item.id %}
+        {% include '_supplements_section.html' %}
+    </div>
+
+    <div class="col-md-4">
+        {% set related_crops = relations.crops %}
+        {% include '_related_crops_card.html' %}
+
+        {% set related_varieties = relations.varieties %}
+        {% include '_related_varieties_card.html' %}
+
+        {% set related_plantings = relations.location_crops %}
+        {% set related_plantings_title = '関連する植え付け' %}
+        {% include '_related_plantings_card.html' %}
+
+        {% set related_harvests = relations.harvests %}
+        {% include '_related_harvests_card.html' %}
+
+        {% if not relations.crops and not relations.varieties and not relations.location_crops and not relations.harvests %}
+        <div class="card">
+            <div class="card-body text-muted text-center">
+                <i class="bi bi-link-45deg"></i> 関連付けなし
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

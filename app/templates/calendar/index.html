@@ -23,40 +23,61 @@
         </a>
     </div>
 
-    <!-- 凡例 -->
-    <div class="calendar-legend">
-        <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="作物">
+    <!-- フィルターバー (凡例兼用) -->
+    <div class="calendar-filter-bar">
+        <button class="calendar-entity-filter" data-entity-type="crops">
+            <img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="">
             <span>作物</span>
-        </div>
-        <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="場所">
+        </button>
+        <button class="calendar-entity-filter" data-entity-type="varieties">
+            <img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="">
+            <span>品種</span>
+        </button>
+        <button class="calendar-entity-filter" data-entity-type="locations">
+            <img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="">
             <span>場所</span>
-        </div>
-        <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="日記">
-            <span>日記</span>
-        </div>
-        <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="植え付け">
+        </button>
+        <button class="calendar-entity-filter" data-entity-type="location_crops">
+            <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="">
             <span>植え付け</span>
-        </div>
-        <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="収穫">
-            <span>収穫</span>
-        </div>
-        <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_tasklist.webp') }}" alt="タスク">
-            <span>タスク</span>
-        </div>
-        <div class="legend-item">
-            <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="栽培記録">
+        </button>
+        <button class="calendar-entity-filter" data-entity-type="growth_records">
+            <img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="">
             <span>栽培記録</span>
-        </div>
+        </button>
+        <button class="calendar-entity-filter" data-entity-type="harvests">
+            <img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="">
+            <span>収穫</span>
+        </button>
+        <button class="calendar-entity-filter" data-entity-type="cooking">
+            <img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="">
+            <span>料理</span>
+        </button>
+        <button class="calendar-entity-filter" data-entity-type="diaries">
+            <img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="">
+            <span>日記</span>
+        </button>
+        <button class="calendar-entity-filter" data-entity-type="tasks">
+            <img src="{{ url_for('static', filename='images/icon_tasklist.webp') }}" alt="">
+            <span>タスク</span>
+        </button>
     </div>
 
-    <!-- カレンダーテーブル -->
-    <table class="calendar-table">
+    <!-- エンティティ種別の設定（デスクトップ・モバイル共通） -->
+    {% set type_config = [
+        ('crops',          'icon_crop.webp',          '作物'),
+        ('varieties',      'icon_variety.webp',       '品種'),
+        ('locations',      'icon_location.webp',      '場所'),
+        ('location_crops', 'icon_location_crop.webp', '植え付け'),
+        ('growth_records', 'icon_location_crop.webp', '栽培記録'),
+        ('harvests',       'icon_harvest.webp',       '収穫'),
+        ('diaries',        'icon_diary.webp',         '日記'),
+        ('tasks',          'icon_tasklist.webp',      'タスク'),
+        ('cooking',        'icon_cooking.webp',       '料理'),
+    ] %}
+
+    <!-- カレンダーテーブル（sm以上で表示） -->
+    <table class="calendar-table d-none d-xl-table">
         <thead>
             <tr class="calendar-header">
                 <th class="weekday-sun">日</th>
@@ -86,20 +107,13 @@
                         {{ day.day }}
                     </div>
 
-                    <!-- アイコン -->
+                    <!-- アイコン・フィルターチップ -->
                     <div class="day-icons">
-                        {% set type_defs = [
-                            ('crops',          'icon_crop.webp',          '作物',     day_data.get('crops', [])),
-                            ('locations',      'icon_location.webp',      '場所',     day_data.get('locations', [])),
-                            ('diaries',        'icon_diary.webp',         '日記',     day_data.get('diaries', [])),
-                            ('location_crops', 'icon_location_crop.webp', '植え付け', day_data.get('location_crops', [])),
-                            ('harvests',       'icon_harvest.webp',       '収穫',     day_data.get('harvests', [])),
-                            ('tasks',          'icon_tasklist.webp',      'タスク',   day_data.get('tasks', [])),
-                            ('growth_records', 'icon_location_crop.webp', '栽培記録', day_data.get('growth_records', [])),
-                        ] %}
-                        {% for type_key, icon, type_label, items in type_defs %}
+                        {% for type_key, icon, type_label in type_config %}
+                        {% set items = day_data.get(type_key, []) %}
                         {% if items %}
                         <button class="calendar-icon-btn"
+                                data-entity-type="{{ type_key }}"
                                 data-type-label="{{ type_label }}"
                                 data-date="{{ date_str }}"
                                 data-items='{{ items | tojson }}'
@@ -113,10 +127,58 @@
                         {% endif %}
                         {% endfor %}
                     </div>
+                    <div class="day-chips"></div>
                 </td>
                 {% endif %}
                 {% endfor %}
             </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- モバイル縦型カレンダー（sm未満で表示） -->
+    {% set wday_names = ['月', '火', '水', '木', '金', '土', '日'] %}
+    <table class="calendar-mobile-table d-xl-none">
+        <tbody>
+            {% for week in calendar_weeks %}
+            {% for day in week %}
+            {% if day is not none %}
+            {% set date_str = day.strftime('%Y-%m-%d') %}
+            {% set day_data = month_data.get(date_str, {}) %}
+            {% set is_today = day == today %}
+            {% set weekday = day.weekday() %}
+            <tr class="calendar-mobile-row {% if is_today %}today{% endif %}">
+                <td class="mobile-day-num {% if weekday == 6 %}weekday-sun{% elif weekday == 5 %}weekday-sat{% endif %}">
+                    {{ day.day }}
+                </td>
+                <td class="mobile-day-name {% if weekday == 6 %}weekday-sun{% elif weekday == 5 %}weekday-sat{% endif %}">
+                    {{ wday_names[weekday] }}
+                </td>
+                <td class="mobile-day-data">
+                    <div class="day-icons">
+                        {% for type_key, icon, type_label in type_config %}
+                        {% set items = day_data.get(type_key, []) %}
+                        {% if items %}
+                        <button class="calendar-icon-btn"
+                                data-entity-type="{{ type_key }}"
+                                data-type-label="{{ type_label }}"
+                                data-date="{{ date_str }}"
+                                data-items='{{ items | tojson }}'
+                                data-bs-html="true"
+                                title="<strong>{{ type_label }}</strong><br>{{ items | map(attribute='label') | map('escape') | join('<br>') | safe }}">
+                            <img src="{{ url_for('static', filename='images/' + icon) }}" alt="{{ type_label }}">
+                            {% if items | length > 1 %}
+                            <span class="icon-badge">{{ items | length }}</span>
+                            {% endif %}
+                        </button>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="day-chips"></div>
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
             {% endfor %}
         </tbody>
     </table>
@@ -136,9 +198,10 @@
         </div>
     </div>
 
-    <!-- キーボード操作ヒント -->
+    <!-- 操作ヒント -->
     <div class="text-muted text-center mt-3">
-        <small><i class="bi bi-keyboard"></i> キーボードの ← → で月を移動できます</small>
+        <small class="d-none d-lg-inline"><i class="bi bi-keyboard"></i> キーボードの ← → で月を移動できます</small>
+        <small class="d-xl-none"><i class="bi bi-hand-index"></i> 左右スワイプで月を移動できます</small>
     </div>
 </div>
 {% endblock %}

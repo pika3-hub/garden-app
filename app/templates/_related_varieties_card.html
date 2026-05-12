@@ -1,0 +1,32 @@
+{# 関連する品種カード（詳細画面サイドバー用） #}
+{# 変数: related_varieties (list of dict: variety_id, variety, crop_id, crop_name, crop_type, icon_path, image_color, variety_image_path) #}
+{% from '_macros.html' import crop_label %}
+{% if related_varieties %}
+<div class="card mb-3">
+    <div class="card-header bg-success text-white">
+        <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="icon-img"> 関連する品種</h6>
+    </div>
+    <div class="card-body">
+        <ul class="list-group list-group-flush">
+            {% for v in related_varieties %}
+            <li class="list-group-item">
+                {% if v.variety_image_path %}
+                <a href="{{ url_for('varieties.detail', variety_id=v.variety_id) }}">
+                    <img src="{{ url_for('static', filename='uploads/' + (v.variety_image_path | thumb_path)) }}"
+                         alt="{{ v.variety }}"
+                         style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                         onerror="this.src='{{ url_for('static', filename='uploads/' + v.variety_image_path) }}'">
+                </a>
+                {% endif %}
+                <a href="{{ url_for('varieties.detail', variety_id=v.variety_id) }}">
+                    {{ crop_label(v.crop_name, v.variety, v.icon_path, v.image_color) }}
+                </a>
+                {% if v.crop_type %}
+                <span class="badge bg-secondary">{{ v.crop_type }}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}

@@ -161,12 +161,40 @@
                          style="max-height: 300px; object-fit: contain;">
                 </div>
             {% elif s.supplement_type == 'url' %}
+                {% if s.ogp_image or s.ogp_title or s.ogp_description %}
+                <a href="{{ s.content }}" target="_blank" rel="noopener noreferrer"
+                   class="supplement-ogp-card text-decoration-none d-block">
+                    <div class="card supplement-ogp-inner">
+                        {% if s.ogp_image %}
+                        <img src="{{ s.ogp_image }}"
+                             class="supplement-ogp-thumb"
+                             alt="{{ s.ogp_title or '' }}"
+                             onerror="this.style.display='none'">
+                        {% endif %}
+                        <div class="card-body supplement-ogp-body py-2 px-3">
+                            <p class="supplement-ogp-title mb-1">
+                                {{ s.ogp_title or s.title or s.content }}
+                            </p>
+                            {% if s.ogp_description %}
+                            <p class="supplement-ogp-desc text-muted mb-1">
+                                {{ s.ogp_description | truncate(120) }}
+                            </p>
+                            {% endif %}
+                            <small class="supplement-ogp-url text-muted">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                                {{ s.content | truncate(60) }}
+                            </small>
+                        </div>
+                    </div>
+                </a>
+                {% else %}
                 <div class="supplement-url">
                     <a href="{{ s.content }}" target="_blank" rel="noopener noreferrer">
                         <i class="bi bi-box-arrow-up-right"></i>
                         {{ s.title or s.content }}
                     </a>
                 </div>
+                {% endif %}
             {% elif s.supplement_type == 'youtube' %}
                 {% set yt_parts = s.content.split(':') %}
                 {% set yt_id = yt_parts[0] %}

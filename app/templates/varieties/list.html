@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
+
+{% block title %}品種一覧 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="icon-img icon-img-lg"> 品種一覧 <span class="text-muted fs-6"> - 登録済みの品種 ({{ varieties|length }}件)</span></h1>
+        <p class="text-muted mb-0">各作物の品種（栽培品種・銘柄など）を管理できます。</p>
+    </div>
+    <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('varieties.new') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> 品種を追加
+        </a>
+    </div>
+</div>
+
+{% if filter_types %}
+<div id="badge-filter-container" class="badge-filter-container">
+    {% for t in filter_types %}
+    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+        {%- for icon in filter_type_icons.get(t, []) %}
+        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
+        {%- endfor %}
+        {{ t }}</span>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if varieties %}
+<div id="filter-empty-msg" class="alert alert-info" style="display:none;">
+    <i class="bi bi-info-circle"></i> 該当する品種がありません。
+</div>
+{% for crop_id, group_varieties in grouped_varieties %}
+{% set parent = group_varieties[0] %}
+<section class="date-group" data-group-key="{{ crop_id }}">
+    <h3 class="date-group-heading">
+        {{ crop_label(parent.crop_name, None, parent.crop_icon_path, parent.crop_image_color) }}
+        <small class="text-muted">({{ group_varieties|length }}件)</small>
+    </h3>
+    <div class="row">
+        {% for v in group_varieties %}
+        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ v.crop_type }}">
+            <a href="{{ url_for('varieties.detail', variety_id=v.id) }}" class="card h-100 card-photo card-bg-crop {{ '' if v.effective_image_path else 'card-no-image' }}">
+                {% if v.effective_image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + (v.effective_image_path | thumb_path)) }}"
+                     class="card-photo-img" alt="{{ v.name }}"
+                     loading="lazy"
+                     onerror="this.src='{{ url_for('static', filename='uploads/' + v.effective_image_path) }}'">
+                {% endif %}
+                {% if v.id in active_variety_ids %}
+                <div class="card-photo-badge-top">
+                    <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
+                </div>
+                {% endif %}
+                <div class="card-photo-overlay">
+                    <h5 class="card-title">{{ crop_label(v.crop_name, v.name, v.effective_icon_path, v.effective_image_color) }}</h5>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endfor %}
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    まだ品種が登録されていません。<a href="{{ url_for('varieties.new') }}" class="alert-link">新規登録</a>から追加してください。
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/badge-filter.js') }}"></script>
+{% endblock %}

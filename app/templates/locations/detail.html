@@ -118,10 +118,6 @@
             </form>
         </div>
 
-        {% set supplement_entity_type = 'location' %}
-        {% set supplement_entity_id = location.id %}
-        {% include '_supplements_section.html' %}
-
         <!-- 見取り図カード -->
         <div class="card mb-3" id="history-card">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
@@ -147,7 +143,7 @@
         </div>
 
         <!-- 栽培中の作物 -->
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0"><i class="bi bi-basket"></i> 栽培中の作物</h5>
             </div>
@@ -156,7 +152,11 @@
                 {% if filter_types and active_crops|length > 1 %}
                 <div id="badge-filter-container" class="badge-filter-container mb-2">
                     {% for t in filter_types %}
-                    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">{{ t }}</span>
+                    <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+                        {%- for icon in filter_type_icons.get(t, []) %}
+                        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
+                        {%- endfor %}
+                        {{ t }}</span>
                     {% endfor %}
                 </div>
                 <p class="text-muted mb-2"><span id="filter-count" data-suffix="件">{{ active_crops|length }}件</span></p>
@@ -209,6 +209,10 @@
                 {% endif %}
             </div>
         </div>
+
+        {% set supplement_entity_type = 'location' %}
+        {% set supplement_entity_id = location.id %}
+        {% include '_supplements_section.html' %}
     </div>
 
     <div class="col-md-4">

@@ -36,7 +36,7 @@
             <div class="crop-list">
                 {% for crop in crops %}
                 <div class="crop-item" draggable="true"
-                     data-crop-id="{{ crop.crop_id }}"
+                     data-crop-id="{{ crop.effective_crop_id }}"
                      data-location-crop-id="{{ crop.id }}"
                      data-crop-name="{{ crop.crop_name }}"
                      data-variety="{{ crop.variety or '' }}"

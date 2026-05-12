@@ -4,6 +4,13 @@ from app.database import get_db
 from app.utils.timezone import get_jst_now
 
 
+_CV_JOIN = (
+    'JOIN crop_variety_view cv ON '
+    'IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) '
+    'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
+)
+
+
 class PlantingRecord:
     """栽培記録モデル"""
 
@@ -24,14 +31,15 @@ class PlantingRecord:
         """特定の栽培に紐づく記録一覧を取得"""
         db = get_db()
         records = db.execute(
-            '''SELECT gr.*, c.name as crop_name, c.variety, l.name as location_name,
-                      lc.location_id, lc.crop_id, lc.planted_date
-               FROM planting_records gr
-               JOIN plantings lc ON gr.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               WHERE gr.location_crop_id = ?
-               ORDER BY gr.recorded_at DESC, gr.created_at DESC''',
+            f'''SELECT gr.*, cv.crop_name, cv.variety, l.name as location_name,
+                       lc.location_id, lc.crop_id, lc.variety_id, lc.planted_date,
+                       cv.effective_crop_id
+                FROM planting_records gr
+                JOIN plantings lc ON gr.location_crop_id = lc.id
+                {_CV_JOIN}
+                JOIN locations l ON lc.location_id = l.id
+                WHERE gr.location_crop_id = ?
+                ORDER BY gr.recorded_at DESC, gr.created_at DESC''',
             (location_crop_id,)
         ).fetchall()
         result = []
@@ -48,15 +56,16 @@ class PlantingRecord:
         """最新の栽培記録を取得"""
         db = get_db()
         records = db.execute(
-            '''SELECT gr.*, c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color, l.name as location_name,
-                      lc.location_id, lc.crop_id, lc.planted_date
-               FROM planting_records gr
-               JOIN plantings lc ON gr.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               ORDER BY gr.recorded_at DESC, gr.created_at DESC
-               LIMIT ?''',
+            f'''SELECT gr.*, cv.crop_name, cv.variety,
+                       cv.icon_path, cv.image_color, l.name as location_name,
+                       lc.location_id, lc.crop_id, lc.variety_id, lc.planted_date,
+                       cv.effective_crop_id
+                FROM planting_records gr
+                JOIN plantings lc ON gr.location_crop_id = lc.id
+                {_CV_JOIN}
+                JOIN locations l ON lc.location_id = l.id
+                ORDER BY gr.recorded_at DESC, gr.created_at DESC
+                LIMIT ?''',
             (limit,)
         ).fetchall()
         return [dict(r) for r in records]
@@ -66,24 +75,24 @@ class PlantingRecord:
         """IDで栽培記録を取得"""
         db = get_db()
         record = db.execute(
-            '''SELECT gr.id, gr.location_crop_id, gr.recorded_at,
-                      gr.notes, gr.image_path,
-                      gr.created_at, gr.updated_at,
-                      c.name as crop_name, c.variety,
-                      c.icon_path, c.image_color,
-                      c.crop_type, c.planting_season, c.harvest_season,
-                      c.characteristics, c.notes as crop_notes,
-                      c.image_path as crop_image_path,
-                      l.name as location_name, lc.location_id,
-                      l.location_type, l.area_size, l.sun_exposure,
-                      l.notes as location_notes,
-                      l.image_path as location_image_path,
-                      lc.crop_id, lc.planted_date
-               FROM planting_records gr
-               JOIN plantings lc ON gr.location_crop_id = lc.id
-               JOIN crops c ON lc.crop_id = c.id
-               JOIN locations l ON lc.location_id = l.id
-               WHERE gr.id = ?''',
+            f'''SELECT gr.id, gr.location_crop_id, gr.recorded_at,
+                       gr.notes, gr.image_path,
+                       gr.created_at, gr.updated_at,
+                       cv.crop_name, cv.variety,
+                       cv.icon_path, cv.image_color, cv.crop_type,
+                       cv.notes as crop_notes,
+                       cv.image_path as crop_image_path,
+                       cv.effective_crop_id,
+                       l.name as location_name, lc.location_id,
+                       l.location_type, l.area_size, l.sun_exposure,
+                       l.notes as location_notes,
+                       l.image_path as location_image_path,
+                       lc.crop_id, lc.variety_id, lc.planted_date
+                FROM planting_records gr
+                JOIN plantings lc ON gr.location_crop_id = lc.id
+                {_CV_JOIN}
+                JOIN locations l ON lc.location_id = l.id
+                WHERE gr.id = ?''',
             (record_id,)
         ).fetchone()
         if record:

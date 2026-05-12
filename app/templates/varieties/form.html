@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
+
+{% block title %}{% if variety %}品種編集{% else %}品種登録{% endif %} - 家庭菜園管理アプリ{% endblock %}
+
+{% block extra_css %}
+<style>
+#cropMultiSelectModal .ms-modal-footer { display: none !important; }
+.crop-icon-circle-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #4CAF50;
+}
+.crop-icon-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px dashed #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+.icon-picker-item {
+  transition: border-color 0.15s;
+}
+.icon-picker-item:hover {
+  border-color: #aaa !important;
+}
+.icon-picker-item.selected {
+  border-color: var(--icon-color, #4CAF50) !important;
+  box-shadow: 0 0 0 2px var(--icon-color, #4CAF50);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="icon-img icon-img-lg">
+            {% if variety %}品種編集{% else %}品種登録{% endif %}
+        </h1>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{% if variety %}{{ url_for('varieties.update', variety_id=variety.id) }}{% else %}{{ url_for('varieties.create') }}{% endif %}" class="needs-validation" enctype="multipart/form-data" novalidate>
+                    <div class="mb-3">
+                        <input type="hidden" id="crop_id_hidden" name="crop_id" value="{% if variety %}{{ variety.crop_id }}{% elif preselected_crop %}{{ preselected_crop.id }}{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">親作物 <span class="text-danger">*</span></label>
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#cropMultiSelectModal">
+                                <i class="bi bi-list-check"></i> 作物を選択
+                            </button>
+                        </div>
+                        <div id="selected-crop-display" class="alert alert-info alert-permanent mb-0 py-2">
+                            {% if variety %}
+                            {{ crop_label(variety.crop_name, None, variety.crop_icon_path, variety.crop_image_color) }}
+                            {% elif preselected_crop %}
+                            {{ crop_label(preselected_crop.name, None, preselected_crop.icon_path, preselected_crop.image_color) }}
+                            {% else %}
+                            <span class="text-muted">作物を選択してください</span>
+                            {% endif %}
+                        </div>
+                        <div id="crop-select-error" class="text-danger small mt-1" style="display:none;">
+                            親作物を選択してください
+                        </div>
+                        <div class="form-text">この品種が属する親作物を選択します</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">品種名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ variety.name if variety else '' }}" placeholder="例: アイコ、千果、桃太郎" required>
+                        <div class="invalid-feedback">品種名を入力してください</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">メモ</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="8"
+                                  placeholder="## 植え付け時期&#10;4月〜5月&#10;&#10;## 収穫時期&#10;7月〜9月&#10;&#10;## 特性&#10;耐病性、日当たりが良い場所を好む">{{ variety.notes if variety else '' }}</textarea>
+                        <div class="form-text">品種ごとの特徴・栽培時期などをMarkdown形式で記入できます</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">アイコン <small class="text-muted">（未指定なら親作物のアイコンを使用）</small></label>
+                        <input type="hidden" name="icon_path" id="selectedIcon" value="{{ variety.icon_path if variety else '' }}">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div id="iconPreview">
+                                {% if variety and variety.icon_path %}
+                                <img src="{{ url_for('static', filename='images/crop_icons/' ~ variety.icon_path) }}"
+                                     class="crop-icon-circle-preview"
+                                     style="border-color: {{ variety.image_color or variety.crop_image_color or '#4CAF50' }};">
+                                {% else %}
+                                <div class="crop-icon-placeholder"><i class="bi bi-image text-muted"></i></div>
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearIconBtn">
+                                <i class="bi bi-x-circle"></i> 選択解除（親作物から継承）
+                            </button>
+                        </div>
+                        <div class="border rounded p-2" style="max-height: 300px; overflow-y: auto;">
+                            <div class="d-flex flex-wrap gap-1" id="iconGrid">
+                                {% for icon in crop_icon_list %}
+                                <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon) }}"
+                                     class="icon-picker-item {% if variety and variety.icon_path == icon %}selected{% endif %}"
+                                     data-icon="{{ icon }}"
+                                     title="{{ icon }}"
+                                     width="48" height="48"
+                                     style="cursor: pointer; border-radius: 50%; object-fit: cover; border: 3px solid transparent;">
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image_color" class="form-label">イメージカラー <small class="text-muted">（空欄で親作物から継承）</small></label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="color" class="form-control form-control-color" id="image_color" name="image_color"
+                                   value="{{ variety.image_color if variety and variety.image_color else '#4CAF50' }}" style="width: 60px;">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearColorBtn">
+                                <i class="bi bi-x-circle"></i> クリア（親作物から継承）
+                            </button>
+                            <input type="hidden" id="colorCleared" name="_color_cleared" value="{% if variety and not variety.image_color %}1{% else %}0{% endif %}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image" class="form-label">画像 <small class="text-muted">（未指定なら親作物の画像を使用）</small></label>
+                        {% if variety and variety.image_path %}
+                        <div class="mb-2">
+                            <img src="{{ url_for('static', filename='uploads/' + variety.image_path) }}" alt="現在の画像" class="img-thumbnail" style="max-height: 150px;">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="delete_image" name="delete_image" value="1">
+                                <label class="form-check-label" for="delete_image">画像を削除する（親作物の画像にフォールバック）</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% include '_photo_pool_preselected.html' %}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('varieties.list') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> {% if variety %}品種を更新{% else %}品種を追加{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% include '_photo_pool_picker_modal.html' %}
+{% include '_crop_select_multi_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>
+<script>
+(function() {
+    var cropIconsUrl = "{{ url_for('static', filename='images/crop_icons/') }}";
+    var cropIdInput = document.getElementById('crop_id_hidden');
+    var displayEl = document.getElementById('selected-crop-display');
+    var errorEl = document.getElementById('crop-select-error');
+
+    // バッジフィルター（モーダル内スコープ）
+    var filterContainer = document.querySelector('.badge-filter-container[data-scope="crop-multi"]');
+    if (filterContainer) {
+        var badges = filterContainer.querySelectorAll('.badge-filter');
+        var cards = document.querySelectorAll('[data-crop-ms-card]');
+        var selected = new Set();
+        badges.forEach(function(badge) {
+            badge.addEventListener('click', function() {
+                var type = this.dataset.type;
+                if (selected.has(type)) {
+                    selected.delete(type);
+                    this.classList.remove('badge-filter-active');
+                    this.classList.add('badge-filter-inactive');
+                } else {
+                    selected.add(type);
+                    this.classList.add('badge-filter-active');
+                    this.classList.remove('badge-filter-inactive');
+                }
+                cards.forEach(function(item) {
+                    var types = item.dataset.filterType ? item.dataset.filterType.split(',') : [];
+                    var show = selected.size === 0 || types.some(function(t) { return selected.has(t); });
+                    item.style.display = show ? '' : 'none';
+                });
+            });
+        });
+    }
+
+    // 作物カードクリック → 即選択＆モーダルを閉じる
+    document.querySelectorAll('.crop-ms-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            var id = card.dataset.cropId;
+            var name = card.dataset.cropName || '';
+            var iconPath = card.dataset.iconPath;
+            var imageColor = card.dataset.imageColor;
+
+            cropIdInput.value = id;
+
+            var iconHtml = '';
+            if (iconPath) {
+                iconHtml = '<img src="' + cropIconsUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+            }
+            displayEl.innerHTML = iconHtml + name;
+            errorEl.style.display = 'none';
+            displayEl.classList.remove('border', 'border-danger');
+
+            var modalEl = document.getElementById('cropMultiSelectModal');
+            var inst = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            inst.hide();
+        });
+    });
+
+    // フォーム送信バリデーション
+    document.querySelector('form.needs-validation').addEventListener('submit', function(e) {
+        if (!cropIdInput.value) {
+            e.preventDefault();
+            e.stopPropagation();
+            errorEl.style.display = '';
+            displayEl.classList.add('border', 'border-danger');
+        } else {
+            errorEl.style.display = 'none';
+            displayEl.classList.remove('border', 'border-danger');
+        }
+    });
+})();
+</script>
+<script>
+(function() {
+  const selectedIconInput = document.getElementById('selectedIcon');
+  const colorInput = document.getElementById('image_color');
+  const colorClearedInput = document.getElementById('colorCleared');
+  const iconPreview = document.getElementById('iconPreview');
+  const iconGrid = document.getElementById('iconGrid');
+  const clearIconBtn = document.getElementById('clearIconBtn');
+  const clearColorBtn = document.getElementById('clearColorBtn');
+  const iconBaseUrl = "{{ url_for('static', filename='images/crop_icons/') }}";
+
+  function getColor() {
+    return colorInput ? colorInput.value : '#4CAF50';
+  }
+
+  function updatePreview(iconName) {
+    if (iconName) {
+      iconPreview.innerHTML = `<img src="${iconBaseUrl}${iconName}" class="crop-icon-circle-preview" style="border-color: ${getColor()};">`;
+    } else {
+      iconPreview.innerHTML = '<div class="crop-icon-placeholder"><i class="bi bi-image text-muted"></i></div>';
+    }
+  }
+
+  function updateSelectedStyle() {
+    const color = getColor();
+    document.querySelectorAll('#iconGrid .icon-picker-item').forEach(img => {
+      img.style.setProperty('--icon-color', color);
+    });
+    const previewImg = iconPreview.querySelector('img');
+    if (previewImg) previewImg.style.borderColor = color;
+  }
+
+  iconGrid.addEventListener('click', function(e) {
+    const item = e.target.closest('.icon-picker-item');
+    if (!item) return;
+    const icon = item.dataset.icon;
+    document.querySelectorAll('#iconGrid .icon-picker-item').forEach(i => i.classList.remove('selected'));
+    item.classList.add('selected');
+    selectedIconInput.value = icon;
+    updatePreview(icon);
+  });
+
+  if (colorInput) {
+    colorInput.addEventListener('input', function() {
+      colorClearedInput.value = '0';
+      updateSelectedStyle();
+    });
+  }
+
+  clearIconBtn.addEventListener('click', function() {
+    document.querySelectorAll('#iconGrid .icon-picker-item').forEach(i => i.classList.remove('selected'));
+    selectedIconInput.value = '';
+    updatePreview('');
+  });
+
+  clearColorBtn.addEventListener('click', function() {
+    colorInput.value = '#4CAF50';
+    colorClearedInput.value = '1';
+    updateSelectedStyle();
+  });
+
+  // 送信前: クリア済みなら image_color を空にする
+  const form = document.querySelector('form.needs-validation');
+  if (form) {
+    form.addEventListener('submit', function() {
+      if (colorClearedInput.value === '1') {
+        colorInput.name = '';  // このnameは送信されない
+      }
+    });
+  }
+
+  updateSelectedStyle();
+})();
+</script>
+{% endblock %}

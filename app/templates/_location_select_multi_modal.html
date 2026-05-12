@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="locationMultiSelectModalLabel"><i class="bi bi-geo-alt"></i> 場所を選択</h5>
+                <h5 class="modal-title" id="locationMultiSelectModalLabel"><img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="" class="icon-img"> 場所を選択</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -15,6 +15,40 @@
                 </div>
                 {% endif %}
                 {% if locations %}
+                {% if grouped_locations %}
+                {% for lt, group_locs in grouped_locations %}
+                <section class="date-group" data-group-key="{{ lt }}">
+                    <h3 class="date-group-heading">
+                        {{ lt if lt else '種類なし' }}
+                        <small class="text-muted">({{ group_locs|length }}件)</small>
+                    </h3>
+                    <div class="row">
+                        {% for location in group_locs %}
+                        <div class="col-6 col-md-4 col-lg-3 mb-3" data-location-ms-card data-filter-type="{{ location.location_type }}">
+                            <div class="card h-100 card-photo card-bg-location location-ms-card {{ '' if location.image_path else 'card-no-image' }} {% if selected_location_ids and location.id|string in selected_location_ids %}ms-card-selected{% endif %}"
+                                 role="button"
+                                 data-location-id="{{ location.id }}"
+                                 data-location-name="{{ location.name }}"
+                                 data-location-type="{{ location.location_type or '' }}">
+                                {% if location.image_path %}
+                                <img src="{{ url_for('static', filename='uploads/' + (location.image_path | thumb_path)) }}"
+                                     class="card-photo-img" alt="{{ location.name }}"
+                                     loading="lazy"
+                                     onerror="this.src='{{ url_for('static', filename='uploads/' + location.image_path) }}'">
+                                {% endif %}
+                                <div class="card-photo-overlay">
+                                    <h5 class="card-title">{{ location.name }}</h5>
+                                    {% if location.location_type %}
+                                    <small>{{ location.location_type }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endfor %}
+                {% else %}
                 <div class="row">
                     {% for location in locations %}
                     <div class="col-6 col-md-4 col-lg-3 mb-3" data-location-ms-card data-filter-type="{{ location.location_type }}">
@@ -39,6 +73,7 @@
                     </div>
                     {% endfor %}
                 </div>
+                {% endif %}
                 {% else %}
                 <div class="alert alert-warning mb-0">場所が登録されていません。</div>
                 {% endif %}

@@ -6,7 +6,8 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-6">
-        <h1><img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="icon-img icon-img-lg"> 作物一覧 <span class="text-muted fs-6"> - 登録済みの作物 ({{ crops|length }}件)</span></h1>
+        <h1><img src="{{ url_for('static', filename='images/icon_crop.webp') }}" alt="" class="icon-img icon-img-lg"> 作物一覧 <span class="text-muted fs-6"> - 登録済みの作物 ({{ sorted_crops|length }}件)</span></h1>
+        <p class="text-muted mb-0">育てる作物の名称、種類などを管理できます。</p>
     </div>
     <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
         <a href="{{ url_for('crops.new') }}" class="btn btn-success">
@@ -27,50 +28,39 @@
 </div>
 {% endif %}
 
-{% if crops %}
+{% if sorted_crops %}
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当する作物がありません。
 </div>
-{% for ct, group_crops in grouped_crops %}
-<section class="date-group" data-group-key="{{ ct }}">
-    <h3 class="date-group-heading">
-        {%- for icon in filter_type_icons.get(ct, []) %}
-        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
-        {%- endfor %}
-        {{ ct if ct else '種類なし' }}
-        <small class="text-muted">({{ group_crops|length }}件)</small>
-    </h3>
-    <div class="row">
-        {% for crop in group_crops %}
-        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ crop.crop_type }}">
-            <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="card h-100 card-photo card-bg-crop {{ '' if crop.image_path else 'card-no-image' }}">
-                {% if crop.image_path %}
-                <img src="{{ url_for('static', filename='uploads/' + (crop.image_path | thumb_path)) }}"
-                     class="card-photo-img" alt="{{ crop.name }}"
-                     loading="lazy"
-                     onerror="this.src='{{ url_for('static', filename='uploads/' + crop.image_path) }}'">
+<div class="row">
+    {% for crop in sorted_crops %}
+    <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ crop.crop_type }}">
+        <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="card h-100 card-photo card-bg-crop {{ '' if crop.image_path else 'card-no-image' }}">
+            {% if crop.image_path %}
+            <img src="{{ url_for('static', filename='uploads/' + (crop.image_path | thumb_path)) }}"
+                 class="card-photo-img" alt="{{ crop.name }}"
+                 loading="lazy"
+                 onerror="this.src='{{ url_for('static', filename='uploads/' + crop.image_path) }}'">
+            {% endif %}
+            {% if task_counts.get(crop.id) or crop.id in active_crop_ids %}
+            <div class="card-photo-badge-top">
+                {% if crop.id in active_crop_ids %}
+                <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
                 {% endif %}
-                {% if task_counts.get(crop.id) or crop.id in active_crop_ids %}
-                <div class="card-photo-badge-top">
-                    {% if crop.id in active_crop_ids %}
-                    <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
-                    {% endif %}
-                    {% if task_counts.get(crop.id) %}
-                    <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
-                        <i class="bi bi-bell-fill"></i> {{ task_counts[crop.id] }}
-                    </span>
-                    {% endif %}
-                </div>
+                {% if task_counts.get(crop.id) %}
+                <span class="badge bg-warning text-dark" title="期限が近いタスクがあります">
+                    <i class="bi bi-bell-fill"></i> {{ task_counts[crop.id] }}
+                </span>
                 {% endif %}
-                <div class="card-photo-overlay">
-                    <h5 class="card-title">{{ crop_label(crop.name, crop.variety, crop.icon_path, crop.image_color) }}</h5>
-                </div>
-            </a>
-        </div>
-        {% endfor %}
+            </div>
+            {% endif %}
+            <div class="card-photo-overlay">
+                <h5 class="card-title">{{ crop_label(crop.name, None, crop.icon_path, crop.image_color) }}</h5>
+            </div>
+        </a>
     </div>
-</section>
-{% endfor %}
+    {% endfor %}
+</div>
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>

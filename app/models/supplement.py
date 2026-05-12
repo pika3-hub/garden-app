@@ -17,7 +17,7 @@ _YOUTUBE_PATTERNS = [
 # タイムスタンプ抽出パターン
 _TIME_PATTERN = re.compile(r'[?&](?:t|start)=(\d+)')
 
-VALID_ENTITY_TYPES = {'crop', 'location', 'diary', 'task', 'harvest'}
+VALID_ENTITY_TYPES = {'crop', 'variety', 'location', 'diary', 'task', 'harvest', 'cooking'}
 VALID_SUPPLEMENT_TYPES = {'text', 'image', 'url', 'youtube'}
 
 
@@ -115,10 +115,12 @@ class Supplement:
 
         cursor = db.execute(
             '''INSERT INTO supplements
-               (entity_type, entity_id, supplement_type, title, content, sort_order)
-               VALUES (?, ?, ?, ?, ?, ?)''',
+               (entity_type, entity_id, supplement_type, title, content,
+                sort_order, ogp_image, ogp_title, ogp_description)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['entity_type'], data['entity_id'], data['supplement_type'],
-             data.get('title'), data['content'], max_order + 1)
+             data.get('title'), data['content'], max_order + 1,
+             data.get('ogp_image'), data.get('ogp_title'), data.get('ogp_description'))
         )
         db.commit()
         return cursor.lastrowid
@@ -128,9 +130,13 @@ class Supplement:
         db = get_db()
         db.execute(
             '''UPDATE supplements
-               SET title = ?, content = ?, updated_at = datetime('now', '+9 hours')
+               SET title = ?, content = ?,
+                   ogp_image = ?, ogp_title = ?, ogp_description = ?,
+                   updated_at = datetime('now', '+9 hours')
                WHERE id = ?''',
-            (data.get('title'), data['content'], supplement_id)
+            (data.get('title'), data['content'],
+             data.get('ogp_image'), data.get('ogp_title'), data.get('ogp_description'),
+             supplement_id)
         )
         db.commit()
 

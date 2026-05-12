@@ -5,16 +5,19 @@ from app.models.supplement import (
 )
 from app.models.photo_pool import PhotoPool
 from app.utils.upload import save_image, delete_image, copy_image
+from app.utils.ogp_fetcher import fetch_ogp
 
 bp = Blueprint('supplements', __name__, url_prefix='/supplements')
 
 # エンティティ詳細ページへのリダイレクト設定
 ENTITY_DETAIL_ROUTES = {
     'crop': ('crops.detail', 'crop_id'),
+    'variety': ('varieties.detail', 'variety_id'),
     'location': ('locations.detail', 'location_id'),
     'diary': ('diary.detail', 'diary_id'),
     'task': ('tasks.detail', 'task_id'),
     'harvest': ('harvests.detail', 'harvest_id'),
+    'cooking': ('cooking.detail', 'cooking_id'),
 }
 
 
@@ -37,6 +40,7 @@ def add(entity_type, entity_id):
 
     title = request.form.get('title', '').strip() or None
     content = None
+    ogp = {}
 
     if supplement_type == 'text':
         content = request.form.get('content', '').strip()
@@ -72,6 +76,7 @@ def add(entity_type, entity_id):
             flash('有効なURL（http:// または https://）を入力してください', 'danger')
             return _redirect_to_entity(entity_type, entity_id)
         content = url
+        ogp = fetch_ogp(url)
 
     elif supplement_type == 'youtube':
         youtube_input = request.form.get('content', '').strip()
@@ -87,6 +92,7 @@ def add(entity_type, entity_id):
         'supplement_type': supplement_type,
         'title': title,
         'content': content,
+        **ogp,
     })
     if supplement_type == 'image':
         pool_id = request.form.get('photo_pool_id', type=int)
@@ -109,6 +115,7 @@ def update(supplement_id):
     supplement_type = supplement['supplement_type']
     title = request.form.get('title', '').strip() or None
     content = supplement['content']
+    ogp = {}
 
     if supplement_type == 'text':
         content = request.form.get('content', '').strip()
@@ -139,6 +146,14 @@ def update(supplement_id):
             flash('有効なURL（http:// または https://）を入力してください', 'danger')
             return _redirect_to_entity(entity_type, entity_id)
         content = url
+        if url != supplement['content']:
+            ogp = fetch_ogp(url)
+        else:
+            ogp = {
+                'ogp_image':       supplement['ogp_image'],
+                'ogp_title':       supplement['ogp_title'],
+                'ogp_description': supplement['ogp_description'],
+            }
 
     elif supplement_type == 'youtube':
         youtube_input = request.form.get('content', '').strip()
@@ -148,7 +163,10 @@ def update(supplement_id):
             return _redirect_to_entity(entity_type, entity_id)
         content = format_youtube_content(video_id, start)
 
-    Supplement.update(supplement_id, {'title': title, 'content': content})
+    update_data = {'title': title, 'content': content}
+    if supplement_type == 'url':
+        update_data.update(ogp)
+    Supplement.update(supplement_id, update_data)
     flash('補足情報を更新しました', 'success')
     return _redirect_to_entity(entity_type, entity_id)
 

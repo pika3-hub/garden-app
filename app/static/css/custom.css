@@ -194,9 +194,11 @@ small, .small { font-size: 0.84em; }
 }
 
 .dashboard-card-with-bg.card-bg-crop       { border-top: 3px solid var(--sage); }
+.dashboard-card-with-bg.card-bg-variety    { border-top: 3px solid var(--sage); }
 .dashboard-card-with-bg.card-bg-location   { border-top: 3px solid var(--teal); }
 .dashboard-card-with-bg.card-bg-location-crop { border-top: 3px solid var(--amber); }
 .dashboard-card-with-bg.card-bg-harvest    { border-top: 3px solid var(--terracotta); }
+.dashboard-card-with-bg.card-bg-cooking    { border-top: 3px solid var(--terracotta); }
 .dashboard-card-with-bg.card-bg-diary      { border-top: 3px solid var(--cobalt); }
 .dashboard-card-with-bg.card-bg-tasklist   { border-top: 3px solid var(--ink-muted); }
 
@@ -583,7 +585,7 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   content: '';
   position: absolute;
   top: 50%; left: 50%;
-  width: 170px; height: 170px;
+  width: 120px; height: 120px;
   transform: translate(-50%, -50%);
   opacity: 0.08;
   background-size: contain;
@@ -611,10 +613,12 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   z-index: 0;
 }
 .card-bg-crop::before          { background-image: url('../images/card_crop.webp'); }
+.card-bg-variety::before       { background-image: url('../images/card_variety.webp'); }
 .card-bg-location::before      { background-image: url('../images/card_location.webp'); }
 .card-bg-location-crop::before { background-image: url('../images/card_location_crop.webp'); }
 .card-bg-diary::before         { background-image: url('../images/card_diary.webp'); }
 .card-bg-harvest::before       { background-image: url('../images/card_harvest.webp'); }
+.card-bg-cooking::before       { background-image: url('../images/card_cooking.webp'); }
 .card-bg-tasklist::before      { background-image: url('../images/card_tasklist.webp'); }
 
 /* Bring card content above background image */
@@ -732,6 +736,12 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     top: 0; left: 0;
     width: 100%; height: 100%;
     object-fit: cover;
+}
+
+/* 補足画像など：アスペクト比を保ったまま枠内に収める */
+.card-photo-img-contain {
+    object-fit: contain;
+    background-color: #f8f9f8;
 }
 
 /* 画像なし時のフォールバック背景 */
@@ -976,16 +986,24 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
 #dashboardCarousel {
     border-radius: 10px;
     overflow: hidden;
+    height: 360px;
 }
 #dashboardCarousel:hover {
     transform: none;
 }
+/* carousel-inner/item/a をコンテナいっぱいに伸ばし、overflow:hidden の角丸を4隅に適用する */
+#dashboardCarousel .carousel-inner,
+#dashboardCarousel .carousel-item,
+#dashboardCarousel .carousel-item > a {
+    height: 100%;
+}
 .carousel-dashboard-img {
-    height: 360px;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
 }
 @media (max-width: 767.98px) {
-    .carousel-dashboard-img {
+    #dashboardCarousel {
         height: 300px;
     }
 }
@@ -1039,6 +1057,24 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     border-radius: 10px;
     font-size: 0.75rem;
     pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD STATS GRID (8カード 2行×4列 レスポンシブレイアウト)
+   ══════════════════════════════════════════════════════════ */
+
+/* デスクトップ・タブレット: 4列（2行×4列、col-md-8内に収める） */
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+/* モバイル版: 2列（4行×2列） */
+@media (max-width: 575px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1150,3 +1186,122 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   padding-bottom: 0.25rem;
   margin: 1rem 0 0.75rem;
 }
+
+/* ==========================================================================
+   Dashboard Timeline (ホーム画面の日付グループ型タイムライン)
+   ========================================================================== */
+.timeline-date-header {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: .4rem .75rem .3rem;
+  background: #ede8e1;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+.timeline-item {
+  color: var(--ink);
+  transition: background .12s;
+}
+.timeline-item:last-child {
+  border-bottom: none !important;
+}
+.timeline-item:hover {
+  background: #f8f5f0;
+  color: var(--forest);
+}
+.timeline-item-title {
+  font-size: .875rem;
+  font-weight: 500;
+}
+.timeline-crop-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.timeline-type-emoji {
+  font-size: 1rem;
+  width: 22px;
+  text-align: center;
+}
+
+.timeline-badge-diary           { background-color: var(--cobalt); }
+.timeline-badge-planting        { background-color: #198754; }
+.timeline-badge-planting_record { background-color: #0a8484; }
+.timeline-badge-harvest         { background-color: var(--terracotta); }
+.timeline-badge-cooking         { background-color: var(--terracotta-light); }
+
+/* デスクトップ: 種別行 */
+.tl-type-row { min-height: 2.25rem; }
+.tl-type-badge { min-width: 64px; text-align: center; margin-top: 2px; }
+
+/* デスクトップ: チップ */
+.tl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: .8125rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s;
+}
+.tl-chip:hover {
+  background: var(--cream);
+  border-color: var(--forest-light);
+  color: var(--forest);
+}
+/* 期限区分バッジ (order 0=期限切れ 1=今日 2=明日 3=X日後) */
+.tl-urgency-0 { background-color: var(--terracotta); }          /* 期限切れ: 赤 */
+.tl-urgency-1 { background-color: var(--amber); color: #fff; }  /* 今日: 琥珀 */
+.tl-urgency-2 { background-color: var(--teal);  color: #fff; }  /* 明日: ティール */
+.tl-urgency-3 { background-color: var(--ink-muted); }           /* X日後: グレー */
+
+.tl-chip-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.tl-chip-emoji { font-size: .875rem; line-height: 1; }
+
+/* ── OGP Card Preview (supplements) ── */
+.supplement-ogp-card { color: inherit; }
+.supplement-ogp-card:hover { opacity: 0.88; }
+.supplement-ogp-inner {
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--surface-elevated);
+    max-width: 480px;
+}
+.supplement-ogp-thumb {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    display: block;
+}
+.supplement-ogp-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--forest);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.supplement-ogp-desc {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.supplement-ogp-url { font-size: 0.75rem; word-break: break-all; }

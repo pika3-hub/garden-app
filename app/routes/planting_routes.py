@@ -4,10 +4,12 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.planting_record import PlantingRecord
 from app.models.planting import Planting
 from app.models.crop import Crop
+from app.models.variety import Variety
 from app.models.location import Location
 from app.models.task import Task
 from app.models.harvest import Harvest
 from app.models.diary import DiaryEntry
+from app.models.cooking import Cooking
 from app.models.photo_pool import PhotoPool
 from app.utils.upload import save_image, delete_image, copy_image
 from datetime import date
@@ -67,7 +69,13 @@ def detail(location_crop_id):
     related_tasks = Task.get_incomplete_tasks_for_entity('location_crop', location_crop_id)
     related_harvests = Harvest.get_by_location_crop(location_crop_id, limit=10)
     related_diaries = DiaryEntry.get_by_location_crop(location_crop_id, limit=10)
+    related_cookings = Cooking.get_by_planting(location_crop_id, limit=10)
     photo_pool_photos = PhotoPool.get_all()
+
+    parent_crop = Crop.get_by_id(location_crop['effective_crop_id'])
+    variety = None
+    if location_crop.get('variety_id'):
+        variety = Variety.apply_inheritance(Variety.get_by_id(location_crop['variety_id']))
 
     return render_template('plantings/detail.html',
                           photo_pool_photos=photo_pool_photos,
@@ -80,7 +88,10 @@ def detail(location_crop_id):
                           next_planting=next_planting,
                           related_tasks=related_tasks,
                           related_harvests=related_harvests,
-                          related_diaries=related_diaries)
+                          related_diaries=related_diaries,
+                          related_cookings=related_cookings,
+                          parent_crop=parent_crop,
+                          variety=variety)
 
 
 @bp.route('/<int:location_crop_id>/end', methods=['POST'])
@@ -125,10 +136,17 @@ def record_detail(record_id):
 
     prev_record, next_record = PlantingRecord.get_adjacent(record_id)
 
+    parent_crop = Crop.get_by_id(record['effective_crop_id'])
+    variety = None
+    if record.get('variety_id'):
+        variety = Variety.apply_inheritance(Variety.get_by_id(record['variety_id']))
+
     return render_template('plantings/record_detail.html',
                           record=record,
                           prev_record=prev_record,
                           next_record=next_record,
+                          parent_crop=parent_crop,
+                          variety=variety,
                           photo_pool_photos=PhotoPool.get_all())
 
 
@@ -335,6 +353,7 @@ def place(location_crop_id):
 def plant_new():
     """植え付け登録フォーム"""
     crops = Crop.get_all()
+    varieties = [Variety.apply_inheritance(v) for v in Variety.get_all()]
     locations = Location.get_all()
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
     crop_filter_type_icons = {}
@@ -348,33 +367,39 @@ def plant_new():
     today = date.today().isoformat()
     preselected_location_id = request.args.get('location_id', type=int)
     preselected_crop_id = request.args.get('crop_id', type=int)
+    preselected_variety_id = request.args.get('variety_id', type=int)
     preselected_crop = next((c for c in crops if c['id'] == preselected_crop_id), None) if preselected_crop_id else None
     preselected_location = next((l for l in locations if l['id'] == preselected_location_id), None) if preselected_location_id else None
+    preselected_variety = next((v for v in varieties if v['id'] == preselected_variety_id), None) if preselected_variety_id else None
     return render_template('plantings/planting_form.html',
                            planting=None,
                            crops=crops,
+                           varieties=varieties,
                            locations=locations,
                            crop_filter_types=crop_filter_types,
                            crop_filter_type_icons=crop_filter_type_icons,
                            location_filter_types=location_filter_types,
                            today=today,
                            preselected_location=preselected_location,
-                           preselected_crop=preselected_crop)
+                           preselected_crop=preselected_crop,
+                           preselected_variety=preselected_variety)
 
 
 @bp.route('/plant/create', methods=['POST'])
 def plant_create():
     """植え付け登録処理"""
     location_id = request.form.get('location_id')
-    crop_id = request.form.get('crop_id')
+    crop_id = request.form.get('crop_id', type=int) or None
+    variety_id = request.form.get('variety_id', type=int) or None
 
-    if not location_id or not crop_id:
-        flash('場所と作物は必須です', 'danger')
+    if not location_id or (not crop_id and not variety_id):
+        flash('場所と作物（または品種）は必須です', 'danger')
         return redirect(url_for('plantings.plant_new'))
 
     data = {
         'location_id': location_id,
         'crop_id': crop_id,
+        'variety_id': variety_id,
         'planted_date': request.form.get('planted_date') or None,
         'quantity': request.form.get('quantity') or None,
         'notes': request.form.get('notes') or None,
@@ -398,6 +423,7 @@ def planting_edit(location_crop_id):
         return redirect(url_for('plantings.index'))
 
     crops = Crop.get_all()
+    varieties = [Variety.apply_inheritance(v) for v in Variety.get_all()]
     locations = Location.get_all()
     crop_filter_types = sorted(set(c['crop_type'] for c in crops if c['crop_type']))
     crop_filter_type_icons = {}
@@ -409,18 +435,21 @@ def planting_edit(location_crop_id):
                 icons.append({'icon_path': icon, 'image_color': c['image_color'] or '#4CAF50'})
     location_filter_types = sorted(set(l['location_type'] for l in locations if l['location_type']))
     earliest_child_date = Planting.get_earliest_child_date(location_crop_id)
-    preselected_crop = next((c for c in crops if c['id'] == planting['crop_id']), None)
+    preselected_crop = next((c for c in crops if c['id'] == planting.get('crop_id')), None) if planting.get('crop_id') else None
+    preselected_variety = next((v for v in varieties if v['id'] == planting.get('variety_id')), None) if planting.get('variety_id') else None
     preselected_location = next((l for l in locations if l['id'] == planting['location_id']), None)
 
     return render_template('plantings/planting_form.html',
                            planting=planting,
                            crops=crops,
+                           varieties=varieties,
                            locations=locations,
                            crop_filter_types=crop_filter_types,
                            crop_filter_type_icons=crop_filter_type_icons,
                            location_filter_types=location_filter_types,
                            earliest_child_date=earliest_child_date,
                            preselected_crop=preselected_crop,
+                           preselected_variety=preselected_variety,
                            preselected_location=preselected_location,
                            today=None)
 
@@ -434,10 +463,11 @@ def planting_update(location_crop_id):
         return redirect(url_for('plantings.index'))
 
     location_id = request.form.get('location_id')
-    crop_id = request.form.get('crop_id')
+    crop_id = request.form.get('crop_id', type=int) or None
+    variety_id = request.form.get('variety_id', type=int) or None
 
-    if not location_id or not crop_id:
-        flash('場所と作物は必須です', 'danger')
+    if not location_id or (not crop_id and not variety_id):
+        flash('場所と作物（または品種）は必須です', 'danger')
         return redirect(url_for('plantings.planting_edit', location_crop_id=location_crop_id))
 
     planted_date = request.form.get('planted_date') or None
@@ -450,6 +480,7 @@ def planting_update(location_crop_id):
     data = {
         'location_id': location_id,
         'crop_id': crop_id,
+        'variety_id': variety_id,
         'planted_date': planted_date,
         'quantity': request.form.get('quantity') or None,
         'notes': request.form.get('notes') or None,

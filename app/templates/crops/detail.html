@@ -17,10 +17,10 @@
 
 {% set prev_item = {'url': url_for('crops.detail', crop_id=prev_crop.id),
                     'button_text': '前の作物',
-                    'label': crop_label(prev_crop.name, prev_crop.variety, prev_crop.icon_path, prev_crop.image_color)} if prev_crop else None %}
+                    'label': crop_label(prev_crop.name, None, prev_crop.icon_path, prev_crop.image_color)} if prev_crop else None %}
 {% set next_item = {'url': url_for('crops.detail', crop_id=next_crop.id),
                     'button_text': '次の作物',
-                    'label': crop_label(next_crop.name, next_crop.variety, next_crop.icon_path, next_crop.image_color)} if next_crop else None %}
+                    'label': crop_label(next_crop.name, None, next_crop.icon_path, next_crop.image_color)} if next_crop else None %}
 {% set nav_label = '作物ナビゲーション' %}
 {% include '_detail_nav.html' %}
 
@@ -34,40 +34,22 @@
             </div>
             {% endif %}
             <div class="card-photo-detail-overlay">
-                <h4 class="card-photo-detail-title">{{ crop_label(crop.name, crop.variety, crop.icon_path, crop.image_color) }}</h4>
+                <h4 class="card-photo-detail-title">{{ crop_label(crop.name, None, crop.icon_path, crop.image_color) }}</h4>
                 <div class="detail-fields">
                     <div class="detail-field">
                         <span class="detail-field-label">種類:</span>
                         <span class="detail-field-value"><span class="badge bg-success">{{ crop.crop_type }}</span></span>
                     </div>
-                    {% if crop.variety %}
-                    <div class="detail-field">
-                        <span class="detail-field-label">品種:</span>
-                        <span class="detail-field-value">{{ crop.variety }}</span>
-                    </div>
-                    {% endif %}
-                    {% if crop.planting_season %}
-                    <div class="detail-field">
-                        <span class="detail-field-label">植え付け時期:</span>
-                        <span class="detail-field-value">{{ crop.planting_season }}</span>
-                    </div>
-                    {% endif %}
-                    {% if crop.harvest_season %}
-                    <div class="detail-field">
-                        <span class="detail-field-label">収穫時期:</span>
-                        <span class="detail-field-value">{{ crop.harvest_season }}</span>
-                    </div>
-                    {% endif %}
                 </div>
-                {% if crop.characteristics %}
-                <div class="detail-notes">{{ crop.characteristics }}</div>
-                {% endif %}
                 {% if crop.notes %}
                 <div class="detail-notes">{{ crop.notes }}</div>
                 {% endif %}
                 <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
                     <a href="{{ url_for('plantings.plant_new', crop_id=crop.id) }}" class="btn btn-success">
                         <i class="bi bi-plus-circle"></i> 作物を植え付ける
+                    </a>
+                    <a href="{{ url_for('varieties.new', crop_id=crop.id) }}" class="btn btn-outline-success">
+                        <i class="bi bi-plus-circle"></i> 品種を追加
                     </a>
                 </div>
                 <div class="detail-timestamps">
@@ -87,6 +69,28 @@
             </form>
         </div>
 
+        {% if varieties %}
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="icon-img"> 登録されている品種 <small>({{ varieties|length }}件)</small></h6>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for v in varieties %}
+                {% set eff_icon = v.icon_path or crop.icon_path %}
+                {% set eff_color = v.image_color or crop.image_color or '#4CAF50' %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('varieties.detail', variety_id=v.id) }}" class="text-decoration-none flex-grow-1">
+                        {{ crop_label(crop.name, v.name, eff_icon, eff_color) }}
+                    </a>
+                    <a href="{{ url_for('varieties.edit', variety_id=v.id) }}" class="btn btn-sm btn-outline-primary" title="編集">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         {% set supplement_entity_type = 'crop' %}
         {% set supplement_entity_id = crop.id %}
         {% include '_supplements_section.html' %}
@@ -101,6 +105,8 @@
         {% include '_related_harvests_card.html' %}
 
         {% include '_related_diaries_card.html' %}
+
+        {% include '_related_cookings_card.html' %}
     </div>
 </div>
 {% endblock %}

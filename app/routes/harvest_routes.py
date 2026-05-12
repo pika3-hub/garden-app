@@ -4,8 +4,10 @@ from app.models.harvest import Harvest
 from app.models.planting import Planting
 from app.models.location import Location
 from app.models.crop import Crop
+from app.models.variety import Variety
 from app.models.diary import DiaryEntry
 from app.models.supplement import Supplement
+from app.models.cooking import Cooking
 from app.models.photo_pool import PhotoPool
 from app.utils.upload import save_image, delete_image, copy_image
 from datetime import date
@@ -53,8 +55,16 @@ def detail(harvest_id):
     # 関連する日記
     related_diaries = DiaryEntry.get_by_harvest(harvest_id, limit=10)
 
+    # 関連する料理
+    related_cookings = Cooking.get_by_harvest(harvest_id, limit=10)
+
     # 補足情報
     supplements = Supplement.get_by_entity('harvest', harvest_id)
+
+    parent_crop = Crop.get_by_id(harvest['effective_crop_id'])
+    variety = None
+    if harvest.get('variety_id'):
+        variety = Variety.apply_inheritance(Variety.get_by_id(harvest['variety_id']))
 
     return render_template('harvests/detail.html',
                           harvest=harvest,
@@ -62,7 +72,10 @@ def detail(harvest_id):
                           next_harvest=next_harvest,
                           related_plantings=related_plantings,
                           related_diaries=related_diaries,
+                          related_cookings=related_cookings,
                           supplements=supplements,
+                          parent_crop=parent_crop,
+                          variety=variety,
                           photo_pool_photos=PhotoPool.get_all())
 
 

@@ -91,19 +91,32 @@
 
     <div class="col-md-4">
         {% set crop_info = {
-            'crop_id': harvest.crop_id,
-            'crop_name': harvest.crop_name,
-            'variety': harvest.variety,
-            'icon_path': harvest.icon_path,
-            'image_color': harvest.image_color,
-            'crop_type': harvest.crop_type,
-            'planting_season': harvest.planting_season,
-            'harvest_season': harvest.harvest_season,
-            'characteristics': harvest.characteristics,
-            'crop_notes': harvest.crop_notes,
-            'crop_image_path': harvest.crop_image_path
+            'crop_id': parent_crop.id,
+            'variety_id': None,
+            'crop_name': parent_crop.name,
+            'variety': None,
+            'icon_path': parent_crop.icon_path,
+            'image_color': parent_crop.image_color,
+            'crop_type': parent_crop.crop_type,
+            'crop_notes': parent_crop.notes,
+            'crop_image_path': parent_crop.image_path
         } %}
         {% include '_crop_info_card.html' %}
+
+        {% if variety %}
+        {% set variety_info = {
+            'variety_id': variety.id,
+            'variety_name': variety.name,
+            'parent_crop_id': variety.crop_id,
+            'parent_crop_name': variety.crop_name,
+            'icon_path': variety.effective_icon_path,
+            'image_color': variety.effective_image_color,
+            'variety_notes': variety.notes,
+            'variety_image_path': variety.effective_image_path,
+            'has_overrides': variety.icon_path or variety.image_color or variety.image_path or variety.notes
+        } %}
+        {% include '_variety_info_card.html' %}
+        {% endif %}
 
         {% set location_info = {
             'location_id': harvest.location_id,
@@ -119,6 +132,8 @@
         {% include '_related_plantings_card.html' %}
 
         {% include '_related_diaries_card.html' %}
+
+        {% include '_related_cookings_card.html' %}
     </div>
 </div>
 {% endblock %}

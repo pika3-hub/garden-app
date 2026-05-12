@@ -102,6 +102,9 @@
         {% set related_crops = relations.crops %}
         {% include '_related_crops_card.html' %}
 
+        {% set related_varieties = relations.varieties %}
+        {% include '_related_varieties_card.html' %}
+
         {% set related_locations = relations.locations %}
         {% include '_related_locations_card.html' %}
 
@@ -111,7 +114,7 @@
         {% set related_harvests = relations.harvests %}
         {% include '_related_harvests_card.html' %}
 
-        {% if not relations.crops and not relations.locations and not relations.location_crops and not relations.harvests %}
+        {% if not relations.crops and not relations.varieties and not relations.locations and not relations.location_crops and not relations.harvests %}
         <div class="card">
             <div class="card-body text-muted text-center">
                 <i class="bi bi-link-45deg"></i> 関連付けなし
