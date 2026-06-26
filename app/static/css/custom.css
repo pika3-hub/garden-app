@@ -847,6 +847,11 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     cursor: pointer;
 }
 
+/* g-0 グリッド内ではホバー時のリフトを無効化（隣接カードと重ならないよう） */
+.row.g-0 .card-photo:hover {
+    transform: none;
+}
+
 /* ══════════════════════════════════════════════════════════
    DETAIL HERO CARD (詳細画面用)
    画像上・テキスト下の縦積みレイアウト
