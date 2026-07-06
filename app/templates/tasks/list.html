@@ -70,9 +70,9 @@
         <span class="badge {{ Task.get_status_badge(st) }}">{{ Task.get_status_label(st) if st else '状態なし' }}</span>
         <small class="text-muted">({{ group_tasks|length }}件)</small>
     </h3>
-    <div class="row g-0">
+    <div class="card-auto-grid">
         {% for task in group_tasks %}
-        <div class="col-6 col-md-4 col-lg-3"
+        <div
              data-filter-year="{{ (task.due_date|string)[:4] if task.due_date else '' }}"
              data-filter-month="{{ (task.due_date|string)[5:7]|int if task.due_date else '' }}"
              data-filter-status="{{ task.status }}"

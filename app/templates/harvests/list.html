@@ -63,9 +63,9 @@
         {% if ym %}{{ ym[:4] }}年{{ ym[5:7]|int }}月{% else %}日付なし{% endif %}
         <small class="text-muted">({{ group_harvests|length }}件)</small>
     </h3>
-    <div class="row g-0">
+    <div class="card-auto-grid">
         {% for harvest in group_harvests %}
-        <div class="col-6 col-md-4 col-lg-3" data-filter-card data-filter-group-crop-type="{{ harvest.crop_type }}" data-filter-group-location-name="{{ harvest.location_name }}">
+        <div data-filter-card data-filter-group-crop-type="{{ harvest.crop_type }}" data-filter-group-location-name="{{ harvest.location_name }}">
             <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="card h-100 card-photo card-bg-harvest {{ '' if harvest.image_path else 'card-no-image' }}">
                 {% if harvest.image_path %}
                 <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"
