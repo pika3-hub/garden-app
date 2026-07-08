@@ -73,9 +73,9 @@
         {% if ym %}{{ ym[:4] }}年{{ ym[5:7]|int }}月{% else %}日付なし{% endif %}
         <small class="text-muted">({{ group_crops|length }}件)</small>
     </h3>
-    <div class="row">
+    <div class="card-auto-grid">
         {% for crop in group_crops %}
-        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-card data-filter-group-crop-type="{{ crop.crop_type }}" data-filter-group-location-name="{{ crop.location_name }}">
+        <div data-filter-card data-filter-group-crop-type="{{ crop.crop_type }}" data-filter-group-location-name="{{ crop.location_name }}">
             <a href="{{ url_for('plantings.detail', location_crop_id=crop.id) }}" class="card h-100 card-photo card-bg-location-crop {{ '' if crop.latest_growth_image else 'card-no-image' }}">
                 {% if crop.latest_growth_image %}
                 <img src="{{ url_for('static', filename='uploads/' + (crop.latest_growth_image | thumb_path)) }}"

@@ -39,9 +39,9 @@
         {{ crop_label(parent.crop_name, None, parent.crop_icon_path, parent.crop_image_color) }}
         <small class="text-muted">({{ group_varieties|length }}件)</small>
     </h3>
-    <div class="row">
+    <div class="card-auto-grid">
         {% for v in group_varieties %}
-        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ v.crop_type }}">
+        <div data-filter-type="{{ v.crop_type }}">
             <a href="{{ url_for('varieties.detail', variety_id=v.id) }}" class="card h-100 card-photo card-bg-crop {{ '' if v.effective_image_path else 'card-no-image' }}">
                 {% if v.effective_image_path %}
                 <img src="{{ url_for('static', filename='uploads/' + (v.effective_image_path | thumb_path)) }}"

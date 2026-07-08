@@ -32,9 +32,9 @@
 <div id="filter-empty-msg" class="alert alert-info" style="display:none;">
     <i class="bi bi-info-circle"></i> 該当する作物がありません。
 </div>
-<div class="row">
+<div class="card-auto-grid">
     {% for crop in sorted_crops %}
-    <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-type="{{ crop.crop_type }}">
+    <div data-filter-type="{{ crop.crop_type }}">
         <a href="{{ url_for('crops.detail', crop_id=crop.id) }}" class="card h-100 card-photo card-bg-crop {{ '' if crop.image_path else 'card-no-image' }}">
             {% if crop.image_path %}
             <img src="{{ url_for('static', filename='uploads/' + (crop.image_path | thumb_path)) }}"

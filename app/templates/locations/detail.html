@@ -164,9 +164,9 @@
                     <i class="bi bi-info-circle"></i> 該当する作物がありません。
                 </div>
                 {% endif %}
-                <div class="row">
+                <div class="card-auto-grid">
                     {% for lc in active_crops %}
-                    <div class="col-6 col-md-6 col-lg-4 mb-3" data-filter-type="{{ lc.crop_type }}">
+                    <div data-filter-type="{{ lc.crop_type }}">
                         <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}"
                            class="card h-100 card-photo card-bg-location-crop {{ '' if lc.latest_record_image else 'card-no-image' }}">
                             {% if lc.latest_record_image %}

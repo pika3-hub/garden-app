@@ -586,7 +586,7 @@ class Planting:
         valid_dates = []
         for d in sorted(candidate_dates):
             for p in renderable:
-                if p['planted'] <= d and (p['ended'] is None or p['ended'] >= d):
+                if p['planted'] and p['planted'] <= d and (p['ended'] is None or p['ended'] >= d):
                     valid_dates.append(d)
                     break
 

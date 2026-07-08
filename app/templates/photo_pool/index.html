@@ -117,9 +117,9 @@
 
 <!-- 一覧 -->
 {% if photos %}
-<div class="row" id="photo-grid">
+<div class="card-auto-grid" id="photo-grid">
     {% for photo in photos %}
-    <div class="col-md-4 col-lg-3 mb-3 photo-item" data-usage-count="{{ photo.usage_count }}">
+    <div class="photo-item" data-usage-count="{{ photo.usage_count }}">
         <div class="card photo-pool-card h-100">
             <div class="photo-select-overlay">
                 <input type="checkbox" class="form-check-input photo-select-check" data-photo-id="{{ photo.id }}" aria-label="選択">
