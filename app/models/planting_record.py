@@ -39,7 +39,7 @@ class PlantingRecord:
                 {_CV_JOIN}
                 JOIN locations l ON lc.location_id = l.id
                 WHERE gr.location_crop_id = ?
-                ORDER BY gr.recorded_at DESC, gr.created_at DESC''',
+                ORDER BY gr.recorded_at ASC, gr.created_at ASC''',
             (location_crop_id,)
         ).fetchall()
         result = []

@@ -60,10 +60,8 @@ if (fullscreenBtn) {
     <div class="col-md-8">
         {% set ns = namespace(hero_image=None, hero_date=None) %}
         {% for r in records if r.image_path %}
-            {% if not ns.hero_image %}
-                {% set ns.hero_image = r.image_path %}
-                {% set ns.hero_date = r.recorded_at %}
-            {% endif %}
+            {% set ns.hero_image = r.image_path %}
+            {% set ns.hero_date = r.recorded_at %}
         {% endfor %}
         <div class="card mb-3 card-photo-detail card-bg-location-crop {{ '' if ns.hero_image else 'card-no-image' }}">
             {% if ns.hero_image %}
