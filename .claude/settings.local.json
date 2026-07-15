@@ -22,7 +22,12 @@
       "Bash(ls:*)",
       "Bash(2)",
       "Bash(uv run python -c \":*)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(.venv/Scripts/python.exe -c \"import playwright; print\\('ok'\\)\")",
+      "Bash(.venv/Scripts/python.exe -m playwright --version)",
+      "Bash(pkill -f \"python run.py\")",
+      "Bash(where chromium-cli *)",
+      "PowerShell(Get-Command *)"
     ]
   }
 }
