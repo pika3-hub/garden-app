@@ -14,7 +14,7 @@
                 <a href="{{ url_for('crops.detail', crop_id=crop.crop_id) }}">
                     <img src="{{ url_for('static', filename='uploads/' + (crop.crop_image_path | thumb_path)) }}"
                          alt="作物画像"
-                         style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                         class="sidebar-card-float-img"
                          onerror="this.src='{{ url_for('static', filename='uploads/' + crop.crop_image_path) }}'">
                 </a>
                 {% endif %}

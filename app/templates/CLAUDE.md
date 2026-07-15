@@ -294,7 +294,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 ### 作物情報カード (`_crop_info_card.html`)
 
-植え付け詳細・収穫詳細・栽培記録詳細・品種詳細の右カラムに配置。作物の登録画像がある場合、カード本体内の右上に縮小表示（`float: right; width: 48%`）。`variety_id` を渡せば作物詳細リンクの下に「品種詳細へ」リンクが表示されるが、植え付け・収穫・栽培記録の各詳細では「品種情報カード」を別途表示する方針のため `variety_id: None` を渡す。
+植え付け詳細・収穫詳細・栽培記録詳細・品種詳細の右カラムに配置。作物の登録画像がある場合、カード本体内の右上に縮小表示（`.sidebar-card-float-img` クラス、`float: right; width: 48%; aspect-ratio: 1/1` で常に正方形を維持）。`variety_id` を渡せば作物詳細リンクの下に「品種詳細へ」リンクが表示されるが、植え付け・収穫・栽培記録の各詳細では「品種情報カード」を別途表示する方針のため `variety_id: None` を渡す。
 
 **テンプレート変数**: `crop_info` dict
 
@@ -348,7 +348,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 ### 場所情報カード (`_location_info_card.html`)
 
-植え付け詳細・収穫詳細の右カラムに配置。場所の登録画像がある場合、カード本体内の右上に縮小表示（`float: right; width: 48%`）。
+植え付け詳細・収穫詳細の右カラムに配置。場所の登録画像がある場合、カード本体内の右上に縮小表示（`.sidebar-card-float-img` クラス、常に正方形を維持）。
 
 **テンプレート変数**: `location_info` dict
 

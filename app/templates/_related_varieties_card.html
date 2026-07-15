@@ -14,7 +14,7 @@
                 <a href="{{ url_for('varieties.detail', variety_id=v.variety_id) }}">
                     <img src="{{ url_for('static', filename='uploads/' + (v.variety_image_path | thumb_path)) }}"
                          alt="{{ v.variety }}"
-                         style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                         class="sidebar-card-float-img"
                          onerror="this.src='{{ url_for('static', filename='uploads/' + v.variety_image_path) }}'">
                 </a>
                 {% endif %}

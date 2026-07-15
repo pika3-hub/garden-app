@@ -15,7 +15,7 @@
         <a href="{{ url_for('locations.detail', location_id=location_info.location_id) }}">
             <img src="{{ url_for('static', filename='uploads/' + (location_info.location_image_path | thumb_path)) }}"
                  alt="場所画像"
-                 style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                 class="sidebar-card-float-img"
                  onerror="this.src='{{ url_for('static', filename='uploads/' + location_info.location_image_path) }}'">
         </a>
         {% endif %}

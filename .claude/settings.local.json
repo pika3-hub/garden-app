@@ -27,7 +27,8 @@
       "Bash(.venv/Scripts/python.exe -m playwright --version)",
       "Bash(pkill -f \"python run.py\")",
       "Bash(where chromium-cli *)",
-      "PowerShell(Get-Command *)"
+      "PowerShell(Get-Command *)",
+      "Bash(taskkill //F //IM python.exe)"
     ]
   }
 }

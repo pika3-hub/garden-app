@@ -744,6 +744,16 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     background-color: #f8f9f8;
 }
 
+/* サイドバーカード（関連情報）内の右上フロート画像：常に正方形を維持 */
+.sidebar-card-float-img {
+    float: right;
+    width: 48%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 0.375rem;
+    margin: 0 0 0.5rem 0.75rem;
+}
+
 /* 画像なし時のフォールバック背景 */
 .card-photo.card-no-image::before {
     content: '';
