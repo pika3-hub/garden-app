@@ -74,20 +74,25 @@
             <div class="card-header bg-success text-white">
                 <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="icon-img"> 登録されている品種 <small>({{ varieties|length }}件)</small></h6>
             </div>
-            <ul class="list-group list-group-flush">
+            <div class="card-body variety-grid">
                 {% for v in varieties %}
                 {% set eff_icon = v.icon_path or crop.icon_path %}
                 {% set eff_color = v.image_color or crop.image_color or '#4CAF50' %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <a href="{{ url_for('varieties.detail', variety_id=v.id) }}" class="text-decoration-none flex-grow-1">
-                        {{ crop_label(crop.name, v.name, eff_icon, eff_color) }}
+                {% set eff_image = v.image_path or crop.image_path %}
+                <div class="variety-grid-item">
+                    <a href="{{ url_for('varieties.detail', variety_id=v.id) }}" class="card h-100 card-photo card-bg-crop {{ '' if eff_image else 'card-no-image' }}">
+                        {% if eff_image %}
+                        <img src="{{ url_for('static', filename='uploads/' + (eff_image | thumb_path)) }}"
+                             class="card-photo-img" alt="{{ v.name }}" loading="lazy"
+                             onerror="this.src='{{ url_for('static', filename='uploads/' + eff_image) }}'">
+                        {% endif %}
+                        <div class="card-photo-overlay">
+                            <h6 class="card-title mb-0">{{ crop_label(crop.name, v.name, eff_icon, eff_color) }}</h6>
+                        </div>
                     </a>
-                    <a href="{{ url_for('varieties.edit', variety_id=v.id) }}" class="btn btn-sm btn-outline-primary" title="編集">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                </li>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
         {% endif %}
 

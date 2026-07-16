@@ -744,6 +744,21 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     background-color: #f8f9f8;
 }
 
+/* 作物詳細: 登録されている品種のリッチグリッド表示（正方形画像・画面幅に応じて列数が変化） */
+.variety-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+.variety-grid-item {
+    flex: 1 1 140px;
+    max-width: 180px;
+}
+.variety-grid-item .card-photo {
+    aspect-ratio: 1 / 1;
+    min-height: 0;
+}
+
 /* サイドバーカード（関連情報）内の右上フロート画像：常に正方形を維持 */
 .sidebar-card-float-img {
     float: right;
