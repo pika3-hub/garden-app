@@ -1096,6 +1096,27 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
    SUPPLEMENTS SECTION (補足情報)
    ══════════════════════════════════════════════════════════ */
 
+.supplement-list {
+  display: flex;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem !important;
+}
+.supplement-list .supplement-item {
+  flex: 1 1 320px;
+  min-width: 0;
+  width: 320px;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  border: 1px solid var(--bs-border-color, #dee2e6) !important;
+  border-radius: 0.5rem !important;
+}
+.supplement-list .supplement-item img,
+.supplement-list .supplement-item iframe {
+  max-width: 100%;
+}
 .supplement-item .supplement-actions {
   white-space: nowrap;
   flex-shrink: 0;
