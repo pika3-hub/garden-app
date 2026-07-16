@@ -29,27 +29,43 @@
 </div>
 
 {% if filter_types or filter_locations %}
-<div class="badge-filter-multi">
-    {% if filter_types %}
-    <div class="badge-filter-group" data-filter-key="cropType">
-        <span class="badge-filter-group-label">種類:</span>
-        {% for t in filter_types %}
-        <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
-            {%- for icon in filter_type_icons.get(t, []) %}
-            <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
-            {%- endfor %}
-            {{ t }}</span>
-        {% endfor %}
+<button type="button" id="badge-filter-toggle" class="btn btn-outline-secondary btn-sm badge-filter-toggle-btn d-md-none" data-bs-toggle="modal" data-bs-target="#badgeFilterModal">
+    <i class="bi bi-funnel"></i> フィルター
+    <span class="badge-filter-toggle-dot"></span>
+</button>
+<div class="modal fade badge-filter-modal" id="badgeFilterModal" tabindex="-1" aria-labelledby="badgeFilterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="badgeFilterModalLabel"><i class="bi bi-funnel"></i> フィルター</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="badge-filter-multi">
+                    {% if filter_types %}
+                    <div class="badge-filter-group" data-filter-key="cropType">
+                        <span class="badge-filter-group-label">種類:</span>
+                        {% for t in filter_types %}
+                        <span class="badge badge-filter badge-filter-inactive" data-type="{{ t }}">
+                            {%- for icon in filter_type_icons.get(t, []) %}
+                            <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon.icon_path) }}" alt="" class="badge-filter-icon" style="border-color: {{ icon.image_color }};">
+                            {%- endfor %}
+                            {{ t }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if filter_locations %}
+                    <div class="badge-filter-group" data-filter-key="locationName">
+                        <span class="badge-filter-group-label">場所:</span>
+                        {% for loc in filter_locations %}
+                        <span class="badge badge-filter badge-filter-inactive" data-type="{{ loc }}">{{ loc }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-    {% endif %}
-    {% if filter_locations %}
-    <div class="badge-filter-group" data-filter-key="locationName">
-        <span class="badge-filter-group-label">場所:</span>
-        {% for loc in filter_locations %}
-        <span class="badge badge-filter badge-filter-inactive" data-type="{{ loc }}">{{ loc }}</span>
-        {% endfor %}
-    </div>
-    {% endif %}
 </div>
 {% endif %}
 

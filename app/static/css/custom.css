@@ -364,6 +364,53 @@ a.dashboard-stat-link:hover {
   transform: translate(0, -2px); /* icon and text alignment deviation */
 }
 
+/* ── Badge Filter Mobile Toggle (Modal) ─────────────────── */
+.badge-filter-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.badge-filter-toggle-dot {
+  display: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--forest);
+}
+.badge-filter-toggle-btn.badge-filter-toggle-active {
+  border-color: var(--forest);
+  color: var(--forest);
+}
+.badge-filter-toggle-btn.badge-filter-toggle-active .badge-filter-toggle-dot {
+  display: inline-block;
+}
+
+/* デスクトップ: モーダルの外枠を解除してインライン表示（トグルボタンが d-md-none で非表示のため開かれない） */
+@media (min-width: 768px) {
+  .badge-filter-modal {
+    position: static !important;
+    display: block !important;
+    opacity: 1 !important;
+  }
+  .badge-filter-modal .modal-dialog {
+    margin: 0;
+    max-width: 100%;
+    transform: none !important;
+  }
+  .badge-filter-modal .modal-content {
+    border: none;
+    background: none;
+    box-shadow: none;
+  }
+  .badge-filter-modal .modal-header {
+    display: none;
+  }
+  .badge-filter-modal .modal-body {
+    padding: 0;
+  }
+}
+
 /* ── Multi-group Badge Filters ──────────────────────────── */
 .badge-filter-multi {
   margin-bottom: 1rem;
