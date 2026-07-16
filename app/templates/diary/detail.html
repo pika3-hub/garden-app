@@ -43,6 +43,9 @@
             '曇り時々雨': 'bg_cloud_rain.webp'
         } %}
         <div class="card mb-3 card-photo-detail">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_diary.webp') }}" alt="" class="icon-img"> 日記情報</h6>
+            </div>
             <div class="card-photo-detail-img-wrapper">
                 {%- if entry.image_path %}
                 <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}"

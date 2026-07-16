@@ -68,6 +68,9 @@
         <!-- 基本情報カード -->
         <div class="col-12 col-lg-6">
         <div class="card mb-3 card-photo-detail card-bg-location {{ '' if location.image_path else 'card-no-image' }}">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_location.webp') }}" alt="" class="icon-img"> 場所情報</h6>
+            </div>
             {% if location.image_path %}
             <div class="card-photo-detail-img-wrapper">
                 <img src="{{ url_for('static', filename='uploads/' + location.image_path) }}"

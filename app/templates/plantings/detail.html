@@ -66,6 +66,9 @@ if (fullscreenBtn) {
             {% set ns.hero_date = r.recorded_at %}
         {% endfor %}
         <div class="card mb-3 card-photo-detail card-bg-location-crop {{ '' if ns.hero_image else 'card-no-image' }}">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_location_crop.webp') }}" alt="" class="icon-img"> 植え付け情報</h6>
+            </div>
             {% if ns.hero_image %}
             <div class="card-photo-detail-img-wrapper">
                 <img src="{{ url_for('static', filename='uploads/' + ns.hero_image) }}"
