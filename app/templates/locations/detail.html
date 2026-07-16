@@ -230,6 +230,10 @@
 
         {% include '_related_harvests_card.html' %}
 
+        {% set related_plantings = ended_plantings %}
+        {% set related_plantings_title = '栽培終了した植え付け' %}
+        {% include '_related_plantings_card.html' %}
+
         {% include '_related_diaries_card.html' %}
     </div>
 </div>

@@ -125,6 +125,66 @@ class Planting:
         return [dict(r) for r in rows]
 
     @staticmethod
+    def get_ended_by_crop(crop_id, limit=5):
+        """作物に紐づく栽培終了した植え付けを取得（品種経由も含む、終了日が新しい順、終了日なしは最後）"""
+        db = get_db()
+        query = f'''
+            SELECT lc.*, l.name as location_name, l.location_type,
+                   cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.crop_type,
+                   (SELECT pr.image_path FROM planting_records pr
+                    WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                    ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
+            FROM plantings lc
+            JOIN locations l ON lc.location_id = l.id
+            {_CV_JOIN}
+            WHERE cv.effective_crop_id = ? AND lc.status = 'harvested'
+            ORDER BY lc.end_date DESC, lc.planted_date DESC, lc.id DESC
+            LIMIT ?
+        '''
+        rows = db.execute(query, [crop_id, limit]).fetchall()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def get_ended_by_variety(variety_id, limit=5):
+        """品種に紐づく栽培終了した植え付けを取得（終了日が新しい順、終了日なしは最後）"""
+        db = get_db()
+        query = f'''
+            SELECT lc.*, l.name as location_name, l.location_type,
+                   cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.crop_type,
+                   (SELECT pr.image_path FROM planting_records pr
+                    WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                    ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
+            FROM plantings lc
+            JOIN locations l ON lc.location_id = l.id
+            {_CV_JOIN}
+            WHERE lc.variety_id = ? AND lc.status = 'harvested'
+            ORDER BY lc.end_date DESC, lc.planted_date DESC, lc.id DESC
+            LIMIT ?
+        '''
+        rows = db.execute(query, [variety_id, limit]).fetchall()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def get_ended_by_location(location_id, limit=5):
+        """場所に紐づく栽培終了した植え付けを取得（終了日が新しい順、終了日なしは最後）"""
+        db = get_db()
+        query = f'''
+            SELECT lc.*,
+                   cv.crop_name, cv.crop_type, cv.variety,
+                   cv.icon_path, cv.image_color,
+                   (SELECT pr.image_path FROM planting_records pr
+                    WHERE pr.location_crop_id = lc.id AND pr.image_path IS NOT NULL AND pr.image_path != ''
+                    ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
+            FROM plantings lc
+            {_CV_JOIN}
+            WHERE lc.location_id = ? AND lc.status = 'harvested'
+            ORDER BY lc.end_date DESC, lc.planted_date DESC, lc.id DESC
+            LIMIT ?
+        '''
+        rows = db.execute(query, [location_id, limit]).fetchall()
+        return [dict(r) for r in rows]
+
+    @staticmethod
     def get_by_id(location_crop_id):
         """IDで場所-作物関連を取得"""
         db = get_db()

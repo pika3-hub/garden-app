@@ -281,9 +281,9 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 | 画面 | カード順序 |
 |------|-----------|
-| 作物詳細 | タスク → 栽培中の植え付け → 収穫 → 日記 |
-| 品種詳細 | 親作物情報 → この品種の栽培中 → 関連する収穫 |
-| 場所詳細 | タスク → 収穫 → 日記 |
+| 作物詳細 | タスク → 栽培中の植え付け → 収穫 → 栽培終了した植え付け → 日記 |
+| 品種詳細 | 親作物情報 → この品種の栽培中 → 関連する収穫 → 栽培終了した植え付け |
+| 場所詳細 | タスク → 収穫 → 栽培終了した植え付け → 日記 |
 | 植え付け詳細 | 作物情報 → 品種情報（variety_id があれば） → 場所情報 → タスク → 収穫 → 日記 |
 | 収穫詳細 | 作物情報 → 品種情報（variety_id があれば） → 場所情報 → 植え付け → 日記 |
 | 栽培記録詳細 | 作物情報 → 品種情報（variety_id があれば） → 場所情報 |
@@ -380,6 +380,8 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 | `_related_locations_card.html` | `related_locations` | location_id, location_name, location_type | なし |
 
 `_related_plantings_card.html` はオプション変数 `related_plantings_title` でヘッダーテキストを変更可能（デフォルト: 「関連する植え付け」、作物詳細では「栽培中の植え付け」）。
+
+作物詳細・品種詳細・場所詳細では、収穫カードの後に「栽培終了した植え付け」カードを同テンプレートで再表示する（`related_plantings` 変数を `ended_plantings` に再 `{% set %}` してから再 `include`）。データは `Planting.get_ended_by_crop/get_ended_by_variety/get_ended_by_location`（`status='harvested'`、`end_date DESC` で最大5件、終了日なしは最後）。
 
 ## 一覧画面のバッジフィルター
 

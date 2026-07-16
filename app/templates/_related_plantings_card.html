@@ -36,6 +36,9 @@
                     {% if lc.planted_date %}
                     <span class="ms-1">植え付け: {{ lc.planted_date }}</span>
                     {% endif %}
+                    {% if lc.end_date %}
+                    <span class="ms-1">終了: {{ lc.end_date }}</span>
+                    {% endif %}
                 </div>
             </li>
             {% endfor %}

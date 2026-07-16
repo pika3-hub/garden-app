@@ -48,6 +48,8 @@ def detail(crop_id):
     varieties = Crop.get_varieties(crop_id)
     # 栽培中の植え付けを取得
     related_plantings = Planting.get_by_crop(crop_id, status='active')
+    # 栽培終了した植え付けを取得（最大5件、終了日が新しい順）
+    ended_plantings = Planting.get_ended_by_crop(crop_id, limit=5)
     # 関連する収穫を取得
     related_harvests = Harvest.get_by_crop(crop_id, limit=10)
     # 関連する日記を取得
@@ -63,6 +65,7 @@ def detail(crop_id):
                           crop=crop,
                           varieties=varieties,
                           related_plantings=related_plantings,
+                          ended_plantings=ended_plantings,
                           related_harvests=related_harvests,
                           related_diaries=related_diaries,
                           prev_crop=prev_crop,
