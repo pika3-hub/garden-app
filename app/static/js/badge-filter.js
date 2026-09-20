@@ -16,14 +16,40 @@
  * 共通:
  *   #filter-count            … 件数表示（data-suffix="件の作物" 等）
  *   #filter-empty-msg        … 0件時メッセージ（初期 display:none）
+ *
+ * モバイル用フィルターモーダル:
+ *   #badge-filter-toggle     … モーダルを開くトリガーボタン（モバイルのみ表示、d-md-noneで制御）
+ *                               data-bs-toggle="modal" でBootstrapモーダルを開く
+ *   .badge-filter-modal      … フィルター群を内包するBootstrapモーダル（デスクトップではCSSでインライン表示に解除）
+ *   バッジクリック時、開いていればモーダルを自動で閉じる
  */
 document.addEventListener('DOMContentLoaded', function () {
     var groups = document.querySelectorAll('.badge-filter-group');
+    var updateToggleIndicator = initToggle();
 
     if (groups.length > 0) {
         initMultiGroup(groups);
     } else {
         initLegacy();
+    }
+
+    /** モバイル: フィルターモーダルのアクティブ状態インジケーター + バッジクリックで自動クローズ */
+    function initToggle() {
+        var toggleBtn = document.getElementById('badge-filter-toggle');
+        var modalEl = document.querySelector('.badge-filter-modal');
+        var container = document.getElementById('badge-filter-container') || document.querySelector('.badge-filter-multi');
+        if (!container) return function () {};
+
+        return function () {
+            if (toggleBtn) {
+                var activeCount = container.querySelectorAll('.badge-filter-active').length;
+                toggleBtn.classList.toggle('badge-filter-toggle-active', activeCount > 0);
+            }
+            if (modalEl && window.bootstrap) {
+                var modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+            }
+        };
     }
 
     /** レガシーモード（単一グループ） */
@@ -50,6 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     this.classList.add('badge-filter-active');
                     this.classList.remove('badge-filter-inactive');
                 }
+                updateToggleIndicator();
                 applyFilter();
             });
         });
@@ -112,6 +139,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         this.classList.add('badge-filter-active');
                         this.classList.remove('badge-filter-inactive');
                     }
+                    updateToggleIndicator();
                     applyMultiFilter();
                 });
             });

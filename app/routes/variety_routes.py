@@ -68,6 +68,7 @@ def detail(variety_id):
     Variety.apply_inheritance(variety)
 
     related_plantings = Planting.get_by_variety(variety_id, status='active')
+    ended_plantings = Planting.get_ended_by_variety(variety_id, limit=5)
     related_harvests = Harvest.get_by_variety(variety_id, limit=10)
     related_diaries = DiaryEntry.get_by_variety(variety_id, limit=10)
     related_cookings = Cooking.get_by_variety(variety_id, limit=10)
@@ -79,6 +80,7 @@ def detail(variety_id):
     return render_template('varieties/detail.html',
                            variety=variety,
                            related_plantings=related_plantings,
+                           ended_plantings=ended_plantings,
                            related_harvests=related_harvests,
                            related_diaries=related_diaries,
                            related_cookings=related_cookings,

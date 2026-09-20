@@ -29,6 +29,9 @@
 <div class="row">
     <div class="col-md-8">
         <div class="card mb-3 card-photo-detail">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_cooking.webp') }}" alt="" class="icon-img"> 料理情報</h6>
+            </div>
             <div class="card-photo-detail-img-wrapper">
                 {%- if item.image_path %}
                 <img src="{{ url_for('static', filename='uploads/' + item.image_path) }}"

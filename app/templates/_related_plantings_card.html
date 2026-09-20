@@ -15,7 +15,7 @@
                 <a href="{{ url_for('plantings.detail', location_crop_id=lc.id) }}">
                     <img src="{{ url_for('static', filename='uploads/' + (lc.latest_record_image | thumb_path)) }}"
                          alt="栽培記録画像"
-                         style="float: right; width: 48%; max-height: 140px; object-fit: cover; border-radius: 0.375rem; margin: 0 0 0.5rem 0.75rem;"
+                         class="sidebar-card-float-img"
                          onerror="this.src='{{ url_for('static', filename='uploads/' + lc.latest_record_image) }}'">
                 </a>
                 {% endif %}
@@ -35,6 +35,9 @@
                     {% endif %}
                     {% if lc.planted_date %}
                     <span class="ms-1">植え付け: {{ lc.planted_date }}</span>
+                    {% endif %}
+                    {% if lc.end_date %}
+                    <span class="ms-1">終了: {{ lc.end_date }}</span>
                     {% endif %}
                 </div>
             </li>

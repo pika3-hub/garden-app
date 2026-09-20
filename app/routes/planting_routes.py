@@ -213,6 +213,163 @@ def create():
         return redirect(url_for('plantings.new', location_crop_id=location_crop_id))
 
 
+def _build_planting_multi_select_data():
+    """_planting_select_multi_modal.html が要求する変数名でフィルタ・グルーピングデータを組み立てる"""
+    active_plantings = Planting.get_all_with_stats(status='active')
+    planting_filter_types = sorted(set(p['crop_type'] for p in active_plantings if p.get('crop_type')))
+    planting_filter_locations = sorted(set(p['location_name'] for p in active_plantings if p.get('location_name')))
+    planting_filter_type_icons = {}
+    for p in active_plantings:
+        t, icon = p.get('crop_type'), p.get('icon_path')
+        if t and icon:
+            icons = planting_filter_type_icons.setdefault(t, [])
+            if not any(i['icon_path'] == icon for i in icons):
+                icons.append({'icon_path': icon, 'image_color': p.get('image_color') or '#4CAF50'})
+
+    def _ym(p):
+        d = p.get('planted_date')
+        return str(d)[:7] if d else ''
+    grouped_plantings = [(k, [item for item in g]) for k, g in groupby(active_plantings, key=_ym)]
+
+    return {
+        'active_plantings': active_plantings,
+        'planting_filter_types': planting_filter_types,
+        'planting_filter_type_icons': planting_filter_type_icons,
+        'planting_filter_locations': planting_filter_locations,
+        'grouped_plantings': grouped_plantings,
+    }
+
+
+def _render_bulk_rows(location_crops, recorded_at_value=None, rows_values=None, preselected_photo_id=None):
+    """一括登録フォームの行入力ステップを描画する"""
+    preselected_photo = PhotoPool.get_by_id(preselected_photo_id) if preselected_photo_id else None
+    rows_values = rows_values or {}
+    row_preselected_photos = {}
+    for lc_id_str, rv in rows_values.items():
+        pool_id = rv.get('override_photo_pool_id')
+        if pool_id:
+            row_preselected_photos[lc_id_str] = PhotoPool.get_by_id(pool_id)
+    return render_template('plantings/bulk_form.html',
+                          location_crops=location_crops,
+                          recorded_at_value=recorded_at_value or date.today().isoformat(),
+                          rows_values=rows_values,
+                          preselected_photo=preselected_photo,
+                          row_preselected_photos=row_preselected_photos,
+                          photo_pool_photos=PhotoPool.get_all(),
+                          **_build_planting_multi_select_data())
+
+
+@bp.route('/bulk/new')
+def bulk_new():
+    """栽培記録の一括登録フォーム（植え付け選択 → 行入力の2ステップ）"""
+    location_crop_ids = request.args.getlist('location_crop_id', type=int)
+
+    if not location_crop_ids:
+        return render_template('plantings/bulk_form.html',
+                              location_crops=None,
+                              photo_pool_photos=PhotoPool.get_all(),
+                              **_build_planting_multi_select_data())
+
+    location_crops = [lc for lc in (Planting.get_by_id(lc_id) for lc_id in location_crop_ids) if lc]
+    if not location_crops:
+        flash('選択された栽培記録が見つかりません', 'danger')
+        return redirect(url_for('plantings.bulk_new'))
+
+    return _render_bulk_rows(location_crops)
+
+
+@bp.route('/bulk/create', methods=['POST'])
+def bulk_create():
+    """栽培記録の一括登録処理"""
+    location_crop_ids = request.form.getlist('location_crop_id', type=int)
+    recorded_at = request.form.get('recorded_at')
+
+    location_crops = [lc for lc in (Planting.get_by_id(lc_id) for lc_id in location_crop_ids) if lc]
+    if not location_crops:
+        flash('選択された栽培記録が見つかりません', 'danger')
+        return redirect(url_for('plantings.bulk_new'))
+
+    rows_values = {}
+    errors = []
+
+    if not recorded_at:
+        errors.append('記録日は必須です')
+
+    parsed_rows = []
+    for lc in location_crops:
+        lc_id = lc['id']
+        notes = request.form.get(f'notes_{lc_id}') or None
+        override = request.form.get(f'override_image_{lc_id}') == '1'
+        override_photo_pool_id = request.form.get(f'photo_pool_id_{lc_id}', type=int) if override else None
+        rows_values[str(lc_id)] = {'notes': notes or '', 'override': override,
+                                    'override_photo_pool_id': override_photo_pool_id}
+
+        override_file = request.files.get(f'image_override_{lc_id}') if override else None
+        parsed_rows.append({
+            'location_crop_id': lc_id,
+            'notes': notes,
+            'override': override,
+            'override_photo_pool_id': override_photo_pool_id,
+            'override_file': override_file,
+        })
+
+    if errors:
+        for e in errors:
+            flash(e, 'danger')
+        return _render_bulk_rows(location_crops, recorded_at_value=recorded_at, rows_values=rows_values,
+                                 preselected_photo_id=request.form.get('photo_pool_id', type=int))
+
+    # デフォルト画像の確定（写真プール優先）。同一ファイルを複数行のimage_pathに
+    # 使い回すと片方の削除で他方まで壊れるため、行ごとに独立したコピーを作る。
+    photo_pool_id = request.form.get('photo_pool_id', type=int)
+    default_pool_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
+    default_upload_path = None
+    if not default_pool_photo and 'image' in request.files and request.files['image'].filename:
+        default_upload_path = save_image(request.files['image'], 'growth_records')
+    default_upload_used = False
+
+    try:
+        for row in parsed_rows:
+            used_pool_id = None
+            if row['override']:
+                override_pool_photo = PhotoPool.get_by_id(row['override_photo_pool_id']) if row['override_photo_pool_id'] else None
+                if override_pool_photo:
+                    image_path = copy_image(override_pool_photo['image_path'], 'growth_records')
+                    used_pool_id = row['override_photo_pool_id']
+                elif row['override_file'] and row['override_file'].filename:
+                    image_path = save_image(row['override_file'], 'growth_records')
+                else:
+                    image_path = None
+            elif default_pool_photo:
+                image_path = copy_image(default_pool_photo['image_path'], 'growth_records')
+                used_pool_id = photo_pool_id
+            elif default_upload_path:
+                if not default_upload_used:
+                    image_path = default_upload_path
+                    default_upload_used = True
+                else:
+                    image_path = copy_image(default_upload_path, 'growth_records')
+            else:
+                image_path = None
+
+            data = {
+                'location_crop_id': row['location_crop_id'],
+                'recorded_at': recorded_at,
+                'notes': row['notes'],
+                'image_path': image_path,
+            }
+            record_id = PlantingRecord.create(data)
+            if used_pool_id and image_path:
+                PhotoPool.record_usage(used_pool_id, 'planting_record', record_id, image_path)
+
+        flash(f'{len(parsed_rows)}件の栽培記録を登録しました', 'success')
+        return redirect(url_for('plantings.index'))
+    except Exception as e:
+        flash(f'エラーが発生しました: {str(e)}', 'danger')
+        return _render_bulk_rows(location_crops, recorded_at_value=recorded_at, rows_values=rows_values,
+                                 preselected_photo_id=request.form.get('photo_pool_id', type=int))
+
+
 @bp.route('/record/<int:record_id>/edit')
 def edit(record_id):
     """栽培記録編集フォーム"""

@@ -27,6 +27,9 @@
 <div class="row">
     <div class="col-md-8">
         <div class="card mb-3 card-photo-detail card-bg-crop {{ '' if variety.effective_image_path else 'card-no-image' }}">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_variety.webp') }}" alt="" class="icon-img"> 品種情報</h6>
+            </div>
             {% if variety.effective_image_path %}
             <div class="card-photo-detail-img-wrapper">
                 <img src="{{ url_for('static', filename='uploads/' + variety.effective_image_path) }}"
@@ -102,6 +105,10 @@
         {% include '_related_plantings_card.html' %}
 
         {% include '_related_harvests_card.html' %}
+
+        {% set related_plantings = ended_plantings %}
+        {% set related_plantings_title = '栽培終了した植え付け' %}
+        {% include '_related_plantings_card.html' %}
 
         {% include '_related_diaries_card.html' %}
 

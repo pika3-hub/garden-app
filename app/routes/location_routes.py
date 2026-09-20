@@ -70,6 +70,9 @@ def detail(location_id):
     # 関連する収穫を取得
     related_harvests = Harvest.get_by_location(location_id, limit=10)
 
+    # 栽培終了した植え付けを取得（最大5件、終了日が新しい順）
+    ended_plantings = Planting.get_ended_by_location(location_id, limit=5)
+
     today = date.today().isoformat()
     prev_location, next_location = Location.get_adjacent(location_id)
     related_tasks = Task.get_incomplete_tasks_for_entity('location', location_id)
@@ -86,6 +89,7 @@ def detail(location_id):
                           filter_type_icons=filter_type_icons,
                           related_diaries=related_diaries,
                           related_harvests=related_harvests,
+                          ended_plantings=ended_plantings,
                           today=today,
                           prev_location=prev_location,
                           next_location=next_location,

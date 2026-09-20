@@ -30,6 +30,9 @@
 <div class="row">
     <div class="col-md-8">
         <div class="card mb-3 card-photo-detail card-bg-harvest {{ '' if harvest.image_path else 'card-no-image' }}">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_harvest.webp') }}" alt="" class="icon-img"> 収穫情報</h6>
+            </div>
             {% if harvest.image_path %}
             <div class="card-photo-detail-img-wrapper">
                 <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"

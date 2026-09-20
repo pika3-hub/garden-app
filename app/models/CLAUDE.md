@@ -18,6 +18,9 @@
 | planting_records | 栽培観察記録（植え付けに紐づく） | id |
 | cooking | 料理記録 | id |
 | cooking_relations | 料理×関連エンティティ（多対多、relation_type で区別） | id |
+| photo_pool | 写真プール（先行アップロードした画像のプール） | id |
+| photo_pool_usages | 写真プール画像の使用履歴（多対多） | id |
+| supplements | 補足情報（作物/品種/場所/日記/タスク/収穫/料理に添付） | id |
 
 ### ビュー
 
@@ -81,7 +84,10 @@
 | position_x | DECIMAL | キャンバスX座標 |
 | position_y | DECIMAL | キャンバスY座標 |
 | canvas_snapshot | TEXT | 栽培終了時の見取り図スナップショット（version 2.0 JSON） |
+| quantity | INTEGER | 植え付け株数 |
+| notes | TEXT | メモ |
 | created_at | DATETIME | 作成日時 |
+| updated_at | TIMESTAMP | 更新日時 |
 
 **制約（重要）**: `CHECK ((crop_id IS NOT NULL AND variety_id IS NULL) OR (crop_id IS NULL AND variety_id IS NOT NULL))`
 - 作物として植えた場合: `crop_id=X, variety_id=NULL`
@@ -100,7 +106,9 @@
 | content | TEXT | 本文 |
 | weather | TEXT | 天気 |
 | image_path | TEXT | 画像パス |
+| status | VARCHAR(20) | 公開状態（デフォルト `published`） |
 | created_at | DATETIME | 作成日時 |
+| updated_at | DATETIME | 更新日時 |
 
 #### harvests
 | カラム | 型 | 説明 |
@@ -113,6 +121,7 @@
 | notes | TEXT | メモ |
 | image_path | TEXT | 画像パス |
 | created_at | DATETIME | 作成日時 |
+| updated_at | DATETIME | 更新日時 |
 
 #### tasks
 | カラム | 型 | 説明 |
@@ -161,6 +170,30 @@
 | created_at | TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 更新日時 |
 
+#### cooking
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| title | VARCHAR(200) | 料理名（必須） |
+| category | VARCHAR(100) | カテゴリ |
+| notes | TEXT | メモ |
+| image_path | TEXT | 画像パス |
+| cooked_date | DATE | 調理日（必須） |
+| created_at | TIMESTAMP | 作成日時 |
+| updated_at | TIMESTAMP | 更新日時 |
+
+#### cooking_relations
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| cooking_id | INTEGER | 料理ID（FK、必須） |
+| relation_type | VARCHAR(20) | 関連タイプ（crop/variety/location_crop/harvest） |
+| crop_id | INTEGER | 作物ID（FK、任意） |
+| variety_id | INTEGER | 品種ID（FK → varieties、任意） |
+| location_crop_id | INTEGER | 植え付けID（FK → plantings、任意） |
+| harvest_id | INTEGER | 収穫ID（FK、任意） |
+| created_at | TIMESTAMP | 作成日時 |
+
 #### photo_pool
 | カラム | 型 | 説明 |
 |--------|-----|------|
@@ -178,7 +211,7 @@
 |--------|-----|------|
 | id | INTEGER | 主キー |
 | photo_pool_id | INTEGER | 写真プールID（FK → photo_pool、ON DELETE CASCADE） |
-| entity_type | VARCHAR(20) | 使用先種別（crop/location/diary/harvest/planting_record/supplement） |
+| entity_type | VARCHAR(20) | 使用先種別（crop/variety/location/diary/harvest/planting_record/supplement/cooking） |
 | entity_id | INTEGER | 使用先エンティティID |
 | copied_image_path | VARCHAR(255) | コピー先の相対パス（追跡用） |
 | created_at | TIMESTAMP | 使用日時 |
@@ -192,6 +225,9 @@
 | supplement_type | VARCHAR(20) | 補足種別（text/image/url/youtube） |
 | title | VARCHAR(200) | 表示ラベル（任意） |
 | content | TEXT | ペイロード（text:本文, image:画像パス, url:完全URL, youtube:動画ID or 動画ID:秒数） |
+| ogp_image | TEXT | url補足のOGP画像URL（取得できた場合のみ） |
+| ogp_title | TEXT | url補足のOGPタイトル |
+| ogp_description | TEXT | url補足のOGP説明文 |
 | sort_order | INTEGER | 表示順（将来用、現在は登録順） |
 | created_at | TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 更新日時 |

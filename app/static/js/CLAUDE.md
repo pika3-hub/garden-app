@@ -1,6 +1,8 @@
 # フロントエンドJS開発ガイド
 
-バニラJS（フレームワークなし）で実装された UI 部品。大きい順に `canvas-editor.js` / `canvas-preview.js` / `canvas-fullscreen.js`（見取り図系）、`entity-select-modal.js`（複数選択モーダル）、`badge-filter.js`（一覧フィルター）、`slideshow.js` / `lightbox.js` など。
+バニラJS（フレームワークなし）で実装された UI 部品。大きい順に `canvas-editor.js` / `canvas-preview.js` / `canvas-fullscreen.js`（見取り図系）、`entity-select-modal.js`（複数選択モーダル）、`badge-filter.js` / `date-badge-filter.js`（一覧フィルター）、`slideshow.js` / `lightbox.js`、`calendar.js`（カレンダービュー）、`photo-pool-picker.js`（写真プール選択モーダル、詳細は `app/templates/CLAUDE.md` 参照）、`main.js`（共通初期化）など。
+
+`canvas-history.js` はどのテンプレート・CSSからも参照されていない未使用ファイル（レガシー）。日付ナビゲーション機能は現在 `canvas-fullscreen.js` に統合されている。削除候補として認識しておくこと。
 
 ## 見取り図機能
 
@@ -25,8 +27,8 @@
 ### 作物アイコン
 
 - **保存場所**: `app/static/images/crop_icons/`
-- **命名規則**: `icon_{row:02d}_{col:02d}.png`（例: `icon_01_03.png`）
-- **生成元**: スプライトシートを `split_sprite.py` で分割（12列×7行 = 84アイコン）
+- **命名規則**: `icon_{NNN}.png`（3桁連番、例: `icon_001.png`）、現在約95アイコン
+- **生成元**: `split_sprite.py` はスプライトシートを12列×7行（84アイコン）に分割し `icon_{row:02d}_{col:02d}.png` 形式で出力するが、実際のディレクトリは連番にリネームされた状態で保存されている（`trim_icons.py` はアイコンの余白トリム用でリネームは行わない）
 
 ### データ形式（version 2.0 JSON）
 
@@ -77,8 +79,8 @@
 
 ### フルスクリーン表示
 
-見取り図プレビューをクリックすると `canvas-fullscreen.js` でフルスクリーン表示が開く。
-- 場所詳細・植え付け詳細の両方で利用（拡大ボタンは廃止、プレビュークリックで起動）
+場所詳細・植え付け詳細に配置された専用ボタン（`#fullscreen-btn`、「拡大」）をクリックすると `canvas-fullscreen.js` でフルスクリーン表示が開く。
+- 場所詳細・植え付け詳細の両方で利用
 - 場所詳細では履歴の日付ナビゲーション（前へ/次へボタン＋キーボード左右矢印）が利用可能
 - 日付データは `/locations/<id>/canvas/history/range` API から取得
 - 位置情報の取得元: active作物は `locations.canvas_data`（複数配置対応）、harvested作物は `plantings.canvas_snapshot`
@@ -111,8 +113,8 @@
 植え付け登録後、見取り図配置ページへ自動遷移し、作物の配置を促す2ステップ方式。
 
 ```
-植え付けフォーム（/plantings/plant/new）
-  ↓ POST → DBにレコード作成（ID取得）
+植え付けフォーム（GET /plantings/plant/new）
+  ↓ POST /plantings/plant/create → DBにレコード作成（ID取得）
 見取り図配置ページ（/plantings/<id>/place）
   ├─ 新規作物をサイドバーでハイライト表示（.crop-item-new）
   ├─ ドラッグ&ドロップで配置 → 保存 → 植え付け詳細へ
