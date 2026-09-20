@@ -87,7 +87,7 @@
         <div data-filter-card data-filter-group-crop-type="{{ harvest.crop_type }}" data-filter-group-location-name="{{ harvest.location_name }}">
             <a href="{{ url_for('harvests.detail', harvest_id=harvest.id) }}" class="card h-100 card-photo card-bg-harvest {{ '' if harvest.image_path else 'card-no-image' }}">
                 {% if harvest.image_path %}
-                <img src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"
+                <img src="{{ url_for('static', filename='uploads/' + (harvest.image_path | thumb_path)) }}"
                      class="card-photo-img slideshow-target" alt="{{ harvest.crop_name }}"
                      data-slideshow-date="{{ harvest.harvest_date }}"
                      data-slideshow-days="{{ harvest.days_from_planting }}"
