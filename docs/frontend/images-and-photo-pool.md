@@ -18,10 +18,19 @@
 モバイルで先行アップロードした写真を、各登録/編集フォームの画像フィールドから選んで送り込むための共通UI。
 
 - **`_photo_pool_picker_modal.html`**: 共通モーダル本体。ローカルファイル選択（`<input type="file">`）と排他的に切り替えられ、使用状況（未使用/使用済み）バッジフィルター付きでプール画像を選択できる。
-- **`_photo_pool_preselected.html`**: フォーム内で「写真プールから選択」した画像のプレビュー表示部品（選択解除ボタン付き）。
+- **`_photo_pool_preselected.html`**: フォーム内で「写真プールから選択」した画像のプレビュー表示部品（選択解除ボタン付き）。`photo_pool_id`/`image` という固定のフィールド名を前提とするため、1画面に1箇所だけ配置する用途向け。
 - **共通JS**: `app/static/js/photo-pool-picker.js`
-- **利用画面**: `cooking/form.html`, `crops/form.html`, `diary/form.html`, `harvests/form.html`, `locations/form.html`, `plantings/form.html`, `varieties/form.html`, `_supplements_section.html`（画像補足の追加時）
+- **利用画面**: `cooking/form.html`, `crops/form.html`, `diary/form.html`, `harvests/form.html`, `plantings/form.html`（栽培記録登録）, `locations/form.html`, `varieties/form.html`, `_supplements_section.html`（画像補足の追加時）
 - **アップロード時のコピー**: `app/utils/upload.py` の `copy_image()` がプール画像を対象エンティティのフォルダへコピーする（元のプール画像は使い回し可能なまま残る）
+
+### 1画面に複数の写真プール選択欄を置く場合（一括登録フォーム）
+
+`harvests/bulk_form.html` / `plantings/bulk_form.html`（収穫記録・栽培記録の一括登録）は、共通の既定画像1箇所 + 行（植え付け）ごとの上書き画像を持つため、1画面に複数の `[data-photo-pool-container]` が同時に存在する。
+
+- `photo-pool-picker.js` は `[data-photo-pool-container]` 単位でクラスベースにスキャンするため、複数個所在しても干渉しない。共有モーダル `#photoPoolPickerModal` は1つだけ include すればよい。
+- 「どのトリガーボタンが押されたか」は `activeContainer`（直近クリックされたボタンの `closest('[data-photo-pool-container]')`）で判定し、モーダルでのカード選択結果をそのコンテナだけに反映する。
+- `_photo_pool_preselected.html` は固定フィールド名（`photo_pool_id`, `image`）前提なので、行ごとの欄では使わずマークアップを直接複製し、`name` 属性だけ行のID付きに変える（例: `photo_pool_id_{{ lc.id }}`, `image_override_{{ lc.id }}`）。クラス名（`.photo-pool-id-input`, `.photo-pool-file-input` 等）は変えずに揃えること。
+- サーバー側で「行が独自の画像を選ばなかった場合は共通の既定画像を使う」というフォールバック解決を行う（`harvest_routes.py`/`planting_routes.py` の `bulk_create()` を参照）。
 
 ## スライドショー機能
 

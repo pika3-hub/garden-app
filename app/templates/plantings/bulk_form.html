@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% from '_macros.html' import crop_label %}
+
+{% block title %}栽培記録の一括登録 - 家庭菜園管理アプリ{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>
+{% if not location_crops %}
+<script src="{{ url_for('static', filename='js/entity-select-modal.js') }}"></script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <i class="bi bi-journal-text text-info"></i>
+            栽培記録の一括登録
+        </h1>
+        <p class="text-muted mb-0">同じ日に観察した複数の植え付けの栽培記録をまとめて登録できます。</p>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('plantings.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </a>
+    </div>
+</div>
+
+{% if not location_crops %}
+<!-- ステップ1: 植え付けを選択 -->
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('plantings.bulk_new') }}">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong><i class="bi bi-flower1"></i> 植え付けを選択</strong>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#plantingMultiSelectModal">
+                            <i class="bi bi-list-check"></i> 植え付けを選択
+                        </button>
+                    </div>
+                    <div id="selected-plantings-display" class="selected-items-chips mb-2"></div>
+                    <div id="planting-hidden-inputs"></div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('plantings.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-info text-white">
+                            <i class="bi bi-arrow-right-circle"></i> 次へ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include '_planting_select_multi_modal.html' %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var cropIconBaseUrl = '{{ url_for("static", filename="images/crop_icons/") }}';
+    new MultiSelectModal({
+        modalId: 'plantingMultiSelectModal',
+        cardSelector: '.planting-ms-card',
+        idAttribute: 'plantingId',
+        inputContainerId: 'planting-hidden-inputs',
+        inputName: 'location_crop_id',
+        displayContainerId: 'selected-plantings-display',
+        badgeRenderer: function(card) {
+            var name = card.dataset.cropName;
+            var variety = card.dataset.variety;
+            var locationName = card.dataset.locationName;
+            var iconPath = card.dataset.iconPath;
+            var imageColor = card.dataset.imageColor;
+            var label = variety ? variety + '(' + name + ')' : name;
+            var iconHtml = '';
+            if (iconPath) {
+                iconHtml = '<img src="' + cropIconBaseUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+            }
+            return iconHtml + label + ' <small>@ ' + locationName + '</small>';
+        },
+        filterMode: 'multi'
+    });
+});
+</script>
+
+{% else %}
+<!-- ステップ2: 記録日・共通画像・行ごとの詳細を入力 -->
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('plantings.bulk_create') }}" enctype="multipart/form-data">
+                    {% for lc in location_crops %}
+                    <input type="hidden" name="location_crop_id" value="{{ lc.id }}">
+                    {% endfor %}
+
+                    <div class="alert alert-info alert-permanent mb-4">
+                        <i class="bi bi-list-check"></i> 選択中の植え付け: {{ location_crops|length }}件
+                        <a href="{{ url_for('plantings.bulk_new') }}" class="ms-2">選び直す</a>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="recorded_at" class="form-label">記録日（共通） <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="recorded_at" name="recorded_at"
+                               value="{{ recorded_at_value }}" required>
+                        <div class="form-text">選択したすべての植え付けに同じ記録日が登録されます</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">既定の画像（共通）</label>
+                        {% include '_photo_pool_preselected.html' %}
+                        <div class="form-text">ここで設定した画像が、行ごとに個別画像を指定しない限りすべての栽培記録に使用されます</div>
+                    </div>
+
+                    <hr>
+
+                    {% for lc in location_crops %}
+                    {% set rv = rows_values.get(lc.id|string, {}) %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-center mb-2">
+                                <div class="col-md-6">
+                                    <strong>{{ crop_label(lc.crop_name, lc.variety, lc.icon_path, lc.image_color) }}</strong>
+                                    <small class="text-muted">@ {{ lc.location_name }}</small>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">メモ</label>
+                                <textarea class="form-control" name="notes_{{ lc.id }}" rows="2"
+                                          placeholder="苗の状態、成長具合、気づいたことなど">{{ rv.get('notes', '') }}</textarea>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input row-override-check" type="checkbox"
+                                       id="override_image_{{ lc.id }}_check" name="override_image_{{ lc.id }}" value="1"
+                                       data-target="image_override_wrap_{{ lc.id }}"
+                                       {% if rv.get('override') %}checked{% endif %}>
+                                <label class="form-check-label" for="override_image_{{ lc.id }}_check">
+                                    この植え付けだけ既定の画像を使わない
+                                </label>
+                            </div>
+                            {% set _rp = row_preselected_photos.get(lc.id|string) if row_preselected_photos else None %}
+                            <div id="image_override_wrap_{{ lc.id }}" class="mt-2" style="{{ '' if rv.get('override') else 'display:none;' }}">
+                                <div data-photo-pool-container>
+                                    <div class="photo-pool-selected-area alert alert-success alert-permanent {{ 'd-flex' if _rp else 'd-none' }} align-items-center mb-2">
+                                        <img class="photo-pool-selected-thumb me-3 rounded"
+                                             src="{% if _rp %}{{ url_for('static', filename='uploads/' + _rp.image_path | thumb_path) }}{% endif %}"
+                                             alt="選択された写真" style="width: 80px; height: 60px; object-fit: cover;">
+                                        <div class="flex-grow-1">
+                                            <strong><i class="bi bi-images"></i> 写真プールから選択中</strong>
+                                            <div class="photo-pool-selected-notes small">{{ _rp.notes if _rp and _rp.notes else '' }}</div>
+                                        </div>
+                                        <button type="button" class="photo-pool-clear-btn btn btn-sm btn-outline-secondary">選択解除</button>
+                                    </div>
+                                    <input type="hidden" name="photo_pool_id_{{ lc.id }}" class="photo-pool-id-input"
+                                           value="{% if _rp %}{{ _rp.id }}{% endif %}">
+                                    <input type="file" class="form-control photo-pool-file-input" name="image_override_{{ lc.id }}" accept="image/*">
+                                    <small class="text-muted photo-pool-file-hint">対応形式: PNG, JPG, JPEG, GIF, WebP（最大16MB）</small>
+                                    <div class="mt-2 photo-pool-trigger-wrap">
+                                        <button type="button" class="photo-pool-trigger btn btn-outline-primary btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#photoPoolPickerModal">
+                                            <i class="bi bi-images"></i> 写真プールから選択
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('plantings.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-info text-white">
+                            <i class="bi bi-check-circle"></i> {{ location_crops|length }}件を登録
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include '_photo_pool_picker_modal.html' %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.row-override-check').forEach(function(chk) {
+        chk.addEventListener('change', function() {
+            var wrap = document.getElementById(chk.dataset.target);
+            if (wrap) wrap.style.display = chk.checked ? '' : 'none';
+        });
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -21,7 +21,10 @@
         </h1>
         <p class="text-muted mb-0">植え付けた作物からの収穫を、日付・収穫量・写真とともに記録・管理できます。</p>
     </div>
-    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center gap-2">
+        <a href="{{ url_for('harvests.bulk_new') }}" class="btn btn-outline-success">
+            <i class="bi bi-collection"></i> まとめて登録
+        </a>
         <a href="{{ url_for('harvests.new') }}" class="btn btn-success">
             <i class="bi bi-basket"></i> 収穫を記録
         </a>

@@ -10,7 +10,7 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 | 品種 | varieties | /varieties/ | /varieties/{id} | /varieties/new（`?crop_id={id}` でプリセレクト可） | /varieties/{id}/edit |
 | 場所 | locations | /locations/ | /locations/{id} | /locations/new | /locations/{id}/edit |
 | 日記 | diary | /diary/ | /diary/{id} | /diary/new | /diary/{id}/edit |
-| 収穫 | harvests | /harvests/ | /harvests/{id} | /harvests/new?location_crop_id={id}（任意） | /harvests/{id}/edit |
+| 収穫 | harvests | /harvests/ | /harvests/{id} | /harvests/new?location_crop_id={id}（任意）、一括登録: /harvests/bulk/new | /harvests/{id}/edit |
 | 植え付け | plantings | /plantings/?status= | /plantings/{lc_id} | /plantings/plant/new | /plantings/{lc_id}/edit |
 | タスク | tasks | /tasks/ | /tasks/{id} | /tasks/new | /tasks/{id}/edit |
 | カレンダー | calendar | /calendar/ | - | - | - |
@@ -38,6 +38,8 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 | `plantings.planting_edit_harvested` | GET `/plantings/<location_crop_id>/edit-harvested` | 植え付け編集フォーム（harvested時） |
 | `plantings.planting_update_harvested` | POST `/plantings/<location_crop_id>/update-harvested` | 植え付け更新処理（harvested時） |
 | `plantings.new` | `/plantings/new/<location_crop_id>` | 栽培記録登録 |
+| `plantings.bulk_new` | GET `/plantings/bulk/new`（`?location_crop_id=` 複数指定で行入力ステップへ） | 栽培記録の一括登録（植え付け選択→行入力の2ステップ） |
+| `plantings.bulk_create` | POST `/plantings/bulk/create` | 栽培記録の一括登録処理 |
 | `plantings.record_detail` | `/plantings/record/<record_id>` | 栽培記録詳細 |
 | `plantings.edit` | `/plantings/record/<record_id>/edit` | 栽培記録編集 |
 | `plantings.end_cultivation` | POST `/plantings/<location_crop_id>/end` | 栽培終了（植え付け詳細から） |
