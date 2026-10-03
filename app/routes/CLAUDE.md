@@ -17,8 +17,11 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 | 料理 | cooking | /cooking/ | /cooking/{id} | /cooking/new | /cooking/{id}/edit |
 | 補足情報 | supplements | - | - | POST /supplements/{entity_type}/{entity_id}/add | POST /supplements/{id}/update |
 | 写真プール | photo_pool | /photo_pool/ | - | POST /photo_pool/upload | POST /photo_pool/{id}/update |
+| 設定 | settings | - | - | - | GET/POST /settings/ |
 
 補足情報・写真プールはページ単位のCRUDではなく、他画面に埋め込まれるモーダル/フォーム部品からのPOST操作が中心（詳細は `app/templates/CLAUDE.md` の補足情報・写真プールの節を参照）。
+
+`settings` Blueprint は設定画面に加え、作物・品種フォーム共通の AI メモ下書き API `POST /settings/ai/notes-draft`（JSON）を持つ。リクエストは `{"mode": "crop", "crop_name", "crop_type", "use_web_search"}` または `{"mode": "variety", "crop_id", "variety_name", "use_web_search"}`。成功 200 `{"ok": true, "markdown"}`、入力不備 400（地域未設定は `need_settings: true`）、生成失敗 502。Claude API 呼び出しは `app/utils/ai_notes.py` に集約している。
 
 植え付け（plantings）は `?status=active|harvested|all` でタブフィルター。
 

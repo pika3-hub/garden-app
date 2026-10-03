@@ -25,6 +25,7 @@ cp instance/garden.db instance/garden.db.before-<change-name>
   cp instance/garden.db /tmp/test.db
   # その後 /tmp/test.db に接続して検証
   ```
+- 画面の動作確認（ブラウザ）は、コピーDBに向けたサーバーを起動して行う。手順は [`dev-workflow-tips.md`](dev-workflow-tips.md) の「実データ DB を汚さないブラウザ確認」を参照
 - またはトランザクション ROLLBACK を使って永続化を防ぐ：
   ```python
   conn.execute('BEGIN')

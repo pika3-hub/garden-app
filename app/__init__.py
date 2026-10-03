@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 from flask import Flask, render_template, url_for
@@ -46,7 +47,7 @@ def create_app(config_name='default'):
     from app.routes import (
         crop_routes, variety_routes, location_routes, diary_routes,
         harvest_routes, calendar_routes, task_routes, planting_routes,
-        supplement_routes, photo_pool_routes, cooking_routes
+        supplement_routes, photo_pool_routes, cooking_routes, settings_routes
     )
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(variety_routes.bp)
@@ -59,6 +60,22 @@ def create_app(config_name='default'):
     app.register_blueprint(supplement_routes.bp)
     app.register_blueprint(photo_pool_routes.bp)
     app.register_blueprint(cooking_routes.bp)
+    app.register_blueprint(settings_routes.bp)
+
+    # AIメモ下書きの request_id 等を INFO でサーバーログへ出す（Flask の 'app' ロガーのハンドラーへ伝播）
+    app.logger  # 既定ハンドラーを生成
+    logging.getLogger('app.utils.ai_notes').setLevel(logging.INFO)
+
+    # AI機能の状態をテンプレートへ提供
+    @app.context_processor
+    def inject_ai_status():
+        from app.utils import ai_notes
+        model = ai_notes.current_model()
+        return {
+            'ai_available': ai_notes.is_available(),
+            'ai_model': model,
+            'ai_model_info': ai_notes.MODEL_INFO[model],
+        }
 
     # ホームページルート
     @app.route('/')

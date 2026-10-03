@@ -1,6 +1,6 @@
 # フロントエンドJS開発ガイド
 
-バニラJS（フレームワークなし）で実装された UI 部品。大きい順に `canvas-editor.js` / `canvas-preview.js` / `canvas-fullscreen.js`（見取り図系）、`entity-select-modal.js`（複数選択モーダル）、`badge-filter.js` / `date-badge-filter.js`（一覧フィルター）、`slideshow.js` / `lightbox.js`、`calendar.js`（カレンダービュー）、`photo-pool-picker.js`（写真プール選択モーダル、詳細は `app/templates/CLAUDE.md` 参照）、`main.js`（共通初期化）など。
+バニラJS（フレームワークなし）で実装された UI 部品。大きい順に `canvas-editor.js` / `canvas-preview.js` / `canvas-fullscreen.js`（見取り図系）、`entity-select-modal.js`（複数選択モーダル）、`badge-filter.js` / `date-badge-filter.js`（一覧フィルター）、`slideshow.js` / `lightbox.js`、`calendar.js`（カレンダービュー）、`photo-pool-picker.js`（写真プール選択モーダル、詳細は `app/templates/CLAUDE.md` 参照）、`ai-notes.js`（作物・品種メモの AI 下書きモーダル、詳細は `docs/frontend/ai-notes.md`）、`main.js`（共通初期化）など。
 
 `canvas-history.js` はどのテンプレート・CSSからも参照されていない未使用ファイル（レガシー）。日付ナビゲーション機能は現在 `canvas-fullscreen.js` に統合されている。削除候補として認識しておくこと。
 

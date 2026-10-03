@@ -1,0 +1,16 @@
+{# メモ欄の「AIで下書き」ボタン。include 前に ai_mode ('crop' | 'variety') を set すること #}
+{% if ai_available %}
+<button type="button" class="btn btn-sm btn-outline-primary" id="aiNotesBtn">
+    ✨ AIで下書き
+</button>
+{% else %}
+<span class="text-end">
+    <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" data-ai-notes-tooltip
+          title="APIキーが未設定のため使えません">
+        <button type="button" class="btn btn-sm btn-outline-primary" id="aiNotesBtn" disabled>
+            ✨ AIで下書き
+        </button>
+    </span>
+    <a href="{{ url_for('settings.index') }}" class="d-block small">APIキーが未設定です（設定画面で確認）</a>
+</span>
+{% endif %}

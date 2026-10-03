@@ -13,6 +13,7 @@
 
 ### 主な機能
 - **作物管理:** 作物（トマト、なすなど）のCRUD。種類・アイコン・イメージカラー・画像・Markdownメモを持つ
+- **AIメモ下書き:** 作物・品種フォームの「✨ AIで下書き」から Claude API でメモの下書き（設定画面の地域・栽培環境を基準にした時期、特性、栽培のコツ）を生成し、モーダルで確認して置き換え／追記できる。「Webで調べる」（品種は既定ON）で Web 検索を併用し参考URLを付与（`web_search_20260209` は本文に citations が付かないことが多いため、無い場合は検索結果の URL を最大5件付与）。APIキーは `.env` の `ANTHROPIC_API_KEY`、モデルは `ANTHROPIC_MODEL`（`claude-opus-5-5` 既定 / `claude-sonnet-5-5`）。地域は設定画面（`/settings/`）で `app_settings` テーブルに保存。実装は `app/utils/ai_notes.py` + `settings_routes.py` + `_ai_notes_button.html` / `_ai_notes_modal.html` / `ai-notes.js`
 - **品種管理:** 作物に紐づく品種（アイコ、桃太郎など）のCRUD。1作物：多品種の関係。アイコン・イメージカラー・画像は nullable で、未設定時は親作物から継承
 - **場所管理:** 畑やプランターの場所のCRUD、画像サポート付き
 - **キャンバスエディター:** バニラJSベースのビジュアル菜園レイアウトデザイナー（作物アイコンのドラッグ&ドロップ配置、背景画像選択）。植え付け登録時に見取り図配置ページへ自動遷移（スキップ可能）
@@ -86,6 +87,14 @@ garden-app/
 ```bash
 uv run python run.py
 ```
+
+## テスト
+
+```bash
+uv run pytest
+```
+
+テストは `tests/conftest.py` のフィクスチャで tmp_path 上の使い捨て DB を使う（`instance/garden.db` には触れない）。Claude API はフェイククライアントで差し替え、実 API は呼ばない。
 
 ---
 
@@ -205,6 +214,28 @@ f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
 ## DBを使った検証作業
 
 `instance/garden.db` はユーザーの**実データ**である。マイグレーション・スキーマ変更・SQLの動作確認など、DBに対して検証を行う前に必ず [`docs/db-validation-safety.md`](docs/db-validation-safety.md) を参照すること。バックアップ手順、`WHERE`句必須ルール、テーブル再作成時の注意点などを記載している（過去のデータ消失事故を踏まえたガイドライン）。
+
+---
+
+## 開発ノウハウと既知の課題
+
+- [`docs/dev-workflow-tips.md`](docs/dev-workflow-tips.md): 過去のセッションで得た実務ノウハウ（Windows の改行コード、コピーDBでのブラウザ確認、外部 API の早期実確認、ブラウザ自動操作の注意、未インストールのツールなど）。**作業を始める前に一読すること**
+- [`docs/known-issues.md`](docs/known-issues.md): 見つかったが対応を見送った課題・改善候補の一覧。関連箇所を触るときは確認し、対応したら行を削除する
+
+---
+
+## セッション終了時の振り返り
+
+機能追加・不具合修正などひとまとまりの作業を終えたら、セッションの最後に次の振り返りを行い、得た知見をドキュメントに残す。
+
+1. **つまずき・手戻りを洗い出す**: 想定と違った挙動、やり直した作業、ユーザーに確認し直したこと、レビューで見つかった指摘を列挙する
+2. **原因と再発防止策を考える**: 「次回の自分が知っていれば避けられたか」で判断する。一度きりの事情や、コード・git 履歴を読めば分かることは残さない
+3. **適切な場所に残す**（1トピック1ファイルの原則に従う）:
+   - 作業の進め方・環境・ツールのノウハウ → `docs/dev-workflow-tips.md`
+   - 見送った不具合・改善候補 → `docs/known-issues.md`
+   - 特定の領域の規約・落とし穴 → 該当する CLAUDE.md または `docs/frontend/*.md`（DB は `docs/db-validation-safety.md`）
+   - 機能の仕様変更 → 「ドキュメント更新チェックリスト」に従って更新
+4. **ユーザーに報告する**: 振り返りの要点と、どのファイルに何を追記したかを伝える
 
 ---
 

@@ -13,6 +13,7 @@ Jinja2 テンプレートと関連フロントエンド部品（Bootstrap カス
 | [`docs/frontend/list-filtering.md`](../../docs/frontend/list-filtering.md) | 一覧画面のバッジフィルター（レガシー/マルチグループ、モバイルモーダル）、日付・種類グルーピング |
 | [`docs/frontend/entity-select-modal.md`](../../docs/frontend/entity-select-modal.md) | エンティティ選択モーダル（複数選択、`MultiSelectModal`） |
 | [`docs/frontend/supplements.md`](../../docs/frontend/supplements.md) | 補足情報（テキスト/画像/URL+OGP/YouTube埋め込み） |
+| [`docs/frontend/ai-notes.md`](../../docs/frontend/ai-notes.md) | 作物・品種フォームの AI メモ下書き（ボタン・モーダル・`ai-notes.js`） |
 
 ## 料理記録（Cooking）は横断的な機能
 

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}設定 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1><i class="bi bi-gear"></i> 設定</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="h5 card-title">地域・栽培環境</h2>
+                <form method="POST" action="{{ url_for('settings.update') }}">
+                    <div class="mb-3">
+                        <label for="region" class="form-label">地域・栽培環境</label>
+                        <textarea class="form-control" id="region" name="region" rows="3"
+                                  maxlength="{{ region_max_length }}"
+                                  placeholder="例: 神奈川県横浜市（温暖地）。露地の畑とベランダのプランター">{{ region }}</textarea>
+                        <div class="form-text">
+                            AIでメモの下書きを作るとき、植え付け時期・収穫時期の基準になります。
+                            温暖地・寒冷地などの区分を書くと時期の精度が上がります。
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> 保存
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h2 class="h5 card-title">AI機能の状態</h2>
+                {% if ai_available %}
+                <p class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> APIキー設定済み</p>
+                {% else %}
+                <p class="mb-2"><i class="bi bi-exclamation-triangle-fill text-warning"></i> 未設定</p>
+                <ol class="small mb-3">
+                    <li>Anthropic Console（console.anthropic.com）で API キーを発行します</li>
+                    <li>プロジェクト直下の <code>.env</code> に <code>ANTHROPIC_API_KEY=発行したキー</code> を追記します</li>
+                    <li>アプリを再起動します</li>
+                </ol>
+                {% endif %}
+                <p class="mb-1">使用中のモデル: <strong>{{ ai_model_info.label }}</strong></p>
+                <p class="small text-muted mb-0">
+                    <code>.env</code> の <code>ANTHROPIC_MODEL</code> に
+                    <code>claude-opus-5-5</code>（品質重視・既定）または
+                    <code>claude-sonnet-5-5</code>（コスト・速度重視）を指定して切り替えられます（再起動が必要）。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -9,6 +9,8 @@
 - `{% block content %}` — メインコンテンツ
 - `{% block extra_js %}` — 追加JS読み込み
 
+**フラッシュメッセージ・アラートの自動クローズに注意:** `static/js/main.js` はページ読み込み時に `.alert:not(.alert-permanent)` をすべて5秒後に閉じ、DOM から削除する。モーダル内のエラー表示など、**後から JS で表示するために最初は非表示で置いておくアラート**にも適用されてしまうので、そうした要素には必ず `alert-permanent` クラスを付けること（例: `_ai_notes_modal.html` の `#aiNotesError`）。
+
 ## 使用ライブラリ
 
 - Bootstrap 5.3（CDN）
