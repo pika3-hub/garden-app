@@ -85,16 +85,14 @@ CREATE TABLE IF NOT EXISTS app_settings (
 
 リクエスト（JSON）:
 ```json
-{
-  "crop_name": "トマト",
-  "crop_type": "果菜類",
-  "variety_name": "アイコ",   // 作物フォームからは null
-  "use_web_search": true
-}
+// 作物フォーム
+{"mode": "crop", "crop_name": "ミニトマト", "crop_type": "トマト", "use_web_search": false}
+// 品種フォーム
+{"mode": "variety", "crop_id": 3, "variety_name": "アイコ", "use_web_search": true}
 ```
 
-- 値はフォームの入力中の値をそのまま送る（未保存の新規登録でも使えるようにするため）
-- 品種フォームでは選択中の親作物の名前・種類を送る（親作物の名前・種類はフォームのデータ属性から取得）
+- 作物名・作物種類・品種名はフォームの入力中の値をそのまま送る（未保存の新規登録でも使えるようにするため）
+- 品種フォームでは選択中の親作物の `crop_id`（hidden フィールド `crop_id_hidden`）を送り、サーバー側で `Crop.get_by_id` から作物名・作物種類を引く（親作物は既存レコードのため。選択モーダルのカードには作物種類のデータ属性がない）
 
 レスポンス:
 ```json
@@ -103,7 +101,8 @@ CREATE TABLE IF NOT EXISTS app_settings (
 ```
 
 サーバー側バリデーション:
-- `crop_name` 必須（品種の場合は `variety_name` も必須）→ 欠けていれば 400
+- 作物: `crop_name` 必須（空白のみも空扱い）→ 欠けていれば 400
+- 品種: `crop_id` が既存作物を指すこと、`variety_name` 必須 → 満たさなければ 400
 - `region` 未設定 → 400 `{"ok": false, "error": "...", "need_settings": true}`
 - APIキー未設定 → 400
 
