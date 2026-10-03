@@ -51,7 +51,7 @@
 ### 変更ファイル
 
 - `run.py` / `server.py`: `load_dotenv()` 追加（`python-dotenv` は依存済みだが未使用）
-- `app/__init__.py`: `settings` Blueprint 登録、テンプレートから APIキー有無を参照できるよう context processor で `ai_available`（bool）を提供
+- `app/__init__.py`: `settings` Blueprint 登録、テンプレートから APIキー有無を参照できるよう context processor で `ai_available`（bool）と `ai_model`（使用中のモデルID）を提供
 - `app/templates/base.html`: ナビバー右端に歯車アイコン付き「設定」リンク
 - `app/templates/crops/form.html` / `app/templates/varieties/form.html`: メモ欄ラベル横に「✨ AIで下書き」ボタン、モーダル include、`ai-notes.js` 読み込み
 - `pyproject.toml`: `anthropic` 追加、dev 依存に `pytest` 追加
@@ -123,13 +123,29 @@ def generate_notes(crop_name: str, crop_type: str | None, variety_name: str | No
 
 ### リクエスト内容
 
-- モデル: `claude-opus-5-5`
-- `output_config={"effort": "medium"}`、`thinking` は省略（adaptive）
+- モデル: 環境変数 `ANTHROPIC_MODEL` で切り替え可能（下記「モデルの切り替え」参照）。既定は `claude-opus-5-5`
+- `output_config={"effort": "medium"}`（両モデルで明示指定。既定値が Opus 5.5 は medium、Sonnet 5.5 は high と異なるため）、`thinking` は省略（adaptive）
 - `max_tokens=16000`（非ストリーミング）
 - 拒否時の保険: `client.beta.messages.create(..., betas=["server-side-fallback-2026-07-01"], fallbacks="default")`
 - Web検索 ON の場合: `tools=[{"type": "web_search_20260209", "name": "web_search", "max_uses": 5, "user_location": {"type": "approximate", "country": "JP"}}]`
 - `stop_reason == "pause_turn"` の場合は、返ってきた `content` を assistant メッセージとして追加し再リクエスト（最大3回）
 - クライアントのタイムアウト: 180秒
+
+### モデルの切り替え
+
+- `.env` の `ANTHROPIC_MODEL` で指定。許可するのは次の2つのみ:
+
+  | 値 | 用途 |
+  |---|---|
+  | `claude-opus-5-5`（既定） | 品質重視 |
+  | `claude-sonnet-5-5` | コスト・速度重視（Web検索OFF時で Opus の約半額） |
+
+- 未設定 → `claude-opus-5-5`
+- 許可リスト外の値 → 起動は止めず、サーバーログに警告を出して `claude-opus-5-5` を使う
+- Haiku 4.5 は対象外（知識量・指示追従性が落ちるうえ、`web_search_20260209` に非対応でリクエスト形が変わるため）
+- 両モデルとも `web_search_20260209`、`fallbacks: "default"`（Claude API 上）、`effort` の指定に対応しているため、モデル以外のリクエスト内容は共通
+- 解決ロジックは `ai_notes.py` の `resolve_model(env_value: str | None) -> str` として切り出し、単体テストする
+- 設定画面の「AI機能の状態」に使用中のモデル名を表示する（変更は `.env` 編集＋再起動）
 
 SDK の正確な呼び出し形（beta メソッド・web search ツールの結果ブロック構造・citations の型）は実装時に claude-api スキルの `python/` ドキュメントで確認する。
 
@@ -186,7 +202,7 @@ SDK の正確な呼び出し形（beta メソッド・web search ツールの結
 ### 設定画面（`/settings/`）
 
 - **地域・栽培環境**: テキストエリア（自由記述）。入力例「神奈川県横浜市（温暖地）。露地の畑とベランダのプランター」と、「温暖地・寒冷地などの区分を書くと時期の精度が上がります」の案内
-- **AI機能の状態**: `✅ APIキー設定済み` / `⚠️ 未設定` と設定手順（Anthropic Console でキー発行 → `.env` に `ANTHROPIC_API_KEY=...` を追記 → アプリ再起動）。キーそのものは表示しない
+- **AI機能の状態**: `✅ APIキー設定済み` / `⚠️ 未設定` と設定手順（Anthropic Console でキー発行 → `.env` に `ANTHROPIC_API_KEY=...` を追記 → アプリ再起動）。キーそのものは表示しない。使用中のモデル名と、`ANTHROPIC_MODEL` で Opus / Sonnet を切り替えられる旨も表示
 - 保存後はフラッシュメッセージ付きで同画面に戻る
 
 ### 作物・品種フォーム
@@ -199,7 +215,7 @@ SDK の正確な呼び出し形（beta メソッド・web search ツールの結
   - 地域未設定（サーバーから `need_settings: true`）→ モーダル内に「先に設定画面で地域を登録してください」と設定画面へのリンクを表示
 
 **下書きモーダル**（`_ai_notes_modal.html`）:
-1. 「Webで調べる」チェックボックス（初期値: 品種フォーム=ON、作物フォーム=OFF）と目安表示（OFF:「10〜30秒・約5〜10円」/ ON:「30〜90秒・約20〜40円」）
+1. 「Webで調べる」チェックボックス（初期値: 品種フォーム=ON、作物フォーム=OFF）と目安表示（使用中のモデルに応じて9章の値を表示。例: Opus 5.5 なら OFF「10〜30秒・約10円」/ ON「30〜90秒・約35〜40円」）
 2. 「生成」ボタン押下 → スピナーと経過秒数を表示、生成ボタン無効化（二重送信防止）
 3. 結果を編集可能なテキストエリアに表示（詳細画面がプレーンテキスト表示のため描画プレビューは設けない）
 4. 「置き換える」「末尾に追記する」「破棄」
@@ -230,12 +246,18 @@ SDK の正確な呼び出し形（beta メソッド・web search ツールの結
   - `pause_turn` の再リクエストと上限到達時のエラー
   - `stop_reason` が `refusal` / `max_tokens` の場合のエラー
   - SDK 例外 → `AiNotesError` メッセージへの変換
+  - `resolve_model`: 未設定・許可リスト内・許可リスト外（既定へフォールバック）
   - いずれもフェイククライアントを `client` 引数で注入
 - 実 API の動作確認: APIキー発行後、作物1件・品種1件（Web検索 ON/OFF 各1回）を手動で確認。課金が発生するため自動テストでは呼ばない
 - マイグレーション・設定画面の確認: `docs/db-validation-safety.md` に従い `instance/garden.db` をバックアップしてから実施
 
 ## 9. コスト見積もり（参考）
 
-Claude Opus 5.5（入力 $4 / 出力 $20 per 1M tokens）での概算:
-- Web検索 OFF: 1件あたり約5〜10円
-- Web検索 ON: 検索料と検索結果の入力トークンが加わり、1件あたり約20〜40円
+前提: 1ドル=150円。Web検索OFFは入力約1.5k・出力約3k（思考含む）トークン、Web検索ONは検索4〜5回・入力約30k・出力約4kトークン。Web検索料はモデルによらず $10 / 1,000回。
+
+| モデル | 単価（入力 / 出力、1Mトークンあたり） | Web検索 OFF | Web検索 ON |
+|---|---|---|---|
+| Opus 5.5（既定） | $4 / $20 | 約10円 | 約35〜40円 |
+| Sonnet 5.5 | $2 / $10 | 約5円 | 約20円 |
+
+モーダルの目安表示（6章）は使用中のモデルに応じて切り替える。
