@@ -1,5 +1,6 @@
 {# メモの AI 下書きモーダル。include 前に ai_mode ('crop' | 'variety') を set すること #}
 <div class="modal fade" id="aiNotesModal" tabindex="-1" aria-labelledby="aiNotesModalLabel" aria-hidden="true"
+     data-bs-backdrop="static" data-bs-keyboard="false"
      data-mode="{{ ai_mode }}"
      data-endpoint="{{ url_for('settings.ai_notes_draft') }}"
      data-settings-url="{{ url_for('settings.index') }}">

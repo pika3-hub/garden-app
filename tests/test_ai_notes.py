@@ -226,3 +226,37 @@ def test_missing_api_key_raises_without_client(monkeypatch):
     with pytest.raises(AiNotesError) as e:
         generate_notes('トマト', None, None, '東京', False)
     assert str(e.value) == ai_notes.NO_API_KEY_MESSAGE
+
+
+# --- タイムアウトと再試行（最終レビュー指摘） ---
+
+def test_client_is_created_without_sdk_retries(monkeypatch):
+    created = {}
+
+    def fake_anthropic(**kwargs):
+        created.update(kwargs)
+        return FakeClient(response([text_block('本文')]))
+
+    monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-test')
+    monkeypatch.setattr(ai_notes.anthropic, 'Anthropic', fake_anthropic)
+    generate_notes('トマト', None, None, '東京', False)
+    assert created['max_retries'] == 0
+
+
+def test_each_call_gets_remaining_time_budget():
+    first = [SimpleNamespace(type='server_tool_use', id='s1', name='web_search', input={})]
+    client = FakeClient(response(first, 'pause_turn'), response([text_block('続き')]))
+    call(client, use_web_search=True)
+    timeouts = [c['timeout'] for c in client.calls]
+    assert all(0 < t <= ai_notes.REQUEST_TIMEOUT_SECONDS for t in timeouts)
+    assert timeouts[1] <= timeouts[0]
+
+
+def test_overall_deadline_exceeded_raises_timeout(monkeypatch):
+    clock = iter([0.0, 0.0, 200.0])
+    monkeypatch.setattr(ai_notes.time, 'monotonic', lambda: next(clock))
+    first = [SimpleNamespace(type='server_tool_use', id='s1', name='web_search', input={})]
+    client = FakeClient(response(first, 'pause_turn'), response([text_block('続き')]))
+    with pytest.raises(AiNotesError, match='時間内に'):
+        call(client, use_web_search=True)
+    assert len(client.calls) == 1

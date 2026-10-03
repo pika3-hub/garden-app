@@ -165,3 +165,19 @@ def test_variety_form_has_ai_button_enabled_with_key(client, monkeypatch):
     assert 'APIキーが未設定' not in html
     # 品種は Web検索の初期値 ON
     assert 'id="aiNotesWebSearch" checked' in html
+
+
+# --- 最終レビュー指摘 ---
+
+def test_ai_notes_logger_emits_info(app):
+    import logging
+    logger = logging.getLogger('app.utils.ai_notes')
+    assert logger.isEnabledFor(logging.INFO)
+    assert app.logger.handlers or logging.getLogger().handlers
+
+
+def test_ai_modal_is_not_dismissed_by_backdrop_or_esc(client, monkeypatch):
+    monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-test')
+    html = client.get('/crops/new').get_data(as_text=True)
+    assert 'data-bs-backdrop="static"' in html
+    assert 'data-bs-keyboard="false"' in html

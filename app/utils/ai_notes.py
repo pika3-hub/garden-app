@@ -5,6 +5,7 @@ Flask に依存しない。APIキーは環境変数 ANTHROPIC_API_KEY、
 """
 import logging
 import os
+import time
 
 import anthropic
 
@@ -39,6 +40,7 @@ WEB_SEARCH_TOOL = {
 
 NO_API_KEY_MESSAGE = 'AI機能を使うには .env に ANTHROPIC_API_KEY を設定してください'
 _MSG_INCOMPLETE = '生成が途中で終わりました。もう一度お試しください'
+_MSG_TIMEOUT = '時間内に生成が終わりませんでした。もう一度お試しください'
 
 SYSTEM_PROMPT = """あなたは日本の家庭菜園に詳しいアドバイザーです。
 ユーザーが指定した作物（または品種）について、家庭菜園の栽培メモの下書きを作成します。
@@ -154,8 +156,12 @@ def _call_api(client, params):
     """pause_turn を継続しながら呼び出し、(全 content ブロック, 最終 stop_reason) を返す"""
     user_turn = params['messages'][0]
     blocks = []
+    deadline = time.monotonic() + REQUEST_TIMEOUT_SECONDS
     for _ in range(MAX_PAUSE_CONTINUATIONS + 1):
-        response = client.beta.messages.create(**params)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise AiNotesError(_MSG_TIMEOUT)
+        response = client.beta.messages.create(**params, timeout=remaining)
         logger.info('AI notes request_id=%s stop_reason=%s',
                     getattr(response, '_request_id', None), response.stop_reason)
         blocks.extend(response.content)
@@ -172,7 +178,8 @@ def generate_notes(crop_name, crop_type, variety_name, region, use_web_search,
     if client is None:
         if not is_available():
             raise AiNotesError(NO_API_KEY_MESSAGE)
-        client = anthropic.Anthropic(timeout=REQUEST_TIMEOUT_SECONDS)
+        # SDK の自動再試行は待ち時間と課金を倍増させるため無効化（全体の期限は _call_api で管理）
+        client = anthropic.Anthropic(timeout=REQUEST_TIMEOUT_SECONDS, max_retries=0)
 
     params = _build_request_params(
         model, _build_user_message(crop_name, crop_type, variety_name, region), use_web_search)
@@ -180,7 +187,7 @@ def generate_notes(crop_name, crop_type, variety_name, region, use_web_search,
     try:
         blocks, stop_reason = _call_api(client, params)
     except anthropic.APITimeoutError:
-        raise AiNotesError('時間内に生成が終わりませんでした。もう一度お試しください')
+        raise AiNotesError(_MSG_TIMEOUT)
     except anthropic.APIConnectionError:
         raise AiNotesError('通信エラーです。ネットワーク接続を確認してください')
     except anthropic.AuthenticationError:
