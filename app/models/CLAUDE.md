@@ -21,6 +21,7 @@
 | photo_pool | 写真プール（先行アップロードした画像のプール） | id |
 | photo_pool_usages | 写真プール画像の使用履歴（多対多） | id |
 | supplements | 補足情報（作物/品種/場所/日記/タスク/収穫/料理に添付） | id |
+| app_settings | アプリ設定（キーバリュー形式。`region` = 地域・栽培環境） | key |
 
 ### ビュー
 
@@ -231,6 +232,15 @@
 | sort_order | INTEGER | 表示順（将来用、現在は登録順） |
 | created_at | TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 更新日時 |
+
+#### app_settings
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| key | TEXT | 主キー（設定名）。現在の使用キー: `region`（AIメモ下書きの地域・栽培環境） |
+| value | TEXT | 設定値 |
+| updated_at | TIMESTAMP | 更新日時 |
+
+`AppSettings.get(key, default=None)` / `AppSettings.set(key, value)`（upsert）でアクセスする。APIキーなどの秘密情報はここに保存しない（`.env` で管理）。
 
 ## crop_variety_view（VIEW）の使い方
 

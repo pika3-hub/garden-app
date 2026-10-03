@@ -5,6 +5,11 @@
 ## 機能
 
 - **作物管理**: トマト、なすなどの作物情報を登録・管理（CRUD完備）
+- **AIメモ下書き**: 作物・品種のメモを AI（Claude）が下書き
+  - 設定画面で地域・栽培環境を登録すると、その地域に合わせた植え付け・収穫時期を提案
+  - 特性・栽培のコツ（株間・水やり・肥料・病害虫・コンパニオンプランツ）もまとめて作成
+  - 「Webで調べる」で Web 検索を併用し、参考URL付きで品種固有の情報を調べられる
+  - 生成結果は確認・編集してからメモに置き換え／追記（保存は従来どおりフォームの保存ボタン）
 - **品種管理**: 作物に紐づく品種（アイコ、桃太郎など）を登録・管理
   - 1作物に対して複数品種を持てる1:多関係
   - 品種のアイコン・イメージカラー・画像は未指定なら親作物から継承
@@ -101,7 +106,19 @@ uv sync
 uv run python -c "from app import create_app; from app.database import init_db; app = create_app(); init_db(app)"
 ```
 
-### 3. 開発サーバー起動
+### 3. AI機能の設定（任意）
+
+メモの AI 下書きを使う場合は、Anthropic Console（console.anthropic.com）で API キーを発行し、プロジェクト直下に `.env` を作成します。
+
+```
+ANTHROPIC_API_KEY=発行したキー
+# 任意: claude-opus-5-5（既定・品質重視）または claude-sonnet-5-5（コスト・速度重視）
+ANTHROPIC_MODEL=claude-opus-5-5
+```
+
+起動後、ナビバーの「設定」で地域・栽培環境を登録してください。API の利用料は 1 件あたり約5〜40円です（モデルと Web 検索の有無による）。
+
+### 4. 開発サーバー起動
 
 ```bash
 uv run python run.py
@@ -124,7 +141,8 @@ garden-app/
 │   │   ├── calendar.py     # カレンダーモデル
 │   │   ├── task.py         # タスクモデル
 │   │   ├── planting_record.py # 栽培記録モデル
-│   │   └── supplement.py   # 補足情報モデル
+│   │   ├── supplement.py   # 補足情報モデル
+│   │   └── app_settings.py # アプリ設定モデル（app_settings テーブル）
 │   ├── routes/             # ルーティング（Blueprint）
 │   │   ├── crop_routes.py          # Blueprint: crops
 │   │   ├── variety_routes.py       # Blueprint: varieties
@@ -134,7 +152,8 @@ garden-app/
 │   │   ├── calendar_routes.py      # Blueprint: calendar
 │   │   ├── task_routes.py          # Blueprint: tasks
 │   │   ├── planting_routes.py      # Blueprint: plantings
-│   │   └── supplement_routes.py   # Blueprint: supplements
+│   │   ├── supplement_routes.py   # Blueprint: supplements
+│   │   └── settings_routes.py     # Blueprint: settings（設定画面・AIメモ下書きAPI）
 │   ├── templates/          # HTMLテンプレート
 │   │   ├── _detail_nav.html # 詳細画面の前後ナビゲーション共通部品
 │   │   ├── _supplements_section.html # 補足情報セクション共通部品
@@ -147,6 +166,7 @@ garden-app/
 │   │   ├── plantings/     # 植え付け・栽培記録関連
 │   │   ├── calendar/      # カレンダー関連
 │   │   ├── tasks/         # タスク関連
+│   │   ├── settings/      # 設定画面
 │   │   └── base.html      # ベーステンプレート
 │   ├── static/            # 静的ファイル
 │   │   ├── css/           # スタイルシート
@@ -164,11 +184,13 @@ garden-app/
 │   ├── migrations/        # データベースマイグレーション（増分SQL）
 │   ├── utils/             # ユーティリティ
 │   │   ├── upload.py      # 画像アップロードヘルパー
-│   │   └── migration.py   # マイグレーション実行ユーティリティ
+│   │   ├── migration.py   # マイグレーション実行ユーティリティ
+│   │   └── ai_notes.py    # Claude API によるメモ下書き生成
 │   ├── schema.sql         # データベーススキーマ
 │   ├── database.py        # データベース接続管理
 │   └── config.py          # 設定
 ├── instance/              # インスタンス固有ファイル（garden.db）
+├── tests/                 # pytest（uv run pytest）
 ├── run.py                 # アプリケーション起動スクリプト
 ├── test_data.py           # テストデータ投入スクリプト
 └── pyproject.toml         # プロジェクト設定（uv）

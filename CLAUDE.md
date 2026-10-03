@@ -13,6 +13,7 @@
 
 ### 主な機能
 - **作物管理:** 作物（トマト、なすなど）のCRUD。種類・アイコン・イメージカラー・画像・Markdownメモを持つ
+- **AIメモ下書き:** 作物・品種フォームの「✨ AIで下書き」から Claude API でメモの下書き（設定画面の地域・栽培環境を基準にした時期、特性、栽培のコツ）を生成し、モーダルで確認して置き換え／追記できる。「Webで調べる」（品種は既定ON）で Web 検索を併用し参考URLを付与。APIキーは `.env` の `ANTHROPIC_API_KEY`、モデルは `ANTHROPIC_MODEL`（`claude-opus-5-5` 既定 / `claude-sonnet-5-5`）。地域は設定画面（`/settings/`）で `app_settings` テーブルに保存。実装は `app/utils/ai_notes.py` + `settings_routes.py` + `_ai_notes_button.html` / `_ai_notes_modal.html` / `ai-notes.js`
 - **品種管理:** 作物に紐づく品種（アイコ、桃太郎など）のCRUD。1作物：多品種の関係。アイコン・イメージカラー・画像は nullable で、未設定時は親作物から継承
 - **場所管理:** 畑やプランターの場所のCRUD、画像サポート付き
 - **キャンバスエディター:** バニラJSベースのビジュアル菜園レイアウトデザイナー（作物アイコンのドラッグ&ドロップ配置、背景画像選択）。植え付け登録時に見取り図配置ページへ自動遷移（スキップ可能）
@@ -86,6 +87,14 @@ garden-app/
 ```bash
 uv run python run.py
 ```
+
+## テスト
+
+```bash
+uv run pytest
+```
+
+テストは `tests/conftest.py` のフィクスチャで tmp_path 上の使い捨て DB を使う（`instance/garden.db` には触れない）。Claude API はフェイククライアントで差し替え、実 API は呼ばない。
 
 ---
 
