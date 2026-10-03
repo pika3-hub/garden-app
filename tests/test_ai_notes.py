@@ -260,3 +260,53 @@ def test_overall_deadline_exceeded_raises_timeout(monkeypatch):
     with pytest.raises(AiNotesError, match='時間内に'):
         call(client, use_web_search=True)
     assert len(client.calls) == 1
+
+
+# --- 参考URL: citations が無い場合は検索結果から補完（実API確認で判明: web_search_20260209 は動的フィルタリングで citations が付かない） ---
+
+def search_result_block(*pairs):
+    return SimpleNamespace(type='web_search_tool_result', tool_use_id='s1',
+                           content=[SimpleNamespace(type='web_search_result', url=u, title=t)
+                                    for u, t in pairs])
+
+
+def test_falls_back_to_search_results_when_no_citations():
+    blocks = [
+        search_result_block(('https://a.example/1', 'A'), ('https://b.example/2', 'B [種苗]')),
+        search_result_block(('https://a.example/1', 'A'), ('https://c.example/3', '')),
+        text_block('緑嶺は花蕾の締まりがよい。'),
+    ]
+    result = call(FakeClient(response(blocks)), use_web_search=True)
+    assert result == (
+        '緑嶺は花蕾の締まりがよい。\n\n'
+        '## 参考URL（検索で見つかったページ）\n'
+        '- [A](https://a.example/1)\n'
+        '- [B ［種苗］](https://b.example/2)\n'
+        '- [https://c.example/3](https://c.example/3)'
+    )
+
+
+def test_search_result_fallback_is_capped_at_five():
+    pairs = [(f'https://x.example/{i}', f'T{i}') for i in range(8)]
+    result = call(FakeClient(response([search_result_block(*pairs), text_block('本文')])),
+                  use_web_search=True)
+    assert result.count('\n- [') == 5
+    assert 'https://x.example/4' in result and 'https://x.example/5' not in result
+
+
+def test_citations_take_precedence_over_search_results():
+    blocks = [
+        search_result_block(('https://other.example/', 'Other')),
+        text_block('本文', [citation('https://cited.example/', 'Cited')]),
+    ]
+    result = call(FakeClient(response(blocks)), use_web_search=True)
+    assert '## 参考URL\n- [Cited](https://cited.example/)' in result
+    assert 'other.example' not in result
+
+
+def test_search_error_result_is_ignored():
+    error = SimpleNamespace(type='web_search_tool_result', tool_use_id='s1',
+                            content=SimpleNamespace(type='web_search_tool_result_error',
+                                                    error_code='max_uses_exceeded'))
+    result = call(FakeClient(response([error, text_block('本文')])), use_web_search=True)
+    assert result == '本文'

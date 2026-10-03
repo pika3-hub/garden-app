@@ -30,6 +30,7 @@ MODEL_INFO = {
 MAX_TOKENS = 16000
 REQUEST_TIMEOUT_SECONDS = 180.0
 MAX_PAUSE_CONTINUATIONS = 3
+MAX_SEARCH_RESULT_SOURCES = 5
 FALLBACK_BETA = 'server-side-fallback-2026-07-01'
 WEB_SEARCH_TOOL = {
     'type': 'web_search_20260209',
@@ -144,8 +145,31 @@ def _extract_text_and_sources(blocks):
     return ''.join(texts).strip(), sources
 
 
-def _format_sources(sources):
-    lines = ['## 参考URL']
+def _extract_search_result_sources(blocks):
+    """web_search_tool_result の検索結果から (title, url) を重複なしで集める。
+
+    web_search_20260209 は動的フィルタリング（コード実行経由で結果を読む）のため
+    本文に citations が付かないことがあり、その場合の補完に使う。
+    """
+    sources = []
+    seen = set()
+    for block in blocks:
+        if getattr(block, 'type', None) != 'web_search_tool_result':
+            continue
+        results = getattr(block, 'content', None)
+        if not isinstance(results, list):  # エラー時は list ではなくエラーオブジェクト
+            continue
+        for result in results:
+            url = getattr(result, 'url', None)
+            if not url or url in seen:
+                continue
+            seen.add(url)
+            sources.append((getattr(result, 'title', None) or url, url))
+    return sources
+
+
+def _format_sources(sources, heading='## 参考URL'):
+    lines = [heading]
     for title, url in sources:
         safe_title = title.replace('[', '［').replace(']', '］')
         lines.append(f'- [{safe_title}]({url})')
@@ -211,6 +235,11 @@ def generate_notes(crop_name, crop_type, variety_name, region, use_web_search,
     text, sources = _extract_text_and_sources(blocks)
     if not text:
         raise AiNotesError('生成結果が空でした。もう一度お試しください')
-    if use_web_search and sources:
+    if not use_web_search:
+        return text
+    if sources:
         return f'{text}\n\n{_format_sources(sources)}'
+    search_sources = _extract_search_result_sources(blocks)[:MAX_SEARCH_RESULT_SOURCES]
+    if search_sources:
+        return f'{text}\n\n{_format_sources(search_sources, "## 参考URL（検索で見つかったページ）")}'
     return text
