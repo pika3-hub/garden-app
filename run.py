@@ -1,5 +1,8 @@
 import os
 from app import create_app
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 環境変数から設定を選択（デフォルトは開発環境）
 config_name = os.environ.get('FLASK_ENV', 'development')

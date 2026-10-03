@@ -102,6 +102,12 @@
                             <img src="{{ url_for('static', filename='images/icon_calendar.webp') }}" alt="" class="icon-img icon-img-lg"> カレンダー
                         </a>
                     </li>
+                    <li class="nav-item">
+                        {% set is_settings = request.endpoint and request.endpoint.startswith('settings.') %}
+                        <a class="nav-link {% if is_settings %}active{% endif %}" href="{{ url_for('settings.index') }}" {% if is_settings %}aria-current="page"{% endif %}>
+                            <i class="bi bi-gear"></i> 設定
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
