@@ -86,7 +86,11 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="notes" class="form-label">メモ</label>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <label for="notes" class="form-label mb-0">メモ</label>
+                            {% set ai_mode = 'variety' %}
+                            {% include '_ai_notes_button.html' %}
+                        </div>
                         <textarea class="form-control" id="notes" name="notes" rows="8"
                                   placeholder="## 植え付け時期&#10;4月〜5月&#10;&#10;## 収穫時期&#10;7月〜9月&#10;&#10;## 特性&#10;耐病性、日当たりが良い場所を好む">{{ variety.notes if variety else '' }}</textarea>
                         <div class="form-text">品種ごとの特徴・栽培時期などをMarkdown形式で記入できます</div>
@@ -164,10 +168,12 @@
 </div>
 {% include '_photo_pool_picker_modal.html' %}
 {% include '_crop_select_multi_modal.html' %}
+{% include '_ai_notes_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ai-notes.js') }}"></script>
 <script>
 (function() {
     var cropIconsUrl = "{{ url_for('static', filename='images/crop_icons/') }}";

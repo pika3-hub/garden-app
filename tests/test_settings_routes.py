@@ -145,3 +145,23 @@ def test_generation_error_returns_502(client, ready, monkeypatch):
     assert res.status_code == 502
     assert res.get_json() == {'ok': False,
                               'error': '混み合っています。しばらく待ってから再度お試しください'}
+
+
+# --- フォームへの組み込み ---
+
+def test_crop_form_has_ai_button_disabled_without_key(client):
+    html = client.get('/crops/new').get_data(as_text=True)
+    assert 'id="aiNotesBtn"' in html
+    assert 'id="aiNotesModal"' in html
+    assert 'data-mode="crop"' in html
+    assert 'APIキーが未設定' in html
+    assert 'js/ai-notes.js' in html
+
+
+def test_variety_form_has_ai_button_enabled_with_key(client, monkeypatch):
+    monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-test')
+    html = client.get('/varieties/new').get_data(as_text=True)
+    assert 'data-mode="variety"' in html
+    assert 'APIキーが未設定' not in html
+    # 品種は Web検索の初期値 ON
+    assert 'id="aiNotesWebSearch" checked' in html
