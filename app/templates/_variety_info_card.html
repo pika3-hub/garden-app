@@ -23,7 +23,7 @@
         {% if variety_info.variety_notes %}
         <div class="mb-2">
             <small class="text-muted d-block">メモ</small>
-            <div class="small" style="white-space: pre-wrap;">{{ variety_info.variety_notes }}</div>
+            <div class="small markdown-body">{{ variety_info.variety_notes|markdown }}</div>
         </div>
         {% endif %}
         {% if not variety_info.has_overrides %}

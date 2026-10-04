@@ -16,6 +16,7 @@
 - **ダッシュボード**: 件数の集計、最近の記録、写真のスライド表示
 - **写真**: 各データへの写真添付、写真のスライドショー表示。スマホで撮った写真を「写真プール」にまとめてアップロードし、後から各記録に割り当てられる
 - **補足情報**: 詳細画面にメモ・画像・外部リンク・YouTube 動画を追加
+- **メモの Markdown 表示**: 各メモ欄は Markdown（見出し・箇条書き・太字・表・リンクなど）で書くと、詳細画面で整形して表示される
 - **AIメモ下書き**: 作物・品種のメモを Claude（AI）が下書き。設定画面で登録した地域・栽培環境に合わせた内容になり、Web 検索も併用できる
 
 ## 技術スタック
@@ -23,6 +24,7 @@
 - **バックエンド**: Python 3.12 / Flask 3.1 / SQLite / waitress（本番用サーバー）
 - **フロントエンド**: Jinja2 テンプレート / Bootstrap 5.3・Bootstrap Icons（CDN）/ バニラ JS
 - **画像処理**: Pillow（サムネイル生成）
+- **Markdown**: markdown-it-py（メモ欄の表示）
 - **AI**: Anthropic Python SDK（Claude API）
 - **開発**: uv（パッケージ管理）/ pytest
 
@@ -83,7 +85,7 @@ garden-app/
 │   ├── schema.sql           # 初期スキーマ
 │   ├── models/              # データモデル（機能ごとに {feature}.py）
 │   ├── routes/              # Blueprint（機能ごとに {feature}_routes.py）
-│   ├── utils/               # アップロード・サムネイル・マイグレーション・OGP取得・AIメモ等
+│   ├── utils/               # アップロード・サムネイル・マイグレーション・OGP取得・AIメモ・Markdown表示等
 │   ├── migrations/          # 増分マイグレーション SQL（連番）
 │   ├── templates/           # Jinja2 テンプレート（機能ごとのフォルダ + 共通部品 _*.html）
 │   └── static/

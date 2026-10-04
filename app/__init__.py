@@ -4,6 +4,7 @@ import random
 from flask import Flask, render_template, url_for
 from app.config import config
 from app.database import init_db, get_db
+from app.utils.markdown_render import render_markdown
 
 
 def _thumb_path_filter(image_path):
@@ -39,6 +40,7 @@ def create_app(config_name='default'):
 
     # Jinja2 フィルター登録
     app.jinja_env.filters['thumb_path'] = _thumb_path_filter
+    app.jinja_env.filters['markdown'] = render_markdown
 
     # Jinja2 グローバル関数登録
     app.jinja_env.globals['crop_display_name'] = _crop_display_name

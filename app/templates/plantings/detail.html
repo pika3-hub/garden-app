@@ -116,7 +116,7 @@ if (fullscreenBtn) {
                     </div>
                 </div>
                 {% if location_crop.notes %}
-                <div class="detail-notes">{{ location_crop.notes }}</div>
+                <div class="detail-notes markdown-body">{{ location_crop.notes|markdown }}</div>
                 {% endif %}
                 {% if location_crop.status == 'active' %}
                 <div class="d-flex justify-content-center gap-2 flex-wrap my-3">

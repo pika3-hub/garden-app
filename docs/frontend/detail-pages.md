@@ -17,7 +17,7 @@
 | `.card-photo-detail-title` | タイトル（`color: var(--forest)`） |
 | `.detail-fields` / `.detail-field` | フィールド群（縦積み左揃え） |
 | `.detail-field-label` / `.detail-field-value` | ラベルと値 |
-| `.detail-notes` | メモ・本文（`white-space: pre-wrap`） |
+| `.detail-notes` | メモ・本文。`markdown-body` と併用し `|markdown` フィルターで表示（[`markdown-notes.md`](markdown-notes.md)） |
 | `.detail-timestamps` | タイムスタンプ（`登録日時: ... / 更新日時: ...` 統一書式） |
 
 ### 各画面のHTML構造
@@ -34,7 +34,7 @@
     <div class="card-photo-detail-overlay">
         <h4 class="card-photo-detail-title">タイトル</h4>
         <div class="detail-fields">...</div>
-        <div class="detail-notes">メモ</div>
+        <div class="detail-notes markdown-body">{{ x.notes|markdown }}</div>
         <div class="detail-timestamps">登録日時: ... / 更新日時: ...</div>
     </div>
 </div>
