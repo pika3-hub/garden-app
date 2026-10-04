@@ -1196,6 +1196,83 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
   white-space: pre-wrap;
   color: var(--ink-soft);
 }
+
+/* ===== Markdown 表示（メモ欄・補足テキスト。render_markdown フィルターの出力） ===== */
+/* .detail-notes / .supplement-text の pre-wrap を打ち消す（両者より後に定義） */
+.markdown-body {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.markdown-body > :first-child { margin-top: 0; }
+.markdown-body > :last-child { margin-bottom: 0; }
+.markdown-body p,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body blockquote,
+.markdown-body pre,
+.markdown-body table {
+  margin-bottom: 0.6em;
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin: 0.9em 0 0.4em;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--forest);
+}
+.markdown-body h1 { font-size: 1.15em; }
+.markdown-body h2 {
+  font-size: 1.08em;
+  padding-bottom: 0.15em;
+  border-bottom: 1px solid var(--border-light);
+}
+.markdown-body h3 { font-size: 1em; }
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 { font-size: 0.95em; }
+.markdown-body ul,
+.markdown-body ol { padding-left: 1.4em; }
+.markdown-body li + li { margin-top: 0.15em; }
+.markdown-body blockquote {
+  padding: 0.2em 0.8em;
+  border-left: 3px solid var(--sage-light);
+  color: var(--ink-soft);
+}
+.markdown-body code {
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: 0.9em;
+}
+.markdown-body pre {
+  padding: 0.6em 0.8em;
+  border-radius: 4px;
+  background: var(--parchment);
+  overflow-x: auto;
+}
+.markdown-body pre code { padding: 0; background: none; }
+.markdown-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+.markdown-body th,
+.markdown-body td {
+  padding: 0.25em 0.6em;
+  border: 1px solid var(--border);
+}
+.markdown-body th { background: var(--parchment); }
+.markdown-body hr {
+  margin: 0.8em 0;
+  border-color: var(--border);
+}
+.markdown-body img { max-width: 100%; }
 .supplement-url a {
   word-break: break-all;
 }

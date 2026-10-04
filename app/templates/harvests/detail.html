@@ -67,7 +67,7 @@
                     </div>
                 </div>
                 {% if harvest.notes %}
-                <div class="detail-notes">{{ harvest.notes }}</div>
+                <div class="detail-notes markdown-body">{{ harvest.notes|markdown }}</div>
                 {% endif %}
                 <div class="detail-timestamps">
                     登録日時: {{ harvest.created_at }} / 更新日時: {{ harvest.updated_at }}

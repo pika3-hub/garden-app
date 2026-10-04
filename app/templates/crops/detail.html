@@ -45,7 +45,7 @@
                     </div>
                 </div>
                 {% if crop.notes %}
-                <div class="detail-notes">{{ crop.notes }}</div>
+                <div class="detail-notes markdown-body">{{ crop.notes|markdown }}</div>
                 {% endif %}
                 <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
                     <a href="{{ url_for('plantings.plant_new', crop_id=crop.id) }}" class="btn btn-success">

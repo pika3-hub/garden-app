@@ -40,7 +40,7 @@
         {% if location_info.location_notes %}
         <div class="mb-2">
             <small class="text-muted d-block">メモ</small>
-            <div class="small" style="white-space: pre-wrap;">{{ location_info.location_notes }}</div>
+            <div class="small markdown-body">{{ location_info.location_notes|markdown }}</div>
         </div>
         {% endif %}
     </div>

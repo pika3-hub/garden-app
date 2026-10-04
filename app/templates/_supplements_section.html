@@ -153,7 +153,7 @@
 
             {# コンテンツ表示 #}
             {% if s.supplement_type == 'text' %}
-                <div class="supplement-text">{{ s.content }}</div>
+                <div class="supplement-text markdown-body">{{ s.content|markdown }}</div>
             {% elif s.supplement_type == 'image' %}
                 <div class="supplement-image">
                     <img src="{{ url_for('static', filename='uploads/' + s.content) }}"

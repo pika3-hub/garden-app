@@ -36,7 +36,7 @@
         {% if crop_info.crop_notes %}
         <div class="mb-2">
             <small class="text-muted d-block">メモ</small>
-            <div class="small" style="white-space: pre-wrap;">{{ crop_info.crop_notes }}</div>
+            <div class="small markdown-body">{{ crop_info.crop_notes|markdown }}</div>
         </div>
         {% endif %}
     </div>

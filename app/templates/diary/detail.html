@@ -77,7 +77,7 @@
                     {% endif %}
                 </div>
                 {% if entry.content %}
-                <div class="detail-notes">{{ entry.content }}</div>
+                <div class="detail-notes markdown-body">{{ entry.content|markdown }}</div>
                 {% endif %}
                 <div class="detail-timestamps">
                     登録日時: {{ entry.created_at }} / 更新日時: {{ entry.updated_at }}

@@ -98,7 +98,7 @@
                     {% endif %}
                 </div>
                 {% if location.notes %}
-                <div class="detail-notes">{{ location.notes }}</div>
+                <div class="detail-notes markdown-body">{{ location.notes|markdown }}</div>
                 {% endif %}
                 <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
                     <a href="{{ url_for('plantings.plant_new') }}?location_id={{ location.id }}"

@@ -59,7 +59,7 @@
                     {% endif %}
                 </div>
                 {% if variety.notes %}
-                <div class="detail-notes">{{ variety.notes }}</div>
+                <div class="detail-notes markdown-body">{{ variety.notes|markdown }}</div>
                 {% endif %}
                 <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
                     <a href="{{ url_for('plantings.plant_new', crop_id=variety.crop_id, variety_id=variety.id) }}" class="btn btn-success">
