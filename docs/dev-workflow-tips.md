@@ -36,6 +36,14 @@ create_app('copy').run(host='127.0.0.1', port=int(os.environ.get('PORT', '5055')
 - `debug=False` なので、コードを変えたら再起動が必要
 - `load_dotenv()` を引数なしで呼ぶと、**呼び出し元スクリプトのディレクトリ** から `.env` を探す。リポジトリ外のスクリプトでは見つからないので、パスを明示する
 
+## ドキュメントとコードの照合
+
+CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか確かめるときは、記述を読むより実物を出力して比べる方が速く確実。
+
+- **URL 一覧**: `create_app('testing')`（`DATABASE=':memory:'`）で作ったアプリの `app.url_map.iter_rules()` を出力する。`run.py` を import したり `create_app()` を引数なしで呼んだりすると、**実データ DB にマイグレーションが走る** ので使わない
+- **実際のスキーマ**: `sqlite3.connect('file:instance/garden.db?mode=ro', uri=True)` の読み取り専用接続で `PRAGMA table_info` を見る。`schema.sql` には初期テーブルしか無く、残りはマイグレーションで作られるため、`schema.sql` だけ見ても型は分からない
+- **ずれやすい箇所**: 「対象画面」「利用画面」などの列挙（機能追加時に追記漏れが起きる）、他ドキュメントへの参照先（`app/templates/CLAUDE.md` を `docs/frontend/` に分割した後も古い参照が残っていた）
+
 ## 外部 API を使う機能
 
 - 外部 API のレスポンス構造に依存する設計（例: 引用情報の有無、ブロックの種類）は、**設計の段階で最小リクエスト（数円程度）を1回実際に投げて確認する**。ドキュメントや SDK の型だけで判断しない

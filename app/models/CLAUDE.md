@@ -35,7 +35,7 @@
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | INTEGER | 主キー |
-| name | TEXT | 作物名（必須） |
+| name | VARCHAR(100) | 作物名（必須） |
 | crop_type | VARCHAR(50) | 種類（必須） |
 | notes | TEXT | メモ（Markdown形式） |
 | icon_path | TEXT | 作物アイコンパス（`crop_icons/` 内） |
@@ -49,7 +49,7 @@
 |--------|-----|------|
 | id | INTEGER | 主キー |
 | crop_id | INTEGER | 親作物ID（FK → crops、ON DELETE CASCADE） |
-| name | TEXT | 品種名（必須） |
+| name | VARCHAR(100) | 品種名（必須） |
 | notes | TEXT | メモ（Markdown形式） |
 | icon_path | TEXT | アイコンパス（nullable、未設定なら親作物から継承） |
 | image_color | TEXT | イメージカラー（nullable、未設定なら親作物から継承） |
@@ -81,13 +81,13 @@
 | variety_id | INTEGER | 品種ID（FK → varieties、ON DELETE CASCADE、**nullable**） |
 | planted_date | DATE | 植え付け日 |
 | end_date | DATE | 栽培終了日（harvested 時に自動セット、任意） |
-| status | TEXT | 状態（active/harvested/removed） |
-| position_x | DECIMAL | キャンバスX座標 |
-| position_y | DECIMAL | キャンバスY座標 |
+| status | VARCHAR(50) | 状態（active/harvested/removed、デフォルト `active`） |
+| position_x | DECIMAL(10,2) | キャンバスX座標 |
+| position_y | DECIMAL(10,2) | キャンバスY座標 |
 | canvas_snapshot | TEXT | 栽培終了時の見取り図スナップショット（version 2.0 JSON） |
 | quantity | INTEGER | 植え付け株数 |
 | notes | TEXT | メモ |
-| created_at | DATETIME | 作成日時 |
+| created_at | TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 更新日時 |
 
 **制約（重要）**: `CHECK ((crop_id IS NOT NULL AND variety_id IS NULL) OR (crop_id IS NULL AND variety_id IS NOT NULL))`
@@ -102,27 +102,27 @@
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | INTEGER | 主キー |
-| entry_date | DATE | 記録日 |
-| title | TEXT | タイトル（必須） |
+| entry_date | DATE | 記録日（必須） |
+| title | VARCHAR(200) | タイトル（必須） |
 | content | TEXT | 本文 |
-| weather | TEXT | 天気 |
-| image_path | TEXT | 画像パス |
+| weather | VARCHAR(50) | 天気 |
+| image_path | VARCHAR(255) | 画像パス |
 | status | VARCHAR(20) | 公開状態（デフォルト `published`） |
-| created_at | DATETIME | 作成日時 |
-| updated_at | DATETIME | 更新日時 |
+| created_at | TIMESTAMP | 作成日時 |
+| updated_at | TIMESTAMP | 更新日時 |
 
 #### harvests
 | カラム | 型 | 説明 |
 |--------|-----|------|
 | id | INTEGER | 主キー |
-| location_crop_id | INTEGER | 栽培記録ID（FK） |
-| harvest_date | DATE | 収穫日 |
-| quantity | REAL | 収穫量 |
-| unit | TEXT | 単位 |
+| location_crop_id | INTEGER | 植え付けID（FK → plantings、必須） |
+| harvest_date | DATE | 収穫日（必須） |
+| quantity | DECIMAL(10,2) | 収穫量 |
+| unit | VARCHAR(20) | 単位 |
 | notes | TEXT | メモ |
-| image_path | TEXT | 画像パス |
-| created_at | DATETIME | 作成日時 |
-| updated_at | DATETIME | 更新日時 |
+| image_path | VARCHAR(255) | 画像パス |
+| created_at | TIMESTAMP | 作成日時 |
+| updated_at | TIMESTAMP | 更新日時 |
 
 #### tasks
 | カラム | 型 | 説明 |
@@ -131,9 +131,9 @@
 | title | VARCHAR(200) | タイトル（必須） |
 | description | TEXT | 説明 |
 | due_date | DATE | 期限日 |
-| status | VARCHAR(20) | ステータス（pending/in_progress/completed） |
-| created_at | DATETIME | 作成日時 |
-| updated_at | DATETIME | 更新日時 |
+| status | VARCHAR(20) | ステータス（pending/in_progress/completed、デフォルト `pending`） |
+| created_at | TIMESTAMP | 作成日時 |
+| updated_at | TIMESTAMP | 更新日時 |
 
 #### task_relations
 | カラム | 型 | 説明 |
@@ -144,8 +144,8 @@
 | crop_id | INTEGER | 作物ID（FK、任意） |
 | variety_id | INTEGER | 品種ID（FK → varieties、ON DELETE CASCADE、任意） |
 | location_id | INTEGER | 場所ID（FK、任意） |
-| location_crop_id | INTEGER | 栽培記録ID（FK、任意） |
-| created_at | DATETIME | 作成日時 |
+| location_crop_id | INTEGER | 植え付けID（FK、任意） |
+| created_at | TIMESTAMP | 作成日時 |
 
 #### diary_relations
 | カラム | 型 | 説明 |
@@ -270,7 +270,7 @@ SQLiteの `Row` オブジェクトを dict として扱う場合、**同名カ�
    JOIN plantings lc ON dr.location_crop_id = lc.id ...'''
 
 # Good — dr.* を使わず、必要なカラムだけ明示的に列挙する
-'''SELECT lc.id as id, c.name as crop_name, c.variety, ...
+'''SELECT lc.id as id, c.name as crop_name, ...
    FROM diary_relations dr
    JOIN plantings lc ON dr.location_crop_id = lc.id ...'''
 ```

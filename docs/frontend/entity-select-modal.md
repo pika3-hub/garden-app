@@ -43,8 +43,8 @@ new MultiSelectModal({
 
 | テンプレート | Modal ID | 対象画面 | テンプレート変数 |
 |------------|----------|---------|----------------|
-| `_crop_select_multi_modal.html` | `cropMultiSelectModal` | 日記・タスク | `crops`, `crop_filter_types`, `crop_filter_type_icons`, `selected_crop_ids` |
-| `_variety_select_multi_modal.html` | `varietyMultiSelectModal` | 日記・タスク | `varieties`（`apply_inheritance` 適用済み）, `variety_filter_types`, `variety_filter_type_icons`, `selected_variety_ids` |
+| `_crop_select_multi_modal.html` | `cropMultiSelectModal` | 日記・タスク・料理（品種フォームの親作物選択でも使うが、単一選択の独自JSで `MultiSelectModal` は使わない） | `crops`, `crop_filter_types`, `crop_filter_type_icons`, `selected_crop_ids` |
+| `_variety_select_multi_modal.html` | `varietyMultiSelectModal` | 日記・タスク・料理 | `varieties`（`apply_inheritance` 適用済み）, `variety_filter_types`, `variety_filter_type_icons`, `selected_variety_ids` |
 | `_location_select_multi_modal.html` | `locationMultiSelectModal` | 日記・タスク | `locations`, `location_filter_types`, `selected_location_ids` |
 | `_planting_select_multi_modal.html` | `plantingMultiSelectModal` | 日記・タスク・料理・収穫/栽培記録の一括登録 | `active_plantings`, `planting_filter_types`, `planting_filter_type_icons`, `planting_filter_locations`, `selected_location_crop_ids` |
 | `_harvest_select_multi_modal.html` | `harvestMultiSelectModal` | 日記・料理 | `harvests`, `harvest_filter_types`, `harvest_filter_type_icons`, `harvest_filter_locations`, `selected_harvest_ids` |
@@ -53,15 +53,15 @@ new MultiSelectModal({
 
 ## ルートでの実装パターン
 
-各ルートでフィルターデータを計算して `render_template` に渡す。`diary_routes.py` と `task_routes.py` にそれぞれ `_build_filter_data()` ヘルパーがある。
+各ルートでフィルターデータを計算して `render_template` に渡す。`diary_routes.py`・`task_routes.py`・`cooking_routes.py` にそれぞれ `_build_filter_data()` ヘルパーがある（引数は画面で使うモーダルに合わせて異なる）。
 
 ```python
 active_plantings = Planting.get_all_with_stats(status='active')
-filter_data = _build_filter_data(crops, locations, active_plantings, harvests)
+filter_data = _build_filter_data(crops, varieties, locations, active_plantings, harvests)  # diary_routes.py の例
 render_template('diary/form.html', ..., **filter_data)
 ```
 
-編集時は `selected_crop_ids`, `selected_location_ids`, `selected_location_crop_ids`, `selected_harvest_ids`（文字列IDのリスト）も追加で渡す。
+編集時は `selected_crop_ids`, `selected_variety_ids`, `selected_location_ids`, `selected_location_crop_ids`, `selected_harvest_ids`（文字列IDのリスト）も追加で渡す。
 
 `harvest_routes.py` / `planting_routes.py` は植え付けモーダルのみ使うため、それぞれ `_build_planting_multi_select_data()` という専用の縮小版ヘルパーを個別に持つ（`_build_filter_data()` を共有せず、既存の per-file 重複の慣習に従う）。「収穫記録・栽培記録の一括登録」フォーム（`harvests/bulk_form.html`, `plantings/bulk_form.html`）のステップ1（植え付け選択）で使用。
 

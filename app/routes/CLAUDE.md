@@ -19,7 +19,7 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 | 写真プール | photo_pool | /photo_pool/ | - | POST /photo_pool/upload | POST /photo_pool/{id}/update |
 | 設定 | settings | - | - | - | GET/POST /settings/ |
 
-補足情報・写真プールはページ単位のCRUDではなく、他画面に埋め込まれるモーダル/フォーム部品からのPOST操作が中心（詳細は `app/templates/CLAUDE.md` の補足情報・写真プールの節を参照）。
+補足情報・写真プールはページ単位のCRUDではなく、他画面に埋め込まれるモーダル/フォーム部品からのPOST操作が中心（詳細は `docs/frontend/supplements.md` / `docs/frontend/images-and-photo-pool.md` を参照）。
 
 `settings` Blueprint は設定画面に加え、作物・品種フォーム共通の AI メモ下書き API `POST /settings/ai/notes-draft`（JSON）を持つ。リクエストは `{"mode": "crop", "crop_name", "crop_type", "use_web_search"}` または `{"mode": "variety", "crop_id", "variety_name", "use_web_search"}`。成功 200 `{"ok": true, "markdown"}`、入力不備 400（地域未設定は `need_settings: true`）、生成失敗 502。Claude API 呼び出しは `app/utils/ai_notes.py` に集約している。
 
@@ -72,7 +72,7 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 ## 新機能追加チェックリスト
 
 1. **モデル作成**: `app/models/{feature}.py` - 静的メソッドパターン、`get_db()`使用
-2. **ルート作成**: `app/routes/{feature}_routes.py` - Blueprint名は `{feature}`
+2. **ルート作成**: `app/routes/{feature}_routes.py` - Blueprint名は原則 `{feature}` の複数形（上記「Blueprint規約」参照）
 3. **Blueprint登録**: `app/__init__.py` の `create_app()` 内に追加
 4. **テンプレート**: `app/templates/{feature}/` フォルダ作成（Blueprint名に合わせる）
 5. **CSS（任意）**: `app/static/css/{feature}.css`

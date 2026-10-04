@@ -256,7 +256,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 | 画面 | モデルメソッド | 表示順 | ラベル |
 |------|-------------|--------|-------|
 | 作物詳細 | `Crop.get_adjacent(crop_id)` | `created_at DESC` | 作物名 |
-| 品種詳細 | `Variety.get_adjacent(variety_id)` | `crop_id ASC, created_at DESC` | 品種名（作物名） |
+| 品種詳細 | `Variety.get_adjacent(variety_id)` | 作物名順 → `created_at DESC`（Python側でインデックス検索） | 品種名（作物名） |
 | 場所詳細 | `Location.get_adjacent(location_id)` | `created_at DESC` | 場所名 |
 | 植え付け詳細 | `Planting.get_adjacent(id, status)` | `planted_date DESC`、同じステータス内 | 作物名（品種）- 場所名 |
 | 栽培記録詳細 | `PlantingRecord.get_adjacent(record_id)` | `recorded_at DESC`、同一植え付け内 | 記録日 |

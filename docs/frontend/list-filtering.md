@@ -4,7 +4,7 @@
 
 ## 一覧画面のバッジフィルター
 
-作物・場所・植え付け・収穫の一覧画面では、種類バッジによるクライアントサイドフィルターを提供する。日記・タスクは従来のサーバーサイド検索を維持。
+作物・品種・場所・植え付け・収穫・料理の一覧画面では、種類バッジによるクライアントサイドフィルター（`badge-filter.js`）を提供する。日記・タスクは年・季節・月（タスクはステータスも）のバッジによるクライアントサイドフィルター（`date-badge-filter.js`、規約はファイル冒頭のコメント参照）を使う。日記・タスク・料理はこれとは別にサーバーサイドのキーワード検索（`?keyword=`）を持つ。
 
 ### 2つのモード
 
@@ -23,7 +23,7 @@
 | 場所一覧 | レガシー | `location_type` | `filter_types` |
 | 植え付け一覧 | マルチグループ | `crop_type` + `location_name` | `filter_types`, `filter_locations` |
 | 収穫記録一覧 | マルチグループ | `crop_type` + `location_name` | `filter_types`, `filter_locations` |
-| 料理一覧 | マルチグループ | `crop_type` + `category` | `filter_types`, `filter_categories`（相当） |
+| 料理一覧 | マルチグループ | `crop_type` + `category` | `filter_crop_types`, `filter_crop_type_icons`, `categories` |
 
 ### モバイル用フィルターモーダル
 
