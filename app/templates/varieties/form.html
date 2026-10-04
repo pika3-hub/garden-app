@@ -218,11 +218,17 @@
 
             cropIdInput.value = id;
 
-            var iconHtml = '';
+            displayEl.textContent = '';
             if (iconPath) {
-                iconHtml = '<img src="' + cropIconsUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (imageColor || '#4CAF50') + ';"> ';
+                var img = document.createElement('img');
+                img.src = cropIconsUrl + iconPath;
+                img.alt = '';
+                img.className = 'crop-icon-inline';
+                img.style.borderColor = imageColor || '#4CAF50';
+                displayEl.appendChild(img);
+                displayEl.appendChild(document.createTextNode(' '));
             }
-            displayEl.innerHTML = iconHtml + name;
+            displayEl.appendChild(document.createTextNode(name));
             errorEl.style.display = 'none';
             displayEl.classList.remove('border', 'border-danger');
 
