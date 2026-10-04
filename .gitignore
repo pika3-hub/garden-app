@@ -35,3 +35,6 @@ app/static/uploads/**/*
 !app/static/uploads/**/.gitkeep
 
 work/
+
+# Claude Code の個人設定（共有設定は .claude/settings.json）
+.claude/settings.local.json

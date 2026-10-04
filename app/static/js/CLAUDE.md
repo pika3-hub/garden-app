@@ -1,6 +1,6 @@
 # フロントエンドJS開発ガイド
 
-バニラJS（フレームワークなし）で実装された UI 部品。大きい順に `canvas-editor.js` / `canvas-preview.js` / `canvas-fullscreen.js`（見取り図系）、`entity-select-modal.js`（複数選択モーダル）、`badge-filter.js` / `date-badge-filter.js`（一覧フィルター）、`slideshow.js` / `lightbox.js`、`calendar.js`（カレンダービュー）、`photo-pool-picker.js`（写真プール選択モーダル、詳細は `app/templates/CLAUDE.md` 参照）、`ai-notes.js`（作物・品種メモの AI 下書きモーダル、詳細は `docs/frontend/ai-notes.md`）、`main.js`（共通初期化）など。
+バニラJS（フレームワークなし）で実装された UI 部品。大きい順に `canvas-editor.js` / `canvas-preview.js` / `canvas-fullscreen.js`（見取り図系）、`entity-select-modal.js`（複数選択モーダル）、`badge-filter.js` / `date-badge-filter.js`（一覧フィルター）、`slideshow.js` / `lightbox.js`、`calendar.js`（カレンダービュー）、`photo-pool-picker.js`（写真プール選択モーダル、詳細は `docs/frontend/images-and-photo-pool.md`）、`ai-notes.js`（作物・品種メモの AI 下書きモーダル、詳細は `docs/frontend/ai-notes.md`）、`main.js`（共通初期化）など。
 
 `canvas-history.js` はどのテンプレート・CSSからも参照されていない未使用ファイル（レガシー）。日付ナビゲーション機能は現在 `canvas-fullscreen.js` に統合されている。削除候補として認識しておくこと。
 
@@ -28,7 +28,6 @@
 
 - **保存場所**: `app/static/images/crop_icons/`
 - **命名規則**: `icon_{NNN}.png`（3桁連番、例: `icon_001.png`）、現在約95アイコン
-- **生成元**: `split_sprite.py` はスプライトシートを12列×7行（84アイコン）に分割し `icon_{row:02d}_{col:02d}.png` 形式で出力するが、実際のディレクトリは連番にリネームされた状態で保存されている（`trim_icons.py` はアイコンの余白トリム用でリネームは行わない）
 
 ### データ形式（version 2.0 JSON）
 
@@ -41,7 +40,7 @@
       "cropId": 5,
       "x": 350,
       "y": 420,
-      "iconPath": "icon_01_03.png",
+      "iconPath": "icon_003.png",
       "imageColor": "#4CAF50",
       "cropName": "トマト",
       "variety": "ミニトマト"
@@ -123,12 +122,12 @@
 
 - **場所詳細からの植え付け:** 栽培中の作物カード内の「作物を植え付ける」→ `/plantings/plant/new?location_id=<id>`（場所プリセレクト済み）
 - **品種詳細からの植え付け:** 「この品種を植え付ける」ボタン → `/plantings/plant/new?crop_id=<id>&variety_id=<id>`（作物・品種プリセレクト済み）
-- **品種プルダウン:** 作物を選ぶと JS で該当作物の品種のみに絞り込まれる。品種なしでも登録可能（`variety_id` は nullable）。サーバー側で `variety.crop_id == crop_id` を検証する
+- **作物・品種の選択:** 作物と品種を1つの選択モーダル（`#cropVarietySelectModal`）で選ぶ。作物カードを選ぶと `crop_id` のみ、品種カードを選ぶと `variety_id` のみを hidden input にセットする（排他）。サーバー側は `Planting._normalize_crop_variety()` で正規化する
 - **`canvas-placement.js`:** `canvas-editor.js` の上に載せる薄いラッパー。保存後に植え付け詳細へリダイレクトする動作を追加
 - **`canvas-editor.js`:** `window._canvasEditor` でインスタンスを公開、`buildSaveData()` メソッドで保存データを取得可能
 
 ## 関連ドキュメント
 
-- エンティティ選択モーダル（`entity-select-modal.js`）: `app/templates/CLAUDE.md`
-- 一覧画面のバッジフィルター（`badge-filter.js` / `date-badge-filter.js`）: `app/templates/CLAUDE.md`
-- スライドショー（`slideshow.js`）: `app/templates/CLAUDE.md`
+- エンティティ選択モーダル（`entity-select-modal.js`）: `docs/frontend/entity-select-modal.md`
+- 一覧画面のバッジフィルター（`badge-filter.js` / `date-badge-filter.js`）: `docs/frontend/list-filtering.md`
+- スライドショー（`slideshow.js`）: `docs/frontend/images-and-photo-pool.md`

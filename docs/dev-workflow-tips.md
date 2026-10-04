@@ -4,7 +4,7 @@ AI アシスタント（Claude Code など）がこのリポジトリで作業�
 
 ## 改行コード（Windows 環境）
 
-- リポジトリのファイルは **LF**（`core.autocrlf` は `false`）
+- リポジトリのファイルは原則 **LF**（`core.autocrlf` は `false`）。ただし一部 **CRLF のまま登録されているファイル** がある（`server.py`、`app/routes/` の一部など。`git ls-files --eol | grep i/crlf` で確認）。スクリプトで編集するときは元の改行コードを判定して保ち、勝手に統一しない
 - Git Bash から `python` で文字列置換スクリプトを書く場合、`open(p, 'w')` のままだと Windows の Python が **CRLF で書き出し、ファイル全体が差分になる**。必ず `open(p, encoding='utf-8', newline='')` で読み書きする（または Edit ツールを使う）
 - 改行コードの確認は `grep -c $'\r' <file>`（0 なら LF）。`od -c | grep '\\r'` は誤判定するので使わない
 - 編集後は `git diff --stat` で差分行数が想定どおりかを必ず見る。行数が異常に多ければ改行コードの変化を疑う
@@ -35,6 +35,14 @@ create_app('copy').run(host='127.0.0.1', port=int(os.environ.get('PORT', '5055')
 - 環境変数を変えた複数の状態（例: APIキー無し / ダミーキー）を比べたいときは、`PORT` を変えて同時に起動するとよい（例: `ANTHROPIC_API_KEY=sk-ant-dummy PORT=5056 ...`）
 - `debug=False` なので、コードを変えたら再起動が必要
 - `load_dotenv()` を引数なしで呼ぶと、**呼び出し元スクリプトのディレクトリ** から `.env` を探す。リポジトリ外のスクリプトでは見つからないので、パスを明示する
+
+## ドキュメントとコードの照合
+
+CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか確かめるときは、記述を読むより実物を出力して比べる方が速く確実。
+
+- **URL 一覧**: `create_app('testing')`（`DATABASE=':memory:'`）で作ったアプリの `app.url_map.iter_rules()` を出力する。`run.py` を import したり `create_app()` を引数なしで呼んだりすると、**実データ DB にマイグレーションが走る** ので使わない
+- **実際のスキーマ**: `sqlite3.connect('file:instance/garden.db?mode=ro', uri=True)` の読み取り専用接続で `PRAGMA table_info` を見る。`schema.sql` には初期テーブルしか無く、残りはマイグレーションで作られるため、`schema.sql` だけ見ても型は分からない
+- **ずれやすい箇所**: 「対象画面」「利用画面」などの列挙（機能追加時に追記漏れが起きる）、他ドキュメントへの参照先（`app/templates/CLAUDE.md` を `docs/frontend/` に分割した後も古い参照が残っていた）
 
 ## 外部 API を使う機能
 
