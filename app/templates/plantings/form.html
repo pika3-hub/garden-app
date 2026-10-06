@@ -54,7 +54,7 @@
                     <div class="mb-3">
                         <label for="notes" class="form-label">メモ</label>
                         <textarea class="form-control" id="notes" name="notes" rows="5"
-                                  placeholder="苗の状態、成長具合、気づいたことなど">{{ record.notes if record else '' }}</textarea>
+                                  placeholder="苗の状態、成長具合、気づいたことなど">{{ (record.notes or '') if record else '' }}</textarea>
                         <div class="form-text">苗の高さ、葉の色、花の数、実の大きさなど成長の様子を記録できます</div>
                     </div>
 

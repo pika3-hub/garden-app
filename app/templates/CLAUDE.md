@@ -16,6 +16,10 @@ Jinja2 テンプレートと関連フロントエンド部品（Bootstrap カス
 | [`docs/frontend/ai-notes.md`](../../docs/frontend/ai-notes.md) | 作物・品種フォームの AI メモ下書き（ボタン・モーダル・`ai-notes.js`） |
 | [`docs/frontend/markdown-notes.md`](../../docs/frontend/markdown-notes.md) | メモ欄・補足テキストの Markdown 表示（`markdown` フィルター、`.markdown-body`、対象/対象外の箇所） |
 
+## フォームの初期値は NULL を空文字にする
+
+編集フォームで nullable なカラムを初期値に出すときは `{{ (crop.notes or '') if crop else '' }}` と書く。`{{ crop.notes if crop else '' }}` だと NULL が「None」と表示され、そのまま保存すると文字列 `'None'` が DB に登録される（過去に収穫の単位・作物/品種のメモで発生）。`tests/test_form_empty_values.py` で確認している。
+
 ## 料理記録（Cooking）は横断的な機能
 
 `/cooking/` は独立したCRUD画面を持つが、内容の大半は上記の既存ガイドに統合されている（単独のガイドは持たない）。新機能を作物・場所などと同様に既存の共通部品へ統合する際の参考実装:

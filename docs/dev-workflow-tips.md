@@ -61,7 +61,8 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 
 ## ツール・環境
 
-- `gh` CLI は未インストール。プルリクエストは `git push` 後に表示される URL から手動で作成し、本文はアシスタントが用意する
+- `gh` CLI は winget でインストール済み（`C:\Program Files\GitHub CLI\gh.exe`、pika3-hub でログイン済み）。インストール直後のセッションなど PATH に無いときはフルパスで呼ぶ。プルリクエストは `gh pr create` で作成できる
 - `node` は未インストール。JS の構文チェックはブラウザでの読み込み（コンソールエラー確認）で代用する
 - テストは `uv run pytest`。`tests/conftest.py` のフィクスチャが tmp_path 上の使い捨て DB を使う
+- `uv run pytest` が Smart App Control に `pytest.exe` をブロックされる（os error 4551）ときは、`uv run python -m pytest` なら実行できる
 - 起動のたびに全マイグレーションが再実行され、適用済みのものは `Migration warning`（duplicate column 等）として出る。新しいマイグレーションの確認では、自分のファイル名の行だけを見る

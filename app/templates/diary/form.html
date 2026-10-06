@@ -25,7 +25,7 @@
                     <div class="row">
                         <div class="col-md-8 mb-3">
                             <label for="title" class="form-label">タイトル <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="title" name="title" value="{{ entry.title if entry else '' }}" required>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ (entry.title or '') if entry else '' }}" required>
                             <div class="form-text">日記のタイトルを入力します（例: 苗の植え付け、追肥作業）</div>
                             <div class="invalid-feedback">タイトルを入力してください</div>
                         </div>
@@ -52,7 +52,7 @@
                         <label class="form-label">天気</label>
 
                         <input type="hidden" name="weather" id="weather"
-                            value="{{ entry.weather if entry else '' }}">
+                            value="{{ (entry.weather or '') if entry else '' }}">
 
                         <div class="dropdown">
                             <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start"
@@ -119,7 +119,7 @@ document.querySelectorAll('.dropdown-item').forEach(item => {
 
                     <div class="mb-3">
                         <label for="content" class="form-label">内容</label>
-                        <textarea class="form-control" id="content" name="content" rows="8" placeholder="今日の作業内容、観察したことなどを記録しましょう">{{ entry.content if entry else '' }}</textarea>
+                        <textarea class="form-control" id="content" name="content" rows="8" placeholder="今日の作業内容、観察したことなどを記録しましょう">{{ (entry.content or '') if entry else '' }}</textarea>
                         <div class="form-text">作業内容や観察記録を自由に記入できます</div>
                     </div>
 

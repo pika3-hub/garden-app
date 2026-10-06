@@ -25,7 +25,7 @@
                     <div class="row">
                         <div class="col-md-8 mb-3">
                             <label for="title" class="form-label">タイトル <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="title" name="title" value="{{ task.title if task else '' }}" required>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ (task.title or '') if task else '' }}" required>
                             <div class="form-text">タスクのタイトルを入力します（例: 追肥作業、支柱立て）</div>
                             <div class="invalid-feedback">タイトルを入力してください</div>
                         </div>
@@ -48,7 +48,7 @@
 
                     <div class="mb-3">
                         <label for="description" class="form-label">説明</label>
-                        <textarea class="form-control" id="description" name="description" rows="6" placeholder="タスクの詳細を記入してください">{{ task.description if task else '' }}</textarea>
+                        <textarea class="form-control" id="description" name="description" rows="6" placeholder="タスクの詳細を記入してください">{{ (task.description or '') if task else '' }}</textarea>
                         <div class="form-text">タスクの詳細内容を自由に記入できます</div>
                     </div>
 

@@ -56,14 +56,14 @@
                 <form method="POST" action="{% if crop %}{{ url_for('crops.update', crop_id=crop.id) }}{% else %}{{ url_for('crops.create') }}{% endif %}" class="needs-validation" enctype="multipart/form-data" novalidate>
                     <div class="mb-3">
                         <label for="name" class="form-label">作物名 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ crop.name if crop else '' }}" required>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ (crop.name or '') if crop else '' }}" required>
                         <div class="form-text">栽培する作物の名前を入力します（例: ミニトマト、丸なす）</div>
                         <div class="invalid-feedback">作物名を入力してください</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="crop_type" class="form-label">作物種類 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="crop_type" name="crop_type" value="{{ crop.crop_type if crop else '' }}" placeholder="例: トマト、なす" required>
+                        <input type="text" class="form-control" id="crop_type" name="crop_type" value="{{ (crop.crop_type or '') if crop else '' }}" placeholder="例: トマト、なす" required>
                         <div class="form-text">作物の大分類を入力します（例: トマト、なす、きゅうり）</div>
                         <div class="invalid-feedback">作物種類を入力してください</div>
                     </div>
@@ -74,13 +74,13 @@
                             {% set ai_mode = 'crop' %}
                             {% include '_ai_notes_button.html' %}
                         </div>
-                        <textarea class="form-control" id="notes" name="notes" rows="8" placeholder="## 植え付け時期&#10;4月〜5月&#10;&#10;## 収穫時期&#10;7月〜9月&#10;&#10;## 特性&#10;耐病性、日当たりが良い場所を好む">{{ crop.notes if crop else '' }}</textarea>
+                        <textarea class="form-control" id="notes" name="notes" rows="8" placeholder="## 植え付け時期&#10;4月〜5月&#10;&#10;## 収穫時期&#10;7月〜9月&#10;&#10;## 特性&#10;耐病性、日当たりが良い場所を好む">{{ (crop.notes or '') if crop else '' }}</textarea>
                         <div class="form-text">作物全般のメモ。Markdown形式で書けます（## 見出しなど）。品種固有の情報は品種側で管理してください。</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">アイコン</label>
-                        <input type="hidden" name="icon_path" id="selectedIcon" value="{{ crop.icon_path if crop else '' }}">
+                        <input type="hidden" name="icon_path" id="selectedIcon" value="{{ (crop.icon_path or '') if crop else '' }}">
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <div id="iconPreview">
                                 {% if crop and crop.icon_path %}

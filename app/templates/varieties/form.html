@@ -81,7 +81,7 @@
 
                     <div class="mb-3">
                         <label for="name" class="form-label">品種名 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ variety.name if variety else '' }}" placeholder="例: アイコ、千果、桃太郎" required>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ (variety.name or '') if variety else '' }}" placeholder="例: アイコ、千果、桃太郎" required>
                         <div class="invalid-feedback">品種名を入力してください</div>
                     </div>
 
@@ -92,13 +92,13 @@
                             {% include '_ai_notes_button.html' %}
                         </div>
                         <textarea class="form-control" id="notes" name="notes" rows="8"
-                                  placeholder="## 植え付け時期&#10;4月〜5月&#10;&#10;## 収穫時期&#10;7月〜9月&#10;&#10;## 特性&#10;耐病性、日当たりが良い場所を好む">{{ variety.notes if variety else '' }}</textarea>
+                                  placeholder="## 植え付け時期&#10;4月〜5月&#10;&#10;## 収穫時期&#10;7月〜9月&#10;&#10;## 特性&#10;耐病性、日当たりが良い場所を好む">{{ (variety.notes or '') if variety else '' }}</textarea>
                         <div class="form-text">品種ごとの特徴・栽培時期などをMarkdown形式で記入できます</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">アイコン <small class="text-muted">（未指定なら親作物のアイコンを使用）</small></label>
-                        <input type="hidden" name="icon_path" id="selectedIcon" value="{{ variety.icon_path if variety else '' }}">
+                        <input type="hidden" name="icon_path" id="selectedIcon" value="{{ (variety.icon_path or '') if variety else '' }}">
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <div id="iconPreview">
                                 {% if variety and variety.icon_path %}
