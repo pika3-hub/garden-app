@@ -25,7 +25,7 @@
                     <div class="row">
                         <div class="col-md-8 mb-3">
                             <label for="title" class="form-label">タイトル <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="title" name="title" value="{{ item.title if item else '' }}" required>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ (item.title or '') if item else '' }}" required>
                             <div class="invalid-feedback">タイトルを入力してください</div>
                         </div>
                         <div class="col-md-4 mb-3">
@@ -38,7 +38,7 @@
                     <div class="mb-3">
                         <label for="category" class="form-label">カテゴリ</label>
                         <input type="text" class="form-control" id="category" name="category"
-                               value="{{ item.category if item else '' }}"
+                               value="{{ (item.category or '') if item else '' }}"
                                list="category-suggestions"
                                placeholder="例: サラダ、炒め物、スープ">
                         {% if categories %}
@@ -53,7 +53,7 @@
 
                     <div class="mb-3">
                         <label for="notes" class="form-label">メモ</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="6" placeholder="レシピ、食材のメモ、食べた感想など">{{ item.notes if item else '' }}</textarea>
+                        <textarea class="form-control" id="notes" name="notes" rows="6" placeholder="レシピ、食材のメモ、食べた感想など">{{ (item.notes or '') if item else '' }}</textarea>
                     </div>
 
                     <div class="mb-3">

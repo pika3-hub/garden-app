@@ -24,21 +24,21 @@
                 <form method="POST" action="{% if location %}{{ url_for('locations.update', location_id=location.id) }}{% else %}{{ url_for('locations.create') }}{% endif %}" class="needs-validation" enctype="multipart/form-data" novalidate>
                     <div class="mb-3">
                         <label for="name" class="form-label">場所名 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ location.name if location else '' }}" required>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ (location.name or '') if location else '' }}" required>
                         <div class="form-text">場所を識別しやすい名前を入力します（例: 南側の畑、ベランダプランター1）</div>
                         <div class="invalid-feedback">場所名を入力してください</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="location_type" class="form-label">場所種類 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="location_type" name="location_type" value="{{ location.location_type if location else '' }}" placeholder="例: 畑、プランター、鉢" required>
+                        <input type="text" class="form-control" id="location_type" name="location_type" value="{{ (location.location_type or '') if location else '' }}" placeholder="例: 畑、プランター、鉢" required>
                         <div class="form-text">場所の種類を入力します（例: 畑、プランター、鉢）</div>
                         <div class="invalid-feedback">場所種類を入力してください</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="area_size" class="form-label">面積（㎡）</label>
-                        <input type="number" step="0.01" class="form-control" id="area_size" name="area_size" value="{{ location.area_size if location else '' }}" placeholder="例: 5.5">
+                        <input type="number" step="0.01" class="form-control" id="area_size" name="area_size" value="{{ (location.area_size or '') if location else '' }}" placeholder="例: 5.5">
                         <div class="form-text">おおよその面積を㎡で入力します</div>
                     </div>
 
@@ -55,7 +55,7 @@
 
                     <div class="mb-3">
                         <label for="notes" class="form-label">メモ</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="自由にメモを記入できます">{{ location.notes if location else '' }}</textarea>
+                        <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="自由にメモを記入できます">{{ (location.notes or '') if location else '' }}</textarea>
                     </div>
 
                     <div class="mb-3">

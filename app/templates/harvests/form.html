@@ -30,7 +30,7 @@
         <div class="card">
             <div class="card-body">
                 <form method="POST" action="{% if harvest %}{{ url_for('harvests.update', harvest_id=harvest.id) }}{% else %}{{ url_for('harvests.create') }}{% endif %}" class="needs-validation" enctype="multipart/form-data" novalidate>
-                    <input type="hidden" name="location_crop_id" id="location_crop_id_input" value="{{ location_crop.id if location_crop else '' }}" required>
+                    <input type="hidden" name="location_crop_id" id="location_crop_id_input" value="{{ (location_crop.id or '') if location_crop else '' }}" required>
 
                     {% if harvest %}
                     <!-- 作物・場所情報（編集時は固定表示） -->
@@ -111,7 +111,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="unit" class="form-label">単位</label>
                             <input type="text" class="form-control" id="unit" name="unit"
-                                   value="{{ harvest.unit if harvest else '' }}"
+                                   value="{{ (harvest.unit or '') if harvest else '' }}"
                                    placeholder="例: kg, 個, 枚, 本, 束">
                             <div class="form-text">重量（kg, g）、個数（個, 本）など自由に入力できます。よく使う単位: kg, g, 個, 本, 枚, 束, 房, パック</div>
                         </div>
@@ -120,7 +120,7 @@
                     <div class="mb-3">
                         <label for="notes" class="form-label">メモ</label>
                         <textarea class="form-control" id="notes" name="notes" rows="3"
-                                  placeholder="収穫時の気づきや感想など">{{ harvest.notes if harvest else '' }}</textarea>
+                                  placeholder="収穫時の気づきや感想など">{{ (harvest.notes or '') if harvest else '' }}</textarea>
                         <div class="form-text">収穫時の気づき、品質、サイズなどを記録できます</div>
                     </div>
 
