@@ -7,7 +7,7 @@
 | supplement_type | contentの格納値 | 表示 |
 |----------------|----------------|------|
 | text | テキスト本文 | Markdown で表示（`|markdown` + `.markdown-body`、[`markdown-notes.md`](markdown-notes.md)） |
-| image | 画像パス（`supplements/uuid.jpg`） | サムネイル + lightbox |
+| image | 画像パス（`supplements/uuid.jpg`） | 元画像（`max-height: 300px`）+ lightbox |
 | url | 完全URL（http/https） | `target="_blank" rel="noopener noreferrer"` リンク（`app/utils/ogp_fetcher.py` で取得した `ogp_image`/`ogp_title`/`ogp_description` があればOGPカード表示） |
 | youtube | 動画ID または `動画ID:開始秒数` | サーバー制御のiframe埋め込み（`?start=秒数`） |
 
@@ -80,7 +80,7 @@ for img_path in supplement_images:
 |------|------------|---------|
 | 作物詳細 | crop | 操作ボタンの下 |
 | 品種詳細 | variety | 操作ボタンの下 |
-| 場所詳細 | location | 操作ボタンの下（見取り図カードの上） |
+| 場所詳細 | location | メインカラムの末尾（見取り図カード・栽培中の作物の下） |
 | 日記詳細 | diary | 操作ボタンの下 |
 | タスク詳細 | task | 操作ボタンの下 |
 | 収穫詳細 | harvest | 操作ボタンの下 |

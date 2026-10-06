@@ -20,7 +20,7 @@
 |------|--------|-------------|----------------|
 | 作物一覧 | レガシー | `crop_type` | `filter_types` |
 | 品種一覧 | レガシー | `crop_type` | `filter_types` |
-| 場所一覧 | レガシー | `location_type` | `filter_types` |
+| 場所一覧 | レガシー | 栽培中の作物の `crop_type`（`Planting.get_active_crop_types_by_location()`、カンマ区切りの複数値） | `filter_types`, `filter_type_icons`, `crop_types_by_location` |
 | 植え付け一覧 | マルチグループ | `crop_type` + `location_name` | `filter_types`, `filter_locations` |
 | 収穫記録一覧 | マルチグループ | `crop_type` + `location_name` | `filter_types`, `filter_locations` |
 | 料理一覧 | マルチグループ | `crop_type` + `category` | `filter_crop_types`, `filter_crop_type_icons`, `categories` |
@@ -43,7 +43,7 @@
 {% endif %}
 
 <!-- カードラッパーに data-filter-type を付与 -->
-<div class="col-md-6 col-lg-4 mb-3" data-filter-type="{{ item.crop_type }}">
+<div data-filter-type="{{ item.crop_type }}">
 ```
 
 **マルチグループモード（植え付け・収穫一覧）:**
@@ -71,7 +71,7 @@
 {% endif %}
 
 <!-- カードラッパーに data-filter-card + data-filter-group-* を付与 -->
-<div class="col-md-6 col-lg-4 mb-3" data-filter-card data-filter-group-crop-type="{{ item.crop_type }}" data-filter-group-location-name="{{ item.location_name }}">
+<div data-filter-card data-filter-group-crop-type="{{ item.crop_type }}" data-filter-group-location-name="{{ item.location_name }}">
 ```
 
 **共通（件数・0件メッセージ）:**
@@ -97,7 +97,7 @@ CSSクラス: `.badge-filter-container`, `.badge-filter-multi`, `.badge-filter-g
 | 植え付け一覧 | `grouped_crops` | `planted_date` の `YYYY-MM` | `planted_date DESC` | `YYYY年M月` |
 | 収穫記録一覧 | `grouped_harvests` | `harvest_date` の `YYYY-MM` | `harvest_date DESC` | `YYYY年M月` |
 | 料理一覧 | `grouped_items` | `cooked_date` の `YYYY-MM` | `cooked_date DESC` | `YYYY年M月` |
-| 作物一覧 | `grouped_crops` | `crop_type` | 件数多い順、1件のみは末尾「その他」にまとめる | 作物アイコン（`filter_type_icons`）+ 種類名 |
+| 品種一覧 | `grouped_varieties` | `crop_id`（親作物） | 品種数の多い順（「その他」へのまとめなし） | 親作物の `crop_label` + 件数 |
 | 場所一覧 | `grouped_locations` | `location_type` | 件数多い順、1件のみは末尾「その他」にまとめる | 種類名 |
 | タスク一覧 | `grouped_tasks` | `status` | `進行中 → 未着手 → 完了`（`Task.get_all()` の ORDER BY） | ステータスバッジ + ラベル + 件数 |
 
@@ -115,20 +115,22 @@ grouped_entries = [(k, [item for item in g]) for k, g in groupby(entries, key=_y
 
 注意: Flask ルート関数名が `list` の場合、ビルトイン `list` がシャドウされるため `list(g)` は `TypeError` になる。内包表記 `[item for item in g]` を使うこと。
 
-種類グループ（作物・場所）は種類キーでソート → グループ化 → 件数降順 → 1件グループを「その他」にマージする:
+種類グループ（場所）は種類キーでソート → グループ化 → 件数降順 → 1件グループを「その他」にマージする:
 
 ```python
-sorted_crops = sorted(crops, key=_type_key)
-grouped_crops = [(k, [item for item in g]) for k, g in groupby(sorted_crops, key=_type_key)]
-grouped_crops.sort(key=lambda kv: len(kv[1]), reverse=True)
-multi_groups = [kv for kv in grouped_crops if len(kv[1]) > 1]
-single_items = [items[0] for _, items in grouped_crops if len(items) == 1]
+sorted_locations = sorted(locations, key=_type_key)
+grouped_locations = [(k, [item for item in g]) for k, g in groupby(sorted_locations, key=_type_key)]
+grouped_locations.sort(key=lambda kv: len(kv[1]), reverse=True)
+multi_groups = [kv for kv in grouped_locations if len(kv[1]) > 1]
+single_items = [items[0] for _, items in grouped_locations if len(items) == 1]
 if single_items:
     multi_groups.append(('その他', single_items))
-grouped_crops = multi_groups
+grouped_locations = multi_groups
 ```
 
 Pythonの `sorted` は stable のため、種類内の元順序（`created_at DESC`）は保たれる。
+
+作物一覧はグループ化せず、名前順に並べた `sorted_crops` を1つのグリッドで表示する。
 
 ### テンプレートでの使い方
 
@@ -136,16 +138,16 @@ Pythonの `sorted` は stable のため、種類内の元順序（`created_at DE
 {% for key, group_items in grouped_items %}
 <section class="date-group" data-group-key="{{ key }}">
     <h3 class="date-group-heading">{{ key }}</h3>
-    <div class="row">
+    <div class="card-auto-grid">
         {% for item in group_items %}
-        <div class="col-6 col-md-4 col-lg-3 mb-3" data-filter-...>...</div>
+        <div data-filter-...>...</div>
         {% endfor %}
     </div>
 </section>
 {% endfor %}
 ```
 
-作物一覧の見出しはフィルタバッジと同じアイコンを表示するため `filter_type_icons.get(ct, [])` をループして `<img class="badge-filter-icon">` を先頭に並べる。
+品種一覧の見出しは親作物の `crop_label(parent.crop_name, None, parent.crop_icon_path, parent.crop_image_color)` + 件数を表示する。
 
 ### 空グループの自動非表示
 
@@ -168,5 +170,5 @@ dateGroups.forEach(function (group) {
 
 | クラス | 役割 |
 |--------|------|
-| `.date-group` | セクションラッパー（`custom.css` 末尾の `Date Group` セクションで定義） |
+| `.date-group` | セクションラッパー（`custom.css` の `Date Group` セクションで定義） |
 | `.date-group-heading` | 見出し（フォレストグリーン下線、`h3` スタイル） |

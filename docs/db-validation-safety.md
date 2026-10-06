@@ -47,9 +47,9 @@ cp instance/garden.db instance/garden.db.before-<change-name>
 
 ### 5. `init_db()` はマイグレーション失敗を warning として握り潰す
 
-`app/database.py` の `run_migrations()` は例外を warning として print するだけで止まらない：
+`app/database.py` の `run_migrations()` は例外を warning として print するだけで止まらない（メッセージに `already exists` を含むエラーは print もされず無視される）：
 
-- 出力に `Migration warning:` が出たら必ず内容を確認する
+- 出力に `Migration warning for <ファイル名>:` が出たら必ず内容を確認する
 - 失敗が続いた状態でアプリを起動すると、見えない不整合（中間テーブル残存・トリガー消失など）が蓄積する
 
 ## 推奨される検証フロー（マイグレーション編集時）

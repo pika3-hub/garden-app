@@ -17,7 +17,7 @@
 - **日付オーバーレイ**: `.card-img-date-overlay` を画像上に表示
 - **リンク**: 画像クリックで対応する詳細ページに遷移
 - **サイズ**: 固定高さではなく `aspect-ratio: 1/1; height: 100%`（統計カードと高さを揃える正方形レイアウト）
-- **画像なし**: カルーセル自体を非表示（`{% if carousel_images %}`）
+- **画像なし**: `{% else %}` 側で同じ `#dashboardCarousel` のカードに「画像がありません」を表示する
 
 **CSS（`custom.css` の `Dashboard Carousel` セクション）**:
 
@@ -30,7 +30,7 @@
 | `.carousel-type-icon` | キャプション内の種別アイコン |
 | `#dashboardCarousel .card-img-date-overlay` | 画像上の日付オーバーレイ |
 
-`.carousel-counter` クラスは `custom.css` に残っているが `index.html` 側にレンダリングされておらず、対応する `#carouselCurrent` 要素も存在しない（orphaned／未使用のレガシーコード）。
+`.carousel-counter` クラスは `custom.css` に残っているが `index.html` 側にレンダリングされておらず、対応する `#carouselCurrent` 要素も存在しない（orphaned／未使用のレガシーコード）。`index.html` の `extra_js` にも `#carouselCurrent` を探して見つからず即 return するだけのスクリプトが残っている。
 
 ## 直近のタスク
 
@@ -38,4 +38,4 @@
 
 ## 最近の活動
 
-7種類のデータソース（作物・品種・場所・日記・植え付け・収穫・料理など）を日付・種別でグルーピングしたアクティビティタイムラインを表示する。バッジ・アイコン表示はカルーセルとは別ロジックで `index()` 内に実装されている。
+5種類のデータソース（日記・植え付け・栽培記録・収穫・料理）を日付・種別でグルーピングしたアクティビティタイムラインを表示する。バッジ・アイコン表示はカルーセルとは別ロジックで `index()` 内に実装されている。
