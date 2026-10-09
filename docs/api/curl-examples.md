@@ -84,3 +84,18 @@ gapi -X POST "$GARDEN_API_URL/harvests" \
      -F 'data={"planting_id":5,"harvest_date":"2026-10-09","quantity":300,"unit":"g"}' \
      -F image=@harvest.jpg -F extra_images=@harvest2.jpg
 ```
+
+## 日記・料理・タスク（関連付き）
+
+```bash
+gapi -X POST "$GARDEN_API_URL/diary_entries" \
+     -F 'data={"title":"初収穫","entry_date":"2026-10-09","weather":"晴れ","content":"甘かった","relations":{"planting_ids":[5],"harvest_ids":[12]}}' \
+     -F image=@diary.jpg
+# relations は送ったキーだけ置き換え（[] で全解除、送らないキーはそのまま）
+gapi -X PATCH "$GARDEN_API_URL/diary_entries/8" -H 'Content-Type: application/json' -d '{"relations":{"harvest_ids":[]}}'
+gapi -X POST "$GARDEN_API_URL/cooking_records" -H 'Content-Type: application/json' \
+     -d '{"title":"トマトサラダ","cooked_date":"2026-10-09","category":"サラダ","relations":{"harvest_ids":[12]}}'
+gapi -X POST "$GARDEN_API_URL/tasks" -H 'Content-Type: application/json' \
+     -d '{"title":"追肥","due_date":"2026-10-10","relations":{"planting_ids":[5]}}'
+gapi -X PATCH "$GARDEN_API_URL/tasks/3" -H 'Content-Type: application/json' -d '{"status":"completed"}'
+```
