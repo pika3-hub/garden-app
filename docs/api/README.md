@@ -1,7 +1,7 @@
 # 外部API リファレンス（/api/v1）
 
 AI エージェント（Hermes Agent など）から、菜園データを参照・作成・部分更新するための JSON API。
-既存の Web 画面（認証なし）とは**別アプリ・別ポート**で動き、エージェントは API にしか到達できない。
+既存の Web 画面（認証なし）とは**別アプリ・別ポート**で動く。エージェントが Web 画面に届かないようにするのはネットワーク側の設定で、Windows では [`firewall-windows.md`](firewall-windows.md)、エージェントと同じ Ubuntu に移した後は [`migration-to-ubuntu.md`](migration-to-ubuntu.md) の手順 6（Hermes の実行ユーザーから 5000 番への接続を拒否）が必須。
 **削除はできない**（DELETE は 405）。
 
 - 実装: `app/api/`（`create_api_app()` 専用。Web アプリには登録されない）

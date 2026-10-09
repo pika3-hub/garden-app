@@ -11,8 +11,10 @@ Hermes ──────▶ 127.0.0.1:5001  API（Bearer 必須。LAN からは
 /opt/garden-app/ … ユーザー garden が所有・0700。Hermes の実行ユーザーは読めない
 ```
 
-**最重要**: Hermes はシェルを実行できるため、同じ PC に DB があると API を通さずに読み書き・削除できてしまう。
-アプリを専用ユーザー `garden` で動かし、Hermes の実行ユーザーからはアプリのフォルダを読めないようにする。
+**最重要**: Hermes はシェルを実行できるため、同じ PC にあるものには API を通さずに触れてしまう。次の2つを両方行う。
+
+1. **DB・ファイル**: アプリを専用ユーザー `garden` で動かし、Hermes の実行ユーザーからはアプリのフォルダを読めないようにする（手順 1）
+2. **Web 画面（認証なし・削除もできる）**: 同じ PC からは `127.0.0.1:5000` や自分の LAN IP の 5000 番に接続できてしまう（ufw はループバックや自ホスト宛てを止めない）。Hermes の実行ユーザーから 5000 番への接続を OS で拒否する（手順 6）
 
 ## 1. 専用ユーザーとフォルダ
 
@@ -105,14 +107,31 @@ sudo systemctl enable --now garden-app
 journalctl -u garden-app -f      # 監査ログ（app.api）もここに出る
 ```
 
-## 6. ファイアウォール（ufw）
+## 6. ファイアウォール（ufw）と Hermes からの Web 画面の遮断
+
+LAN（スマホ）から Web 画面へ:
 
 ```bash
 sudo ufw allow from 192.168.11.0/24 to any port 5000 proto tcp
-sudo ufw enable
 ```
 
 5001 は 127.0.0.1 で待ち受けるので開けない。
+
+**Hermes の実行ユーザー（以下 `hermes`）から 5000 番への接続を拒否する**。ufw の受信ルールは同じ PC 内の通信を止めないため、送信側でユーザー単位に拒否する。`/etc/ufw/before.rules` の `*filter` セクション内、`COMMIT` の直前に追加:
+
+```
+# Hermes の実行ユーザーは Web 画面（認証なし）に接続できない。API（5001）だけを使う
+-A ufw-before-output -p tcp --dport 5000 -m owner --uid-owner hermes -j REJECT
+```
+
+IPv6 でも同じ行を `/etc/ufw/before6.rules` に追加する。その後:
+
+```bash
+sudo ufw enable
+sudo ufw reload
+```
+
+（宛先を限定していないので、`127.0.0.1`・自分の LAN IP・`localhost` のどれで接続しても拒否される。hermes ユーザーがほかの機器の 5000 番を使う予定があれば `-d` で宛先を自ホストに絞る）
 
 ## 7. バックアップ
 
@@ -128,8 +147,12 @@ garden ユーザーの crontab（`sudo -u garden crontab -e`）:
 ## 8. 動作確認と Hermes 側の切り替え
 
 ```bash
-curl -sS -H "Authorization: Bearer $T" http://127.0.0.1:5001/api/v1/health   # Ubuntu 上で
+curl -sS -H "Authorization: Bearer $T" http://127.0.0.1:5001/api/v1/health   # Ubuntu 上で → {"ok": true, ...}
 curl -sS -m 5 http://192.168.11.24:5001/                                      # 別の端末から → 接続できない
+sudo -u hermes curl -sS -m 5 http://127.0.0.1:5000/                           # → 拒否されること（Connection refused）
+sudo -u hermes curl -sS -m 5 http://192.168.11.24:5000/                       # → 拒否されること
+sudo -u hermes curl -sS -m 5 -H "Authorization: Bearer $T" http://127.0.0.1:5001/api/v1/health  # → 成功すること
+sudo -u hermes ls /opt/garden-app                                             # → Permission denied
 ```
 
 スマホで `http://192.168.11.24:5000/` を開き、件数が移行前と同じことを確認する。

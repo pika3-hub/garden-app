@@ -282,6 +282,6 @@ New-NetFirewallRule -DisplayName "Garden Web block Hermes" -Direction Inbound -P
 2. uv で依存導入、`.env` 作成（`API_HOST=127.0.0.1`、`HOST=0.0.0.0`、`DATABASE` 絶対パス）
 3. データ移行: Windows 側でアプリ停止 → `garden.db` と `app/static/uploads/` をコピー
 4. systemd ユニット（`User=garden`、`WorkingDirectory`、`ExecStart=uv run python server.py`、`Restart=on-failure`）
-5. ufw: 5000/tcp を LAN サブネットに許可（5001 は 127.0.0.1 待受のため不要）
+5. ufw: 5000/tcp を LAN サブネットに許可（5001 は 127.0.0.1 待受のため不要）。同じ PC 内の通信は ufw の受信ルールで止まらないため、`ufw-before-output` に `--uid-owner <Hermes の実行ユーザー>` で 5000 番宛てを REJECT するルールを追加し、エージェントが認証なしの Web 画面に届かないようにする
 6. バックアップ: cron で `sqlite3 garden.db ".backup ..."` と uploads の rsync
 7. Hermes の `GARDEN_API_URL` を `http://127.0.0.1:5001` に変更
