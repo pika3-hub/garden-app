@@ -117,7 +117,7 @@ sudo ufw allow from 192.168.11.0/24 to any port 5000 proto tcp
 
 5001 は 127.0.0.1 で待ち受けるので開けない。
 
-**Hermes の実行ユーザー（以下 `hermes`）から 5000 番への接続を拒否する**。ufw の受信ルールは同じ PC 内の通信を止めないため、送信側でユーザー単位に拒否する。`/etc/ufw/before.rules` の `*filter` セクション内、`COMMIT` の直前に追加:
+**Hermes の実行ユーザー（以下 `hermes`）から 5000 番への接続を拒否する**。2026-10-10 時点の .24 では、Hermes は専用ユーザーではなく `pika3` のユーザー systemd サービス（`hermes-gateway.service`）で動いている。そのままなら下の `hermes` は `pika3` に読み替える（`pika3` がサーバー上で `localhost:5000` を開けなくなるだけで、スマホからは使える）。`pika3` は sudo できるため `/opt/garden-app` の権限での保護は弱くなる点に注意。ufw の受信ルールは同じ PC 内の通信を止めないため、送信側でユーザー単位に拒否する。`/etc/ufw/before.rules` の `*filter` セクション内、`COMMIT` の直前に追加:
 
 ```
 # Hermes の実行ユーザーは Web 画面（認証なし）に接続できない。API（5001）だけを使う
@@ -157,11 +157,14 @@ sudo -u hermes ls /opt/garden-app                                             # 
 
 スマホで `http://192.168.11.24:5000/` を開き、件数が移行前と同じことを確認する。
 
-Hermes 側の環境変数を変更する:
+Hermes 側の環境変数を変更する。Windows 暫定期から、接続情報は `~/.config/garden-api.env`（`GARDEN_API_URL` と `GARDEN_API_TOKEN`、権限 600）に書き、drop-in `~/.config/systemd/user/hermes-gateway.service.d/garden-api.conf`（`[Service]` に `EnvironmentFile=%h/.config/garden-api.env`）で gateway に渡している。URL の行だけ書き換えて再起動する:
 
+```bash
+sed -i 's|^GARDEN_API_URL=.*|GARDEN_API_URL=http://127.0.0.1:5001/api/v1|' ~/.config/garden-api.env
+systemctl --user restart hermes-gateway.service
 ```
-GARDEN_API_URL=http://127.0.0.1:5001/api/v1
-```
+
+ターミナルで `hermes` を直接起動するときは、先に `set -a; . ~/.config/garden-api.env; set +a` で読み込む（サービスの設定は読まれない）。
 
 Windows 側のファイアウォールのルール（[`firewall-windows.md`](firewall-windows.md)）は削除してよい。
 

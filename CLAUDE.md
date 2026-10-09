@@ -227,6 +227,7 @@ f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
 
 - [`docs/dev-workflow-tips.md`](docs/dev-workflow-tips.md): 過去のセッションで得た実務ノウハウ（Windows の改行コード、コピーDBでのブラウザ確認、外部 API の早期実確認、ブラウザ自動操作の注意、未インストールのツールなど）。**作業を始める前に一読すること**
 - [`docs/known-issues.md`](docs/known-issues.md): 見つかったが対応を見送った課題・改善候補の一覧。関連箇所を触るときは確認し、対応したら行を削除する
+- [`docs/wishlist.md`](docs/wishlist.md): ユーザーがやりたいと言った作業・検証の一覧（Hermes の無料モデル検証など）。「次に何をするか」を聞かれたら確認する
 
 ---
 
