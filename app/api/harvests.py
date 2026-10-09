@@ -1,6 +1,6 @@
 """収穫 API（/api/v1/harvests）"""
 from app.api import bp
-from app.api.planting_records import check_planting_unchanged, planting_ref
+from app.api.planting_records import check_planting_active, check_planting_unchanged, planting_ref
 from app.api.resource import Resource, register
 from app.api.validation import REF_PLANTING, Field
 from app.models.harvest import Harvest
@@ -34,6 +34,7 @@ class HarvestResource(Resource):
 
     def check(self, values, merged, row, errors):
         check_planting_unchanged(values, row, self.label, errors)
+        check_planting_active(values, row, self.label, errors)
 
     def describe(self, row):
         return {'planting': planting_ref(row), 'days_from_planting': row.get('days_from_planting')}

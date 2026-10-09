@@ -73,6 +73,25 @@ def test_harvest_validation(api, plantings):
     assert fields == {'planting_id', 'harvest_date', 'quantity'}
 
 
+@pytest.mark.parametrize('path, body', [
+    ('/api/v1/planting_records', {'recorded_at': '2026-06-01'}),
+    ('/api/v1/harvests', {'harvest_date': '2026-07-01'}),
+])
+def test_cannot_create_for_ended_planting(api, plantings, sql, path, body):
+    """画面と同じく、栽培終了した植え付けには新しく作成できない（既存の記録は修正できる）"""
+    created = api.post(path, json={'planting_id': plantings['by_crop'], **body}).get_json()['data']
+    sql("UPDATE plantings SET status = 'harvested', end_date = '2026-08-01' WHERE id = ?", (plantings['by_crop'],))
+
+    res = api.post(path, json={'planting_id': plantings['by_crop'], **body})
+    assert res.status_code == 422
+    details = res.get_json()['error']['details']
+    assert [d['field'] for d in details] == ['planting_id']
+    assert '栽培中ではありません' in details[0]['reason']
+
+    res = api.patch(f'{path}/{created["id"]}', json={'notes': '修正'})
+    assert res.status_code == 200, res.get_json()
+
+
 def test_list_harvests_by_crop(api, plantings):
     api.post('/api/v1/harvests', json={'planting_id': plantings['by_crop'], 'harvest_date': '2026-07-01'})
     api.post('/api/v1/harvests', json={'planting_id': plantings['by_variety'], 'harvest_date': '2026-07-02'})

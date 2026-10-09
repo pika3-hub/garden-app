@@ -141,7 +141,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 ### 栽培記録 `/planting_records`
 | 項目 | 型 | 備考 |
 |---|---|---|
-| planting_id | 植え付け ID | **必**。作成後は変更不可（変更すると 422） |
+| planting_id | 植え付け ID | **必**。栽培中（`status=active`）の植え付けのみ（画面と同じ。終了済みは 422、既存の記録の修正は可）。作成後は変更不可（変更すると 422） |
 | recorded_at | 日付 | **必** |
 | notes | 文字列 | |
 
@@ -150,7 +150,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 ### 収穫 `/harvests`
 | 項目 | 型 | 備考 |
 |---|---|---|
-| planting_id | 植え付け ID | **必**。作成後は変更不可 |
+| planting_id | 植え付け ID | **必**。栽培中の植え付けのみ（栽培記録と同じ）。作成後は変更不可 |
 | harvest_date | 日付 | **必** |
 | quantity | 数値 ≥0 | |
 | unit | 文字列 ≤20 | 既存値は `/meta` の `harvest_units` |
