@@ -99,3 +99,13 @@ gapi -X POST "$GARDEN_API_URL/tasks" -H 'Content-Type: application/json' \
      -d '{"title":"追肥","due_date":"2026-10-10","relations":{"planting_ids":[5]}}'
 gapi -X PATCH "$GARDEN_API_URL/tasks/3" -H 'Content-Type: application/json' -d '{"status":"completed"}'
 ```
+
+## 写真プール（/photos）
+
+```bash
+gapi -X POST "$GARDEN_API_URL/photos" -F files=@IMG_1.jpg -F files=@IMG_2.jpg -F 'data={"notes":"10/9 畑"}'
+gapi "$GARDEN_API_URL/photos?unused=true"
+# プールの写真を本体画像・追加画像として使う
+gapi -X POST "$GARDEN_API_URL/harvests" -H 'Content-Type: application/json' \
+     -d '{"planting_id":5,"harvest_date":"2026-10-09","quantity":300,"unit":"g","photo_pool_id":21,"extra_photo_pool_ids":[22]}'
+```

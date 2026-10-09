@@ -16,7 +16,7 @@ def init_app(app):
     # 各モジュールは import 時に bp へルートを登録する（Blueprint 登録より前に読み込む）
     from app.api import (  # noqa: F401
         meta, crops, varieties, locations, plantings, planting_records, harvests,
-        diary_entries, cooking_records, tasks,
+        diary_entries, cooking_records, tasks, photos,
     )
 
     errors.register_error_handlers(app)
