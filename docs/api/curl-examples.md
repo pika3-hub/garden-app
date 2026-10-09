@@ -67,3 +67,20 @@ gapi -X POST "$GARDEN_API_URL/plantings" -H 'Content-Type: application/json' \
 gapi -X PATCH "$GARDEN_API_URL/plantings/5" -H 'Content-Type: application/json' -d '{"quantity":3}'
 gapi -X POST "$GARDEN_API_URL/plantings/5/end" -H 'Content-Type: application/json' -d '{"end_date":"2026-10-09"}'
 ```
+
+## 栽培記録（/planting_records）
+
+```bash
+gapi "$GARDEN_API_URL/planting_records?planting_id=5"
+gapi -X POST "$GARDEN_API_URL/planting_records" \
+     -F 'data={"planting_id":5,"recorded_at":"2026-10-09","notes":"花が咲いた"}' -F image=@flower.jpg
+```
+
+## 収穫（/harvests）
+
+```bash
+gapi "$GARDEN_API_URL/harvests?crop_id=1&date_from=2026-07-01"
+gapi -X POST "$GARDEN_API_URL/harvests" \
+     -F 'data={"planting_id":5,"harvest_date":"2026-10-09","quantity":300,"unit":"g"}' \
+     -F image=@harvest.jpg -F extra_images=@harvest2.jpg
+```
