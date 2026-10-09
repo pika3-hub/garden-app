@@ -306,6 +306,14 @@ entry_date as date
 WHERE planted_date BETWEEN ? AND ?
 ```
 
+## マイグレーションを書くときの注意
+
+マイグレーションは起動のたびに全ファイルが `executescript` で再実行され、エラーは「already exists」以外も警告として握りつぶされる（`app/database.py`）。`executescript` は**最初のエラーで止まり、同じファイルの残りの文は実行されない**。
+
+- `ALTER TABLE ... ADD COLUMN` は再実行すると duplicate column エラーになるので、**1ファイルに1つ**にする（複数あると、2回目以降の起動や新規 DB で後ろの文が実行されない）
+- 実例: `003` は先頭の `crops.image_path` が `schema.sql` と重複してエラーになり、新規 DB では `diary_entries.image_path` が作られていなかった（`021` で補完、`tests/test_fresh_db_schema.py`）
+- 新規 DB で列がそろうかは、テストの `app` フィクスチャ（tmp_path の新規 DB）で `PRAGMA table_info` を見て確かめる
+
 ## モデルのコーディングパターン
 
 ```python

@@ -1,6 +1,7 @@
 import logging
 import os
 import random
+import secrets
 from flask import Flask, render_template, url_for
 from app.config import config
 from app.database import init_db, get_db
@@ -34,6 +35,13 @@ def create_app(config_name='default'):
 
     # 設定読み込み
     app.config.from_object(config[config_name])
+
+    # 本番設定は SECRET_KEY を .env から読む。未設定だと flash() が 500 になるため、
+    # 起動ごとのランダム値で補う（セッションは flash 用のみ。再起動で未表示の通知が消えるだけ）
+    if not app.config.get('SECRET_KEY'):
+        app.config['SECRET_KEY'] = secrets.token_hex(32)
+        logging.getLogger(__name__).warning(
+            'SECRET_KEY が未設定のため、起動ごとのランダム値を使います')
 
     # データベース初期化
     init_db(app)
@@ -365,4 +373,30 @@ def create_app(config_name='default'):
                              upcoming_tasks_by_urgency=upcoming_tasks_by_urgency,
                              carousel_images=carousel_images)
 
+    return app
+
+
+def create_api_app(config_name='default'):
+    """外部API専用アプリ（/api/v1/* のみ。画面ルート・static 配信は持たない）
+
+    server.py が Web アプリとは別ポートで起動する。
+    API_TOKEN が未設定・32文字未満なら RuntimeError（API を無認証で公開しないため）。
+    """
+    from app.api import init_app as init_api
+    from app.api.auth import token_is_valid
+
+    app = Flask(__name__, static_folder=None)
+    app.config.from_object(config[config_name])
+    if not token_is_valid(app.config.get('API_TOKEN')):
+        raise RuntimeError('API_TOKEN が未設定か32文字未満のため、API を起動できません')
+    app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+    app.json.ensure_ascii = False
+    app.json.sort_keys = False
+
+    init_db(app)
+    init_api(app)
+
+    # 監査ログ（app.api）を Flask の 'app' ロガーのハンドラーへ伝播させる
+    app.logger  # 既定ハンドラーを生成
+    logging.getLogger('app.api').setLevel(logging.INFO)
     return app

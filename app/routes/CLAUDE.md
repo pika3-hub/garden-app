@@ -2,6 +2,8 @@
 
 Flask Blueprint ベースのルーティング規約と URL 設計。
 
+外部 JSON API（`/api/v1/*`）はここではなく `app/api/` にあり、Web アプリとは別の `create_api_app()` にだけ登録される（仕様は `docs/api/README.md`）。画面側の作成・更新処理を変えたときは、API 側の同じ処理（`app/api/{resource}.py`）も合わせて確認する。
+
 ## URL設計
 
 | 機能 | Blueprint | 一覧 | 詳細 | 新規 | 編集 |

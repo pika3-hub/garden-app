@@ -33,6 +33,7 @@
 - **補足情報:** 作物・品種・場所・日記・タスク・収穫・料理の詳細画面に補足テキスト、追加画像、外部URL（OGP情報の自動取得付き）、YouTube動画埋め込みを複数添付可能。共通テンプレート `_supplements_section.html` + `supplements` テーブルで管理
 - **写真プール:** モバイルで撮影した複数写真を先に一括アップロードし、後から各写真を選んで作物・品種・場所・栽培記録・収穫・料理・日記・補足情報の登録/編集画面へ送り込める機能（`/photo_pool/`）。プール写真は `uploads/photo_pool/` に独立保存し、登録時に対象エンティティのフォルダへコピー（使い回し可）。使用回数は `photo_pool_usages` 中間テーブルで追跡。各登録/編集画面の画像フィールドからは「写真プールから選択」ボタンで共通モーダル（`_photo_pool_picker_modal.html`）を開いて選択可能（ローカルファイル選択と排他UI、使用状況フィルター付き）
 - **料理記録:** 収穫した野菜を使った料理のCRUD（`/cooking/`）。タイトル・カテゴリ・調理日（必須）・メモ・画像を記録。作物・品種・植え付け・収穫との多対多関連付け（`cooking_relations` テーブル）。補足情報対応（`entity_type='cooking'`）。メニュー順は収穫の直後
+- **外部API（エージェント連携）:** `/api/v1/*` の JSON API で作物・品種・場所・植え付け・栽培記録・収穫・料理・日記・タスク・写真プールを参照・作成・部分更新できる（削除なし）。Bearer トークン（`.env` の `API_TOKEN`、32文字以上）必須。`server.py` が Web とは別ポート（`API_PORT`、既定5001）で API 専用アプリ `create_api_app()` を起動し、エージェントからは画面の URL に届かないようにしている（`run.py` では起動しない）。実装は `app/api/`（`Resource` 基底クラス＋リソースごとの定義）。仕様は `docs/api/README.md`、エージェント用スキルは `docs/api/hermes-skill/SKILL.md`、Ubuntu への移設手順は `docs/api/migration-to-ubuntu.md`。ネットワーク・画像まわりを変えるときは API 側（`app/api/images.py`）も確認する
 
 ---
 
@@ -46,6 +47,7 @@
 | `app/routes/CLAUDE.md` | URL設計、Blueprint規約、新機能追加チェックリスト |
 | `app/templates/CLAUDE.md` | トピック別ガイド（`docs/frontend/*.md`）へのインデックス。詳細は `app/templates/CLAUDE.md` のガイド一覧表を参照 |
 | `app/static/js/CLAUDE.md` | 見取り図機能（エディター・プレビュー・フルスクリーン・800×800px座標系）、植え付け登録フロー |
+| `docs/api/README.md` | 外部API（`app/api/`）の仕様・項目・エラー形式。API を変えたら更新する |
 
 ---
 
@@ -60,6 +62,7 @@ garden-app/
 │   ├── config.py            # 環境ベース設定
 │   ├── database.py          # SQLite接続管理
 │   ├── schema.sql           # 初期データベーススキーマ
+│   ├── api/                  # 外部API（/api/v1/*、create_api_app 専用）。{resource}.py = リソース定義、resource.py = 共通処理
 │   ├── models/               # データモデル（静的メソッドパターン）。命名: {feature}.py = {feature}テーブルのCRUD
 │   │                         # → 正確なテーブル一覧・モデル一覧は app/models/CLAUDE.md 参照
 │   ├── routes/               # Flask ブループリント。命名: {feature}_routes.py、Blueprint名は原則複数形
@@ -81,8 +84,8 @@ garden-app/
 ├── docs/                     # 開発ドキュメント（frontend/ のトピック別ガイド、開発ノウハウ、既知の課題等）
 ├── tests/                    # pytest テスト（conftest.py のフィクスチャで使い捨て DB）
 ├── instance/                 # Flask インスタンスフォルダ（garden.db）
-├── run.py                    # アプリケーション起動スクリプト（開発用）
-├── server.py                 # 本番用起動スクリプト（waitress）
+├── run.py                    # 開発サーバー起動スクリプト（Web のみ、debug）
+├── server.py                 # waitress 起動スクリプト（Web :5000 ＋ API :API_PORT）
 ├── test_data.py              # テストデータ投入スクリプト
 └── pyproject.toml            # プロジェクトメタデータ（uvパッケージマネージャー）
 ```
@@ -172,7 +175,7 @@ FROM crops c;
 
 ### JOIN パターン（`_CV_JOIN` 定数）
 
-植え付け（`plantings` エイリアス `lc`）や収穫（`h`）を VIEW と結合するときは以下の定数を使う。`_CV_JOIN` は `app/models/planting.py`, `harvest.py`, `calendar.py`, `planting_record.py` の4ファイルにそれぞれ同一内容がコピーされて定義されている（共有インポートではない）。修正時は4箇所すべての同期が必要（定数を使わず同じ JOIN 条件を直接書いている箇所も `app/models/diary.py`, `task.py`, `cooking.py`, `app/__init__.py` にあるため、あわせて確認する）：
+植え付け（`plantings` エイリアス `lc`）や収穫（`h`）を VIEW と結合するときは以下の定数を使う。`_CV_JOIN` は `app/models/planting.py`, `harvest.py`, `calendar.py`, `planting_record.py` の4ファイルにそれぞれ同一内容がコピーされて定義されている（共有インポートではない）。修正時は4箇所すべての同期が必要（定数を使わず同じ JOIN 条件を直接書いている箇所も `app/models/diary.py`, `task.py`, `cooking.py`, `app/__init__.py` にあるため、あわせて確認する。外部API `app/api/` は `app.models.planting._CV_JOIN` を import して使う。5箇所目のコピーは作らない）：
 
 ```python
 _CV_JOIN = (
@@ -226,6 +229,7 @@ f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
 
 - [`docs/dev-workflow-tips.md`](docs/dev-workflow-tips.md): 過去のセッションで得た実務ノウハウ（Windows の改行コード、コピーDBでのブラウザ確認、外部 API の早期実確認、ブラウザ自動操作の注意、未インストールのツールなど）。**作業を始める前に一読すること**
 - [`docs/known-issues.md`](docs/known-issues.md): 見つかったが対応を見送った課題・改善候補の一覧。関連箇所を触るときは確認し、対応したら行を削除する
+- [`docs/wishlist.md`](docs/wishlist.md): ユーザーがやりたいと言った作業・検証の一覧（Hermes の無料モデル検証など）。「次に何をするか」を聞かれたら確認する
 
 ---
 
