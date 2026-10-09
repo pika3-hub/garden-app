@@ -281,6 +281,19 @@ class Planting:
         db.commit()
 
     @staticmethod
+    def end_cultivation(location_crop_id, location_id, end_date=None):
+        """栽培終了: 見取り図に配置されていればスナップショットを残し、配置を外す（画面と API で共用）"""
+        from app.models.location import Location
+
+        canvas_data = Location.get_canvas_data(location_id)
+        snapshot = None
+        if canvas_data and 'placements' in canvas_data:
+            if any(p.get('locationCropId') == location_crop_id for p in canvas_data['placements']):
+                snapshot = canvas_data
+        Planting.harvest(location_crop_id, end_date=end_date, canvas_snapshot=snapshot)
+        Location.remove_from_canvas(location_id, location_crop_id)
+
+    @staticmethod
     def update_end_date_notes(location_crop_id, end_date, notes):
         """harvested 状態の植え付けの終了日・メモを更新"""
         db = get_db()
