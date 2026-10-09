@@ -4,7 +4,7 @@
 
 ```bash
 # Windows 暫定期（移設後は http://127.0.0.1:5001/api/v1）
-export GARDEN_API_URL=http://192.168.11.24:5001/api/v1
+export GARDEN_API_URL=http://192.168.11.10:5001/api/v1
 export GARDEN_API_TOKEN='（.env の API_TOKEN）'
 gapi() { curl -sS -H "Authorization: Bearer $GARDEN_API_TOKEN" "$@"; echo; }
 ```
