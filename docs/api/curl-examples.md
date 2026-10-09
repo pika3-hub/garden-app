@@ -16,3 +16,18 @@ gapi "$GARDEN_API_URL/health"
 # → {"ok": true, "data": {"status": "ok"}}
 curl -sS "$GARDEN_API_URL/health"   # トークンなし → 401
 ```
+
+## 作物（/crops）
+
+```bash
+gapi "$GARDEN_API_URL/crops?q=トマト"                                   # 一覧・検索
+gapi "$GARDEN_API_URL/crops/1"                                           # 詳細
+gapi -X POST "$GARDEN_API_URL/crops" -H 'Content-Type: application/json' \
+     -d '{"name":"ミニトマト","crop_type":"ナス科"}'                      # 作成
+gapi -X POST "$GARDEN_API_URL/crops" \
+     -F 'data={"name":"なす","crop_type":"ナス科"}' -F image=@nasu.jpg   # 画像付きで作成
+gapi -X PATCH "$GARDEN_API_URL/crops/1" -H 'Content-Type: application/json' \
+     -d '{"notes":"脇芽はこまめに摘む"}'                                  # 部分更新
+gapi -X POST "$GARDEN_API_URL/crops/1/images" -F extra_images=@a.jpg -F extra_images=@b.jpg  # 追加画像
+gapi -X POST "$GARDEN_API_URL/crops" -H 'Content-Type: application/json' -d '{"nmae":"x"}'   # → 422 の例
+```
