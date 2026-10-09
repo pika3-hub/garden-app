@@ -366,3 +366,29 @@ def create_app(config_name='default'):
                              carousel_images=carousel_images)
 
     return app
+
+
+def create_api_app(config_name='default'):
+    """外部API専用アプリ（/api/v1/* のみ。画面ルート・static 配信は持たない）
+
+    server.py が Web アプリとは別ポートで起動する。
+    API_TOKEN が未設定・32文字未満なら RuntimeError（API を無認証で公開しないため）。
+    """
+    from app.api import init_app as init_api
+    from app.api.auth import token_is_valid
+
+    app = Flask(__name__, static_folder=None)
+    app.config.from_object(config[config_name])
+    if not token_is_valid(app.config.get('API_TOKEN')):
+        raise RuntimeError('API_TOKEN が未設定か32文字未満のため、API を起動できません')
+    app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+    app.json.ensure_ascii = False
+    app.json.sort_keys = False
+
+    init_db(app)
+    init_api(app)
+
+    # 監査ログ（app.api）を Flask の 'app' ロガーのハンドラーへ伝播させる
+    app.logger  # 既定ハンドラーを生成
+    logging.getLogger('app.api').setLevel(logging.INFO)
+    return app
