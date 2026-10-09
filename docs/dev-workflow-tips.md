@@ -68,6 +68,13 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - 自動テストは SDK クライアントを差し替えて実 API を呼ばない（`tests/test_ai_notes.py` の `FakeClient` 参照）。ただしフェイクは型を検査しないので、SDK の引数名・フィールド名は `inspect.signature(...)` や `Model.model_fields` で別途確認する
 - Anthropic Python SDK は既定で `max_retries=2`（タイムアウトも再試行）。長時間・高コストのリクエストでは待ち時間と課金が倍増するので、`max_retries=0` にして全体の期限を自前で管理する
 
+## 外部 API（`app/api/`）の実機確認
+
+- 画面でできない操作が、ボタンの表示条件や選択肢の絞り込み（例: 収穫・栽培記録の登録先は栽培中の植え付けだけ表示）だけで防がれていることがある。API で同じ操作を作るときは、ルートだけでなくテンプレートの表示条件まで確認し、API 側ではサーバーで検査する。実例: 終了済みの植え付けに API からだけ収穫を登録できた
+- 画像の確認は実際のスマホ写真で行う。スマホの写真は MPO（複数画像入りの JPEG）のことが多く、Pillow で作ったテスト画像だけでは気づけなかった（写真プール `app/static/uploads/photo_pool/` に実物がある）
+- `.env` に `API_HOST=0.0.0.0` を書き込むなど、サービスを LAN に公開する操作は Claude Code の自動許可で止められる。ユーザーに実行してもらうスクリプトを用意する
+- ユーザーに実行してもらうコマンドには `cd D:\workspace\garden-app` を含める（管理者の PowerShell は `C:\windows\system32` で開くため、相対パスの `.env` が見つからず、uv 版の Python が使われた）。トークンなど秘密の値をファイルに書いてもらったら、値を出さずに確認するコマンド（文字数の表示など）を添える
+
 ## ブラウザ自動操作（Claude in Chrome）
 
 - `javascript_tool` の実行は **約45秒でタイムアウト** する。長い処理（AI 生成など）を JS 内で待たない。開始だけして、`wait` → 状態確認の短い呼び出しを繰り返す
@@ -84,6 +91,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 ## ツール・環境
 
 - `gh` CLI は winget でインストール済み（`C:\Program Files\GitHub CLI\gh.exe`、pika3-hub でログイン済み）。インストール直後のセッションなど PATH に無いときはフルパスで呼ぶ。プルリクエストは `gh pr create` で作成できる
+- PowerShell で `gh pr view --json body -q .body` の結果は行ごとの配列になる。そのまま文字列として書き戻すと改行が消える（PR #48 の本文で発生）。`-join "`n"` してから書くか、本文の加工は Bash で行う。消えてしまったら GraphQL の `pullRequest.userContentEdits { editedAt diff }` に過去の本文が残っている
 - `node` は未インストール。JS の構文チェックはブラウザでの読み込み（コンソールエラー確認）で代用する
 - テストは `uv run pytest`。`tests/conftest.py` のフィクスチャが tmp_path 上の使い捨て DB を使う
 - `uv run pytest` が Smart App Control に `pytest.exe` をブロックされる（os error 4551）ときは、`uv run python -m pytest` なら実行できる
