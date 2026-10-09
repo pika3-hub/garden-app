@@ -48,3 +48,11 @@ gapi -X POST "$GARDEN_API_URL/varieties" -H 'Content-Type: application/json' \
      -d '{"crop_id":1,"name":"アイコ"}'
 gapi -X PATCH "$GARDEN_API_URL/varieties/3" -H 'Content-Type: application/json' -d '{"notes":"甘い"}'
 ```
+
+## 場所（/locations）
+
+```bash
+gapi "$GARDEN_API_URL/locations"
+gapi -X POST "$GARDEN_API_URL/locations" -F 'data={"name":"ベランダ","location_type":"プランター","sun_exposure":"半日"}' -F image=@veranda.jpg
+gapi -X PATCH "$GARDEN_API_URL/locations/2" -H 'Content-Type: application/json' -d '{"area_size":3.5}'
+```

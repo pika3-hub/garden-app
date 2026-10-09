@@ -14,7 +14,7 @@ audit_logger = logging.getLogger('app.api')
 def init_app(app):
     from app.api import auth, errors
     # 各モジュールは import 時に bp へルートを登録する（Blueprint 登録より前に読み込む）
-    from app.api import meta, crops, varieties  # noqa: F401
+    from app.api import meta, crops, varieties, locations  # noqa: F401
 
     errors.register_error_handlers(app)
     app.before_request(auth.require_token)
