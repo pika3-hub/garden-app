@@ -114,3 +114,16 @@ def test_list_plantings(api, base):
     assert ids('/api/v1/plantings?q=アイコ') == [b['id']]
     assert ids('/api/v1/plantings?status=all&q=南の畑') == [c['id'], b['id'], a['id']]
     assert api.get('/api/v1/plantings?status=done').status_code == 422
+
+
+def test_patch_planted_date_cannot_be_after_children(api, base, sql):
+    """画面と同じく、植え付け日は栽培記録・収穫の日付より後にできない（日数が負になるのを防ぐ）"""
+    planting = _plant(api, location_id=base['location'], crop_id=base['crop'], planted_date='2026-05-01')
+    sql("INSERT INTO harvests (location_crop_id, harvest_date) VALUES (?, '2026-06-01')", (planting['id'],))
+    res = api.patch(f'/api/v1/plantings/{planting["id"]}', json={'planted_date': '2026-09-01'})
+    assert res.status_code == 422
+    detail = res.get_json()['error']['details'][0]
+    assert detail['field'] == 'planted_date'
+    assert '2026-06-01' in detail['reason']
+    res = api.patch(f'/api/v1/plantings/{planting["id"]}', json={'planted_date': '2026-06-01'})
+    assert res.status_code == 200

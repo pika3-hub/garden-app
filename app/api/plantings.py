@@ -60,6 +60,12 @@ class PlantingResource(Resource):
             merged['variety_id'] = None
         if not merged.get('crop_id') and not merged.get('variety_id'):
             errors.append(detail('crop_id', 'crop_id（作物）か variety_id（品種）のどちらか一方を指定してください'))
+        if row is not None and values.get('planted_date'):
+            # 画面（planting_routes.planting_update）と同じく、子レコードより後の植え付け日は不可
+            earliest = Planting.get_earliest_child_date(row['id'])
+            if earliest and values['planted_date'] > str(earliest)[:10]:
+                errors.append(detail('planted_date', f'植え付け日は栽培記録・収穫記録の日付（{str(earliest)[:10]}）'
+                                                     'より前の日付にしてください', values['planted_date']))
         if 'end_date' in values:
             if row is None:
                 errors.append(detail('end_date', '作成時は指定できません。栽培終了は POST /api/v1/plantings/{id}/end で行ってください'))
