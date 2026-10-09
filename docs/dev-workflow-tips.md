@@ -37,6 +37,21 @@ create_app('copy').run(host='127.0.0.1', port=int(os.environ.get('PORT', '5055')
 - 以前のセッションのサーバーが同じポートで動いたままだと、**新しいサーバーも起動に成功したように見えるが、リクエストは古いプロセスが受けて古いコードの画面が返る**（Windows では同じポートに複数のプロセスが LISTEN できる）。起動前に `netstat -ano | grep LISTEN | grep :5055` で空きを確認し、埋まっていれば `PORT` を変える。自分のサーバーのログにアクセスが記録されているかでも見分けられる
 - `load_dotenv()` を引数なしで呼ぶと、**呼び出し元スクリプトのディレクトリ** から `.env` を探す。リポジトリ外のスクリプトでは見つからないので、パスを明示する
 
+## 外部API の手動確認
+
+API（`app/api/`）を実際のデータで確かめるときも、**コピー DB に `DATABASE` を向けて `server.py` を起動**する（`run.py` では API は起動しない）。
+
+```bash
+cp instance/garden.db <scratch>/garden_copy.db
+HOST=127.0.0.1 API_HOST=127.0.0.1 DATABASE=<scratch>/garden_copy.db   API_TOKEN=<40文字程度のテスト用トークン> API_PORT=5061 uv run python server.py
+```
+
+- `.env` に `HOST=0.0.0.0` があっても、環境変数で `HOST=127.0.0.1` を渡せば LAN に公開しない（`load_dotenv` は既存の環境変数を上書きしない）
+- Web 側のポートは 5000 固定なので、既に 5000 でサーバーが動いていると起動できない。先に `netstat -ano | grep LISTEN | grep :5000` で確認する
+- アップロード先は実際の `app/static/uploads/` になる。確認で作った画像は、作成したパスを控えておいて後で消す
+- waitress は stdout をバッファするので、ログファイルが空でも起動していることがある。`curl` で応答を確かめる
+- curl の書き方は `docs/api/curl-examples.md`（`gapi` 関数）
+
 ## ドキュメントとコードの照合
 
 CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか確かめるときは、記述を読むより実物を出力して比べる方が速く確実。
