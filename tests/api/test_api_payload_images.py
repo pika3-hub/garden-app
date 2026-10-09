@@ -79,6 +79,19 @@ def test_check_image_detects_real_format(api_app, fmt, name, ext):
     assert checked.original_name == name
 
 
+def test_check_image_accepts_mpo(api_app):
+    """スマホの写真に多い MPO（複数画像入りの JPEG）は JPEG として受け付ける"""
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new('RGB', (8, 8), 'green').save(buf, 'MPO', save_all=True,
+                                           append_images=[Image.new('RGB', (4, 4))])
+    with Image.open(io.BytesIO(buf.getvalue())) as probe:
+        assert probe.format == 'MPO'
+    with api_app.app_context():
+        checked = img.check_image(_fs(buf.getvalue(), 'test.jpeg'), 'image')
+    assert checked.ext == 'jpg'
+
+
 def test_check_image_rejects_non_image(api_app):
     with api_app.app_context(), pytest.raises(ApiError) as e:
         img.check_image(_fs(b'hello, not an image', 'a.jpg'), 'image')

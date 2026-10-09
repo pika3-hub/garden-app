@@ -202,7 +202,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | multipart `extra_images`（複数） | 追加画像（補足情報の画像として添付） |
 | `"extra_photo_pool_ids": [13, 14]` | 写真プールの写真を追加画像としてコピー |
 
-- 形式: JPEG / PNG / GIF / WebP。拡張子ではなく中身で判定し、保存時の拡張子も中身に合わせる
+- 形式: JPEG / PNG / GIF / WebP。拡張子ではなく中身で判定し、保存時の拡張子も中身に合わせる。スマホの写真に多い MPO（複数画像入りの JPEG）は JPEG として受け付け、そのまま `.jpg` で保存する
 - HEIC/HEIF は 415（Telegram では「写真」として送れば JPEG になる）
 - 1枚 `API_MAX_IMAGE_MB`（既定20MB）まで、5000万画素まで、1リクエスト20枚まで、合計100MBまで
 - 写真プールから使った場合は使用履歴（`photo_pool_usages`）に記録される

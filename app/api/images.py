@@ -15,7 +15,8 @@ from app.models.photo_pool import PhotoPool
 from app.models.supplement import Supplement
 from app.utils.upload import copy_image, delete_image, save_image
 
-ALLOWED_FORMATS = {'JPEG': 'jpg', 'PNG': 'png', 'GIF': 'gif', 'WEBP': 'webp'}
+# MPO はスマホの写真に多い複数画像入りの JPEG（先頭は通常の JPEG なので、そのまま .jpg で保存できる）
+ALLOWED_FORMATS = {'JPEG': 'jpg', 'MPO': 'jpg', 'PNG': 'png', 'GIF': 'gif', 'WEBP': 'webp'}
 MAX_PIXELS = 50_000_000
 MAX_FILES_PER_REQUEST = 20
 IMAGE_KEYS = ('photo_pool_id', 'remove_image', 'extra_photo_pool_ids')
