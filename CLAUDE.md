@@ -18,7 +18,7 @@
 - **品種管理:** 作物に紐づく品種（アイコ、桃太郎など）のCRUD。1作物：多品種の関係。アイコン・イメージカラー・画像は nullable で、未設定時は親作物から継承
 - **場所管理:** 畑やプランターの場所のCRUD、画像サポート付き
 - **キャンバスエディター:** バニラJSベースのビジュアル菜園レイアウトデザイナー（作物アイコンのドラッグ&ドロップ配置、背景画像選択）。植え付け登録時に見取り図配置ページへ自動遷移（スキップ可能）
-- **見取り図プレビュー:** 場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）、場所詳細では日付スライダーで過去の配置状態を再現可能
+- **見取り図プレビュー:** 場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）、場所詳細ではフルスクリーン表示の日付ナビゲーション（前へ/次へ・左右キー）で過去の配置状態を再現可能
 - **栽培記録:** 作物と場所をリンクし、ステータス追跡（栽培中/栽培終了/削除済み）、タブフィルター付き一覧（`/plantings/`）、栽培観察記録の登録・管理。植え付け一覧の「栽培記録をまとめて登録」から複数の植え付けの栽培記録を一括登録も可能（`/plantings/bulk/new`）：複数の植え付けを選択→共通の記録日・既定画像を設定した上で、メモ・画像は植え付けごとに個別入力・上書き（写真プールからの選択も可）できる
 - **収穫記録:** 複数回の収穫を記録、収穫量・単位・メモ・画像対応、植え付けからの日数自動計算。収穫一覧・植え付け詳細の両方から「収穫を記録」可能で、新規フォームはモーダルから対象の植え付けを選択できる（種類・場所バッジフィルタ付き）。収穫一覧の「まとめて登録」から一括登録も可能（`/harvests/bulk/new`）：複数の植え付けを選択→共通の収穫日・既定画像を設定した上で、収穫量・単位・メモ・画像は植え付けごとに個別入力・上書き（写真プールからの選択も可）できる
 - **日記システム:** 複数エンティティ（作物、品種、場所、植え付け、収穫）との関連付けと画像添付を持つ栽培日記。関連付けはカード型モーダルで複数選択（`entity-select-modal.js`）
@@ -27,7 +27,7 @@
 - **メモの Markdown 表示:** 詳細画面のメモ・本文・補足テキスト・サイドバーの作物/品種/場所カードは、入力された Markdown をサーバー側で HTML に変換して表示（`markdown-it-py`、Jinja フィルター `markdown`、生 HTML はエスケープ、単独改行も維持）。一覧などの切り詰めプレビューはプレーンテキストのまま。詳細は `docs/frontend/markdown-notes.md`
 - **検索とフィルター:** 作物・品種・場所・植え付け・収穫・料理の一覧はクライアントサイドの種類バッジフィルター（`badge-filter.js`）、日記・タスクはクライアントサイドの年・季節・月バッジフィルター（`date-badge-filter.js`）。日記・タスク・料理はサーバーサイドのキーワード検索も持つ
 - **ダッシュボード:** 統計情報と最近のアクティビティ概要、画像カルーセル（全データ種別の最近の画像をランダム再生、Bootstrap 5 Carousel使用）
-- **カレンダービュー:** 月別カレンダーで作物・場所・日記・植え付け・収穫・タスクをアイコン表示、詳細ページへのリンク
+- **カレンダービュー:** 月別カレンダーで作物・品種・場所・日記・植え付け・栽培記録・収穫・タスク・料理をアイコン表示、詳細ページへのリンク
 - **タスク管理:** 栽培作業タスクのCRUD、ステータス管理（未着手/進行中/完了）、期限日設定、作物・品種・場所・植え付けとの関連付け。関連付けはカード型モーダルで複数選択（`entity-select-modal.js`）
 - **詳細画面ナビゲーション:** 全詳細画面（作物・品種・場所・植え付け・栽培記録・収穫・日記・タスク・料理）で前後データへの移動ボタンを表示。共通部品 `_detail_nav.html` を使用し、各モデルの `get_adjacent()` メソッドで一覧の表示順に基づく前後を取得
 - **補足情報:** 作物・品種・場所・日記・タスク・収穫・料理の詳細画面に補足テキスト、追加画像、外部URL（OGP情報の自動取得付き）、YouTube動画埋め込みを複数添付可能。共通テンプレート `_supplements_section.html` + `supplements` テーブルで管理
@@ -81,6 +81,8 @@ garden-app/
 │       ├── js/               # バニラJS部品（見取り図・フィルター・モーダル等）→ app/static/js/CLAUDE.md
 │       ├── images/           # UIアイコン・静的画像（location_bg_images/, crop_icons/ 等）
 │       └── uploads/          # ユーザーアップロード画像。機能ごとのフォルダ＋各 thumbs/ サブフォルダ
+├── docs/                     # 開発ドキュメント（frontend/ のトピック別ガイド、開発ノウハウ、既知の課題等）
+├── tests/                    # pytest テスト（conftest.py のフィクスチャで使い捨て DB）
 ├── instance/                 # Flask インスタンスフォルダ（garden.db）
 ├── run.py                    # 開発サーバー起動スクリプト（Web のみ、debug）
 ├── server.py                 # waitress 起動スクリプト（Web :5000 ＋ API :API_PORT）
@@ -173,7 +175,7 @@ FROM crops c;
 
 ### JOIN パターン（`_CV_JOIN` 定数）
 
-植え付け（`plantings` エイリアス `lc`）や収穫（`h`）を VIEW と結合するときは以下の定数を使う。`_CV_JOIN` は `app/models/planting.py`, `harvest.py`, `calendar.py`, `planting_record.py` の4ファイルにそれぞれ同一内容がコピーされて定義されている（共有インポートではない）。修正時は4箇所すべての同期が必要（外部API `app/api/` は `app.models.planting._CV_JOIN` を import して使う。5箇所目のコピーは作らない）：
+植え付け（`plantings` エイリアス `lc`）や収穫（`h`）を VIEW と結合するときは以下の定数を使う。`_CV_JOIN` は `app/models/planting.py`, `harvest.py`, `calendar.py`, `planting_record.py` の4ファイルにそれぞれ同一内容がコピーされて定義されている（共有インポートではない）。修正時は4箇所すべての同期が必要（定数を使わず同じ JOIN 条件を直接書いている箇所も `app/models/diary.py`, `task.py`, `cooking.py`, `app/__init__.py` にあるため、あわせて確認する。外部API `app/api/` は `app.models.planting._CV_JOIN` を import して使う。5箇所目のコピーは作らない）：
 
 ```python
 _CV_JOIN = (
@@ -198,14 +200,14 @@ f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
 'SELECT ... FROM plantings lc WHERE lc.crop_id = ?'
 ```
 
-既に `Planting.get_by_crop()` / `Harvest.get_by_crop()` / `Harvest.search()` は `effective_crop_id` 経由に移行済み。`DiaryEntry.get_by_crop()` は未移行で、`crop_variety_view` を使わず `diary_relations` を `crop_id`/`variety_id`/`location_crop_id` の手動 OR 条件で直接クエリしている（品種経由の取得は別ロジックで担保）。
+既に `Planting.get_by_crop()` / `Harvest.get_by_crop()` / `Harvest.search()` は `effective_crop_id` 経由に移行済み。`DiaryEntry.get_by_crop()` は未移行で、`crop_variety_view` を使わず `diary_relations` を `crop_id`/`variety_id`/`location_crop_id` の手動 OR 条件で直接クエリしている（品種経由は同じクエリ内の `varieties` / `plantings` サブクエリで取得）。
 
 ### 継承ロジックの実装箇所
 
 | 箇所 | 実装 |
 |------|------|
 | VIEW経由（植え付け・収穫・カレンダー等） | `crop_variety_view` の `COALESCE` で自動継承 |
-| 品種画面（一覧・詳細） | `app/models/variety.py` の `Variety.apply_inheritance(variety)` が `effective_icon_path` / `effective_image_color` / `effective_image_path` を付与（`variety_routes.py` から呼び出し） |
+| 品種画面（一覧・詳細） | `app/models/variety.py` の `Variety.apply_inheritance(variety)` が `effective_icon_path` / `effective_image_color` / `effective_image_path` を付与（`variety_routes.py` のほか、植え付け・収穫・日記・タスク・料理の各ルートからも呼び出し） |
 | テンプレート側 | `effective_*` または VIEW 由来のカラムをそのまま表示 |
 
 ### 補足情報（supplements）の紐付け

@@ -45,17 +45,19 @@
 | ページ | 画像ソース | 画像なし時 |
 |--------|-----------|-----------|
 | 作物 | `crop.image_path` | テキストのみ表示 |
+| 品種 | `variety.effective_image_path`（親作物から継承） | テキストのみ表示 |
 | 場所 | `location.image_path` | テキストのみ表示 |
 | 植え付け | `records`の最新画像付きレコード（`namespace`使用） | テキストのみ表示 |
 | 栽培記録 | `record.image_path` | テキストのみ表示 |
 | 収穫 | `harvest.image_path` | テキストのみ表示 |
 | 日記(画像あり) | `entry.image_path` | - |
-| 日記(天気あり) | なし（`card-weather-bg` + `::before` で天気背景） | - |
-| 日記(その他) | なし | テキストのみ表示 |
+| 日記(天気あり) | なし（天気ごとの背景画像 `bg_*.webp` を `.card-photo-img-fallback` で表示） | - |
+| 日記(その他) | なし | フォールバック画像 `card_diary.webp` を表示 |
+| 料理 | `item.image_path` | フォールバック画像 `card_cooking.webp` を表示 |
 | タスク | なし（常にテキストのみ） | テキストのみ表示 |
 
 - 画像ありの場合のみ `lightbox-target` クラスを付与（既存 `lightbox.js` が動作）
-- 画像なし時（`card-no-image`）はテキストパネルのみ表示（フォールバック画像なし）
+- 画像なし時（`card-no-image`）はテキストパネルのみ表示（フォールバック画像なし）。日記・料理は `card-no-image` を使わず、上表のフォールバック画像を表示する
 - 植え付け詳細の画像取得は Jinja2 の `namespace` パターン（`{% set ns = namespace(hero_image=None) %}`）でループ内から変数を書き出す
 
 ## 詳細画面の操作ボタン配置
@@ -81,7 +83,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 |------|--------|
 | 作物詳細 | 編集、削除 |
 | 場所詳細 | 編集、削除 |
-| 植え付け詳細(active) | 編集、収穫を記録、栽培を終了（モーダル）、削除 |
+| 植え付け詳細(active) | 編集、削除（「栽培記録を追加」「収穫を記録」「栽培を終了（モーダル）」はヒーローカードのテキストパネル内に配置） |
 | 植え付け詳細(harvested) | 編集、削除 |
 | 収穫詳細 | 編集、削除 |
 | 日記詳細 | 編集、削除 |
@@ -89,9 +91,9 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 ### 新規登録ボタンの配置ルール
 
-新規登録系のボタンは関連する一覧の直上に配置する:
-- 場所詳細の「作物を植え付ける」→ 栽培中の作物カード内、テーブルの上
-- 植え付け詳細の「栽培記録を追加」→ 栽培記録一覧の見出し横
+新規登録系のボタンはヒーローカード（基本情報カード）のテキストパネル内、メモと登録日時の間に配置する:
+- 場所詳細の「作物を植え付ける」→ 場所情報カード内
+- 植え付け詳細の「栽培記録を追加」「収穫を記録」「栽培を終了」→ 植え付け情報カード内（active のときのみ）
 
 ### 栽培終了モーダル
 
@@ -99,7 +101,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 ## 詳細画面サイドバーカード（関連情報）
 
-全詳細画面の右カラム（サイドバー）に共通テンプレート部品で関連情報カードを表示する。各カードは `{% set %}` で変数を構築してから `{% include %}` するパターン。データが空の場合はカード自体が非表示になる。関連データは最大10件（`limit=10`）で取得する。
+全詳細画面の右カラム（サイドバー）に共通テンプレート部品で関連情報カードを表示する。各カードは `{% set %}` で変数を構築してから `{% include %}` するパターン。データが空の場合はカード自体が非表示になる。収穫・日記・料理などの関連データは最大10件（`limit=10`）、栽培終了した植え付けは最大5件（`limit=5`）で取得する（栽培中の植え付け・未完了タスクは件数制限なし）。
 
 ### カードヘッダーアイコン
 
@@ -110,7 +112,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 | 作物情報 | `icon_crop.webp` | `bg-success` |
 | 品種情報 | `icon_variety.webp` | `bg-success` |
 | 場所情報 | `icon_location.webp` | `bg-info` |
-| タスク | `icon_tasklist.webp` | `bg-primary` |
+| 未完了タスク | `icon_tasklist.webp` | `bg-warning` |
 | 関連する植え付け | `icon_location_crop.webp` | `bg-warning` |
 | 関連する収穫 | `icon_harvest.webp` | `bg-success` |
 | 関連する日記 | `icon_diary.webp` | `bg-primary` |
@@ -158,7 +160,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 **表示内容**: 作物名＋品種名（`crop_label` マクロ、`variety` が渡された場合のみ品種を表記）、品種詳細リンク（`variety_id` がある場合のみ）、登録画像（右上フロート）、種類（badge）、メモ（Markdown 統合テキスト）、作物詳細リンク。各フィールドは値がある場合のみ表示。
 
-**データソース**: `Planting.get_by_id()` / `Harvest.get_by_id()` / `PlantingRecord.get_by_id()` 由来の `cv.*` は **品種オーバーライド込みの継承後値** のため作物の素の値を見せたいケースには使わない。各ルート（`planting_routes.detail/record_detail`、`harvest_routes.detail`、`variety_routes.detail`）で **`Crop.get_by_id(effective_crop_id)` を別途呼び出して `parent_crop` をテンプレートに渡す**。`variety_routes.detail()` も同様に `Variety.get_by_id()` で JOIN 取得した `crop_*` フィールドから親作物情報を組み立てる（VIEW を経由しない）。
+**データソース**: `Planting.get_by_id()` / `Harvest.get_by_id()` / `PlantingRecord.get_by_id()` 由来の `cv.*` は **品種オーバーライド込みの継承後値** のため作物の素の値を見せたいケースには使わない。各ルート（`planting_routes.detail/record_detail`、`harvest_routes.detail`）で **`Crop.get_by_id(effective_crop_id)` を別途呼び出して `parent_crop` をテンプレートに渡す**。`variety_routes.detail()` も同様に `Variety.get_by_id()` で JOIN 取得した `crop_*` フィールドから親作物情報を組み立てる（VIEW を経由しない）。
 
 ### 品種情報カード (`_variety_info_card.html`)
 
@@ -185,13 +187,13 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 **表示内容**: 品種名（作物名）の `crop_label`（品種詳細へリンク）、品種画像（オーバーライドがあれば品種独自、なければ親作物継承、右上フロート）、品種メモ（オーバーライド時のみ）、継承ヒント（オーバーライドが一つも無い場合のみ）。種類バッジは作物情報カードと重複するため省略。
 
-**データソース**: 各ルート（`planting_routes.detail/record_detail`、`harvest_routes.detail`）で `location_crop['variety_id']` または `record['variety_id']` が NULL でないとき `Variety.get_by_id(variety_id)` で取得し、`Variety.apply_inheritance(variety)` で `effective_icon_path` / `effective_image_color` / `effective_image_path` を付与してテンプレートに渡す。
+**データソース**: 各ルート（`planting_routes.detail/record_detail`、`harvest_routes.detail`）で `location_crop['variety_id']` / `record['variety_id']` / `harvest['variety_id']` が NULL でないとき `Variety.get_by_id(variety_id)` で取得し、`Variety.apply_inheritance(variety)` で `effective_icon_path` / `effective_image_color` / `effective_image_path` を付与してテンプレートに渡す。
 
 **`Variety.apply_inheritance(variety)` (`app/models/variety.py`)**: 品種に `effective_*` フィールドを付加する静的メソッド。元の `icon_path` / `image_color` / `image_path` は保持されるため、テンプレート側で「品種独自のオーバーライドがあるか」を判定できる（`has_overrides`）。同モデルの `get_effective_display()` は元フィールドを上書きする破壊的バージョンなので用途が異なる。
 
 ### 場所情報カード (`_location_info_card.html`)
 
-植え付け詳細・収穫詳細の右カラムに配置。場所の登録画像がある場合、カード本体内の右上に縮小表示（`.sidebar-card-float-img` クラス、常に正方形を維持）。
+植え付け詳細・収穫詳細・栽培記録詳細の右カラムに配置。場所の登録画像がある場合、カード本体内の右上に縮小表示（`.sidebar-card-float-img` クラス、常に正方形を維持）。
 
 **テンプレート変数**: `location_info` dict
 
@@ -210,7 +212,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 **表示内容**: 登録画像（右上フロート）、種類（badge）、面積、日当たり、メモ、場所詳細リンク。
 
-**クエリ要件**: `Planting.get_by_id()` と `Harvest.get_by_id()` で `l.location_type, l.area_size, l.sun_exposure, l.notes as location_notes, l.image_path as location_image_path` をSELECTしている。
+**クエリ要件**: `Planting.get_by_id()` / `Harvest.get_by_id()` / `PlantingRecord.get_by_id()` で `l.location_type, l.area_size, l.sun_exposure, l.notes as location_notes, l.image_path as location_image_path` をSELECTしている。
 
 ### 関連カード一覧
 
@@ -258,9 +260,9 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 | 作物詳細 | `Crop.get_adjacent(crop_id)` | `created_at DESC` | 作物名 |
 | 品種詳細 | `Variety.get_adjacent(variety_id)` | 作物名順 → `created_at DESC`（Python側でインデックス検索） | 品種名（作物名） |
 | 場所詳細 | `Location.get_adjacent(location_id)` | `created_at DESC` | 場所名 |
-| 植え付け詳細 | `Planting.get_adjacent(id, status)` | `planted_date DESC`、同じステータス内 | 作物名（品種）- 場所名 |
+| 植え付け詳細 | `Planting.get_adjacent(id, status)` | `planted_date DESC`、同じステータス内 | `crop_label`（品種名（作物名））- 場所名 |
 | 栽培記録詳細 | `PlantingRecord.get_adjacent(record_id)` | `recorded_at DESC`、同一植え付け内 | 記録日 |
 | 収穫詳細 | `Harvest.get_adjacent(harvest_id)` | `harvest_date DESC` | 収穫日 作物名 |
 | 日記詳細 | `DiaryEntry.get_adjacent(diary_id)` | `entry_date DESC` | 日付 タイトル |
 | タスク詳細 | `Task.get_adjacent(task_id)` | ステータス順→期限日（Python側でインデックス検索） | タイトル |
-| 料理詳細 | `Cooking.get_adjacent(cooking_id)` | `cooked_date DESC` | 料理名 |
+| 料理詳細 | `Cooking.get_adjacent(cooking_id)` | `cooked_date DESC` | 調理日 料理名 |

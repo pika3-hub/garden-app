@@ -41,7 +41,7 @@
 | 画面 | テンプレート | キャプション内容 |
 |------|------------|----------------|
 | 栽培記録一覧（植え付け詳細内） | `plantings/detail.html` | メモ（80文字で切り詰め） |
-| 収穫記録一覧 | `harvests/list.html` | 作物名（品種名）+ 収穫量 |
+| 収穫記録一覧 | `harvests/list.html` | 品種名（作物名）（`crop_display_name`）+ 収穫量 |
 
 ### テンプレートでの使い方
 
@@ -62,7 +62,7 @@
 <img src="..." class="slideshow-target"
      data-slideshow-date="2025-07-01"
      data-slideshow-days="45"
-     data-slideshow-caption="トマト（ミニトマト）">
+     data-slideshow-caption="ミニトマト（トマト）">
 ```
 
 ### data属性

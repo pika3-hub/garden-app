@@ -1,6 +1,6 @@
 # フロントエンドJS開発ガイド
 
-バニラJS（フレームワークなし）で実装された UI 部品。大きい順に `canvas-editor.js` / `canvas-preview.js` / `canvas-fullscreen.js`（見取り図系）、`entity-select-modal.js`（複数選択モーダル）、`badge-filter.js` / `date-badge-filter.js`（一覧フィルター）、`slideshow.js` / `lightbox.js`、`calendar.js`（カレンダービュー）、`photo-pool-picker.js`（写真プール選択モーダル、詳細は `docs/frontend/images-and-photo-pool.md`）、`ai-notes.js`（作物・品種メモの AI 下書きモーダル、詳細は `docs/frontend/ai-notes.md`）、`main.js`（共通初期化）など。
+バニラJS（フレームワークなし）で実装された UI 部品。主なものは `canvas-editor.js` / `canvas-preview.js` / `canvas-fullscreen.js`（見取り図系）、`entity-select-modal.js`（複数選択モーダル）、`badge-filter.js` / `date-badge-filter.js`（一覧フィルター）、`slideshow.js` / `lightbox.js`、`calendar.js`（カレンダービュー）、`photo-pool-picker.js`（写真プール選択モーダル、詳細は `docs/frontend/images-and-photo-pool.md`）、`ai-notes.js`（作物・品種メモの AI 下書きモーダル、詳細は `docs/frontend/ai-notes.md`）、`main.js`（共通初期化）など。
 
 `canvas-history.js` はどのテンプレート・CSSからも参照されていない未使用ファイル（レガシー）。日付ナビゲーション機能は現在 `canvas-fullscreen.js` に統合されている。削除候補として認識しておくこと。
 
@@ -13,15 +13,15 @@
 | エディター画面 | `locations/canvas.html` + `canvas-editor.js` | 作物配置の編集（800×800px） |
 | 植え付け配置ページ | `plantings/place.html` + `canvas-placement.js` | 植え付け登録後の見取り図配置（エディターを再利用） |
 | プレビューコンポーネント | `locations/_canvas_preview.html` + `canvas-preview.js` | 読み取り専用の表示（400×400px） |
-| フルスクリーン表示 | `canvas-fullscreen.js` + `canvas-fullscreen.css` | プレビュークリックで拡大表示（日付ナビ付き） |
+| フルスクリーン表示 | `canvas-fullscreen.js` + `canvas-fullscreen.css` | 「拡大」ボタン（`#fullscreen-btn`）で拡大表示（日付ナビ付き） |
 | CSSスタイル | `static/css/canvas.css` | エディター・プレビュー共通スタイル |
 
 ### 背景画像
 
 - **保存場所**: `app/static/images/location_bg_images/`（静的ファイル、アップロード不可）
-- **追加方法**: 画像ファイルを直接このフォルダに配置する（`bg_image_001.png` などの連番命名）
+- **追加方法**: 画像ファイルを直接このフォルダに配置する（`bg_image_001.webp` などの連番命名）
 - **対応形式**: `.png`, `.jpg`, `.jpeg`, `.webp`
-- **選択UI**: `Location.get_bg_images()` でファイル一覧を取得し、エディター画面でセレクト
+- **選択UI**: `Location.get_bg_images()` でファイル一覧を取得し、場所の登録・編集フォーム（`locations/form.html`）で選択
 - **デフォルト**: `bg_image_default.png`
 
 ### 作物アイコン
@@ -50,7 +50,7 @@
 ```
 
 - `canvas_data` カラム（`locations` テーブル、TEXT型）に JSON 文字列として保存
-- 旧形式（Fabric.js の version 1.x）は無視してプレビューを非表示にする
+- 旧形式（Fabric.js の version 1.x）は無視する（プレビューは「何も植え付けられていません」の空表示になる）
 
 ### APIエンドポイント
 
@@ -68,9 +68,11 @@
 {% include 'locations/_canvas_preview.html' %}
 ```
 
-テンプレートに渡す変数:
-- `location` — 場所オブジェクト（`location['id']`, `location['bg_image']` を使用）
+テンプレートに渡す変数（`{% with %}` で渡す。現在の利用箇所は植え付け詳細のみで、場所詳細は同等のマークアップを直接記述している）:
+- `preview_location_id` — 場所ID
+- `preview_bg_image` — 背景画像ファイル名
 - `preview_highlight_id`（任意）— ハイライトする `location_crop_id`
+- `preview_canvas_json`（任意）— 配置データ JSON（栽培終了した植え付けのスナップショット表示用）
 
 `CanvasPreview` クラスのAPI:
 - `updateData(data)` — 表示内容をクリアして新しいデータで再描画（フルスクリーン表示等で使用）
@@ -120,7 +122,7 @@
   └─ スキップ → 植え付け詳細へ（配置なしでもOK）
 ```
 
-- **場所詳細からの植え付け:** 栽培中の作物カード内の「作物を植え付ける」→ `/plantings/plant/new?location_id=<id>`（場所プリセレクト済み）
+- **場所詳細からの植え付け:** 場所情報カード内の「作物を植え付ける」→ `/plantings/plant/new?location_id=<id>`（場所プリセレクト済み）
 - **品種詳細からの植え付け:** 「この品種を植え付ける」ボタン → `/plantings/plant/new?crop_id=<id>&variety_id=<id>`（作物・品種プリセレクト済み）
 - **作物・品種の選択:** 作物と品種を1つの選択モーダル（`#cropVarietySelectModal`）で選ぶ。作物カードを選ぶと `crop_id` のみ、品種カードを選ぶと `variety_id` のみを hidden input にセットする（排他）。サーバー側は `Planting._normalize_crop_variety()` で正規化する
 - **`canvas-placement.js`:** `canvas-editor.js` の上に載せる薄いラッパー。保存後に植え付け詳細へリダイレクトする動作を追加

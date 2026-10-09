@@ -34,7 +34,7 @@ new MultiSelectModal({
 
 | モード | 用途 | 仕組み |
 |--------|------|--------|
-| `legacy` | 作物・場所モーダル | `data-scope` + `data-filter-type` による単一グループフィルター |
+| `legacy` | 作物・品種・場所モーダル | `data-scope` + `data-filter-type` による単一グループフィルター |
 | `multi` | 植え付け・収穫モーダル | `data-ms-filter-card` + `data-ms-filter-group-*` によるマルチグループフィルター（AND/OR） |
 
 モーダル内のフィルターは `badge-filter.js` とは独立してスコープされる（同一ページに複数モーダルがあっても干渉しない）。
@@ -44,10 +44,10 @@ new MultiSelectModal({
 | テンプレート | Modal ID | 対象画面 | テンプレート変数 |
 |------------|----------|---------|----------------|
 | `_crop_select_multi_modal.html` | `cropMultiSelectModal` | 日記・タスク・料理（品種フォームの親作物選択でも使うが、単一選択の独自JSで `MultiSelectModal` は使わない） | `crops`, `crop_filter_types`, `crop_filter_type_icons`, `selected_crop_ids` |
-| `_variety_select_multi_modal.html` | `varietyMultiSelectModal` | 日記・タスク・料理 | `varieties`（`apply_inheritance` 適用済み）, `variety_filter_types`, `variety_filter_type_icons`, `selected_variety_ids` |
-| `_location_select_multi_modal.html` | `locationMultiSelectModal` | 日記・タスク | `locations`, `location_filter_types`, `selected_location_ids` |
-| `_planting_select_multi_modal.html` | `plantingMultiSelectModal` | 日記・タスク・料理・収穫/栽培記録の一括登録 | `active_plantings`, `planting_filter_types`, `planting_filter_type_icons`, `planting_filter_locations`, `selected_location_crop_ids` |
-| `_harvest_select_multi_modal.html` | `harvestMultiSelectModal` | 日記・料理 | `harvests`, `harvest_filter_types`, `harvest_filter_type_icons`, `harvest_filter_locations`, `selected_harvest_ids` |
+| `_variety_select_multi_modal.html` | `varietyMultiSelectModal` | 日記・タスク・料理 | `varieties`（`apply_inheritance` 適用済み）, `grouped_varieties`, `variety_filter_types`, `variety_filter_type_icons`, `selected_variety_ids` |
+| `_location_select_multi_modal.html` | `locationMultiSelectModal` | 日記・タスク | `locations`, `grouped_locations`（任意）, `location_filter_types`, `selected_location_ids` |
+| `_planting_select_multi_modal.html` | `plantingMultiSelectModal` | 日記・タスク・料理・収穫/栽培記録の一括登録 | `active_plantings`, `grouped_plantings`, `planting_filter_types`, `planting_filter_type_icons`, `planting_filter_locations`, `selected_location_crop_ids` |
+| `_harvest_select_multi_modal.html` | `harvestMultiSelectModal` | 日記・料理 | `harvests`, `grouped_harvests`, `harvest_filter_types`, `harvest_filter_type_icons`, `harvest_filter_locations`, `selected_harvest_ids` |
 
 `cooking/form.html` は作物・品種・植え付け・収穫の4モーダルすべてを使用する（料理と各エンティティの多対多関連付けのため）。
 

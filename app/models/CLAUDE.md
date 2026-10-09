@@ -40,7 +40,7 @@
 | notes | TEXT | メモ（Markdown形式） |
 | icon_path | TEXT | 作物アイコンパス（`crop_icons/` 内） |
 | image_color | TEXT | イメージカラー（HEX、デフォルト `#4CAF50`） |
-| image_path | TEXT | 画像パス |
+| image_path | VARCHAR(255) | 画像パス |
 | created_at | TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 更新日時 |
 
