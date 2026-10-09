@@ -31,3 +31,20 @@ gapi -X PATCH "$GARDEN_API_URL/crops/1" -H 'Content-Type: application/json' \
 gapi -X POST "$GARDEN_API_URL/crops/1/images" -F extra_images=@a.jpg -F extra_images=@b.jpg  # 追加画像
 gapi -X POST "$GARDEN_API_URL/crops" -H 'Content-Type: application/json' -d '{"nmae":"x"}'   # → 422 の例
 ```
+
+## 選択肢・名前検索
+
+```bash
+gapi "$GARDEN_API_URL/meta"                                   # 選択肢の一覧（最初に読む）
+gapi -G "$GARDEN_API_URL/lookup" --data-urlencode 'q=ミニトマト'  # 名前 → ID
+gapi -G "$GARDEN_API_URL/lookup" --data-urlencode 'q=南' -d types=location
+```
+
+## 品種（/varieties）
+
+```bash
+gapi "$GARDEN_API_URL/varieties?crop_id=1"
+gapi -X POST "$GARDEN_API_URL/varieties" -H 'Content-Type: application/json' \
+     -d '{"crop_id":1,"name":"アイコ"}'
+gapi -X PATCH "$GARDEN_API_URL/varieties/3" -H 'Content-Type: application/json' -d '{"notes":"甘い"}'
+```
