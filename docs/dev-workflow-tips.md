@@ -78,6 +78,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 
 - Git Bash の `curl` で日本語のクエリ（`?q=トマト`）や JSON を送ると、引数の文字コードの都合で正しく届かないことがある（`/lookup?q=トマト` が空になった）。日本語を含む API の確認は、Python（`urllib`）のスクリプトで行う
 - `curl ... | uv run python -c "...json.load(sys.stdin)..."` のようにパイプすると、Python 側が cp932 で読んで文字化けする。スクリプト側で `sys.stdout.reconfigure(encoding='utf-8')` し、HTTP の応答は `urllib` で直接読む
+- `server.py` は `FLASK_ENV` 未設定だと本番設定（`ProductionConfig`、`SECRET_KEY` は `.env` から）で起動する。`run.py`（開発設定）では起きない不具合が出ることがある。以前は `SECRET_KEY` 未設定で、保存後の `flash()` が 500 になっていた（保存自体は済んでいる）。今は `create_app` が起動ごとのランダム値で補う。`server.py` を使う変更は、本番設定でも確認する
 - `server.py` のログは、waitress が `serve()` のときにルートロガーへ `basicConfig()` するため、何もしないと Flask の既定ハンドラーと合わせて2重に出る。`server.py` ではアプリ生成より前に `logging.basicConfig()` している（これを消さない）
 
 ## ツール・環境

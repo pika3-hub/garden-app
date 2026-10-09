@@ -1,6 +1,7 @@
 import logging
 import os
 import random
+import secrets
 from flask import Flask, render_template, url_for
 from app.config import config
 from app.database import init_db, get_db
@@ -34,6 +35,13 @@ def create_app(config_name='default'):
 
     # 設定読み込み
     app.config.from_object(config[config_name])
+
+    # 本番設定は SECRET_KEY を .env から読む。未設定だと flash() が 500 になるため、
+    # 起動ごとのランダム値で補う（セッションは flash 用のみ。再起動で未表示の通知が消えるだけ）
+    if not app.config.get('SECRET_KEY'):
+        app.config['SECRET_KEY'] = secrets.token_hex(32)
+        logging.getLogger(__name__).warning(
+            'SECRET_KEY が未設定のため、起動ごとのランダム値を使います')
 
     # データベース初期化
     init_db(app)
