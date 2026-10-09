@@ -10,6 +10,10 @@ load_dotenv()
 from app import create_app, create_api_app  # noqa: E402
 from app.port_dispatch import PortDispatcher  # noqa: E402
 
+# アプリ生成より先にルートロガーを設定する。後で waitress が basicConfig() すると、
+# Flask の既定ハンドラーと合わせて監査ログ（app.api）が2重に出るため
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+
 config_name = os.environ.get('FLASK_ENV', 'production')
 app = create_app(config_name)
 
