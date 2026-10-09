@@ -56,3 +56,14 @@ gapi "$GARDEN_API_URL/locations"
 gapi -X POST "$GARDEN_API_URL/locations" -F 'data={"name":"ベランダ","location_type":"プランター","sun_exposure":"半日"}' -F image=@veranda.jpg
 gapi -X PATCH "$GARDEN_API_URL/locations/2" -H 'Content-Type: application/json' -d '{"area_size":3.5}'
 ```
+
+## 植え付け（/plantings）
+
+```bash
+gapi -G "$GARDEN_API_URL/plantings" --data-urlencode 'q=アイコ'          # 栽培中（既定 status=active）
+gapi "$GARDEN_API_URL/plantings?status=all&location_id=1"
+gapi -X POST "$GARDEN_API_URL/plantings" -H 'Content-Type: application/json' \
+     -d '{"location_id":1,"variety_id":3,"planted_date":"2026-05-01","quantity":2}'
+gapi -X PATCH "$GARDEN_API_URL/plantings/5" -H 'Content-Type: application/json' -d '{"quantity":3}'
+gapi -X POST "$GARDEN_API_URL/plantings/5/end" -H 'Content-Type: application/json' -d '{"end_date":"2026-10-09"}'
+```

@@ -104,21 +104,7 @@ def end_cultivation(location_crop_id):
 
     try:
         end_date = request.form.get('end_date') or None
-        location_id = location_crop['location_id']
-
-        # スナップショット取得（作物が配置されている場合のみ）
-        canvas_data = Location.get_canvas_data(location_id)
-        snapshot = None
-        if canvas_data and 'placements' in canvas_data:
-            is_placed = any(
-                p.get('locationCropId') == location_crop_id
-                for p in canvas_data['placements']
-            )
-            if is_placed:
-                snapshot = canvas_data
-
-        Planting.harvest(location_crop_id, end_date=end_date, canvas_snapshot=snapshot)
-        Location.remove_from_canvas(location_id, location_crop_id)
+        Planting.end_cultivation(location_crop_id, location_crop['location_id'], end_date)
         flash('栽培を終了しました', 'success')
     except Exception as e:
         flash(f'エラーが発生しました: {str(e)}', 'danger')
