@@ -24,19 +24,21 @@ description: 家庭菜園アプリに作物・品種・場所・植え付け・�
 | ユーザーの依頼 | 呼ぶ API |
 |---|---|
 | 「アイコに花が咲いた（写真）」 | 植え付けを探す → `POST /planting_records`（`planting_id`, `recorded_at`, `notes`, `image`） |
-| 「ミニトマト300g収穫」 | 植え付けを探す → `POST /harvests`（`planting_id`, `harvest_date`, `quantity: 300`, `unit: "g"`） |
+| 「ミニトマト300g収穫」 | 植え付けを探す → `POST /harvests`（`planting_id`, `harvest_date`, `quantity: 300`, `unit: "g"`、写真があれば `image`） |
 | 「トマトサラダを作った」 | `POST /cooking_records`（`title`, `cooked_date`、当日の収穫があれば `relations.harvest_ids`） |
 | 「明日追肥する」 | `POST /tasks`（`title`, `due_date` は今日の日付から計算、植え付けが分かれば `relations.planting_ids`） |
 | 「今日の畑日記」 | `POST /diary_entries`（`title`, `entry_date`, `content`, `weather`） |
 | 「アイコの栽培を終わりにした」 | 植え付けを探す → `POST /plantings/{id}/end` |
 | 「ベランダにバジルを植えた」 | `/lookup` で作物・場所を探す → `POST /plantings`（`location_id` と、`crop_id` か `variety_id` の**どちらか一方**） |
 | タスクが終わった | `PATCH /tasks/{id}` に `{"status": "completed"}` |
+| 登録済みのデータに写真を付けたい | `PATCH /{種類}/{id}` に `-F image=@...`（`data` は省略可）。既存の画像は置き換わるので、ある場合はユーザーに確認し、残すなら `extra_images` で追加する |
 | 写真が複数枚 | 1枚目を `image`、残りを `extra_images`。栽培記録は1件1枚なので、枚数分の記録を作るかユーザーに確認 |
 | 写真だけ先に送られた | `POST /photos` でプールに上げ、後で `photo_pool_id` / `extra_photo_pool_ids` で使う |
 
 ## 送り方
 - JSON: `-H 'Content-Type: application/json' -d '{...}'`
 - 写真付き: `-F 'data={...JSON...}' -F image=@/path/to/photo.jpg -F extra_images=@/path/2.jpg`
+- 写真を付けられる種類: `image`（本体画像1枚）は作物・品種・場所・栽培記録・収穫・料理・日記。`extra_images`（追加画像）は栽培記録・植え付け以外のすべて（タスクは `extra_images` だけ）。**ユーザーが写真を送ってきたら、依頼された登録に必ず添付する**（付けられるか分からないときは推測で諦めず、そのまま送って 422 の内容を見る）
 - 日付は `YYYY-MM-DD`。数値に単位を付けない（`"quantity": 300, "unit": "g"`）
 - PATCH は変えたい項目だけ送る。`relations` は送ったキーだけ置き換わる（`[]` で全解除、送らないキーはそのまま）
 - 品種として植えた植え付けを探すときは、作物 ID で絞り込むと品種経由のものも含まれる（`GET /plantings?crop_id=1`）
