@@ -9,6 +9,7 @@ AI エージェント（Hermes Agent など）から、菜園データを参照�
 - Windows ファイアウォール: [`firewall-windows.md`](firewall-windows.md)
 - Ubuntu への移設: [`migration-to-ubuntu.md`](migration-to-ubuntu.md)
 - エージェント用スキル: [`hermes-skill/SKILL.md`](hermes-skill/SKILL.md)
+- Telegram との接続: [`hermes-telegram.md`](hermes-telegram.md)
 - 設計書: `docs/superpowers/specs/2026-10-09-external-api-design.md`
 
 ## 1. 設定と起動

@@ -1,0 +1,24 @@
+# Hermes と Telegram の接続
+
+スマホ（iPhone の Telegram）から Hermes に依頼し、写真付きで菜園データを登録するための設定。2026-10-10 に .24 で接続した。
+
+## 構成
+
+- ボットは BotFather で作成（`/setjoingroups` を `Disable` にして、グループに追加できないようにしている）
+- .24 の `~/.hermes/.env`（権限 600）に `TELEGRAM_BOT_TOKEN` と `TELEGRAM_ALLOWED_USERS`（自分の数値ユーザー ID。`@userinfobot` で確認）を追記。Hermes はコマンドを実行できるため、`TELEGRAM_ALLOWED_USERS` は必須（`GATEWAY_ALLOW_ALL_USERS` は使わない）
+- gateway（`hermes-gateway.service`）を再起動すると `.env` を読んで接続する。ログに `✓ telegram connected` と `Connected to Telegram (polling mode)` が出れば成功
+- ロングポーリング（.24 から Telegram に取りに行く）なので、.24 をインターネットに公開する必要はない。LINE は公開 HTTPS の Webhook が必要なため採用しなかった
+- ボットとのチャットで `/sethome` を送り、ホームチャンネル（定期実行の結果などの送り先）にしている
+
+トークンを入力するときは、画面と履歴に残さない:
+
+```bash
+read -rsp 'Bot token: ' T; echo; read -rp 'User ID: ' U
+printf '\n# Telegram (garden bot)\nTELEGRAM_BOT_TOKEN=%s\nTELEGRAM_ALLOWED_USERS=%s\n' "$T" "$U" >> ~/.hermes/.env; unset T U
+```
+
+## 使うときの注意
+
+- **gateway が止まっている間に送ったメッセージは捨てられる**（起動時に `drop_pending_on_cold_boot`）。返事がなければ送り直す
+- **写真は「写真」として送る**。Telegram が JPEG に変換するが、960×1280px 程度に縮小され、EXIF（撮影日時）が消える。そのため写真プールに撮影日時が表示されない。日付は依頼の文面か今日の日付で決まるので、撮ってすぐ送るなら困らない。前に撮った写真は「9/20 に撮った」のように日付を書く
+- **「ファイル」として送ると、iPhone の写真は HEIC のまま届く**。API は HEIC を 415 にする（Hermes は写真として送り直すよう案内する）。HEIC 対応は Ubuntu への移設後に行う予定（[`../wishlist.md`](../wishlist.md)）。メイン PC（Windows）では、HEIC を読むライブラリ `pillow-heif` の DLL が Smart App Control に止められるため対応できない
