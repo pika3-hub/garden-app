@@ -74,7 +74,8 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - 画像の確認は実際のスマホ写真で行う。スマホの写真は MPO（複数画像入りの JPEG）のことが多く、Pillow で作ったテスト画像だけでは気づけなかった（写真プール `app/static/uploads/photo_pool/` に実物がある）
 - `.env` に `API_HOST=0.0.0.0` を書き込むなど、サービスを LAN に公開する操作は Claude Code の自動許可で止められる。ユーザーに実行してもらうスクリプトを用意する
 - ユーザーに実行してもらうコマンドには `cd D:\workspace\garden-app` を含める（管理者の PowerShell は `C:\windows\system32` で開くため、相対パスの `.env` が見つからず、uv 版の Python が使われた）。トークンなど秘密の値をファイルに書いてもらったら、値を出さずに確認するコマンド（文字数の表示など）を添える
-- Hermes の回答は、件数などを DB の読み取り専用接続（`sqlite3.connect('file:instance/garden.db?mode=ro', uri=True)`）で突き合わせる。見た目がもっともらしくても、一覧の既定件数（50件）で切れた結果を総数として答えていた。SKILL.md を直したら scp で .24 に送り、ターミナルの `hermes` を起動し直せば反映される（gateway の再起動は不要）
+- Hermes の回答は、件数などを DB の読み取り専用接続（`sqlite3.connect('file:instance/garden.db?mode=ro', uri=True)`）で突き合わせる。見た目がもっともらしくても、一覧の既定件数（50件）で切れた結果を総数として答えていた。SKILL.md を直したら scp で .24 に送り、ターミナルの `hermes` は起動し直す。Telegram（gateway）で試すときは `systemctl --user restart hermes-gateway.service` もする（再起動中に送ったメッセージは捨てられる）
+- SKILL.md の対応表に書いていない組み合わせを、Hermes は「できない」と判断しがち。収穫の行に `image` が無かったため、写真付きの依頼でも収穫に添付しなかった（API は対応済み）。対応表の各行には使えるパラメータを省かずに書く
 
 ## ブラウザ自動操作（Claude in Chrome）
 
