@@ -34,7 +34,8 @@ Hermes は会話の後に裏で振り返り（self-improvement review）を行�
   scp pika3@192.168.11.24:~/.hermes/skills/garden-app/SKILL.md "$env:TEMP\SKILL.24.md"
   ```
   よい追記はリポジトリの `docs/api/hermes-skill/SKILL.md` に取り込み、それから送る
-- 書き換えを承認制にするには、Telegram で `/skills approval on`（記憶は `/memory approval on`）。保留中の変更は `/skills diff <id>` で確認できる。振り返り自体を止めるのは `auxiliary.background_review.enabled: false`（`~/.hermes/config.yaml`）
+- **SKILL.md の書き換えは承認制にしている**（2026-10-10、Telegram で `/skills approval on`。`~/.hermes/config.yaml` の `skills.write_approval: true`）。Hermes の変更は `~/.hermes/pending/skills/` に保留され、Telegram への通知は無い。週1回程度か `Self-improvement review` の通知を見たときに `/skills pending` で確認する。中身は `/skills diff <id>`（長いと途中で切れる）。正しい変更はリポジトリの SKILL.md に取り込んで scp で送り、保留は `/skills reject all` で捨てる（正はリポジトリの1つだけに保つ）
+- 記憶（USER.md / MEMORY.md）は承認制にしていない（`/memory approval on` で承認制にできる）。振り返り自体を止めるのは `auxiliary.background_review.enabled: false`
 - **gateway が止まっている間に送ったメッセージは捨てられる**（起動時に `drop_pending_on_cold_boot`）。返事がなければ送り直す
 - **写真は「写真」として送る**。Telegram が JPEG に変換するが、960×1280px 程度に縮小され、EXIF（撮影日時）が消える。そのため写真プールに撮影日時が表示されない。日付は依頼の文面か今日の日付で決まるので、撮ってすぐ送るなら困らない。前に撮った写真は「9/20 に撮った」のように日付を書く
 - **「ファイル」として送ると、iPhone の写真は HEIC のまま届く**。API は HEIC を 415 にする（Hermes は写真として送り直すよう案内する）。HEIC 対応は Ubuntu への移設後に行う予定（[`../wishlist.md`](../wishlist.md)）。メイン PC（Windows）では、HEIC を読むライブラリ `pillow-heif` の DLL が Smart App Control に止められるため対応できない
