@@ -74,6 +74,8 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - 画像の確認は実際のスマホ写真で行う。スマホの写真は MPO（複数画像入りの JPEG）のことが多く、Pillow で作ったテスト画像だけでは気づけなかった（写真プール `app/static/uploads/photo_pool/` に実物がある）
 - `.env` に `API_HOST=0.0.0.0` を書き込むなど、サービスを LAN に公開する操作は Claude Code の自動許可で止められる。ユーザーに実行してもらうスクリプトを用意する
 - ユーザーに実行してもらうコマンドには `cd D:\workspace\garden-app` を含める（管理者の PowerShell は `C:\windows\system32` で開くため、相対パスの `.env` が見つからず、uv 版の Python が使われた）。トークンなど秘密の値をファイルに書いてもらったら、値を出さずに確認するコマンド（文字数の表示など）を添える
+- Hermes の回答は、件数などを DB の読み取り専用接続（`sqlite3.connect('file:instance/garden.db?mode=ro', uri=True)`）で突き合わせる。見た目がもっともらしくても、一覧の既定件数（50件）で切れた結果を総数として答えていた。SKILL.md を直したら scp で .24 に送り、ターミナルの `hermes` は起動し直す。Telegram（gateway）で試すときは `systemctl --user restart hermes-gateway.service` もする（再起動中に送ったメッセージは捨てられる）
+- SKILL.md の対応表に書いていない組み合わせを、Hermes は「できない」と判断しがち。収穫の行に `image` が無かったため、写真付きの依頼でも収穫に添付しなかった（API は対応済み）。対応表の各行には使えるパラメータを省かずに書く
 
 ## ブラウザ自動操作（Claude in Chrome）
 
@@ -96,4 +98,5 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - テストは `uv run pytest`。`tests/conftest.py` のフィクスチャが tmp_path 上の使い捨て DB を使う
 - `uv run pytest` が Smart App Control に `pytest.exe` をブロックされる（os error 4551）ときは、`uv run python -m pytest` なら実行できる
 - `.venv` は python.org の Python 3.12（winget `Python.Python.3.12`、`%LOCALAPPDATA%\Programs\Python\Python312`、PSF 署名付き）で作っている。uv が自動で入れる Python（`%APPDATA%\uv\python\...`）は署名が無く、Smart App Control に `python.exe` や `DLLs\libcrypto-3-x64.dll` を断続的にブロックされる（HTTPS を使う AI メモ・OGP 取得が失敗しうる）。`.venv` を作り直すときは `uv venv --python "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"` → `uv sync` とし、uv 管理の Python を使わない。ブロックされたファイルはイベントログ `Microsoft-Windows-CodeIntegrity/Operational` の ID 3077 で確認できる
+- ネイティブ DLL を含むライブラリを追加するときは、設計を詰める前に `uv add` → import だけ試す。`pillow-heif` は同梱の `libde265-0-*.dll`・`libwinpthread-1-*.dll` が Smart App Control に毎回止められ、メイン PC では使えなかった（HEIC 対応は Ubuntu への移設後に回した）。Smart App Control は一度オフにすると OS の再インストールまで戻せないので、オフにする案は出さない
 - 起動のたびに全マイグレーションが再実行され、適用済みのものは `Migration warning`（duplicate column 等）として出る。新しいマイグレーションの確認では、自分のファイル名の行だけを見る
