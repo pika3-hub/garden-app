@@ -13,6 +13,8 @@ AI アシスタント（Claude Code など）がこのリポジトリで作業�
 
 `instance/garden.db` は実データ（[`db-validation-safety.md`](db-validation-safety.md) 参照）。画面の動作確認は **DB のコピーに向けたサーバー** で行う。マイグレーションも実データには適用されない。
 
+本番をサーバーへ移した後（2026-10-11〜）は、開発 PC に `instance/garden.db` が無い。コピー元は移設時点の退避 `instance/garden.db.moved-to-ubuntu` を使う（以下の手順の `instance/garden.db` は読み替える）。表示の確認ならこれで足りる。
+
 スクラッチ領域（リポジトリ外）に次のスクリプトを置き、`uv run python <path>/run_copy.py` で起動する:
 
 ```python
