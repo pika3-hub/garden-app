@@ -92,7 +92,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 
 ## ツール・環境
 
-- `gh` CLI は winget でインストール済み（`C:\Program Files\GitHub CLI\gh.exe`、自分の GitHub アカウントでログイン済み）。インストール直後のセッションなど PATH に無いときはフルパスで呼ぶ。プルリクエストは `gh pr create` で作成できる
+- `gh` CLI は winget でインストール済み（`C:\Program Files\GitHub CLI\gh.exe`、自分の GitHub アカウントでログイン済み）。インストール直後のセッションなど PATH に無いときはフルパスで呼ぶ。プルリクエストは `gh pr create` で作成できる。`gh pr merge` は auto mode の権限チェックで止められる（レビューなしのマージ扱い）ので、マージはユーザーに GitHub の画面でしてもらう
 - PowerShell で `gh pr view --json body -q .body` の結果は行ごとの配列になる。そのまま文字列として書き戻すと改行が消える（PR #48 の本文で発生）。`-join "`n"` してから書くか、本文の加工は Bash で行う。消えてしまったら GraphQL の `pullRequest.userContentEdits { editedAt diff }` に過去の本文が残っている
 - `node` は未インストール。JS の構文チェックはブラウザでの読み込み（コンソールエラー確認）で代用する
 - テストは `uv run pytest`。`tests/conftest.py` のフィクスチャが tmp_path 上の使い捨て DB を使う
