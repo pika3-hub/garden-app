@@ -12,7 +12,7 @@ AI エージェント（Hermes Agent など）から、菜園データを参照�
 - Telegram との接続: [`hermes-telegram.md`](hermes-telegram.md)
 - 設計書: `docs/superpowers/specs/2026-10-09-external-api-design.md`
 
-リポジトリは公開なので、文書では IP アドレスやユーザー名を `<サーバーのIP>`・`<メインPCのIP>`・`<LANの範囲>`・`<user>`・`<リポジトリURL>`・`<転送用フォルダ>` などの記号で書く。実際の値は `docs/local-env.md`（git 管理外）にある。
+リポジトリは公開なので、文書では IP アドレスやユーザー名を `<サーバーのIP>`・`<メインPCのIP>`・`<LANの範囲>`・`<user>`・`<リポジトリURL>`・`<転送用フォルダ>` などの記号で書く。実際の値はリポジトリの外のフォルダ（`../garden-app-private/local-env.md`）にある。
 
 ## 1. 設定と起動
 
