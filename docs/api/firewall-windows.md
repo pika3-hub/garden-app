@@ -2,13 +2,13 @@
 
 目的:
 
-- エージェント PC（192.168.11.24）からは **API（5001）だけ**に届く
+- エージェント PC（<サーバーのIP>）からは **API（5001）だけ**に届く
 - スマホなど LAN 内の他の端末からは **Web 画面（5000）だけ**に届く
 - エージェント PC から Web 画面（認証なし。削除もできる）には届かない
 
 ```
-スマホ ──LAN──▶ :5000 Web 画面        ← LocalSubnet を許可、192.168.11.24 はブロック
-Hermes(.24) ──▶ :5001 API（Bearer 必須） ← 192.168.11.24 だけ許可
+スマホ ──LAN──▶ :5000 Web 画面        ← LocalSubnet を許可、<サーバーのIP> はブロック
+Hermes ──▶ :5001 API（Bearer 必須） ← <サーバーのIP> だけ許可
 ```
 
 以下は**管理者として開いた PowerShell** で実行する。
@@ -21,7 +21,7 @@ Get-NetConnectionProfile
 
 `NetworkCategory` が `Private` であること（`Public` だと下のルールが効かない）。違う場合は Windows の設定 → ネットワーク → プロパティで「プライベート」に変える。
 
-このPC（192.168.11.10）とエージェント PC（192.168.11.24）の IP はルーター（192.168.11.1）の DHCP で「手動割当」にして固定してある。IP が変わると下のルールの `-RemoteAddress` と `.env` の `WEB_BASE_URL` がずれる（特に .24 が変わると Web 画面の遮断が効かなくなる）ので、ルーターを交換・初期化したときは割り当てし直す。
+このPC（<メインPCのIP>）とエージェント PC（<サーバーのIP>）の IP はルーターの DHCP で「手動割当」にして固定してある。IP が変わると下のルールの `-RemoteAddress` と `.env` の `WEB_BASE_URL` がずれる（特に .24 が変わると Web 画面の遮断が効かなくなる）ので、ルーターを交換・初期化したときは割り当てし直す。
 
 ## 2. python.exe のプログラム単位の許可ルールを確認・無効化
 
@@ -43,12 +43,12 @@ Disable-NetFirewallRule -DisplayName '<上で表示された名前>'
 ## 3. ポート単位のルールを追加
 
 ```powershell
-New-NetFirewallRule -DisplayName "Garden API (Hermes only)" -Direction Inbound -Protocol TCP -LocalPort 5001 -RemoteAddress 192.168.11.24 -Action Allow -Profile Private
+New-NetFirewallRule -DisplayName "Garden API (Hermes only)" -Direction Inbound -Protocol TCP -LocalPort 5001 -RemoteAddress <サーバーのIP> -Action Allow -Profile Private
 New-NetFirewallRule -DisplayName "Garden Web (LAN)"        -Direction Inbound -Protocol TCP -LocalPort 5000 -RemoteAddress LocalSubnet   -Action Allow -Profile Private
-New-NetFirewallRule -DisplayName "Garden Web block Hermes" -Direction Inbound -Protocol TCP -LocalPort 5000 -RemoteAddress 192.168.11.24 -Action Block
+New-NetFirewallRule -DisplayName "Garden Web block Hermes" -Direction Inbound -Protocol TCP -LocalPort 5000 -RemoteAddress <サーバーのIP> -Action Block
 ```
 
-ブロックのルールは許可のルールより優先されるので、192.168.11.24 から 5000 には届かない。
+ブロックのルールは許可のルールより優先されるので、<サーバーのIP> から 5000 には届かない。
 
 ## 4. `.env` を設定してサーバーを再起動
 
@@ -68,9 +68,9 @@ uv run python server.py
 
 | 実行元 | 操作 | 期待 |
 |---|---|---|
-| Ubuntu (.24) | `curl -sS -H "Authorization: Bearer $T" http://<PC>:5001/api/v1/health` | `{"ok": true, ...}` |
-| Ubuntu (.24) | `curl -sS -m 5 http://<PC>:5000/` | タイムアウト（ブロック） |
-| Ubuntu (.24) | `curl -sS http://<PC>:5001/` | JSON の 401（Web 画面は出ない） |
+| Ubuntu | `curl -sS -H "Authorization: Bearer $T" http://<PC>:5001/api/v1/health` | `{"ok": true, ...}` |
+| Ubuntu | `curl -sS -m 5 http://<PC>:5000/` | タイムアウト（ブロック） |
+| Ubuntu | `curl -sS http://<PC>:5001/` | JSON の 401（Web 画面は出ない） |
 | スマホ | ブラウザで `http://<PC>:5000/` | 画面が開く |
 | スマホ | ブラウザで `http://<PC>:5001/api/v1/health` | 開けない |
 

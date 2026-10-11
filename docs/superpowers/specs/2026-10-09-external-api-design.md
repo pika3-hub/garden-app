@@ -5,7 +5,7 @@
 
 ## 1. 背景と目的
 
-スマホ（Telegram）→ AIエージェント（Hermes Agent、Ubuntu Server 192.168.11.24）→ 本アプリ、の流れで写真付きの菜園データを登録・更新できるようにする。エージェントに渡すのは「API を呼ぶ権限」だけで、アプリのファイル・DB・既存Web画面には触らせない。
+スマホ（Telegram）→ AIエージェント（Hermes Agent、Ubuntu Server <サーバーのIP>）→ 本アプリ、の流れで写真付きの菜園データを登録・更新できるようにする。エージェントに渡すのは「API を呼ぶ権限」だけで、アプリのファイル・DB・既存Web画面には触らせない。
 
 ### 要件（ユーザー確認済み）
 
@@ -17,7 +17,7 @@
 - Bearer トークン必須。トークンは `.env` で管理しコミットしない
 - 画像のサイズ・形式チェック
 - バリデーションエラーは項目名と理由を含める
-- エージェントPC（.24）からは API にのみ到達でき、既存Web画面（認証なし）には到達できない
+- エージェントPCからは API にのみ到達でき、既存Web画面（認証なし）には到達できない
 - **将来アプリを Ubuntu（エージェントPC）へ移設する前提**で、移設時の変更が `.env` とサービス登録だけで済む設計にする（メインPCは普段電源を落としている）
 
 ### スコープ外
@@ -43,8 +43,8 @@ Hermes ──────▶ 127.0.0.1:5001  APIアプリ（/api/v1/* のみ、B
 ### 移設前の暫定形（Windows）
 
 ```
-スマホ ──▶ :5000（FW: LocalSubnet 許可、192.168.11.24 はブロック）
-Hermes(.24) ──▶ :5001（FW: 192.168.11.24 のみ許可）
+スマホ ──▶ :5000（FW: LocalSubnet 許可、<サーバーのIP> はブロック）
+Hermes ──▶ :5001（FW: <サーバーのIP> のみ許可）
 ```
 
 ### 構成要素
@@ -237,13 +237,13 @@ DELETE・PUT は定義しない（405 になる）。
 管理者 PowerShell:
 
 ```powershell
-New-NetFirewallRule -DisplayName "Garden API (Hermes only)" -Direction Inbound -Protocol TCP -LocalPort 5001 -RemoteAddress 192.168.11.24 -Action Allow -Profile Private
+New-NetFirewallRule -DisplayName "Garden API (Hermes only)" -Direction Inbound -Protocol TCP -LocalPort 5001 -RemoteAddress <サーバーのIP> -Action Allow -Profile Private
 New-NetFirewallRule -DisplayName "Garden Web (LAN)"        -Direction Inbound -Protocol TCP -LocalPort 5000 -RemoteAddress LocalSubnet   -Action Allow -Profile Private
-New-NetFirewallRule -DisplayName "Garden Web block Hermes" -Direction Inbound -Protocol TCP -LocalPort 5000 -RemoteAddress 192.168.11.24 -Action Block
+New-NetFirewallRule -DisplayName "Garden Web block Hermes" -Direction Inbound -Protocol TCP -LocalPort 5000 -RemoteAddress <サーバーのIP> -Action Block
 ```
 
 - 初回起動ダイアログで作られた python.exe の**プログラム単位許可ルール**があると全ポートが開くため、確認・無効化する手順を手順書に含める（`Get-NetFirewallApplicationFilter | Where-Object Program -like '*python*'`）
-- 確認: .24 から `curl :5001/api/v1/health` 成功、`:5000/` 失敗。スマホから `:5000/` 成功、`:5001` 失敗
+- 確認: サーバーから `curl :5001/api/v1/health` 成功、`:5000/` 失敗。スマホから `:5000/` 成功、`:5001` 失敗
 
 ## 7. テスト
 
