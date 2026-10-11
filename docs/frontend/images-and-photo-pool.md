@@ -60,7 +60,9 @@
 
 3. 画像に属性を付与:
 ```html
-<img src="..." class="slideshow-target"
+<img src="（サムネイル）" class="slideshow-target" loading="lazy"
+     onerror="this.onerror=null; this.src=this.dataset.slideshowSrc"
+     data-slideshow-src="（元画像）"
      data-slideshow-date="2025-07-01"
      data-slideshow-days="45"
      data-slideshow-caption="ミニトマト（トマト）">
@@ -71,6 +73,7 @@
 | 属性 | 必須 | 説明 |
 |-----|------|------|
 | `class="slideshow-target"` | ○ | JS収集対象 + クリックで起動 |
+| `data-slideshow-src` | - | スライドショーで表示する元画像の URL。省略時は `img.src`（カードはサムネイルなので通常は指定する。サムネイルが無い GIF 等は `onerror` でこの URL に切り替える） |
 | `data-slideshow-date` | - | フッターに表示する日付 |
 | `data-slideshow-days` | - | 「植え付けから N日目」として表示 |
 | `data-slideshow-caption` | - | フッターに表示するキャプションテキスト |

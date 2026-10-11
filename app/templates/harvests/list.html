@@ -90,6 +90,8 @@
                 <img src="{{ url_for('static', filename='uploads/' + (harvest.image_path | thumb_path)) }}"
                      class="card-photo-img slideshow-target" alt="{{ harvest.crop_name }}"
                      loading="lazy"
+                     onerror="this.onerror=null; this.src=this.dataset.slideshowSrc"
+                     data-slideshow-src="{{ url_for('static', filename='uploads/' + harvest.image_path) }}"
                      data-slideshow-date="{{ harvest.harvest_date }}"
                      data-slideshow-days="{{ harvest.days_from_planting }}"
                      data-slideshow-caption="{{ crop_display_name(harvest.crop_name, harvest.variety) }}{% if harvest.quantity %} {{ harvest.quantity }}{{ harvest.unit or '' }}{% endif %}">

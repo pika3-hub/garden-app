@@ -220,8 +220,11 @@ if (fullscreenBtn) {
             <div>
                 <a href="{{ url_for('plantings.record_detail', record_id=record.id) }}" class="card h-100 card-photo card-bg-location-crop {{ '' if record.image_path else 'card-no-image' }}">
                     {% if record.image_path %}
-                    <img src="{{ url_for('static', filename='uploads/' + record.image_path) }}"
+                    <img src="{{ url_for('static', filename='uploads/' + (record.image_path | thumb_path)) }}"
                          class="card-photo-img slideshow-target" alt="栽培記録画像"
+                         loading="lazy"
+                         onerror="this.onerror=null; this.src=this.dataset.slideshowSrc"
+                         data-slideshow-src="{{ url_for('static', filename='uploads/' + record.image_path) }}"
                          data-slideshow-date="{{ record.recorded_at }}"
                          data-slideshow-days="{{ record.days_from_planting }}"
                          {% if record.notes %}data-slideshow-caption="{{ record.notes|replace('\n', ' ')|truncate(80) }}"{% endif %}>
