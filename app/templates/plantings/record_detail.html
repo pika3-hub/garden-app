@@ -35,7 +35,9 @@
             </div>
             {% if record.image_path %}
             <div class="card-photo-detail-img-wrapper">
-                <img src="{{ url_for('static', filename='uploads/' + record.image_path) }}"
+                <img src="{{ url_for('static', filename='uploads/' + (record.image_path | thumb_path)) }}"
+                     data-full="{{ url_for('static', filename='uploads/' + record.image_path) }}"
+                     onerror="this.onerror=null; this.src=this.dataset.full"
                      class="card-photo-img lightbox-target" alt="栽培記録画像">
             </div>
             {% endif %}

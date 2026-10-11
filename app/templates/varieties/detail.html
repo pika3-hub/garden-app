@@ -32,7 +32,9 @@
             </div>
             {% if variety.effective_image_path %}
             <div class="card-photo-detail-img-wrapper">
-                <img src="{{ url_for('static', filename='uploads/' + variety.effective_image_path) }}"
+                <img src="{{ url_for('static', filename='uploads/' + (variety.effective_image_path | thumb_path)) }}"
+                     data-full="{{ url_for('static', filename='uploads/' + variety.effective_image_path) }}"
+                     onerror="this.onerror=null; this.src=this.dataset.full"
                      class="card-photo-img lightbox-target" alt="{{ variety.name }}">
             </div>
             {% endif %}

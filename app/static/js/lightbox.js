@@ -37,10 +37,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // イベント委譲: img.lightbox-target のクリック
+    // 表示がサムネイルのときは data-full の元画像を拡大する
     document.addEventListener('click', function (e) {
         const target = e.target.closest('img.lightbox-target');
         if (target) {
-            open(target.src, target.alt);
+            open(target.dataset.full || target.src, target.alt);
         }
     });
 

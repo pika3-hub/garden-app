@@ -71,7 +71,9 @@ if (fullscreenBtn) {
             </div>
             {% if ns.hero_image %}
             <div class="card-photo-detail-img-wrapper">
-                <img src="{{ url_for('static', filename='uploads/' + ns.hero_image) }}"
+                <img src="{{ url_for('static', filename='uploads/' + (ns.hero_image | thumb_path)) }}"
+                     data-full="{{ url_for('static', filename='uploads/' + ns.hero_image) }}"
+                     onerror="this.onerror=null; this.src=this.dataset.full"
                      class="card-photo-img lightbox-target" alt="栽培記録画像">
                 <div class="card-img-date-overlay">{{ ns.hero_date }}</div>
             </div>
