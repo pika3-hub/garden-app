@@ -224,7 +224,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | メソッド | パス | 用途 |
 |---|---|---|
 | GET | `/health` | 疎通確認 |
-| GET | `/meta` | 選択肢の一覧（ステータス、天気、日当たり、既存の種類・単位・カテゴリ、アイコン、背景画像、関連キー、画像の制限） |
+| GET | `/meta` | 選択肢の一覧（ステータス、天気、日当たり、既存の種類・単位・カテゴリ、アイコン、背景画像、関連キー、画像の制限、設定画面の地域・栽培環境 `region`（未設定は空文字。作物・品種のメモの時期の基準）） |
 | GET | `/lookup?q=名前&types=crop,variety,location&limit=20` | 名前の横断検索。完全一致 → 前方一致 → 部分一致の順。品種は `display_name` と `crop_id` 付き |
 | POST | `/photos` | 写真プールへ一括アップロード（multipart `files` 複数、任意で `data` に `{"notes": "..."}`）。EXIF の撮影日時を取り込む |
 | GET | `/photos?unused=true` | 写真プールの一覧（`unused=true` で未使用のみ） |

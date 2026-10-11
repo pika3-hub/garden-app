@@ -10,6 +10,7 @@ from app.api.errors import detail, ok, validation_error
 from app.api.resource import LIKE_ESCAPE, like_pattern, page_arg
 from app.api.serialize import display_name, web_url
 from app.database import get_db
+from app.models.app_settings import AppSettings
 
 RESOURCE_NAMES = ['crops', 'varieties', 'locations', 'plantings', 'planting_records', 'harvests',
                   'cooking_records', 'diary_entries', 'tasks', 'photos']
@@ -44,6 +45,7 @@ def meta():
         },
         'image_formats': ['jpeg', 'png', 'gif', 'webp'],
         'max_image_mb': current_app.config['API_MAX_IMAGE_MB'],
+        'region': (AppSettings.get('region') or '').strip(),
     })
 
 
