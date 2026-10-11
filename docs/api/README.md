@@ -12,6 +12,8 @@ AI エージェント（Hermes Agent など）から、菜園データを参照�
 - Telegram との接続: [`hermes-telegram.md`](hermes-telegram.md)
 - 設計書: `docs/superpowers/specs/2026-10-09-external-api-design.md`
 
+リポジトリは公開なので、文書では IP アドレスやユーザー名を `<サーバーのIP>`・`<メインPCのIP>`・`<LANの範囲>`・`<user>`・`<リポジトリURL>`・`<転送用フォルダ>` などの記号で書く。実際の値は `docs/local-env.md`（git 管理外）にある。
+
 ## 1. 設定と起動
 
 `.env`（コミットしない）:
@@ -22,7 +24,7 @@ AI エージェント（Hermes Agent など）から、菜園データを参照�
 | `API_HOST` | `127.0.0.1` | API の待受。Windows 暫定期は `0.0.0.0`、Ubuntu 移設後は `127.0.0.1` |
 | `API_PORT` | `5001` | API のポート |
 | `API_MAX_IMAGE_MB` | `20` | 画像1枚の上限（MB） |
-| `WEB_BASE_URL` | `http://localhost:5000` | レスポンスの `web_url` / `image_url` の基準。スマホから開ける URL にする（例 `http://192.168.11.10:5000`） |
+| `WEB_BASE_URL` | `http://localhost:5000` | レスポンスの `web_url` / `image_url` の基準。スマホから開ける URL にする（例 `http://<メインPCのIP>:5000`） |
 | `DATABASE` | `<起動ディレクトリ>/instance/garden.db` | DB の絶対パス（systemd 等で起動ディレクトリに依存しないため） |
 
 トークンの生成:
@@ -233,5 +235,5 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 POST / PATCH はサーバーログ（ロガー `app.api`）に1行ずつ出る。トークンや本文は出さない。
 
 ```
-INFO in __init__: 192.168.11.24 POST /api/v1/harvests -> 201 id=42
+INFO in __init__: <サーバーのIP> POST /api/v1/harvests -> 201 id=42
 ```

@@ -17,7 +17,7 @@ AI アシスタント（Claude Code など）がこのリポジトリで作業�
 
 ```python
 import os, sys
-ROOT = r'D:\workspace\garden-app'
+ROOT = r'<リポジトリのフォルダ>'
 sys.path.insert(0, ROOT)
 os.chdir(ROOT)
 from dotenv import load_dotenv
@@ -73,8 +73,8 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - 画面でできない操作が、ボタンの表示条件や選択肢の絞り込み（例: 収穫・栽培記録の登録先は栽培中の植え付けだけ表示）だけで防がれていることがある。API で同じ操作を作るときは、ルートだけでなくテンプレートの表示条件まで確認し、API 側ではサーバーで検査する。実例: 終了済みの植え付けに API からだけ収穫を登録できた
 - 画像の確認は実際のスマホ写真で行う。スマホの写真は MPO（複数画像入りの JPEG）のことが多く、Pillow で作ったテスト画像だけでは気づけなかった（写真プール `app/static/uploads/photo_pool/` に実物がある）
 - `.env` に `API_HOST=0.0.0.0` を書き込むなど、サービスを LAN に公開する操作は Claude Code の自動許可で止められる。ユーザーに実行してもらうスクリプトを用意する
-- ユーザーに実行してもらうコマンドには `cd D:\workspace\garden-app` を含める（管理者の PowerShell は `C:\windows\system32` で開くため、相対パスの `.env` が見つからず、uv 版の Python が使われた）。トークンなど秘密の値をファイルに書いてもらったら、値を出さずに確認するコマンド（文字数の表示など）を添える
-- Hermes の回答は、件数などを DB の読み取り専用接続（`sqlite3.connect('file:instance/garden.db?mode=ro', uri=True)`）で突き合わせる。見た目がもっともらしくても、一覧の既定件数（50件）で切れた結果を総数として答えていた。SKILL.md を直したら scp で .24 に送り、ターミナルの `hermes` は起動し直す。Telegram（gateway）で試すときは `systemctl --user restart hermes-gateway.service` もする（再起動中に送ったメッセージは捨てられる）
+- ユーザーに実行してもらうコマンドには `cd <リポジトリのフォルダ>` を含める（管理者の PowerShell は `C:\windows\system32` で開くため、相対パスの `.env` が見つからず、uv 版の Python が使われた）。トークンなど秘密の値をファイルに書いてもらったら、値を出さずに確認するコマンド（文字数の表示など）を添える
+- Hermes の回答は、件数などを DB の読み取り専用接続（`sqlite3.connect('file:instance/garden.db?mode=ro', uri=True)`）で突き合わせる。見た目がもっともらしくても、一覧の既定件数（50件）で切れた結果を総数として答えていた。SKILL.md を直したら scp でサーバーに送り、ターミナルの `hermes` は起動し直す。Telegram（gateway）で試すときは `systemctl --user restart hermes-gateway.service` もする（再起動中に送ったメッセージは捨てられる）
 - SKILL.md の対応表に書いていない組み合わせを、Hermes は「できない」と判断しがち。収穫の行に `image` が無かったため、写真付きの依頼でも収穫に添付しなかった（API は対応済み）。対応表の各行には使えるパラメータを省かずに書く
 
 ## ブラウザ自動操作（Claude in Chrome）
@@ -92,7 +92,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 
 ## ツール・環境
 
-- `gh` CLI は winget でインストール済み（`C:\Program Files\GitHub CLI\gh.exe`、pika3-hub でログイン済み）。インストール直後のセッションなど PATH に無いときはフルパスで呼ぶ。プルリクエストは `gh pr create` で作成できる
+- `gh` CLI は winget でインストール済み（`C:\Program Files\GitHub CLI\gh.exe`、自分の GitHub アカウントでログイン済み）。インストール直後のセッションなど PATH に無いときはフルパスで呼ぶ。プルリクエストは `gh pr create` で作成できる
 - PowerShell で `gh pr view --json body -q .body` の結果は行ごとの配列になる。そのまま文字列として書き戻すと改行が消える（PR #48 の本文で発生）。`-join "`n"` してから書くか、本文の加工は Bash で行う。消えてしまったら GraphQL の `pullRequest.userContentEdits { editedAt diff }` に過去の本文が残っている
 - `node` は未インストール。JS の構文チェックはブラウザでの読み込み（コンソールエラー確認）で代用する
 - テストは `uv run pytest`。`tests/conftest.py` のフィクスチャが tmp_path 上の使い捨て DB を使う
@@ -100,3 +100,10 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - `.venv` は python.org の Python 3.12（winget `Python.Python.3.12`、`%LOCALAPPDATA%\Programs\Python\Python312`、PSF 署名付き）で作っている。uv が自動で入れる Python（`%APPDATA%\uv\python\...`）は署名が無く、Smart App Control に `python.exe` や `DLLs\libcrypto-3-x64.dll` を断続的にブロックされる（HTTPS を使う AI メモ・OGP 取得が失敗しうる）。`.venv` を作り直すときは `uv venv --python "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"` → `uv sync` とし、uv 管理の Python を使わない。ブロックされたファイルはイベントログ `Microsoft-Windows-CodeIntegrity/Operational` の ID 3077 で確認できる
 - ネイティブ DLL を含むライブラリを追加するときは、設計を詰める前に `uv add` → import だけ試す。`pillow-heif` は同梱の `libde265-0-*.dll`・`libwinpthread-1-*.dll` が Smart App Control に毎回止められ、メイン PC では使えなかった（HEIC 対応は Ubuntu への移設後に回した）。Smart App Control は一度オフにすると OS の再インストールまで戻せないので、オフにする案は出さない
 - 起動のたびに全マイグレーションが再実行され、適用済みのものは `Migration warning`（duplicate column 等）として出る。新しいマイグレーションの確認では、自分のファイル名の行だけを見る
+
+## サーバー（Ubuntu、本番）の操作
+
+- 2026-10-11 から本番はサーバー（Ubuntu）。Claude は直接操作できないので、コマンドを示して結果を貼ってもらう。変更の前に読み取り専用の確認コマンドで現状を見る
+- sudo を含む複数行を貼ってもらうときは、先頭に `sudo -v` を置く。途中で sudo がパスワードを聞くと、後ろの行が入力に吸い込まれて結果が欠ける（移設時に確認結果が2行分出ていなかった）
+- 「成功ならこう出る」を必ず添え、返ってきた結果と照合する。ufw の遮断ルールは置いただけでは効いておらず（`lo` の ACCEPT の後ろだった）、照合で気づけた
+- `/etc/ufw/*.rules` は root しか読めないので `sudo grep` にする。大きなファイルの受け渡しは `~/garden-transfer`（`/tmp` は tmpfs）

@@ -482,7 +482,7 @@ Expected: PASS（全件）。続けて `uv run python -m pytest` で既存テス
 
 ```bash
 # Windows 暫定期（移設後は http://127.0.0.1:5001/api/v1）
-export GARDEN_API_URL=http://192.168.11.24:5001/api/v1
+export GARDEN_API_URL=http://<サーバーのIP>:5001/api/v1
 export GARDEN_API_TOKEN='（.env の API_TOKEN）'
 gapi() { curl -sS -H "Authorization: Bearer $GARDEN_API_TOKEN" "$@"; echo; }
 ```
@@ -3949,9 +3949,9 @@ Get-NetFirewallApplicationFilter | Where-Object { $_.Program -like '*python*' } 
 Disable-NetFirewallRule -DisplayName '<上で表示された名前>'
 
 # 3. ポート単位のルールを追加（管理者 PowerShell）
-New-NetFirewallRule -DisplayName "Garden API (Hermes only)" -Direction Inbound -Protocol TCP -LocalPort 5001 -RemoteAddress 192.168.11.24 -Action Allow -Profile Private
+New-NetFirewallRule -DisplayName "Garden API (Hermes only)" -Direction Inbound -Protocol TCP -LocalPort 5001 -RemoteAddress <サーバーのIP> -Action Allow -Profile Private
 New-NetFirewallRule -DisplayName "Garden Web (LAN)"        -Direction Inbound -Protocol TCP -LocalPort 5000 -RemoteAddress LocalSubnet   -Action Allow -Profile Private
-New-NetFirewallRule -DisplayName "Garden Web block Hermes" -Direction Inbound -Protocol TCP -LocalPort 5000 -RemoteAddress 192.168.11.24 -Action Block
+New-NetFirewallRule -DisplayName "Garden Web block Hermes" -Direction Inbound -Protocol TCP -LocalPort 5000 -RemoteAddress <サーバーのIP> -Action Block
 
 # 4. .env を設定してサーバーを再起動
 #    HOST=0.0.0.0 / API_HOST=0.0.0.0 / API_TOKEN=... / WEB_BASE_URL=http://<このPCのIP>:5000
@@ -3961,8 +3961,8 @@ New-NetFirewallRule -DisplayName "Garden Web block Hermes" -Direction Inbound -P
 
 | 実行元 | コマンド | 期待 |
 |---|---|---|
-| Ubuntu (.24) | `curl -sS -H "Authorization: Bearer $T" http://<PC>:5001/api/v1/health` | `{"ok": true, ...}` |
-| Ubuntu (.24) | `curl -sS -m 5 http://<PC>:5000/` | タイムアウト（ブロック） |
+| Ubuntu | `curl -sS -H "Authorization: Bearer $T" http://<PC>:5001/api/v1/health` | `{"ok": true, ...}` |
+| Ubuntu | `curl -sS -m 5 http://<PC>:5000/` | タイムアウト（ブロック） |
 | スマホ | ブラウザで `http://<PC>:5000/` | 画面が開く |
 | スマホ | ブラウザで `http://<PC>:5001/api/v1/health` | 開けない |
 
@@ -3990,11 +3990,11 @@ Restart=on-failure
 WantedBy=multi-user.target
 ```
 
-`.env` 例（移設後）: `HOST=0.0.0.0`、`API_HOST=127.0.0.1`、`API_PORT=5001`、`DATABASE=/opt/garden-app/instance/garden.db`、`WEB_BASE_URL=http://192.168.11.24:5000`、`API_TOKEN=...`、`FLASK_ENV=production`、`SECRET_KEY=...`。
+`.env` 例（移設後）: `HOST=0.0.0.0`、`API_HOST=127.0.0.1`、`API_PORT=5001`、`DATABASE=/opt/garden-app/instance/garden.db`、`WEB_BASE_URL=http://<サーバーのIP>:5000`、`API_TOKEN=...`、`FLASK_ENV=production`、`SECRET_KEY=...`。
 
 権限: `sudo useradd --system --create-home garden`、`sudo chown -R garden:garden /opt/garden-app`、`sudo chmod 700 /opt/garden-app`、Hermes 実行ユーザーで `ls /opt/garden-app` が Permission denied になること・`sudo -l` で権限が無いことを確認。
 
-ufw: `sudo ufw allow from 192.168.11.0/24 to any port 5000 proto tcp`（5001 は 127.0.0.1 待受のため開けない）。
+ufw: `sudo ufw allow from <LANの範囲> to any port 5000 proto tcp`（5001 は 127.0.0.1 待受のため開けない）。
 
 バックアップ（garden ユーザーの crontab）:
 
