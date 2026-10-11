@@ -90,3 +90,12 @@ def test_meta(api, tomato):
     assert len(data['crop_icons']) > 0
     assert data['relation_keys']['cooking_records'] == ['crop_ids', 'variety_ids', 'planting_ids', 'harvest_ids']
     assert 'crops' in data['resources']
+
+
+def test_meta_region(api):
+    """設定画面の地域・栽培環境を返す（未設定は空文字）"""
+    assert api.get('/api/v1/meta').get_json()['data']['region'] == ''
+    with api.application.app_context():
+        from app.models.app_settings import AppSettings
+        AppSettings.set('region', '関東・露地')
+    assert api.get('/api/v1/meta').get_json()['data']['region'] == '関東・露地'

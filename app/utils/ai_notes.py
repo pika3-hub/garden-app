@@ -43,6 +43,7 @@ NO_API_KEY_MESSAGE = 'AI機能を使うには .env に ANTHROPIC_API_KEY を設�
 _MSG_INCOMPLETE = '生成が途中で終わりました。もう一度お試しください'
 _MSG_TIMEOUT = '時間内に生成が終わりませんでした。もう一度お試しください'
 
+# 見出し構成を変えたら docs/api/hermes-skill/SKILL.md の「作物・品種のメモの書き方」も合わせる
 SYSTEM_PROMPT = """あなたは日本の家庭菜園に詳しいアドバイザーです。
 ユーザーが指定した作物（または品種）について、家庭菜園の栽培メモの下書きを作成します。
 
