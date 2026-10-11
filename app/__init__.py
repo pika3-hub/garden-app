@@ -116,7 +116,8 @@ def create_app(config_name='default'):
         from collections import OrderedDict
         db_for_timeline = get_db()
 
-        # 記録のある直近3日分の日付を取得
+        # 記録のある直近7日分の日付を取得（重複は UNION で除かれる）。
+        # GROUP BY を付けると SQLite 3.53 で ORDER BY ... DESC が無視され古い順に取れたため付けない
         top_dates_rows = db_for_timeline.execute('''
             SELECT item_date FROM (
                 SELECT entry_date AS item_date FROM diary_entries WHERE entry_date IS NOT NULL
@@ -129,7 +130,7 @@ def create_app(config_name='default'):
                 UNION
                 SELECT cooked_date FROM cooking WHERE cooked_date IS NOT NULL
             ) sub
-            GROUP BY item_date
+            WHERE item_date != ''
             ORDER BY item_date DESC
             LIMIT 7
         ''').fetchall()
