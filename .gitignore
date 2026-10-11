@@ -36,7 +36,7 @@ app/static/uploads/**/*
 
 work/
 
-# 実環境の固有値（IP・ユーザー名など）。リポジトリは公開なので文書には <サーバーのIP> などの記号で書く
+# 実環境の固有値はリポジトリの外（../garden-app-private/）に置く。誤って戻したときの保険
 docs/local-env.md
 
 # Claude Code の個人設定（共有設定は .claude/settings.json）
