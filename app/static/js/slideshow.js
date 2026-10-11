@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // DOMから画像データを収集
     const slides = Array.from(targets).map(function (img) {
         return {
-            src: img.src,
+            // カードはサムネイルなので、元画像の URL があればそちらを表示する
+            src: img.dataset.slideshowSrc || img.src,
             date: img.dataset.slideshowDate || '',
             days: img.dataset.slideshowDays || '',
             caption: img.dataset.slideshowCaption || ''
