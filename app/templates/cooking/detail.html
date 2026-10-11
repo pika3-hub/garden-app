@@ -34,7 +34,9 @@
             </div>
             <div class="card-photo-detail-img-wrapper">
                 {%- if item.image_path %}
-                <img src="{{ url_for('static', filename='uploads/' + item.image_path) }}"
+                <img src="{{ url_for('static', filename='uploads/' + (item.image_path | thumb_path)) }}"
+                     data-full="{{ url_for('static', filename='uploads/' + item.image_path) }}"
+                     onerror="this.onerror=null; this.src=this.dataset.full"
                      class="card-photo-img lightbox-target" alt="{{ item.title }}">
                 {%- else %}
                 <img src="{{ url_for('static', filename='images/card_cooking.webp') }}"

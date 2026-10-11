@@ -48,7 +48,9 @@
             </div>
             <div class="card-photo-detail-img-wrapper">
                 {%- if entry.image_path %}
-                <img src="{{ url_for('static', filename='uploads/' + entry.image_path) }}"
+                <img src="{{ url_for('static', filename='uploads/' + (entry.image_path | thumb_path)) }}"
+                     data-full="{{ url_for('static', filename='uploads/' + entry.image_path) }}"
+                     onerror="this.onerror=null; this.src=this.dataset.full"
                      class="card-photo-img lightbox-target" alt="{{ entry.title }}">
                 {%- elif entry.weather and weather_bg_images.get(entry.weather) %}
                 <img src="{{ url_for('static', filename='images/' + weather_bg_images[entry.weather]) }}"

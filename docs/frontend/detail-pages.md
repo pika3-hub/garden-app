@@ -26,7 +26,9 @@
 <div class="card mb-3 card-photo-detail card-bg-{type} {画像なし: card-no-image}">
     <!-- 画像あり時 -->
     <div class="card-photo-detail-img-wrapper">
-        <img src="..." class="card-photo-img lightbox-target" alt="...">
+        <img src="{サムネイル}" data-full="{元画像}"
+             onerror="this.onerror=null; this.src=this.dataset.full"
+             class="card-photo-img lightbox-target" alt="...">
         <!-- 日付オーバーレイ（植え付け詳細のみ） -->
         <div class="card-img-date-overlay">2026-01-01</div>
     </div>
@@ -57,6 +59,7 @@
 | タスク | なし（常にテキストのみ） | テキストのみ表示 |
 
 - 画像ありの場合のみ `lightbox-target` クラスを付与（既存 `lightbox.js` が動作）
+- 表示はサムネイル（`| thumb_path`）にし、元画像は `data-full` で渡す。`lightbox.js` は `data-full` があればそれを拡大表示する。スマホ写真の元画像は 1 枚 5〜10MB あり、表示だけならサムネイル（80〜200KB）で足りる（縦長の写真はスマホで少し甘くなるのを承知で採用）。サムネイルの無い GIF は `onerror` で元画像に戻す
 - 画像なし時（`card-no-image`）はテキストパネルのみ表示（フォールバック画像なし）。日記・料理は `card-no-image` を使わず、上表のフォールバック画像を表示する
 - 植え付け詳細の画像取得は Jinja2 の `namespace` パターン（`{% set ns = namespace(hero_image=None) %}`）でループ内から変数を書き出す
 

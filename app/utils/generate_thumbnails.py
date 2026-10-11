@@ -1,73 +1,45 @@
 """既存画像の一括サムネイル生成スクリプト
-実行: uv run python app/utils/generate_thumbnails.py
+
+uploads/ の各フォルダ（thumbs/ を除く）の画像から thumbs/{basename}.jpg を作る。
+既定では既にあるサムネイルは飛ばす。--force で全部作り直す（色プロファイルを
+引き継ぐ前に作られたサムネイルの作り直しなど）。
+
+実行: uv run python -m app.utils.generate_thumbnails [--force]
 """
+import argparse
 import os
-import sqlite3
-from PIL import Image, ImageOps
 
-DB_PATH = 'instance/garden.db'
-UPLOAD_FOLDER = 'app/static/uploads'
-THUMBNAIL_SIZE = (800, 600)
-THUMBNAIL_QUALITY = 80
+from app.utils.upload import make_thumbnail
 
-TABLES = [
-    ('crops', 'image_path'),
-    ('locations', 'image_path'),
-    ('diary_entries', 'image_path'),
-    ('harvests', 'image_path'),
-    ('planting_records', 'image_path'),
-]
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'uploads')
+IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp'}  # GIF はサムネイルを作らない
 
 
-def generate_thumbnail(image_path):
-    """1枚の画像からサムネイルを生成"""
-    original = os.path.join(UPLOAD_FOLDER, image_path)
-    if not os.path.exists(original):
-        print(f"  [SKIP] ファイルなし: {original}")
-        return False
-    parts = image_path.split('/', 1)
-    if len(parts) != 2:
-        print(f"  [SKIP] パス不正: {image_path}")
-        return False
-    folder, filename = parts
-    basename = os.path.splitext(filename)[0]
-    thumbs_dir = os.path.join(UPLOAD_FOLDER, folder, 'thumbs')
-    thumb_file = os.path.join(thumbs_dir, f"{basename}.jpg")
-    if os.path.exists(thumb_file):
-        print(f"  [SKIP] 既存あり: {thumb_file}")
-        return False
-    try:
-        img = Image.open(original)
-        if img.format == 'GIF':
-            print(f"  [SKIP] GIF: {original}")
-            return False
-        img = ImageOps.exif_transpose(img)
-        img.thumbnail(THUMBNAIL_SIZE, Image.LANCZOS)
-        if img.mode in ('RGBA', 'P', 'LA'):
-            img = img.convert('RGB')
-        os.makedirs(thumbs_dir, exist_ok=True)
-        img.save(thumb_file, format='JPEG', quality=THUMBNAIL_QUALITY, optimize=True)
-        print(f"  [OK] {image_path} → thumbs/{basename}.jpg")
-        return True
-    except Exception as e:
-        print(f"  [ERROR] {image_path}: {e}")
-        return False
+def regenerate(upload_folder, force=False):
+    """サムネイルを作り、作った枚数を返す"""
+    total = 0
+    for folder in sorted(os.listdir(upload_folder)):
+        folder_path = os.path.join(upload_folder, folder)
+        if not os.path.isdir(folder_path):
+            continue
+        for filename in sorted(os.listdir(folder_path)):
+            basename, ext = os.path.splitext(filename)
+            if ext.lower() not in IMAGE_EXTENSIONS:
+                continue
+            thumb_path = os.path.join(folder_path, 'thumbs', f"{basename}.jpg")
+            if os.path.exists(thumb_path) and not force:
+                continue
+            try:
+                if make_thumbnail(os.path.join(folder_path, filename), thumb_path):
+                    total += 1
+            except Exception as e:
+                print(f"  [ERROR] {folder}/{filename}: {e}")
+    return total
 
 
 if __name__ == '__main__':
-    conn = sqlite3.connect(DB_PATH)
-    total = 0
-    for table, col in TABLES:
-        try:
-            rows = conn.execute(
-                f"SELECT {col} FROM {table} WHERE {col} IS NOT NULL AND {col} != ''"
-            ).fetchall()
-        except sqlite3.OperationalError as e:
-            print(f"\n=== {table} [SKIP] テーブルなし: {e} ===")
-            continue
-        print(f"\n=== {table} ({len(rows)}件) ===")
-        for (path,) in rows:
-            if generate_thumbnail(path):
-                total += 1
-    conn.close()
-    print(f"\n完了: {total} 件のサムネイルを生成しました")
+    parser = argparse.ArgumentParser(description='既存画像のサムネイルを作る')
+    parser.add_argument('--force', action='store_true', help='既にあるサムネイルも作り直す')
+    args = parser.parse_args()
+    count = regenerate(UPLOAD_FOLDER, force=args.force)
+    print(f"完了: {count} 件のサムネイルを作りました（{UPLOAD_FOLDER}）")

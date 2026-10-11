@@ -17,21 +17,32 @@ def allowed_file(filename):
     return ext in current_app.config['ALLOWED_EXTENSIONS']
 
 
+def make_thumbnail(original_path, thumb_path):
+    """オリジナルからサムネイル（JPEG）を作る。作ったら True、GIF は作らず False
+
+    色プロファイル（iPhone の写真は Display P3）は引き継ぐ。捨てるとブラウザが
+    sRGB として表示し、元画像より色が薄く見える。
+    """
+    from PIL import Image, ImageOps
+    img = Image.open(original_path)
+    if img.format == 'GIF':
+        return False
+    icc_profile = img.info.get('icc_profile')
+    img = ImageOps.exif_transpose(img)
+    img.thumbnail(THUMBNAIL_SIZE, Image.LANCZOS)
+    if img.mode in ('RGBA', 'P', 'LA'):
+        img = img.convert('RGB')
+    os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
+    save_kwargs = {'icc_profile': icc_profile} if icc_profile else {}
+    img.save(thumb_path, format='JPEG', quality=THUMBNAIL_QUALITY, optimize=True, **save_kwargs)
+    return True
+
+
 def _save_thumbnail(original_path, upload_folder, folder, basename):
     """オリジナルからサムネイルを生成して保存。失敗しても例外を上げない"""
     try:
-        from PIL import Image, ImageOps
-        img = Image.open(original_path)
-        if img.format == 'GIF':
-            return  # GIF はスキップ
-        img = ImageOps.exif_transpose(img)
-        img.thumbnail(THUMBNAIL_SIZE, Image.LANCZOS)
-        if img.mode in ('RGBA', 'P', 'LA'):
-            img = img.convert('RGB')
-        thumbs_dir = os.path.join(upload_folder, folder, 'thumbs')
-        os.makedirs(thumbs_dir, exist_ok=True)
-        thumb_path = os.path.join(thumbs_dir, f"{basename}.jpg")
-        img.save(thumb_path, format='JPEG', quality=THUMBNAIL_QUALITY, optimize=True)
+        thumb_path = os.path.join(upload_folder, folder, 'thumbs', f"{basename}.jpg")
+        make_thumbnail(original_path, thumb_path)
     except Exception:
         pass  # サムネイル生成失敗はサイレントに無視（オリジナルは保存済み）
 

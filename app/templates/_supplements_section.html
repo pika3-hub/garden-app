@@ -156,7 +156,9 @@
                 <div class="supplement-text markdown-body">{{ s.content|markdown }}</div>
             {% elif s.supplement_type == 'image' %}
                 <div class="supplement-image">
-                    <img src="{{ url_for('static', filename='uploads/' + s.content) }}"
+                    <img src="{{ url_for('static', filename='uploads/' + (s.content | thumb_path)) }}"
+                         data-full="{{ url_for('static', filename='uploads/' + s.content) }}"
+                         onerror="this.onerror=null; this.src=this.dataset.full"
                          class="img-fluid rounded lightbox-target" alt="{{ s.title or '補足画像' }}"
                          style="max-height: 300px; object-fit: contain;">
                 </div>
