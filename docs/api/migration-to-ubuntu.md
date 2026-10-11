@@ -214,3 +214,7 @@ sudo systemctl restart garden-app
 ```
 
 起動時にマイグレーションが自動で走るので、更新前にバックアップ（手順 7 のコマンドを手で実行）を取る。
+
+- 手で取るバックアップは、曜日ごとのファイルを上書きしないよう別名にする: `sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`
+- 再起動の直後（1秒ほど）は接続できない。`curl` で確かめるときは少し待つ（`journalctl -u garden-app` の `Serving on` が出ていれば起動済み）
+- 停止のたびに `status=143` / `Failed with result 'exit-code'` が記録されるが、SIGTERM で終わったという意味で、異常ではない
