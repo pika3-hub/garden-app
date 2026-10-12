@@ -6,6 +6,7 @@
 from flask import g, request
 
 from app.api import images as img
+from app.api import urls as api_urls
 from app.api.errors import ApiError, detail, ok, validation_error
 from app.api.payload import parse_request
 from app.api.serialize import image_url, plain, web_url
@@ -108,10 +109,14 @@ class Resource:
             data['image_url'] = image_url(row.get('image_path'))
         data.update(self.describe(row))
         if self.supplement_type:
+            supplements = Supplement.get_by_entity(self.supplement_type, row['id'])
             data['extra_images'] = [
                 {'supplement_id': s['id'], 'image_url': image_url(s['content'])}
-                for s in Supplement.get_by_entity(self.supplement_type, row['id'])
-                if s['supplement_type'] == 'image'
+                for s in supplements if s['supplement_type'] == 'image'
+            ]
+            data['extra_urls'] = [
+                {'supplement_id': s['id'], 'url': s['content'], 'title': s['ogp_title']}
+                for s in supplements if s['supplement_type'] == 'url'
             ]
         data['created_at'] = plain(row.get('created_at'))
         data['updated_at'] = plain(row.get('updated_at'))
@@ -128,12 +133,13 @@ def load_or_404(res, obj_id):
 
 
 def _validate_body(res, payload, files, row):
-    """本文を検証して (merged, inputs, reserved) を返す。誤りがあれば 422"""
+    """本文を検証して (merged, inputs, urls, reserved) を返す。誤りがあれば 422"""
     values, errors = validate_payload(
         res.fields, payload, creating=row is None,
-        reserved=(*img.IMAGE_KEYS, *res.reserved_keys),
+        reserved=(*img.IMAGE_KEYS, *api_urls.URL_KEYS, *res.reserved_keys),
         read_only=(*res.COMMON_READ_ONLY, *res.read_only))
     inputs = img.collect_image_inputs(payload, files, errors, res)
+    urls = api_urls.collect_urls(payload, errors, res)
     reserved = res.parse_reserved(payload, row, errors)
     merged = {**(res.to_api(row) if row else {}), **values}
     if not errors:
@@ -141,7 +147,7 @@ def _validate_body(res, payload, files, row):
     if errors:
         raise validation_error(errors)
     img.check_files(inputs)
-    return merged, inputs, reserved
+    return merged, inputs, urls, reserved
 
 
 def list_items(res):
@@ -198,7 +204,7 @@ def get_item(res, obj_id):
 
 def create_item(res):
     payload, files = parse_request(('image', 'extra_images'))
-    values, inputs, reserved = _validate_body(res, payload, files, None)
+    values, inputs, urls, reserved = _validate_body(res, payload, files, None)
     with img.SavedFiles() as saved:
         model_data = res.to_model(values)
         if res.image_folder:
@@ -210,6 +216,7 @@ def create_item(res):
         if res.image_folder:
             img.finish_main_image(inputs, res.usage_type, obj_id, model_data['image_path'], None)
         img.add_extra_images(inputs, saved, res.supplement_type, obj_id)
+    api_urls.add_extra_urls(urls, res.supplement_type, obj_id)
     return ok(res.serialize(res.fetch(obj_id)), 201)
 
 
@@ -217,7 +224,7 @@ def patch_item(res, obj_id):
     row = load_or_404(res, obj_id)
     g.api_target_id = obj_id
     payload, files = parse_request(('image', 'extra_images'))
-    merged, inputs, reserved = _validate_body(res, payload, files, row)
+    merged, inputs, urls, reserved = _validate_body(res, payload, files, row)
     with img.SavedFiles() as saved:
         model_data = res.to_model(merged)
         old_path = row.get('image_path') if res.image_folder else None
@@ -229,6 +236,7 @@ def patch_item(res, obj_id):
         if res.image_folder:
             img.finish_main_image(inputs, res.usage_type, obj_id, model_data['image_path'], old_path)
         img.add_extra_images(inputs, saved, res.supplement_type, obj_id)
+    api_urls.add_extra_urls(urls, res.supplement_type, obj_id)
     return ok(res.serialize(res.fetch(obj_id)))
 
 

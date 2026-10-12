@@ -14,7 +14,7 @@
 
 ### 主な機能
 - **作物管理:** 作物（トマト、なすなど）のCRUD。種類・アイコン・イメージカラー・画像・Markdownメモを持つ
-- **AIメモ下書き:** 作物・品種フォームの「✨ AIで下書き」から Claude API でメモの下書き（設定画面の地域・栽培環境を基準にした時期、特性、栽培のコツ）を生成し、モーダルで確認して置き換え／追記できる。「Webで調べる」（品種は既定ON）で Web 検索を併用し参考URLを付与（`web_search_20260209` は本文に citations が付かないことが多いため、無い場合は検索結果の URL を最大5件付与）。APIキーは `.env` の `ANTHROPIC_API_KEY`、モデルは `ANTHROPIC_MODEL`（`claude-opus-5-5` 既定 / `claude-sonnet-5-5`）。地域は設定画面（`/settings/`）で `app_settings` テーブルに保存。実装は `app/utils/ai_notes.py` + `settings_routes.py` + `_ai_notes_button.html` / `_ai_notes_modal.html` / `ai-notes.js`。Hermes から作物・品種を登録するときも、`hermes-skill/SKILL.md` の指示で同じ形式のメモを書かせている（地域は `GET /api/v1/meta` の `region`）
+- **AIメモ下書き:** 作物・品種フォームの「✨ AIで下書き」から Claude API でメモの下書き（設定画面の地域・栽培環境を基準にした時期、特性、栽培のコツ）を生成し、モーダルで確認して置き換え／追記できる。「Webで調べる」（品種は既定ON）で Web 検索を併用し参考URLを付与（`web_search_20260209` は本文に citations が付かないことが多いため、無い場合は検索結果の URL を最大5件付与）。APIキーは `.env` の `ANTHROPIC_API_KEY`、モデルは `ANTHROPIC_MODEL`（`claude-opus-5-5` 既定 / `claude-sonnet-5-5`）。地域は設定画面（`/settings/`）で `app_settings` テーブルに保存。実装は `app/utils/ai_notes.py` + `settings_routes.py` + `_ai_notes_button.html` / `_ai_notes_modal.html` / `ai-notes.js`。Hermes から作物・品種を登録するときも、`hermes-skill/SKILL.md` の指示で同じ形式のメモを書かせている（地域は `GET /api/v1/meta` の `region`。参考URLは本文に残しつつ `extra_urls` で補足情報（URL）にも登録させる）
 - **品種管理:** 作物に紐づく品種（アイコ、桃太郎など）のCRUD。1作物：多品種の関係。アイコン・イメージカラー・画像は nullable で、未設定時は親作物から継承
 - **場所管理:** 畑やプランターの場所のCRUD、画像サポート付き
 - **キャンバスエディター:** バニラJSベースのビジュアル菜園レイアウトデザイナー（作物アイコンのドラッグ&ドロップ配置、背景画像選択）。植え付け登録時に見取り図配置ページへ自動遷移（スキップ可能）
@@ -33,7 +33,7 @@
 - **補足情報:** 作物・品種・場所・日記・タスク・収穫・料理の詳細画面に補足テキスト、追加画像、外部URL（OGP情報の自動取得付き）、YouTube動画埋め込みを複数添付可能。共通テンプレート `_supplements_section.html` + `supplements` テーブルで管理
 - **写真プール:** モバイルで撮影した複数写真を先に一括アップロードし、後から各写真を選んで作物・品種・場所・栽培記録・収穫・料理・日記・補足情報の登録/編集画面へ送り込める機能（`/photo_pool/`）。プール写真は `uploads/photo_pool/` に独立保存し、登録時に対象エンティティのフォルダへコピー（使い回し可）。使用回数は `photo_pool_usages` 中間テーブルで追跡。各登録/編集画面の画像フィールドからは「写真プールから選択」ボタンで共通モーダル（`_photo_pool_picker_modal.html`）を開いて選択可能（ローカルファイル選択と排他UI、使用状況フィルター付き）
 - **料理記録:** 収穫した野菜を使った料理のCRUD（`/cooking/`）。タイトル・カテゴリ・調理日（必須）・メモ・画像を記録。作物・品種・植え付け・収穫との多対多関連付け（`cooking_relations` テーブル）。補足情報対応（`entity_type='cooking'`）。メニュー順は収穫の直後
-- **外部API（エージェント連携）:** `/api/v1/*` の JSON API で作物・品種・場所・植え付け・栽培記録・収穫・料理・日記・タスク・写真プールを参照・作成・部分更新できる（削除なし）。Bearer トークン（`.env` の `API_TOKEN`、32文字以上）必須。`server.py` が Web とは別ポート（`API_PORT`、既定5001）で API 専用アプリ `create_api_app()` を起動し、エージェントからは画面の URL に届かないようにしている（`run.py` では起動しない）。実装は `app/api/`（`Resource` 基底クラス＋リソースごとの定義）。仕様は `docs/api/README.md`、エージェント用スキルは `docs/api/hermes-skill/SKILL.md`、Ubuntu への移設手順は `docs/api/migration-to-ubuntu.md`。ネットワーク・画像まわりを変えるときは API 側（`app/api/images.py`）も確認する
+- **外部API（エージェント連携）:** `/api/v1/*` の JSON API で作物・品種・場所・植え付け・栽培記録・収穫・料理・日記・タスク・写真プールを参照・作成・部分更新できる（削除なし）。補足情報は画像（`extra_images`）と URL（`extra_urls`、OGP はインターネット上のアドレスにだけ取りに行く）を追加できる。Bearer トークン（`.env` の `API_TOKEN`、32文字以上）必須。`server.py` が Web とは別ポート（`API_PORT`、既定5001）で API 専用アプリ `create_api_app()` を起動し、エージェントからは画面の URL に届かないようにしている（`run.py` では起動しない）。実装は `app/api/`（`Resource` 基底クラス＋リソースごとの定義）。仕様は `docs/api/README.md`、エージェント用スキルは `docs/api/hermes-skill/SKILL.md`、Ubuntu への移設手順は `docs/api/migration-to-ubuntu.md`。ネットワーク・画像まわりを変えるときは API 側（`app/api/images.py`）も確認する
 
 ---
 
