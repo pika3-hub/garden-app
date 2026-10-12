@@ -87,7 +87,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 | 作物詳細 | 編集、削除 |
 | 場所詳細 | 編集、削除 |
 | 植え付け詳細(active) | 編集、削除（「栽培記録を追加」「収穫を記録」「栽培を終了（モーダル）」はヒーローカードのテキストパネル内に配置） |
-| 植え付け詳細(harvested) | 編集、削除 |
+| 植え付け詳細(ended) | 編集、削除 |
 | 収穫詳細 | 編集、削除 |
 | 日記詳細 | 編集、削除 |
 | タスク詳細 | 編集、削除 |
@@ -231,7 +231,7 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 
 `_related_plantings_card.html` はオプション変数 `related_plantings_title` でヘッダーテキストを変更可能（デフォルト: 「関連する植え付け」、作物詳細では「栽培中の植え付け」）。
 
-作物詳細・品種詳細・場所詳細では、収穫カードの後に「栽培終了した植え付け」カードを同テンプレートで再表示する（`related_plantings` 変数を `ended_plantings` に再 `{% set %}` してから再 `include`）。データは `Planting.get_ended_by_crop/get_ended_by_variety/get_ended_by_location`（`status='harvested'`、`end_date DESC` で最大5件、終了日なしは最後）。
+作物詳細・品種詳細・場所詳細では、収穫カードの後に「栽培終了した植え付け」カードを同テンプレートで再表示する（`related_plantings` 変数を `ended_plantings` に再 `{% set %}` してから再 `include`）。データは `Planting.get_ended_by_crop/get_ended_by_variety/get_ended_by_location`（`status='ended'`、`end_date DESC` で最大5件、終了日なしは最後）。
 
 ## 詳細画面ナビゲーション
 

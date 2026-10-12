@@ -28,7 +28,7 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('plantings.planting_update_harvested', location_crop_id=planting.id) }}">
+                <form method="POST" action="{{ url_for('plantings.planting_update_ended', location_crop_id=planting.id) }}">
                     <div class="mb-3">
                         <label for="end_date" class="form-label">栽培終了日</label>
                         <input type="date" id="end_date" name="end_date" class="form-control"

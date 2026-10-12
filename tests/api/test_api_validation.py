@@ -33,7 +33,7 @@ def test_check_value_accepts(field, value, expected):
     (Field('decimal', min_value=0), -1, '0 以上'),
     (Field('date'), '2026/10/09', 'YYYY-MM-DD'),
     (Field('date'), '2026-02-30', 'YYYY-MM-DD'),  # 実在しない日付
-    (Field('enum', choices=['active', 'harvested']), 'done', 'active, harvested'),
+    (Field('enum', choices=['active', 'ended']), 'done', 'active, ended'),
     (Field('enum', choices=[f'icon_{i}.png' for i in range(30)]), 'x.png', 'GET /api/v1/meta'),
     (Field('color'), 'green', '#RRGGBB'),
     (Field('str', required=True), None, '必須'),

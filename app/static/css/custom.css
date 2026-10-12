@@ -333,7 +333,7 @@ a.dashboard-stat-link .card-body {
 .badge.bg-secondary { background-color: var(--ink-muted)  !important; }
 
 .badge-status-active   { background-color: var(--forest);    color: #F0EBE0; }
-.badge-status-harvested{ background-color: var(--amber);     color: #F0EBE0; }
+.badge-status-ended   { background-color: var(--amber);     color: #F0EBE0; }
 .badge-status-removed  { background-color: var(--ink-muted); color: #F0EBE0; }
 
 /* ── Badge Filters ──────────────────────────────────────── */

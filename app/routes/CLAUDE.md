@@ -25,7 +25,7 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 
 `settings` Blueprint は設定画面に加え、作物・品種フォーム共通の AI メモ下書き API `POST /settings/ai/notes-draft`（JSON）を持つ。リクエストは `{"mode": "crop", "crop_name", "crop_type", "use_web_search"}` または `{"mode": "variety", "crop_id", "variety_name", "use_web_search"}`。成功 200 `{"ok": true, "markdown"}`、入力不備 400（地域未設定は `need_settings: true`）、生成失敗 502。Claude API 呼び出しは `app/utils/ai_notes.py` に集約している。
 
-植え付け（plantings）は `?status=active|harvested|all` でタブフィルター。
+植え付け（plantings）は `?status=active|ended|all` でタブフィルター。
 
 画面上の用語は URL パスで統一する:
 - `/plantings/` 直下 → **「植え付け一覧」「植え付け詳細」**
@@ -40,8 +40,8 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 | `plantings.place` | `/plantings/<location_crop_id>/place` | 見取り図配置（植え付け登録後に遷移） |
 | `plantings.planting_edit` | GET `/plantings/<location_crop_id>/edit` | 植え付け編集フォーム（active時） |
 | `plantings.planting_update` | POST `/plantings/<location_crop_id>/update` | 植え付け更新処理（active時） |
-| `plantings.planting_edit_harvested` | GET `/plantings/<location_crop_id>/edit-harvested` | 植え付け編集フォーム（harvested時） |
-| `plantings.planting_update_harvested` | POST `/plantings/<location_crop_id>/update-harvested` | 植え付け更新処理（harvested時） |
+| `plantings.planting_edit_ended` | GET `/plantings/<location_crop_id>/edit-ended` | 植え付け編集フォーム（ended時） |
+| `plantings.planting_update_ended` | POST `/plantings/<location_crop_id>/update-ended` | 植え付け更新処理（ended時） |
 | `plantings.new` | `/plantings/new/<location_crop_id>` | 栽培記録登録 |
 | `plantings.bulk_new` | GET `/plantings/bulk/new`（`?location_crop_id=` 複数指定で行入力ステップへ） | 栽培記録の一括登録（植え付け選択→行入力の2ステップ） |
 | `plantings.bulk_create` | POST `/plantings/bulk/create` | 栽培記録の一括登録処理 |
@@ -62,7 +62,7 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 - `url_for('plantings.end_cultivation', location_crop_id=1)` → `/plantings/1/end`（POST）
 - `url_for('diary.detail', diary_id=1)` → `/diary/1`
 
-`location_routes.py` にも植え付けに関する操作系エンドポイント（`POST /locations/<id>/plant`（旧・1ステップ植え付け、現在は未使用のレガシー）、`POST /locations/<id>/complete-harvest/<location_crop_id>`、`POST /locations/<id>/remove/<location_crop_id>`、および見取り図系 `/locations/<id>/canvas*`）があるが、見取り図系は `app/static/js/CLAUDE.md` を参照。
+`location_routes.py` にも植え付けに関する操作系エンドポイント（`POST /locations/<id>/plant`（旧・1ステップ植え付け、現在は未使用のレガシー）、`POST /locations/<id>/remove/<location_crop_id>`、および見取り図系 `/locations/<id>/canvas*`）があるが、見取り図系は `app/static/js/CLAUDE.md` を参照。
 
 ## Blueprint規約
 

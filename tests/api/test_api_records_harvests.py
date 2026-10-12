@@ -80,7 +80,7 @@ def test_harvest_validation(api, plantings):
 def test_cannot_create_for_ended_planting(api, plantings, sql, path, body):
     """画面と同じく、栽培終了した植え付けには新しく作成できない（既存の記録は修正できる）"""
     created = api.post(path, json={'planting_id': plantings['by_crop'], **body}).get_json()['data']
-    sql("UPDATE plantings SET status = 'harvested', end_date = '2026-08-01' WHERE id = ?", (plantings['by_crop'],))
+    sql("UPDATE plantings SET status = 'ended', end_date = '2026-08-01' WHERE id = ?", (plantings['by_crop'],))
 
     res = api.post(path, json={'planting_id': plantings['by_crop'], **body})
     assert res.status_code == 422

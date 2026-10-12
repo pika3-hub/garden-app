@@ -84,7 +84,7 @@
 - 場所詳細・植え付け詳細の両方で利用
 - 場所詳細では履歴の日付ナビゲーション（前へ/次へボタン＋キーボード左右矢印）が利用可能
 - 日付データは `/locations/<id>/canvas/history/range` API から取得
-- 位置情報の取得元: active作物は `locations.canvas_data`（複数配置対応）、harvested作物は `plantings.canvas_snapshot`
+- 位置情報の取得元: active作物は `locations.canvas_data`（複数配置対応）、ended作物は `plantings.canvas_snapshot`
 
 ### レスポンシブ対応（重要）
 

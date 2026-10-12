@@ -46,7 +46,7 @@ class PlantingResource(Resource):
 
     def save(self, obj_id, model_data, row):
         Planting.update_all(obj_id, model_data)
-        if row['status'] == 'harvested':
+        if row['status'] == 'ended':
             Planting.update_end_date_notes(obj_id, model_data['end_date'], model_data['notes'])
 
     def check(self, values, merged, row, errors):
@@ -69,7 +69,7 @@ class PlantingResource(Resource):
         if 'end_date' in values:
             if row is None:
                 errors.append(detail('end_date', '作成時は指定できません。栽培終了は POST /api/v1/plantings/{id}/end で行ってください'))
-            elif row['status'] != 'harvested':
+            elif row['status'] != 'ended':
                 errors.append(detail('end_date', '栽培中の植え付けの終了日は変更できません。'
                                                  '栽培終了は POST /api/v1/plantings/{id}/end で行ってください'))
 

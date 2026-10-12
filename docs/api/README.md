@@ -134,11 +134,11 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | planted_date | 日付 | |
 | quantity | 整数 ≥0 | 株数 |
 | notes | 文字列 | |
-| end_date | 日付 | 栽培終了済み（harvested）のときだけ PATCH で修正可 |
+| end_date | 日付 | 栽培終了済み（ended）のときだけ PATCH で修正可 |
 
 - `status` / `position_x` / `position_y` / `canvas_snapshot` は読み取り専用
 - PATCH で `variety_id` を送ると `crop_id` は自動で外れる（逆も同じ）
-- 検索条件: `status`（active / harvested / removed / all、**既定 active**）、`crop_id`（品種経由の植え付けも含む）、`variety_id`、`location_id`、`q`（作物名・品種名・場所名）
+- 検索条件: `status`（active / ended / removed / all、**既定 active**）、`crop_id`（品種経由の植え付けも含む）、`variety_id`、`location_id`、`q`（作物名・品種名・場所名）
 - 詳細に `status`、`display_name`、`crop`、`variety`、`location`、`days_from_planting`
 - **栽培終了**: `POST /plantings/{id}/end`（本文 `{"end_date": "YYYY-MM-DD"}`、省略時は今日）。見取り図に配置されていればスナップショットを残して配置を外す（画面の「栽培終了」と同じ処理）。active 以外は 422
 

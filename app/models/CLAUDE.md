@@ -80,8 +80,8 @@
 | crop_id | INTEGER | 作物ID（FK → crops、ON DELETE CASCADE、**nullable**） |
 | variety_id | INTEGER | 品種ID（FK → varieties、ON DELETE CASCADE、**nullable**） |
 | planted_date | DATE | 植え付け日 |
-| end_date | DATE | 栽培終了日（harvested 時に自動セット、任意） |
-| status | VARCHAR(50) | 状態（active/harvested/removed、デフォルト `active`） |
+| end_date | DATE | 栽培終了日（ended 時に自動セット、任意） |
+| status | VARCHAR(50) | 状態（active/ended/removed、デフォルト `active`） |
 | position_x | DECIMAL(10,2) | キャンバスX座標 |
 | position_y | DECIMAL(10,2) | キャンバスY座標 |
 | canvas_snapshot | TEXT | 栽培終了時の見取り図スナップショット（version 2.0 JSON） |

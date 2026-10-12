@@ -137,7 +137,7 @@ class Planting:
             FROM plantings lc
             JOIN locations l ON lc.location_id = l.id
             {_CV_JOIN}
-            WHERE cv.effective_crop_id = ? AND lc.status = 'harvested'
+            WHERE cv.effective_crop_id = ? AND lc.status = 'ended'
             ORDER BY lc.end_date DESC, lc.planted_date DESC, lc.id DESC
             LIMIT ?
         '''
@@ -157,7 +157,7 @@ class Planting:
             FROM plantings lc
             JOIN locations l ON lc.location_id = l.id
             {_CV_JOIN}
-            WHERE lc.variety_id = ? AND lc.status = 'harvested'
+            WHERE lc.variety_id = ? AND lc.status = 'ended'
             ORDER BY lc.end_date DESC, lc.planted_date DESC, lc.id DESC
             LIMIT ?
         '''
@@ -177,7 +177,7 @@ class Planting:
                     ORDER BY pr.recorded_at DESC, pr.created_at DESC LIMIT 1) as latest_record_image
             FROM plantings lc
             {_CV_JOIN}
-            WHERE lc.location_id = ? AND lc.status = 'harvested'
+            WHERE lc.location_id = ? AND lc.status = 'ended'
             ORDER BY lc.end_date DESC, lc.planted_date DESC, lc.id DESC
             LIMIT ?
         '''
@@ -268,11 +268,11 @@ class Planting:
         db.commit()
 
     @staticmethod
-    def harvest(location_crop_id, end_date=None, canvas_snapshot=None):
-        """収穫済みに変更"""
+    def mark_ended(location_crop_id, end_date=None, canvas_snapshot=None):
+        """栽培終了（status=ended）に変更"""
         db = get_db()
         db.execute(
-            '''UPDATE plantings SET status = 'harvested', end_date = ?,
+            '''UPDATE plantings SET status = 'ended', end_date = ?,
                canvas_snapshot = ?, updated_at = ? WHERE id = ?''',
             (end_date or get_jst_now()[:10],
              json.dumps(canvas_snapshot, ensure_ascii=False) if canvas_snapshot else None,
@@ -290,12 +290,12 @@ class Planting:
         if canvas_data and 'placements' in canvas_data:
             if any(p.get('locationCropId') == location_crop_id for p in canvas_data['placements']):
                 snapshot = canvas_data
-        Planting.harvest(location_crop_id, end_date=end_date, canvas_snapshot=snapshot)
+        Planting.mark_ended(location_crop_id, end_date=end_date, canvas_snapshot=snapshot)
         Location.remove_from_canvas(location_id, location_crop_id)
 
     @staticmethod
     def update_end_date_notes(location_crop_id, end_date, notes):
-        """harvested 状態の植え付けの終了日・メモを更新"""
+        """ended 状態の植え付けの終了日・メモを更新"""
         db = get_db()
         db.execute(
             '''UPDATE plantings SET end_date = ?, notes = ?, updated_at = ?
@@ -630,7 +630,7 @@ class Planting:
                       status, canvas_snapshot
                FROM plantings
                WHERE location_id = ? AND planted_date IS NOT NULL
-                 AND NOT (end_date IS NULL AND status = 'harvested')''',
+                 AND NOT (end_date IS NULL AND status = 'ended')''',
             (location_id,)
         ).fetchall()
 
@@ -687,7 +687,7 @@ class Planting:
                 {_CV_JOIN}
                 WHERE lc.location_id = ? AND lc.planted_date IS NOT NULL
                   AND DATE(lc.planted_date) <= ?
-                  AND NOT (lc.end_date IS NULL AND lc.status = 'harvested')
+                  AND NOT (lc.end_date IS NULL AND lc.status = 'ended')
                   AND (lc.end_date IS NULL OR DATE(lc.end_date) >= ?)''',
             (location_id, target_date, target_date)
         ).fetchall()

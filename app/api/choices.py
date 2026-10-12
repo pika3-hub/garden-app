@@ -5,7 +5,7 @@ from app.database import get_db
 
 _STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 
-PLANTING_STATUSES = ['active', 'harvested', 'removed']
+PLANTING_STATUSES = ['active', 'ended', 'removed']
 TASK_STATUSES = ['pending', 'in_progress', 'completed']
 SUN_EXPOSURES = ['全日', '半日', '日陰']                       # locations/form.html と同じ
 WEATHERS = ['晴れ', '曇り', '雨', '雪', '晴れ時々曇り', '曇り時々雨']  # diary/form.html と同じ
