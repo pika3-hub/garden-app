@@ -83,6 +83,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | GET | `/{res}/{id}` | 詳細 |
 | POST | `/{res}` | 作成 |
 | PATCH | `/{res}/{id}` | 部分更新（送った項目だけ変わる） |
+| GET | `/{res}/{id}/image` | 本体画像のファイル（`?size=thumb` でサムネイル）。本体画像を持つリソースのみ（[6章](#画像の取得)） |
 | POST | `/{res}/{id}/images` | 追加画像の添付（URL の追加は PATCH の `extra_urls`、[6章](#追加-url補足情報の-url)）（`extra_images` ファイル、または JSON `{"extra_photo_pool_ids": [...]}`）。本体画像・補足情報を持つリソースのみ |
 
 知らない検索条件は 422。
@@ -210,6 +211,15 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 - 1枚 `API_MAX_IMAGE_MB`（既定20MB）まで、5000万画素まで、1リクエスト20枚まで、合計100MBまで
 - 写真プールから使った場合は使用履歴（`photo_pool_usages`）に記録される
 
+### 画像の取得
+
+`GET /{res}/{id}/image`（作物・品種・場所・栽培記録・収穫・料理・日記）と `GET /photos/{id}/image` は、そのデータの本体画像（写真プールは写真そのもの）をファイルで返す。`image_url` は Web 画面（5000番）の URL で Hermes からは開けないため、エージェントが画像を見るときはこちらを使う。
+
+- `?size=thumb` で長辺 800×600 以内の JPEG サムネイル。サムネイルが無い画像（GIF など）は元画像を返す。省略時（`original`）は元画像
+- 返すのはそのデータに登録された画像だけ（パスは指定できない）。`Content-Type` は画像の形式に合わせる
+- 画像が未登録なら 404 `no_image`、ファイルが見つからなければ 404 `image_file_missing`。`size` の誤りや知らない条件は 422
+- 追加画像（補足情報の画像）を取得する API はない
+
 ### 追加 URL（補足情報の URL）
 
 補足情報を持つリソース（作物・品種・場所・収穫・料理・日記・タスク）は、POST / PATCH の本文に `"extra_urls": ["https://…", …]` を入れると、URL の補足情報として追加される（画面の補足情報「URL」と同じ。OGP のタイトル・説明・画像を保存時に自動取得）。
@@ -239,6 +249,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | POST | `/photos` | 写真プールへ一括アップロード（multipart `files` 複数、任意で `data` に `{"notes": "..."}`）。EXIF の撮影日時を取り込む |
 | GET | `/photos?unused=true` | 写真プールの一覧（`unused=true` で未使用のみ） |
 | GET | `/photos/{id}` | 詳細（`usages` 付き） |
+| GET | `/photos/{id}/image` | 写真のファイル（`?size=thumb` でサムネイル、[6章](#画像の取得)） |
 
 ## 9. 監査ログ
 
