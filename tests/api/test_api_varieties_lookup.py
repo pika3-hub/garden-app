@@ -85,7 +85,7 @@ def test_meta(api, tomato):
     data = api.get('/api/v1/meta').get_json()['data']
     assert data['crop_types'] == ['ナス科']
     assert data['task_statuses'] == ['pending', 'in_progress', 'completed']
-    assert data['planting_statuses'] == ['active', 'harvested', 'removed']
+    assert data['planting_statuses'] == ['active', 'ended', 'removed']
     assert data['sun_exposures'] == ['全日', '半日', '日陰']
     assert len(data['crop_icons']) > 0
     assert data['relation_keys']['cooking_records'] == ['crop_ids', 'variety_ids', 'planting_ids', 'harvest_ids']

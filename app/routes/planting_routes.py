@@ -448,21 +448,21 @@ def delete(record_id):
     return redirect(url_for('plantings.index'))
 
 
-@bp.route('/<int:location_crop_id>/edit-harvested')
-def planting_edit_harvested(location_crop_id):
+@bp.route('/<int:location_crop_id>/edit-ended')
+def planting_edit_ended(location_crop_id):
     """栽培終了済み植え付けの限定編集フォーム"""
     planting = Planting.get_by_id(location_crop_id)
-    if not planting or planting['status'] != 'harvested':
+    if not planting or planting['status'] != 'ended':
         flash('対象の植え付けが見つかりません', 'danger')
         return redirect(url_for('plantings.index'))
-    return render_template('plantings/harvested_edit.html', planting=planting)
+    return render_template('plantings/ended_edit.html', planting=planting)
 
 
-@bp.route('/<int:location_crop_id>/update-harvested', methods=['POST'])
-def planting_update_harvested(location_crop_id):
+@bp.route('/<int:location_crop_id>/update-ended', methods=['POST'])
+def planting_update_ended(location_crop_id):
     """栽培終了済み植え付けの限定更新処理"""
     planting = Planting.get_by_id(location_crop_id)
-    if not planting or planting['status'] != 'harvested':
+    if not planting or planting['status'] != 'ended':
         flash('対象の植え付けが見つかりません', 'danger')
         return redirect(url_for('plantings.index'))
     end_date = request.form.get('end_date') or None
@@ -473,7 +473,7 @@ def planting_update_harvested(location_crop_id):
         return redirect(url_for('plantings.detail', location_crop_id=location_crop_id))
     except Exception as e:
         flash(f'エラーが発生しました: {str(e)}', 'danger')
-        return redirect(url_for('plantings.planting_edit_harvested', location_crop_id=location_crop_id))
+        return redirect(url_for('plantings.planting_edit_ended', location_crop_id=location_crop_id))
 
 
 @bp.route('/<int:location_crop_id>/place')

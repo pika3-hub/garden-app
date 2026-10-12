@@ -51,7 +51,7 @@ def test_create_requires_exactly_one_of_crop_or_variety(api, base, payload, fiel
 
 def test_create_rejects_status_and_end_date(api, base):
     res = api.post('/api/v1/plantings', json={'location_id': base['location'], 'crop_id': base['crop'],
-                                              'status': 'harvested'})
+                                              'status': 'ended'})
     assert res.status_code == 422
     res = api.post('/api/v1/plantings', json={'location_id': base['location'], 'crop_id': base['crop'],
                                               'end_date': '2026-10-01'})
@@ -75,7 +75,7 @@ def test_end_planting(api, base, sql):
     res = api.post(f'/api/v1/plantings/{planting["id"]}/end', json={'end_date': '2026-10-01'})
     assert res.status_code == 200
     data = res.get_json()['data']
-    assert data['status'] == 'harvested'
+    assert data['status'] == 'ended'
     assert data['end_date'] == '2026-10-01'
     canvas_now = json.loads(sql('SELECT canvas_data FROM locations WHERE id = ?', (base['location'],))[0]['canvas_data'])
     assert canvas_now['placements'] == []
@@ -90,7 +90,7 @@ def test_end_planting_defaults_to_today(api, base):
     assert data['end_date'] is not None
 
 
-def test_patch_end_date_only_when_harvested(api, base):
+def test_patch_end_date_only_when_ended(api, base):
     planting = _plant(api, location_id=base['location'], crop_id=base['crop'])
     res = api.patch(f'/api/v1/plantings/{planting["id"]}', json={'end_date': '2026-10-02'})
     assert res.status_code == 422

@@ -38,7 +38,7 @@ def test_location_lists_active_plantings(api, sql):
     crop_id = sql("INSERT INTO crops (name, crop_type) VALUES ('トマト', 'ナス科')")
     planting_id = sql("INSERT INTO plantings (location_id, crop_id, planted_date) VALUES (?, ?, '2026-05-01')",
                       (location['id'], crop_id))
-    sql("INSERT INTO plantings (location_id, crop_id, status) VALUES (?, ?, 'harvested')",
+    sql("INSERT INTO plantings (location_id, crop_id, status) VALUES (?, ?, 'ended')",
         (location['id'], crop_id))
     data = api.get(f'/api/v1/locations/{location["id"]}').get_json()['data']
     assert data['active_plantings'] == [

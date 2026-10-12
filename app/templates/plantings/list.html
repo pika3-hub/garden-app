@@ -28,8 +28,8 @@
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {% if current_status == 'harvested' %}active{% endif %}"
-           href="{{ url_for('plantings.index', status='harvested') }}">
+        <a class="nav-link {% if current_status == 'ended' %}active{% endif %}"
+           href="{{ url_for('plantings.index', status='ended') }}">
             <i class="bi bi-check-circle"></i> 栽培終了
         </a>
     </li>
@@ -118,7 +118,7 @@
                     {% if crop.days_from_planting is not none %}
                     <span class="badge bg-success">{{ crop.days_from_planting }}日目</span>
                     {% endif %}
-                    {% elif crop.status == 'harvested' %}
+                    {% elif crop.status == 'ended' %}
                     <span class="badge bg-secondary"><i class="bi bi-check-circle"></i> 栽培終了</span>
                     {% elif crop.status == 'removed' %}
                     <span class="badge bg-danger"><i class="bi bi-x-circle"></i> 削除済み</span>
@@ -143,7 +143,7 @@
     <i class="bi bi-info-circle"></i>
     {% if current_status == 'active' %}
     現在栽培中の作物はありません。<a href="{{ url_for('locations.list') }}" class="alert-link">場所</a>から作物を植え付けてください。
-    {% elif current_status == 'harvested' %}
+    {% elif current_status == 'ended' %}
     栽培終了した作物はありません。
     {% else %}
     栽培データはありません。<a href="{{ url_for('locations.list') }}" class="alert-link">場所</a>から作物を植え付けてください。

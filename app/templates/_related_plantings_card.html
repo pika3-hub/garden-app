@@ -24,7 +24,7 @@
                         {{ crop_label(lc.crop_name, lc.variety, lc.icon_path, lc.image_color) }}
                     </a>
                     <span class="badge {% if lc.status == 'active' %}bg-success{% else %}bg-secondary{% endif %} ms-1">
-                        {% if lc.status == 'active' %}栽培中{% elif lc.status == 'harvested' %}収穫済{% else %}{{ lc.status }}{% endif %}
+                        {% if lc.status == 'active' %}栽培中{% elif lc.status == 'ended' %}栽培終了{% elif lc.status == 'removed' %}削除済み{% else %}{{ lc.status }}{% endif %}
                     </span>
                 </div>
                 <div class="text-muted small">

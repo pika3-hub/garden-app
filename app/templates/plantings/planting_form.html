@@ -32,7 +32,7 @@
                         <div>
                             {% if planting.status == 'active' %}
                             <span class="badge bg-success fs-6"><i class="bi bi-flower1"></i> 栽培中</span>
-                            {% elif planting.status == 'harvested' %}
+                            {% elif planting.status == 'ended' %}
                             <span class="badge bg-secondary fs-6"><i class="bi bi-check-circle"></i> 栽培終了</span>
                             {% elif planting.status == 'removed' %}
                             <span class="badge bg-danger fs-6"><i class="bi bi-x-circle"></i> 削除済み</span>
