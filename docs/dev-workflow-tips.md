@@ -92,7 +92,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - `curl ... | uv run python -c "...json.load(sys.stdin)..."` のようにパイプすると、Python 側が cp932 で読んで文字化けする。スクリプト側で `sys.stdout.reconfigure(encoding='utf-8')` し、HTTP の応答は `urllib` で直接読む
 - `server.py` は `FLASK_ENV` 未設定だと本番設定（`ProductionConfig`、`SECRET_KEY` は `.env` から）で起動する。`run.py`（開発設定）では起きない不具合が出ることがある。以前は `SECRET_KEY` 未設定で、保存後の `flash()` が 500 になっていた（保存自体は済んでいる）。今は `create_app` が起動ごとのランダム値で補う。`server.py` を使う変更は、本番設定でも確認する
 - `server.py` のログは、waitress が `serve()` のときにルートロガーへ `basicConfig()` するため、何もしないと Flask の既定ハンドラーと合わせて2重に出る。`server.py` ではアプリ生成より前に `logging.basicConfig()` している（これを消さない）
-- Bash ツールのヒアドキュメントで Python に置換させるとき、置換文字列の `\\x00` が本物の NUL 文字としてファイルに書かれた（`SyntaxError: source code string cannot contain null bytes`。2026-10-12 に2回）。`b'\x00'` などバックスラッシュを含むコードの編集は Edit ツールで行う
+- Bash ツールのヒアドキュメントで Python にファイルを書き換えさせると、書き込む文字列の中の `\\x00` が本物の NUL 文字としてファイルに入った（`SyntaxError: source code string cannot contain null bytes`。Markdown でも起き、git diff で `Bin` と表示される。2026-10-12 に3回）。バックスラッシュを含む文字列（`b'\x00'`、ログの引用など）の編集は Edit ツールで行う
 - Python スクリプトの日本語の出力は Git Bash で文字化けする。`PYTHONIOENCODING=utf-8 uv run python ...` で実行する
 
 ## ツール・環境
