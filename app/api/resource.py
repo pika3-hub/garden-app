@@ -259,6 +259,12 @@ def add_images(res, obj_id):
     return ok(res.serialize(res.fetch(obj_id)), 201)
 
 
+def get_image(res, obj_id):
+    """GET /{res}/{id}/image: 本体画像のファイルを返す"""
+    row = load_or_404(res, obj_id)
+    return img.send_stored_image(row.get('image_path'), res.label)
+
+
 def register(bp, res):
     """リソースの共通ルートを登録する"""
     base = f'/{res.name}'
@@ -268,6 +274,9 @@ def register(bp, res):
                     lambda obj_id: get_item(res, obj_id), methods=['GET'])
     bp.add_url_rule(f'{base}/<int:obj_id>', f'{res.name}_patch',
                     lambda obj_id: patch_item(res, obj_id), methods=['PATCH'])
+    if res.image_folder:
+        bp.add_url_rule(f'{base}/<int:obj_id>/image', f'{res.name}_image',
+                        lambda obj_id: get_image(res, obj_id), methods=['GET'])
     if res.supplement_type:
         bp.add_url_rule(f'{base}/<int:obj_id>/images', f'{res.name}_images',
                         lambda obj_id: add_images(res, obj_id), methods=['POST'])

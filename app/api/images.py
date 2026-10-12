@@ -6,10 +6,10 @@ import os
 import warnings
 from dataclasses import dataclass, field
 
-from flask import current_app
+from flask import current_app, request, send_file
 from PIL import Image
 
-from app.api.errors import ApiError, detail
+from app.api.errors import ApiError, detail, validation_error
 from app.api.validation import REF_PHOTO, check_ref_id
 from app.models.photo_pool import PhotoPool
 from app.models.supplement import Supplement
@@ -233,3 +233,30 @@ def add_extra_images(inputs, saved, entity_type, entity_id):
                                            'supplement_type': 'image', 'title': None, 'content': path})
         saved.keep(path)
         PhotoPool.record_usage(photo['id'], 'supplement', supplement_id, path)
+
+
+def send_stored_image(image_path, label):
+    """GET /{種類}/{id}/image: 登録済みの画像ファイルを返す（?size=thumb でサムネイル）
+
+    返すのは DB に登録された image_path の画像だけで、uploads の外は読まない。
+    """
+    args = request.args
+    errors = [detail(k, '未知の条件です。使える条件: size') for k in args if k != 'size']
+    size = args.get('size', 'original')
+    if size not in ('original', 'thumb'):
+        errors.append(detail('size', 'thumb（800×600 以内の JPEG）か original で指定してください', size))
+    if errors:
+        raise validation_error(errors)
+    if not image_path:
+        raise ApiError(404, 'no_image', f'この{label}には画像が登録されていません')
+
+    root = os.path.realpath(current_app.config['UPLOAD_FOLDER'])
+    path = os.path.realpath(os.path.join(root, image_path))
+    if not path.startswith(root + os.sep) or not os.path.isfile(path):
+        raise ApiError(404, 'image_file_missing', f'この{label}の画像ファイルが見つかりません')
+    if size == 'thumb':
+        basename = os.path.splitext(os.path.basename(path))[0]
+        thumb = os.path.join(os.path.dirname(path), 'thumbs', f'{basename}.jpg')
+        if os.path.isfile(thumb):  # GIF などサムネイルが無いときは元画像を返す
+            path = thumb
+    return send_file(path)

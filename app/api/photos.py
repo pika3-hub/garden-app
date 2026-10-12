@@ -9,7 +9,7 @@ from flask import current_app, g, request
 
 from app.api import bp
 from app.api.errors import ApiError, detail, ok, validation_error
-from app.api.images import MAX_FILES_PER_REQUEST, SavedFiles, check_image
+from app.api.images import MAX_FILES_PER_REQUEST, SavedFiles, check_image, send_stored_image
 from app.api.payload import parse_request
 from app.api.resource import page_arg
 from app.api.serialize import image_url, plain, web_url
@@ -55,13 +55,22 @@ def list_photos():
     return ok(items, meta={'total': len(photos), 'limit': limit, 'offset': offset})
 
 
-@bp.get('/photos/<int:photo_id>')
-def get_photo(photo_id):
+def _load_photo(photo_id):
     photo = PhotoPool.get_by_id(photo_id) if photo_id <= SQLITE_MAX_INT else None
     if not photo:
         raise ApiError(404, 'not_found',
                        f'ID {photo_id} の写真プールの写真は存在しません。GET /api/v1/photos で一覧を確認してください')
-    return ok(serialize_photo(photo, with_usages=True))
+    return photo
+
+
+@bp.get('/photos/<int:photo_id>')
+def get_photo(photo_id):
+    return ok(serialize_photo(_load_photo(photo_id), with_usages=True))
+
+
+@bp.get('/photos/<int:photo_id>/image')
+def get_photo_image(photo_id):
+    return send_stored_image(_load_photo(photo_id)['image_path'], '写真')
 
 
 @bp.post('/photos')

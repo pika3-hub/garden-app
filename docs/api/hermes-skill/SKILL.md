@@ -36,6 +36,7 @@ description: 家庭菜園アプリに作物・品種・場所・植え付け・�
 | 品種のメモ・補足写真 | `PATCH /varieties/{id}` に `{"notes": "..."}`。補足の写真は `-F extra_images=@...`（返却の `extra_images` に `supplement_id` が付く） |
 | 写真が複数枚 | 1枚目を `image`、残りを `extra_images`。栽培記録は1件1枚なので、枚数分の記録を作るかユーザーに確認 |
 | 参考ページの URL を残したい | `PATCH /{種類}/{id}` に `{"extra_urls": ["https://..."]}`（作成時の POST にも入れられる）。補足情報（URL）として追加され、ページのタイトルは自動で取得される。同じ URL は二重に追加されない。植え付け・栽培記録には付けられない |
+| 「アイコの生育状況を見て」「最近の様子どう？」 | 下の「生育状況の診断」の手順 |
 | 写真だけ先に送られた | `POST /photos` でプールに上げ、後で `photo_pool_id` / `extra_photo_pool_ids` で使う |
 
 ## 作物・品種のメモの書き方
@@ -67,6 +68,25 @@ description: 家庭菜園アプリに作物・品種・場所・植え付け・�
 - 病害虫:
 - コンパニオンプランツ:
 ```
+
+## 生育状況の診断
+登録済みの栽培記録の写真から生育状況を答える手順。`image_url` は Web 画面の URL で開けないので、画像は必ず API の `GET /{種類}/{id}/image` で保存してから見る。
+
+1. 植え付けを特定する（「基本の流れ」と同じ。候補が複数ならユーザーに確認）
+2. `GET /planting_records?planting_id=<id>&limit=10` で記録を新しい順に取り、`image_url` が `null` でないものから**最新**と**その前の1件**を選ぶ（前回が無ければ最新だけ）
+3. 画像を保存する
+   - 最新（元画像）: `curl -sS -H "Authorization: Bearer $GARDEN_API_TOKEN" -o /tmp/garden_latest.jpg "$GARDEN_API_URL/planting_records/<最新のid>/image"`
+   - 前回（サムネイル）: 同様に `"$GARDEN_API_URL/planting_records/<前回のid>/image?size=thumb"` を `-o /tmp/garden_prev.jpg` で保存
+4. `vision_analyze` で両方の画像を見る。**画像を見ずに生育状況を答えない**（見られなかったらそう伝える）
+5. 次をまとめて答える
+   - 最新の記録日・植え付けからの日数（`days_from_planting`）・記録のメモ
+   - 写真から分かること（葉の色・茂り方・花や実の有無・しおれ・斑点や食害の跡など）
+   - 前回の記録日と比べた変化（前回が無ければ省く）
+   - 気になる点があれば対処の候補。病害虫は写真1枚で断定せず「〜の可能性があります」とし、確かめ方（葉の裏を見る、など）を添える
+6. 画像付きの記録が1件も無ければ、写真を送ってもらうよう伝える（送られたら栽培記録として登録してから診断する）
+
+- 他の種類の画像も同じ形で取れる（`/crops/{id}/image` など、写真プールは `/photos/{id}/image`）。404 の `no_image` は画像が未登録
+- 診断の結果は、頼まれない限り記録や日記に書き込まない
 
 ## 送り方
 - JSON: `-H 'Content-Type: application/json' -d '{...}'`
