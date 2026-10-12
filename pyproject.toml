@@ -9,6 +9,7 @@ dependencies = [
     "flask==3.1.2",
     "markdown-it-py>=4.2.0",
     "pillow==12.1.1",
+    "pillow-heif>=1.8.1",
     "python-dotenv==1.2.1",
     "waitress>=3.0.2",
 ]

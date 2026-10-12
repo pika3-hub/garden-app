@@ -1,6 +1,9 @@
 import os
 
-from tests.api.helpers import file_part, image_bytes
+import pytest
+from PIL import Image
+
+from tests.api.helpers import file_part, heic_bytes, image_bytes, jpeg_bytes
 
 
 def _upload(api, n=1, notes=None):
@@ -23,12 +26,30 @@ def test_upload_photos(api, api_app):
     assert os.path.exists(os.path.join(api_app.config['UPLOAD_FOLDER'], rel))
 
 
-def test_upload_requires_files_and_rejects_heic(api):
+def test_upload_requires_files(api):
     assert api.post('/api/v1/photos', data={}, content_type='multipart/form-data').status_code == 422
-    heic = b'\x00\x00\x00\x18ftypheic' + b'\x00' * 32
-    res = api.post('/api/v1/photos', data={'files': [file_part(heic, 'a.heic')]},
+
+
+def test_upload_heic_is_saved_as_jpeg(api, api_app):
+    pytest.importorskip('pillow_heif')
+    res = api.post('/api/v1/photos', data={'files': [file_part(heic_bytes(taken_at='2026:10:01 09:30:00'), 'IMG_0001.HEIC')]},
                    content_type='multipart/form-data')
-    assert res.status_code == 415
+    assert res.status_code == 201, res.get_json()
+    photo = res.get_json()['data'][0]
+    assert photo['original_filename'] == 'IMG_0001.HEIC'
+    assert photo['taken_at'].startswith('2026-10-01')
+    rel = photo['image_url'].split('/static/uploads/')[1]
+    assert rel.endswith('.jpg')
+    with Image.open(os.path.join(api_app.config['UPLOAD_FOLDER'], rel)) as saved:
+        assert saved.format == 'JPEG'
+
+
+def test_api_upload_strips_gps(api, api_app):
+    res = api.post('/api/v1/photos', data={'files': [file_part(jpeg_bytes(gps=True), 'IMG.jpg')]},
+                   content_type='multipart/form-data')
+    assert res.status_code == 201, res.get_json()
+    rel = res.get_json()['data'][0]['image_url'].split('/static/uploads/')[1]
+    assert not Image.open(os.path.join(api_app.config['UPLOAD_FOLDER'], rel)).getexif().get_ifd(0x8825)
 
 
 def test_use_pool_photo_for_main_and_extra_images(api, sql):

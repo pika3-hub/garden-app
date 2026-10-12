@@ -24,7 +24,7 @@
 
 - **バックエンド**: Python 3.12 / Flask 3.1 / SQLite / waitress（本番用サーバー）
 - **フロントエンド**: Jinja2 テンプレート / Bootstrap 5.3・Bootstrap Icons（CDN）/ バニラ JS
-- **画像処理**: Pillow（サムネイル生成）
+- **画像処理**: Pillow（サムネイル生成）、pillow-heif（iPhone の HEIC を JPEG に変換）
 - **Markdown**: markdown-it-py（メモ欄の表示）
 - **AI**: Anthropic Python SDK（Claude API）
 - **開発**: uv（パッケージ管理）/ pytest
