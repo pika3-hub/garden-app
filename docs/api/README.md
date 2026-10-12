@@ -67,7 +67,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | 404 | `not_found` | パスの ID が存在しない、未定義の URL |
 | 405 | `method_not_allowed` | DELETE / PUT など |
 | 413 | `too_large` | 画像が大きすぎる・画素数が多すぎる・リクエスト合計100MB超 |
-| 415 | `unsupported_image` | 画像として読めない、HEIC/HEIF、JPEG/PNG/GIF/WebP 以外 |
+| 415 | `unsupported_image` | 画像として読めない、JPEG/PNG/GIF/WebP/HEIC 以外 |
 | 422 | `validation_error` | 項目の誤り（`details` に全件） |
 | 500 | `internal_error` | 想定外のエラー（詳細はサーバーログのみ） |
 
@@ -207,7 +207,8 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | `"extra_photo_pool_ids": [13, 14]` | 写真プールの写真を追加画像としてコピー |
 
 - 形式: JPEG / PNG / GIF / WebP。拡張子ではなく中身で判定し、保存時の拡張子も中身に合わせる。スマホの写真に多い MPO（複数画像入りの JPEG）は JPEG として受け付け、そのまま `.jpg` で保存する
-- HEIC/HEIF は 415（Telegram では「写真」として送れば JPEG になる）
+- HEIC/HEIF は JPEG（品質90）に変換して保存する。向きは画素に反映し、撮影日時などの EXIF と色プロファイルは残す（`pillow-heif` を読み込めない環境では 415）
+- 撮影場所（GPS）は保存しない（JPEG・HEIC の EXIF から外す。画質は変えない）
 - 1枚 `API_MAX_IMAGE_MB`（既定20MB）まで、5000万画素まで、1リクエスト20枚まで、合計100MBまで
 - 写真プールから使った場合は使用履歴（`photo_pool_usages`）に記録される
 

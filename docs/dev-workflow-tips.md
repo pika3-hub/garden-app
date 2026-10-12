@@ -92,6 +92,8 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - `curl ... | uv run python -c "...json.load(sys.stdin)..."` のようにパイプすると、Python 側が cp932 で読んで文字化けする。スクリプト側で `sys.stdout.reconfigure(encoding='utf-8')` し、HTTP の応答は `urllib` で直接読む
 - `server.py` は `FLASK_ENV` 未設定だと本番設定（`ProductionConfig`、`SECRET_KEY` は `.env` から）で起動する。`run.py`（開発設定）では起きない不具合が出ることがある。以前は `SECRET_KEY` 未設定で、保存後の `flash()` が 500 になっていた（保存自体は済んでいる）。今は `create_app` が起動ごとのランダム値で補う。`server.py` を使う変更は、本番設定でも確認する
 - `server.py` のログは、waitress が `serve()` のときにルートロガーへ `basicConfig()` するため、何もしないと Flask の既定ハンドラーと合わせて2重に出る。`server.py` ではアプリ生成より前に `logging.basicConfig()` している（これを消さない）
+- Bash ツールのヒアドキュメントで Python に置換させるとき、置換文字列の `\\x00` が本物の NUL 文字としてファイルに書かれた（`SyntaxError: source code string cannot contain null bytes`。2026-10-12 に2回）。`b'\x00'` などバックスラッシュを含むコードの編集は Edit ツールで行う
+- Python スクリプトの日本語の出力は Git Bash で文字化けする。`PYTHONIOENCODING=utf-8 uv run python ...` で実行する
 
 ## ツール・環境
 
@@ -101,7 +103,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - テストは `uv run pytest`。`tests/conftest.py` のフィクスチャが tmp_path 上の使い捨て DB を使う
 - `uv run pytest` が Smart App Control に `pytest.exe` をブロックされる（os error 4551）ときは、`uv run python -m pytest` なら実行できる
 - `.venv` は python.org の Python 3.12（winget `Python.Python.3.12`、`%LOCALAPPDATA%\Programs\Python\Python312`、PSF 署名付き）で作っている。uv が自動で入れる Python（`%APPDATA%\uv\python\...`）は署名が無く、Smart App Control に `python.exe` や `DLLs\libcrypto-3-x64.dll` を断続的にブロックされる（HTTPS を使う AI メモ・OGP 取得が失敗しうる）。`.venv` を作り直すときは `uv venv --python "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"` → `uv sync` とし、uv 管理の Python を使わない。ブロックされたファイルはイベントログ `Microsoft-Windows-CodeIntegrity/Operational` の ID 3077 で確認できる
-- ネイティブ DLL を含むライブラリを追加するときは、設計を詰める前に `uv add` → import だけ試す。`pillow-heif` は同梱の `libde265-0-*.dll`・`libwinpthread-1-*.dll` が Smart App Control に毎回止められ、メイン PC では使えなかった（HEIC 対応は Ubuntu への移設後に回した）。Smart App Control は一度オフにすると OS の再インストールまで戻せないので、オフにする案は出さない
+- ネイティブ DLL を含むライブラリを追加するときは、設計を詰める前に `uv add` → import だけ試す。`pillow-heif` は以前、同梱の `libde265-0-*.dll`・`libwinpthread-1-*.dll` が Smart App Control に毎回止められたが、2026-10-12 に 1.8.1 を入れ直したら読み込めた（止められるかは版や時期で変わる。だめなら Ubuntu で試す）。Smart App Control は一度オフにすると OS の再インストールまで戻せないので、オフにする案は出さない
 - 本番サーバーの Python は uv が入れたもので SQLite 3.53、メイン PC の `.venv`（python.org 版）は SQLite 3.49。同じ SQL でも結果が変わることがある（ダッシュボードの `GROUP BY ... ORDER BY ... DESC LIMIT` が 3.53 で古い順になった）。並び順や集計に関わる SQL を変えたら、サーバーでも読み取り専用接続で結果を確かめる
 - コミット前に `git status --short` で含まれるファイルを確かめ、`git add -A` に頼らない。`.gitignore` に足した行は、それを含まない古い main から切ったブランチでは効かない（git 管理外のはずの `docs/local-env.md` が PR #52 で公開リポジトリに入った）。git に上げないものはリポジトリの外の `../garden-app-private/` に置く。追跡を外すコミット（`git rm --cached`）を pull すると、各環境の作業フォルダからもそのファイルが消える
 - 起動のたびに全マイグレーションが再実行され、適用済みのものは `Migration warning`（duplicate column 等）として出る。新しいマイグレーションの確認では、自分のファイル名の行だけを見る

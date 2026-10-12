@@ -1,6 +1,7 @@
 """画像アップロードの検証・保存（本体画像・追加画像・写真プール）
 
 拡張子は信用せず Pillow で開いて実形式を判定し、保存する拡張子も実形式に合わせる。
+HEIC/HEIF は保存時に JPEG へ変換する（app.utils.upload.save_image）。
 """
 import os
 import warnings
@@ -13,14 +14,14 @@ from app.api.errors import ApiError, detail, validation_error
 from app.api.validation import REF_PHOTO, check_ref_id
 from app.models.photo_pool import PhotoPool
 from app.models.supplement import Supplement
-from app.utils.upload import copy_image, delete_image, save_image
+from app.utils.upload import copy_image, delete_image, heif_supported, is_heif, save_image
 
 # MPO はスマホの写真に多い複数画像入りの JPEG（先頭は通常の JPEG なので、そのまま .jpg で保存できる）
-ALLOWED_FORMATS = {'JPEG': 'jpg', 'MPO': 'jpg', 'PNG': 'png', 'GIF': 'gif', 'WEBP': 'webp'}
+# HEIF（iPhone の HEIC）は保存時に JPEG へ変換する
+ALLOWED_FORMATS = {'JPEG': 'jpg', 'MPO': 'jpg', 'PNG': 'png', 'GIF': 'gif', 'WEBP': 'webp', 'HEIF': 'jpg'}
 MAX_PIXELS = 50_000_000
 MAX_FILES_PER_REQUEST = 20
 IMAGE_KEYS = ('photo_pool_id', 'remove_image', 'extra_photo_pool_ids')
-_HEIF_BRANDS = {b'heic', b'heix', b'hevc', b'hevx', b'heim', b'heis', b'mif1', b'msf1'}
 
 
 @dataclass
@@ -55,11 +56,9 @@ def check_image(file, field_name):
     if size > max_mb * 1024 * 1024:
         raise ApiError(413, 'too_large', f'画像が大きすぎます（1枚 {max_mb}MB まで）',
                        [detail(field_name, f'{name}: {size / 1024 / 1024:.1f}MB')])
-    head = stream.read(12)
-    stream.seek(0)
-    if head[4:8] == b'ftyp' and head[8:12] in _HEIF_BRANDS:
+    if is_heif(stream) and not heif_supported():
         raise ApiError(415, 'unsupported_image',
-                       'HEIC/HEIF 形式は未対応です。JPEG で送ってください（Telegram では「写真」として送ると JPEG になります）',
+                       'このサーバーでは HEIC/HEIF を読めません。JPEG で送ってください（Telegram では「写真」として送ると JPEG になります）',
                        [detail(field_name, f'{name}: HEIC')])
     try:
         with warnings.catch_warnings():
@@ -75,12 +74,12 @@ def check_image(file, field_name):
     except (Image.DecompressionBombError, Image.DecompressionBombWarning):
         raise _too_many_pixels(field_name, name)
     except Exception:
-        raise ApiError(415, 'unsupported_image', '画像として読み込めないファイルです（JPEG / PNG / GIF / WebP のみ対応）',
+        raise ApiError(415, 'unsupported_image', '画像として読み込めないファイルです（JPEG / PNG / GIF / WebP / HEIC のみ対応）',
                        [detail(field_name, f'{name}: 読み込み失敗')])
     finally:
         stream.seek(0)
     if fmt not in ALLOWED_FORMATS:
-        raise ApiError(415, 'unsupported_image', f'{fmt} 形式は未対応です（JPEG / PNG / GIF / WebP のみ対応）',
+        raise ApiError(415, 'unsupported_image', f'{fmt} 形式は未対応です（JPEG / PNG / GIF / WebP / HEIC のみ対応）',
                        [detail(field_name, f'{name}: {fmt}')])
     return CheckedFile(file=file, ext=ALLOWED_FORMATS[fmt], original_name=name)
 
