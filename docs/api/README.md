@@ -83,7 +83,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | GET | `/{res}/{id}` | 詳細 |
 | POST | `/{res}` | 作成 |
 | PATCH | `/{res}/{id}` | 部分更新（送った項目だけ変わる） |
-| POST | `/{res}/{id}/images` | 追加画像の添付（`extra_images` ファイル、または JSON `{"extra_photo_pool_ids": [...]}`）。本体画像・補足情報を持つリソースのみ |
+| POST | `/{res}/{id}/images` | 追加画像の添付（URL の追加は PATCH の `extra_urls`、[6章](#追加-url補足情報の-url)）（`extra_images` ファイル、または JSON `{"extra_photo_pool_ids": [...]}`）。本体画像・補足情報を持つリソースのみ |
 
 知らない検索条件は 422。
 
@@ -209,6 +209,16 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 - HEIC/HEIF は 415（Telegram では「写真」として送れば JPEG になる）
 - 1枚 `API_MAX_IMAGE_MB`（既定20MB）まで、5000万画素まで、1リクエスト20枚まで、合計100MBまで
 - 写真プールから使った場合は使用履歴（`photo_pool_usages`）に記録される
+
+### 追加 URL（補足情報の URL）
+
+補足情報を持つリソース（作物・品種・場所・収穫・料理・日記・タスク）は、POST / PATCH の本文に `"extra_urls": ["https://…", …]` を入れると、URL の補足情報として追加される（画面の補足情報「URL」と同じ。OGP のタイトル・説明・画像を保存時に自動取得）。
+
+- http / https のみ、1件2000文字まで、1リクエスト10件まで。前後の空白は除く
+- そのデータに同じ URL の補足情報が既にあれば追加しない（やり直しても重複しない）。既存の URL を消す・書き換える API はない（画面から操作する）
+- 詳細・一覧の `extra_urls` に `[{"supplement_id", "url", "title"}]`（`title` は OGP のタイトル。取れなければ `null`）
+- OGP はインターネット上のアドレスにだけ取りに行く（LAN・ループバックなどのアドレスやそこへのリダイレクトは取得せず、URL だけ保存）。アプリ本体は Hermes から遮断している Web 画面（5000番）にも接続できるため、API 経由で間接的に読まれないようにしている
+- 植え付け・栽培記録に送ると 422
 
 ## 7. 関連（relations）
 

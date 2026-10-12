@@ -8,7 +8,7 @@
 |----------------|----------------|------|
 | text | テキスト本文 | Markdown で表示（`|markdown` + `.markdown-body`、[`markdown-notes.md`](markdown-notes.md)） |
 | image | 画像パス（`supplements/uuid.jpg`） | サムネイル（`max-height: 300px`）+ lightbox で元画像 |
-| url | 完全URL（http/https） | `target="_blank" rel="noopener noreferrer"` リンク（`app/utils/ogp_fetcher.py` で取得した `ogp_image`/`ogp_title`/`ogp_description` があればOGPカード表示） |
+| url | 完全URL（http/https） | `target="_blank" rel="noopener noreferrer"` リンク（`app/utils/ogp_fetcher.py` で取得した（文字コードはヘッダー → `<meta charset>` → UTF-8 の順に判定。外部 API からは `public_only=True` で LAN・ループバックには接続しない） `ogp_image`/`ogp_title`/`ogp_description` があればOGPカード表示） |
 | youtube | 動画ID または `動画ID:開始秒数` | サーバー制御のiframe埋め込み（`?start=秒数`） |
 
 ## データベース
