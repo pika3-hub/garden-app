@@ -9,7 +9,7 @@ from werkzeug.datastructures import FileStorage
 from app.api import images as img
 from app.api.errors import ApiError
 from app.api.payload import parse_request
-from tests.api.helpers import heic_bytes, image_bytes
+from tests.api.helpers import heic_bytes, image_bytes, requires_heif
 
 
 def _fs(data, name):
@@ -98,8 +98,8 @@ def test_check_image_rejects_non_image(api_app):
     assert e.value.status == 415
 
 
+@requires_heif
 def test_check_image_accepts_heic_as_jpg(api_app):
-    pytest.importorskip('pillow_heif')
     with api_app.app_context():
         checked = img.check_image(_fs(heic_bytes(), 'IMG.HEIC'), 'image')
     assert checked.ext == 'jpg'

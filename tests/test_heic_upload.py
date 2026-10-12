@@ -2,14 +2,14 @@
 import io
 import os
 
-import pytest
 from PIL import Image, ImageCms
 from werkzeug.datastructures import FileStorage
 
 from app.utils import upload
-from tests.api.helpers import heic_bytes, image_bytes
+from tests.api.helpers import heic_bytes, image_bytes, requires_heif
 
-pytest.importorskip('pillow_heif')
+# 先頭の ftyp ボックス（brand が heic）だけを持つバイト列。pillow_heif が無くても作れる
+HEIC_HEADER = b'\x00\x00\x00\x18ftypheic' + b'\x00' * 32
 
 
 def _fs(data, name):
@@ -20,6 +20,7 @@ def _open_saved(app, rel):
     return Image.open(os.path.join(app.config['UPLOAD_FOLDER'], rel))
 
 
+@requires_heif
 def test_save_image_converts_heic_to_jpeg(app):
     icc = ImageCms.ImageCmsProfile(ImageCms.createProfile('sRGB')).tobytes()
     data = heic_bytes(size=(40, 20), orientation=6, taken_at='2026:10:01 09:30:00', icc=icc)
@@ -40,6 +41,7 @@ def test_save_image_converts_heic_to_jpeg(app):
         assert os.path.exists(thumb)
 
 
+@requires_heif
 def test_save_image_detects_heic_by_content(app):
     with app.app_context():
         rel = upload.save_image(_fs(heic_bytes(), 'photo.jpg'), 'photo_pool')
@@ -55,9 +57,10 @@ def test_save_image_rejects_heic_name_without_heic_content(app):
 def test_save_image_skips_heic_when_library_unavailable(app, monkeypatch):
     monkeypatch.setattr(upload, 'heif_supported', lambda: False)
     with app.app_context():
-        assert upload.save_image(_fs(heic_bytes(), 'IMG.HEIC'), 'crops') is None
+        assert upload.save_image(_fs(HEIC_HEADER, 'IMG.HEIC'), 'crops') is None
 
 
+@requires_heif
 def test_photo_pool_web_upload_accepts_heic(app, client):
     res = client.post('/photo_pool/upload',
                       data={'images': [(io.BytesIO(heic_bytes()), 'IMG_0002.HEIC')]},
