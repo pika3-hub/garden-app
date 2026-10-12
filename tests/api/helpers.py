@@ -1,7 +1,14 @@
 import io
 import json
 
+import pytest
 from PIL import Image
+
+from app.utils.upload import heif_supported
+
+# pillow_heif は DLL を読めなくても import は通り、使った時点で失敗する。importorskip では
+# スキップされないので、アプリと同じ heif_supported() で判定する（メイン PC の Smart App Control 対策）
+requires_heif = pytest.mark.skipif(not heif_supported(), reason='pillow_heif を読み込めない環境')
 
 TOKEN = 'test-token-' + 'x' * 32
 
@@ -50,7 +57,7 @@ def jpeg_bytes(size=(40, 20), taken_at=None, gps=False, icc=None):
 
 
 def heic_bytes(size=(40, 20), orientation=None, taken_at=None, icc=None, gps=False):
-    """テスト用の HEIC（pillow_heif が必要。呼ぶテストは importorskip しておく）
+    """テスト用の HEIC（pillow_heif が必要。呼ぶテストには @requires_heif を付ける）
 
     左半分を赤、右半分を青にして、向きの反映を画素で確かめられるようにする。
     """

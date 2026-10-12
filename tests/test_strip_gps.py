@@ -3,13 +3,12 @@ import io
 import os
 import struct
 
-import pytest
 from PIL import Image, ImageChops
 from werkzeug.datastructures import FileStorage
 
 from app.utils import upload
 from app.utils.strip_gps import scan, strip_jpeg_gps
-from tests.api.helpers import heic_bytes, image_bytes, jpeg_bytes
+from tests.api.helpers import heic_bytes, image_bytes, jpeg_bytes, requires_heif
 
 
 def _fs(data, name):
@@ -80,8 +79,8 @@ def test_save_image_strips_gps_from_jpeg(app):
     assert exif.get_ifd(0x8769).get(0x9003) == '2026:06:07 16:51:30'
 
 
+@requires_heif
 def test_save_image_strips_gps_from_heic(app):
-    pytest.importorskip('pillow_heif')
     data = heic_bytes(taken_at='2026:06:07 16:51:30', gps=True)
     with app.app_context():
         rel = upload.save_image(_fs(data, 'IMG_0001.HEIC'), 'photo_pool')

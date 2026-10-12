@@ -1,9 +1,8 @@
 import os
 
-import pytest
 from PIL import Image
 
-from tests.api.helpers import file_part, heic_bytes, image_bytes, jpeg_bytes
+from tests.api.helpers import file_part, heic_bytes, image_bytes, jpeg_bytes, requires_heif
 
 
 def _upload(api, n=1, notes=None):
@@ -30,8 +29,8 @@ def test_upload_requires_files(api):
     assert api.post('/api/v1/photos', data={}, content_type='multipart/form-data').status_code == 422
 
 
+@requires_heif
 def test_upload_heic_is_saved_as_jpeg(api, api_app):
-    pytest.importorskip('pillow_heif')
     res = api.post('/api/v1/photos', data={'files': [file_part(heic_bytes(taken_at='2026:10:01 09:30:00'), 'IMG_0001.HEIC')]},
                    content_type='multipart/form-data')
     assert res.status_code == 201, res.get_json()
