@@ -37,7 +37,7 @@
 
 | 項目 | 決定 | 理由 |
 |---|---|---|
-| Matrix サーバー | **Tuwunel**（Conduit 系統の後継、Rust 製） | 2人（自分と Bot）だけなので軽さが効く。公式の `.deb` があり、保守がいちばん活発（2026-10 時点の最新は v1.9.4）。Hermes の公式文書には名前が無いので、相性は構築の早い段階で確かめる |
+| Matrix サーバー | **Tuwunel**（Conduit 系統の後継、Rust 製） | 2人（自分と Bot）だけなので軽さが効く。公式の apt リポジトリがあり、保守がいちばん活発（2026-10 時点の最新は v1.9.4）。Hermes の公式文書には名前が無いので、相性は構築の早い段階で確かめる |
 | 代わりの候補 | Synapse | 動かないと分かったときに切り替える。Hermes の公式文書に名前がある |
 | HTTPS | **Caddy** を前に置き、Caddy の内部の発行元（`tls internal`）で証明書を作る | 証明書の作成・更新が自動。後で Web 画面の HTTPS 化にも使える |
 | スマホからの接続先 | `https://<サーバーのIP>:8448` | ルーターに LAN 内の名前を登録する機能が無い。IP は DHCP の手動割当で固定済み。443 は Web 画面の HTTPS 化用に空けておく |
@@ -61,15 +61,17 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Matrix の Bot
 
 ### Tuwunel
 
-- 公式の `.deb` で入れる。systemd のサービスとして、garden・`<user>` とは別の専用ユーザーで動かす
+- 公式の apt リポジトリから入れる。サービス `tuwunel.service`、専用ユーザー `tuwunel`（garden・`<user>` とは別）、設定 `/etc/tuwunel/tuwunel.toml`、DB `/var/lib/tuwunel`
 - 待ち受けは `127.0.0.1:8008` だけ（LAN から直接はつながらない）
-- 設定: サーバー名 `garden.home.arpa`、フェデレーションをしない、新規登録は閉じる（アカウントを作るときだけ一時的に開ける）
+- 設定: サーバー名 `garden.home.arpa`、フェデレーションをしない（`allow_federation = false`）、他のサーバーに鍵を問い合わせない（`trusted_servers = []`。既定は matrix.org）、新規登録は閉じる（アカウントを作るときだけ登録用トークン付きで一時的に開ける）
 - サーバーの起動時に自動で立ち上がる
 
 ### Caddy
 
 - apt で入れる。`<サーバーのIP>:8448` で HTTPS を受け、`127.0.0.1:8008` へ転送する
 - 証明書は Caddy の内部の発行元で作る。iPhone・iPad には、その発行元（ルート）の証明書を1回だけ入れて信頼させる
+- IP でつなぐとスマホは SNI（どの名前の証明書が欲しいか）を送らないので、`default_sni <サーバーのIP>` を指定する
+- **管理用 API を止める（`admin off`）**。既定の `localhost:2019` はサーバー内のどのユーザーからも設定を書き換えられ、Hermes の実行ユーザーが「5000番へ転送する」設定を足すと、ufw の `<user>` → 5000 の遮断をすり抜けられる。設定の反映は `systemctl reload` ではなく `restart` で行う
 - サーバーの起動時に自動で立ち上がる
 
 ### ufw
@@ -107,7 +109,7 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Matrix の Bot
 | 段階 | やること | 確かめ方 |
 |---|---|---|
 | 0. 下調べ | Hermes の版と仮想環境の場所、`mautrix` の入れ方を調べる。ディスク・メモリの空きを見る | 入れ方が決まる。決まらなければ中止して設計を見直す |
-| 1. Tuwunel | `.deb` で入れて設定し、起動する | サーバーの中で `curl http://127.0.0.1:8008/_matrix/client/versions` が応答する |
+| 1. Tuwunel | apt で入れて設定し、起動する | サーバーの中で `curl http://127.0.0.1:8008/_matrix/client/versions` が応答する |
 | 2. Caddy＋ufw | Caddy を入れて 8448 で受ける。ufw で LAN から 8448 を許可する | メイン PC から `curl -k https://<サーバーのIP>:8448/_matrix/client/versions` が応答する |
 | 3. アカウント | 登録を一時的に開け、自分 → Hermes の順に作って閉じる。Hermes のトークンを取る | 3つ目の登録が断られる |
 | 4. Hermes との相性（サーバーの中だけ） | Hermes に Matrix の設定をして gateway を再起動する。自分のアカウントで curl から暗号化なしの部屋を作り、Hermes を招待し、文字だけのメッセージ → テスト画像付きのメッセージを送る | Hermes が応答する（`health` の確認など）。gateway のログで、Matrix と Telegram の両方が接続中で、画像を受け取ってファイルに保存できている |
@@ -124,7 +126,7 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Matrix の Bot
 
 先にログで原因を見る。設定で直るもの、Tuwunel の新しい版で直っているものはそれで対処する。直らなければ、**その段階で Synapse に切り替える**。
 
-- やり直す: 段階1（Tuwunel を消して Synapse を入れる）、段階3、段階4の部屋作り
+- やり直す: 段階1（Tuwunel を消して Synapse を入れる。`/var/lib/tuwunel` は purge でも消えないので手で消す）、段階3、段階4の部屋作り
 - そのまま使える: Caddy・ufw・iPhone の証明書（Synapse も `127.0.0.1:8008` で待ち受けさせる）
 
 ### つまずきそうな点
@@ -148,7 +150,7 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Matrix の Bot
 ### 更新
 
 - Caddy は apt の普段の更新に含まれる
-- Tuwunel は GitHub のリリースから新しい `.deb` を取ってきて入れる（手順は手順書に書く）。フェデレーションをせず LAN 内だけで使うので、急ぐ更新はほぼない
+- Tuwunel も apt の普段の更新に含まれる（公式の apt リポジトリ）。フェデレーションをせず LAN 内だけで使うので、急ぐ更新はほぼない
 
 ### 秘密の値
 
