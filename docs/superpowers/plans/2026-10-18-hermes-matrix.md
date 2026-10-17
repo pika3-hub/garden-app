@@ -191,7 +191,7 @@ def test_create_dm_is_unencrypted_and_marks_direct():
 
 def test_send_image_uploads_then_sends_m_image(tmp_path):
     img = tmp_path / 'leaf.jpg'
-    img.write_bytes(b'ÿØÿàjpegdata')
+    img.write_bytes(b'\xff\xd8\xff\xe0jpegdata')
     fake = FakeTransport({
         ('POST', '/_matrix/media/v3/upload'): [(200, {'content_uri': 'mxc://garden.home.arpa/abc'})],
         ('PUT', '/_matrix/client/v3/rooms/%21r%3Agarden.home.arpa/send/m.room.message/t1'): [
