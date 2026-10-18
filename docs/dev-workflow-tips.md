@@ -114,3 +114,9 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - sudo を含む複数行を貼ってもらうときは、先頭に `sudo -v` を置く。途中で sudo がパスワードを聞くと、後ろの行が入力に吸い込まれて結果が欠ける（移設時に確認結果が2行分出ていなかった）
 - 「成功ならこう出る」を必ず添え、返ってきた結果と照合する。ufw の遮断ルールは置いただけでは効いておらず（`lo` の ACCEPT の後ろだった）、照合で気づけた
 - `/etc/ufw/*.rules` は root しか読めないので `sudo grep` にする。大きなファイルの受け渡しは `~/garden-transfer`（`/tmp` は tmpfs）
+- **順番に意味がある複数のコマンドは `&&` でつなぐ**。Matrix のアカウント作成で、1つ目（自分）がパスワードの打ち間違いで失敗したのに2つ目（Bot）が実行され、Bot が管理者になって DB を作り直した
+- **root しか読めない場所の `*` は `sudo bash -c '...'` の中に書く**。`sudo chmod /root/x-*.tgz` は、`*` を一般ユーザーのシェルが展開できず失敗する
+- `scp` など、メイン PC 側で実行する手順は結果も貼ってもらう。サーバー側の結果だけ見て「送ったはずのファイルが無い」と後で気づいた
+- Hermes の gateway のログは `~/.hermes/logs/gateway.log` を見る。`journalctl --user -u hermes-gateway` には WARNING 以上しか出ず、Matrix の接続などの INFO が見えない（「つながっていない」と誤解した）
+- Hermes の部品は仮想環境ではなく `hermes pm`（`~/.hermes/tools/` の専用 Python）で管理されている。`~/.local/bin/hermes` は sh のラッパーなので、1行目から Python の場所は分からない
+- iPhone のアプリから LAN 内のサーバーにつながらず Safari では開けるときは、iOS の「ローカルネットワーク」の許可を疑う

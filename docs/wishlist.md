@@ -5,4 +5,4 @@
 | 登録日 | やりたいこと | 背景・メモ | 状態 |
 |---|---|---|---|
 | 2026-10-10 | Hermes を無料モデルで使えるか検証する | サーバーの Hermes は OpenRouter の `anthropic/claude-haiku-5.5`（有料）。補助モデル（auxiliary）の設定はなく、同じ Haiku が使われている。OpenRouter の `:free` モデルからツール呼び出しに対応するものを 2〜3 個選び、`hermes --model <モデル名>` で Haiku と同じ依頼（health → 作物一覧 → 植え付けを名前で探す・候補が複数なら確認 → 写真付きの栽培記録・収穫・日記）を試して比べる。使えればメインと `auxiliary`（`auxiliary.free_only: true` など）の両方を無料にする。無料モデルは回数制限と、何段階もの操作の誤りに注意 | 未着手 |
-| 2026-10-14 | Telegram を使わず、LAN 内のチャットで Hermes に依頼できるようにする | 依頼の文面・写真が Telegram 社のサーバーを通らないようにしたい（OpenRouter・Anthropic は可）。自前の Matrix サーバー＋Element で進める方針。HTTPS は使い、E2EE は第2段階で試す。通知は不要。調査結果・決めたこと・構築前の確認事項は [`api/hermes-local-chat.md`](api/hermes-local-chat.md)。まとまった時間があるときに設計から始める | 調査済み・未構築 |
+| 2026-10-14 | Telegram をやめて LAN 内の Matrix だけで Hermes に依頼する | 第1段階（Tuwunel＋Caddy＋Element X、E2EE なし）は 2026-10-18 に構築済みで、iPhone・iPad から写真付きの登録まで動く（[`api/hermes-local-chat.md`](api/hermes-local-chat.md)）。残り: しばらく Matrix で使ってみてから Telegram を止めるか決める。E2EE（暗号化ありの新しい部屋）を試す（鍵の保管場所が壊れると Bot が黙って読めなくなる点に注意） | 第1段階済み |

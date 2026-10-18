@@ -1,5 +1,7 @@
 # Hermes の LAN 内チャット（Matrix＋Element X）実装計画
 
+> **2026-10-18 に実行済み。** 実行中に直した点（Hermes の部品は `hermes pm install --extra matrix`＋gcc、アカウント登録は `&&` でつなぐ、ログは `gateway.log`、iOS のローカルネットワークの許可など）を反映した最新の手順は [`docs/api/hermes-local-chat.md`](../../api/hermes-local-chat.md)。この計画は記録として残す。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** iPhone・iPad の Element X から、Telegram を通らずに LAN 内だけで Hermes に写真付きの登録を頼めるようにする。
