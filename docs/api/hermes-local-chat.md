@@ -22,21 +22,23 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 | 部品 | 場所・設定 | メモ |
 |---|---|---|
 | Tuwunel | apt（`https://apt.f.dog`）、`tuwunel.service`、ユーザー `tuwunel`、設定 `/etc/tuwunel/tuwunel.toml`（root:tuwunel 640）、DB `/var/lib/tuwunel` | 待ち受け 127.0.0.1:8008 だけ。サーバー名 `garden.home.arpa`（変更不可）。フェデレーションなし、新規登録は閉じている |
-| Caddy | apt（cloudsmith の公式リポジトリ）、`caddy.service`、`/etc/caddy/Caddyfile`、発行元 `/var/lib/caddy/.local/share/caddy/pki/authorities/local/` | `<サーバーのIP>:8448` だけ。**管理用 API を止めている**（下記） |
-| ufw | `8448/tcp ALLOW IN <LANの範囲>` | 8008 は開けない。既存の 22・5000 と `<user>` → 5000 の遮断はそのまま |
+| Caddy | apt（cloudsmith の公式リポジトリ）、`caddy.service`、`/etc/caddy/Caddyfile`、発行元 `/var/lib/caddy/.local/share/caddy/pki/authorities/local/` | `*:8448` で待ち受ける（TCP と HTTP/3 の UDP）。LAN 以外を止めているのは ufw。**管理用 API を止めている**（下記） |
+| ufw | `8448/tcp ALLOW IN <LANの範囲>` | 8008 は開けない。既存の 22・5000 と `<user>` → 5000 の遮断はそのまま。**tuwunel ユーザーからの新しい接続をすべて拒否**（下記） |
 | アカウント | `@<user>:garden.home.arpa`（管理者）、`@hermes:garden.home.arpa`（Bot） | 先に登録したほうが管理者になる |
 | Hermes | `~/.hermes/.env` の `MATRIX_*`、部品は `hermes pm install --extra matrix` | Telegram の設定には触れていない |
-| スマホ | Element X（App Store では「Element X - Secure Chat & Call」、開発元 Vector Creations Limited） | 発行元の証明書を入れて信頼させる |
+| スマホ | Element X（App Store では「Element X - Secure Chat & Call」、開発元 Vector Creations Limited） | 発行元の証明書を入れて信頼させる。**通知はオフ**（下記） |
 
 ### 守っていること
 
 - **Caddy の管理用 API を止める（`admin off`）**。既定の `localhost:2019` はサーバー内のどのユーザーからも設定を書き換えられ、Hermes の実行ユーザーが「5000番へ転送する」設定を足すと、ufw の `<user>` → 5000 の遮断（[`migration-to-ubuntu.md`](migration-to-ubuntu.md) の 6章）をすり抜けられる。代わりに設定の反映は `systemctl reload` ではなく `restart`
 - Tuwunel は他の Matrix サーバーに鍵を問い合わせない（`trusted_servers = []`。既定は matrix.org）
 - 設定ファイルは `<user>` から読めない（登録用トークンを一時的に書くため）
+- **Tuwunel は自分から接続しない（ufw）**。Hermes は Tuwunel のトークンを持つので、URL プレビュー（`preview_url`）や通知の送り先（pusher）を使えば、tuwunel ユーザーに代わりに `127.0.0.1:5000` へ接続させられるおそれがある（`<user>` → 5000 の遮断は tuwunel には効かない）。フェデレーションをしない Tuwunel には外への接続がいらないので、`before.rules`／`before6.rules` で tuwunel の `NEW` の接続を拒否している（スマホ・Hermes・Caddy からの接続への返事は止まらない）
+- **スマホの通知は使わない**。Element X で通知を許可すると、Tuwunel に通知の送り先 `https://matrix.org/_matrix/push/v1/notify`（Element 社の通知サーバー）が登録され、メッセージのたびに部屋 ID・イベント ID・未読数が LAN の外に送られる（本文は送られない `event_id_only` 形式）。上の ufw のルールで送れないが、iPhone・iPad の 設定 → 通知 → Element X はオフにし、登録された送り先は消しておく（構築手順 5）
 
 ## 使い方
 
-- Hermes の部屋で、Telegram と同じように文面・写真を送る。Element X は写真を **JPEG に変換・縮小して送る**（例 1536×2048）ので、HEIC で断られることはない
+- Hermes の部屋で、Telegram と同じように文面・写真を送る。写真（カメラロール）として送れば Element X が **JPEG に変換・縮小して送る**（例 1536×2048）ので、HEIC で断られない。「ファイル」として送ると HEIC のまま届き、受け取りで断られる見込み（Telegram と同じ。[`hermes-skill/SKILL.md`](hermes-skill/SKILL.md) の HEIC の注意）
 - `/new` を送ると確認が出る。Matrix にはボタンが無いので、**`!approve`（今回だけ）・`!always`（以後確認しない）・`!cancel`** を文字で返す
 - 一覧にある「garden.home.arpa Admin」は Tuwunel の管理用の部屋。書いた文が管理コマンドとして扱われるので、普段は開かない
 - サーバーを起動すれば Tuwunel・Caddy・gateway は自動で立ち上がる
@@ -123,6 +125,23 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:2019/config/   # 000�
 sudo ufw allow from <LANの範囲> to any port 8448 proto tcp comment 'Matrix (Caddy)'
 ```
 
+Tuwunel から外へ（`127.0.0.1:5000` を含む）の新しい接続を拒否する。既存の `<user>` → 5000 のルールと同じく、`lo` の ACCEPT より**前**に置く（後ろでは効かない）:
+
+```bash
+for f in /etc/ufw/before.rules /etc/ufw/before6.rules; do
+  case "$f" in *before6*) chain=ufw6-before-output ;; *) chain=ufw-before-output ;; esac
+  n=$(sudo grep -c -- "^-A $chain -o lo -j ACCEPT\$" "$f"); echo "$f lo=$n"
+  [ "$n" = 1 ] || { echo "中止: $f"; break; }
+  sudo cp -p "$f" "$f.bak-matrix"
+  sudo sed -i "/^-A $chain -o lo -j ACCEPT\$/i # Tuwunel(tuwunel) は自分から接続しない（フェデレーション・プッシュ通知・URL プレビュー・5000 番への抜け道を塞ぐ）。lo の ACCEPT より前に置くこと\n-A $chain -m owner --uid-owner tuwunel -m conntrack --ctstate NEW -j REJECT" "$f"
+done
+sudo ufw reload
+sudo iptables -S ufw-before-output | head -4      # tuwunel のルールが -o lo の ACCEPT より上
+sudo -u tuwunel curl -s -m 5 -o /dev/null -w '%{http_code}\n' http://127.0.0.1:5000/ || true   # 000
+sudo -u tuwunel curl -s -m 5 -o /dev/null -w '%{http_code}\n' https://matrix.org/ || true      # 000
+curl -sk -o /dev/null -w '%{http_code}\n' https://<サーバーのIP>:8448/_matrix/client/versions  # 200
+```
+
 HTTP/3（UDP 8448）の待ち受けも始まるが、ufw は TCP だけ許可しているので、スマホは自動で TCP に切り替わる。
 
 ### 3. アカウント
@@ -159,8 +178,8 @@ hermes pm status | grep -E '"(outcome|exit_code)"'   # ok / 0
 
 ```bash
 cp -p ~/.hermes/.env ~/.hermes/.env.bak-before-matrix
-python3 ~/matrix_helper.py login hermes >> ~/.hermes/.env
-cat >> ~/.hermes/.env <<'EOF'
+# ログインに失敗したら残りの行を足さない（やり直すときは .env の MATRIX_ の行を消してから）
+python3 ~/matrix_helper.py login hermes >> ~/.hermes/.env && cat >> ~/.hermes/.env <<'EOF'
 MATRIX_HOMESERVER=http://127.0.0.1:8008
 MATRIX_USER_ID=@hermes:garden.home.arpa
 MATRIX_ALLOWED_USERS=@<user>:garden.home.arpa
@@ -171,16 +190,18 @@ EOF
 部屋（暗号化なしの1対1）を作り、許可する部屋に入れる。Tuwunel は room version 12 で部屋を作るので、部屋 ID にサーバー名が付かない（`!xxxx` だけ）:
 
 ```bash
-umask 077
-python3 ~/matrix_helper.py login <user> > ~/.config/matrix-test-user.env
+(umask 077; python3 ~/matrix_helper.py login <user> > ~/.config/matrix-test-user.env)
 ROOM="$(python3 ~/matrix_helper.py --token-file ~/.config/matrix-test-user.env create-dm @hermes:garden.home.arpa)"
 [ -n "$ROOM" ] && echo "MATRIX_ALLOWED_ROOMS=$ROOM" >> ~/.hermes/.env
 systemctl --user restart hermes-gateway.service
 grep -h 'Matrix' ~/.hermes/logs/gateway.log | tail -5     # 招待を受けて join、matrix connected
 python3 ~/matrix_helper.py --token-file ~/.config/matrix-test-user.env send-text "$ROOM" "API の health を確認して"
 python3 ~/matrix_helper.py --token-file ~/.config/matrix-test-user.env messages "$ROOM" --limit 5
-python3 ~/matrix_helper.py --token-file ~/.config/matrix-test-user.env logout && rm ~/.config/matrix-test-user.env
+python3 ~/matrix_helper.py --token-file ~/.config/matrix-test-user.env logout; rm -f ~/.config/matrix-test-user.env
+ls ~/.config/matrix-test-user.env    # No such file or directory を確かめる
 ```
+
+`matrix-test-user.env` は管理者（`@<user>`）のトークンで、同じユーザーで動く Hermes からも読める。途中で失敗しても、必ず消えたことを確かめる。
 
 Element X で部屋を作ると既定で暗号化ありになる（後からオフにできない）ので、部屋はこのスクリプトで作る。
 
@@ -191,7 +212,17 @@ Element X で部屋を作ると既定で暗号化ありになる（後からオ�
 3. 設定 → 一般 → VPN とデバイス管理 でインストール（詳細の SHA-256 が控えと同じか確かめる）→ 設定 → 一般 → 情報 → 証明書信頼設定 でオン
 4. Safari で `https://<サーバーのIP>:8448/_matrix/client/versions` が警告なしで開けることを確かめる
 5. Element X を入れ、**設定 → プライバシーとセキュリティ → ローカルネットワーク で Element X をオン**にする（オフのままだと「このホームサーバーに接続できませんでした」になる。Safari は開けるので気づきにくい）
-6. 「手動で指定してサインイン」→ アカウント提供元に `https://<サーバーのIP>:8448` → `<user>` でログイン。復元キーの設定などはスキップ
+6. 「手動で指定してサインイン」→ アカウント提供元に `https://<サーバーのIP>:8448` → `<user>` でログイン。復元キーの設定などはスキップ。**通知の許可を聞かれたら「許可しない」**（許可したら 設定 → 通知 → Element X でオフ）
+7. 通知の送り先が登録されていないか確かめ、あれば消す（`{"pushers":[]}` になればよい）:
+
+```bash
+(umask 077; python3 ~/matrix_helper.py login <user> > ~/.config/m.env)
+T="$(sed -n 's/^MATRIX_ACCESS_TOKEN=//p' ~/.config/m.env)"
+curl -s -H "Authorization: Bearer $T" http://127.0.0.1:8008/_matrix/client/v3/pushers   | python3 -c 'import json,sys; [print(json.dumps({"pushkey":p["pushkey"],"app_id":p["app_id"],"kind":None})) for p in json.load(sys.stdin)["pushers"]]'   | while read -r body; do curl -s -X POST -H "Authorization: Bearer $T" -H 'Content-Type: application/json' -d "$body" http://127.0.0.1:8008/_matrix/client/v3/pushers/set; echo; done
+curl -s -H "Authorization: Bearer $T" http://127.0.0.1:8008/_matrix/client/v3/pushers; echo
+unset T
+python3 ~/matrix_helper.py --token-file ~/.config/m.env logout; rm -f ~/.config/m.env; ls ~/.config/m.env
+```
 
 ### 6. 後片付け
 
@@ -205,7 +236,7 @@ rm ~/garden-ca.crt
 
 ## 更新
 
-- Tuwunel・Caddy は apt の普段の更新に含まれる
+- Tuwunel・Caddy は apt の普段の更新に含まれる。Caddy の更新で reload に失敗した旨が出たら（`admin off` のため reload できない）`sudo systemctl restart caddy`
 - Hermes を `hermes update` したら、`hermes pm status` が ok か、`gateway.log` に `matrix connected` が出るかを見る
 
 ## バックアップと戻し方
@@ -213,7 +244,7 @@ rm ~/garden-ca.crt
 - Tuwunel の DB はバックアップしない（残すべき記録はアプリの DB に入る）。消えたら 3・4 をやり直す
 - Caddy の発行元の鍵は `/root/caddy-pki-backup-YYYYMMDD.tgz`（root だけ）。無くなるとスマホに証明書を入れ直すことになる
 - Telegram だけに戻す: `cp -p ~/.hermes/.env.bak-before-matrix ~/.hermes/.env && systemctl --user restart hermes-gateway.service`
-- 全部やめる: `sudo systemctl disable --now tuwunel caddy`、`sudo ufw delete allow from <LANの範囲> to any port 8448 proto tcp`。`/var/lib/tuwunel` は purge でも消えないので手で消す
+- 全部やめる: `sudo systemctl disable --now tuwunel caddy`、`sudo ufw delete allow from <LANの範囲> to any port 8448 proto tcp`、`before.rules`／`before6.rules` の tuwunel の行を消して `sudo ufw reload`。`/var/lib/tuwunel` は purge でも消えないので手で消す
 
 ## 選ばなかった方法（2026-10-14 の調査）
 
