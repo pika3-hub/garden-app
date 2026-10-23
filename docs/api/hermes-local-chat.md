@@ -1,6 +1,6 @@
 # LAN 内のチャット（Matrix＋Element X）で Hermes に依頼する
 
-スマホから Hermes への依頼を、Telegram 社のサーバーを通さず自宅の LAN の中だけで済ませるための構成と手順。**2026-10-18 に構築済み**（Telegram も並行して使える）。設計の経緯は [`../superpowers/specs/2026-10-18-hermes-matrix-design.md`](../superpowers/specs/2026-10-18-hermes-matrix-design.md)、構築時の計画は [`../superpowers/plans/2026-10-18-hermes-matrix.md`](../superpowers/plans/2026-10-18-hermes-matrix.md)。
+スマホから Hermes への依頼を、Telegram 社のサーバーを通さず自宅の LAN の中だけで済ませるための構成と手順。**2026-10-18 に構築済み**。2026-10-23 からはこれだけを使っている（Telegram は停止。[`hermes-telegram.md`](hermes-telegram.md)）。設計の経緯は [`../superpowers/specs/2026-10-18-hermes-matrix-design.md`](../superpowers/specs/2026-10-18-hermes-matrix-design.md)、構築時の計画は [`../superpowers/plans/2026-10-18-hermes-matrix.md`](../superpowers/plans/2026-10-18-hermes-matrix.md)。
 
 固有値は記号で書く（`<サーバーのIP>`・`<LANの範囲>`・`<user>` = Hermes の実行ユーザー）。実際の値はリポジトリ外の `local-env.md`。
 
@@ -25,7 +25,7 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 | Caddy | apt（cloudsmith の公式リポジトリ）、`caddy.service`、`/etc/caddy/Caddyfile`、発行元 `/var/lib/caddy/.local/share/caddy/pki/authorities/local/` | `*:8448` で待ち受ける（TCP と HTTP/3 の UDP）。LAN 以外を止めているのは ufw。**管理用 API を止めている**（下記） |
 | ufw | `8448/tcp ALLOW IN <LANの範囲>` | 8008 は開けない。既存の 22・5000 と `<user>` → 5000 の遮断はそのまま。**tuwunel ユーザーからの新しい接続をすべて拒否**（下記） |
 | アカウント | `@<user>:garden.home.arpa`（管理者）、`@hermes:garden.home.arpa`（Bot） | 先に登録したほうが管理者になる |
-| Hermes | `~/.hermes/.env` の `MATRIX_*`、部品は `hermes pm install --extra matrix` | Telegram の設定には触れていない |
+| Hermes | `~/.hermes/.env` の `MATRIX_*`、部品は `hermes pm install --extra matrix` | Telegram の設定は 2026-10-23 に外した |
 | スマホ | Element X（App Store では「Element X - Secure Chat & Call」、開発元 Vector Creations Limited） | 発行元の証明書を入れて信頼させる。**通知はオフ**（下記） |
 
 ### 守っていること
@@ -38,8 +38,10 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 
 ## 使い方
 
-- Hermes の部屋で、Telegram と同じように文面・写真を送る。写真（カメラロール）として送れば Element X が **JPEG に変換・縮小して送る**（例 1536×2048）ので、HEIC で断られない。「ファイル」として送ると HEIC のまま届き、受け取りで断られる見込み（Telegram と同じ。[`hermes-skill/SKILL.md`](hermes-skill/SKILL.md) の HEIC の注意）
+- Hermes の部屋で文面・写真を送る。写真（カメラロール）として送れば Element X が **JPEG に変換・縮小して送る**（例 1536×2048）ので、HEIC で断られない。「ファイル」として送ると HEIC のまま届き、受け取りで断られる見込み（Telegram と同じ。[`hermes-skill/SKILL.md`](hermes-skill/SKILL.md) の HEIC の注意）
 - `/new` を送ると確認が出る。Matrix にはボタンが無いので、**`!approve`（今回だけ）・`!always`（以後確認しない）・`!cancel`** を文字で返す
+- セッションは自動ではリセットされない。区切りごとと、SKILL.md をサーバーに送った後は `/new` する。理由と、自己改善（SKILL.md の書き換えは承認制。`/skills pending` で確認）の扱いは [`hermes-telegram.md`](hermes-telegram.md) の「使うときの注意」「Hermes の自己改善」（Telegram 時代の記録だが Matrix でも同じ）
+- ホームチャンネル（定期実行の結果や gateway の終了通知の送り先）は設定していない（Telegram の `/sethome` は停止とともに無効。定期実行のジョブも無い）。必要になったら Hermes の部屋で `/sethome` を送る
 - 一覧にある「garden.home.arpa Admin」は Tuwunel の管理用の部屋。書いた文が管理コマンドとして扱われるので、普段は開かない
 - サーバーを起動すれば Tuwunel・Caddy・gateway は自動で立ち上がる
 
@@ -47,7 +49,7 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 
 ```bash
 systemctl is-active tuwunel caddy garden-app; systemctl --user is-active hermes-gateway
-grep -h -E 'matrix connected|Connected to Telegram' ~/.hermes/logs/gateway.log | tail -2
+grep -h 'matrix connected' ~/.hermes/logs/gateway.log | tail -1
 ```
 
 - **gateway のログは `~/.hermes/logs/gateway.log` を見る**。`journalctl --user -u hermes-gateway` には WARNING 以上しか出ず、Matrix の接続や受け取った画像（`Cached user image at ...`）の行が見えない
@@ -243,7 +245,7 @@ rm ~/garden-ca.crt
 
 - Tuwunel の DB はバックアップしない（残すべき記録はアプリの DB に入る）。消えたら 3・4 をやり直す
 - Caddy の発行元の鍵は `/root/caddy-pki-backup-YYYYMMDD.tgz`（root だけ）。無くなるとスマホに証明書を入れ直すことになる
-- Telegram だけに戻す: `cp -p ~/.hermes/.env.bak-before-matrix ~/.hermes/.env && systemctl --user restart hermes-gateway.service`
+- Telegram に戻す: Bot は削除済みなので作り直す（[`hermes-telegram.md`](hermes-telegram.md) の冒頭）。`~/.hermes/.env.bak-before-matrix` などのバックアップの中の Telegram のトークンは使えない
 - 全部やめる: `sudo systemctl disable --now tuwunel caddy`、`sudo ufw delete allow from <LANの範囲> to any port 8448 proto tcp`、`before.rules`／`before6.rules` の tuwunel の行を消して `sudo ufw reload`。`/var/lib/tuwunel` は purge でも消えないので手で消す
 
 ## 選ばなかった方法（2026-10-14 の調査）
