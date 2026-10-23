@@ -6,3 +6,4 @@
 |---|---|---|---|
 | 2026-10-10 | Hermes を無料モデルで使えるか検証する | サーバーの Hermes は OpenRouter の `anthropic/claude-haiku-5.5`（有料）。補助モデル（auxiliary）の設定はなく、同じ Haiku が使われている。OpenRouter の `:free` モデルからツール呼び出しに対応するものを 2〜3 個選び、`hermes --model <モデル名>` で Haiku と同じ依頼（health → 作物一覧 → 植え付けを名前で探す・候補が複数なら確認 → 写真付きの栽培記録・収穫・日記）を試して比べる。使えればメインと `auxiliary`（`auxiliary.free_only: true` など）の両方を無料にする。無料モデルは回数制限と、何段階もの操作の誤りに注意 | 未着手 |
 | 2026-10-14 | Matrix の部屋で E2EE（暗号化）を試す | LAN 内の Matrix（Tuwunel＋Caddy＋Element X、E2EE なし）は 2026-10-18 に構築し、2026-10-23 に Telegram を止めてこれだけにした（[`api/hermes-local-chat.md`](api/hermes-local-chat.md)）。残りは暗号化ありの新しい部屋を試すこと（`MATRIX_E2EE_MODE`。鍵の保管場所が壊れると Bot が黙って読めなくなる点に注意） | 未着手 |
+| 2026-10-23 | Hermes の会話（セッション）を自動でリセットする | 自動ではリセットされず、`/new` を忘れると会話が何日も続く。料金（毎回会話全体を送る）が増え、SKILL.md の更新も読み直されず、2026-10-22 には「今日」を会話の始まった 10/18 と取り違えた。Hermes の設定に毎日・一定時間後のリセットがあるか調べる | 未着手 |
