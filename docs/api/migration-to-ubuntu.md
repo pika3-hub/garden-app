@@ -171,7 +171,7 @@ sudo iptables -S ufw-before-output | head -3   # 遮断ルールが -o lo の AC
 
 （宛先を限定していないので、`127.0.0.1`・自分の LAN IP・`localhost` のどれで接続しても拒否される。hermes ユーザーがほかの機器の 5000 番を使う予定があれば `-d` で宛先を自ホストに絞る）
 
-Hermes を後で専用ユーザーへ移すときは、`~/.hermes`・Telegram の `.env`・`~/.config/garden-api.env`・systemd の設定を移し、上の `--uid-owner` を新しいユーザーに書き換えて `sudo ufw reload` する。
+Hermes を後で専用ユーザーへ移すときは、`~/.hermes`（`.env` を含む）・`~/.config/garden-api.env`・systemd の設定を移し、上の `--uid-owner` を新しいユーザーに書き換えて `sudo ufw reload` する。
 
 ## 7. バックアップ
 
