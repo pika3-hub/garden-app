@@ -40,7 +40,7 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 
 - Hermes の部屋で文面・写真を送る。写真（カメラロール）として送れば Element X が **JPEG に変換・縮小して送る**（例 1536×2048）ので、HEIC で断られない。「ファイル」として送ると HEIC のまま届き、受け取りで断られる見込み（Telegram と同じ。[`hermes-skill/SKILL.md`](hermes-skill/SKILL.md) の HEIC の注意）
 - `/new` を送ると確認が出る。Matrix にはボタンが無いので、**`!approve`（今回だけ）・`!always`（以後確認しない）・`!cancel`** を文字で返す
-- セッションは自動ではリセットされない。区切りごとと、SKILL.md をサーバーに送った後は `/new` する。理由と、自己改善（SKILL.md の書き換えは承認制。`/skills pending` で確認）の扱いは [`hermes-telegram.md`](hermes-telegram.md) の「使うときの注意」「Hermes の自己改善」（Telegram 時代の記録だが Matrix でも同じ）
+- セッションは自動ではリセットされない。その日最初の依頼の前と、SKILL.md をサーバーに送った後は `/new` する（2026-10-22、10/18 から続いていた会話で Hermes が「今日」を 10/18 と思い込み、途中の `date +%F` で気づいて直した。サーバーの時計は正しかった）。理由と、自己改善（SKILL.md の書き換えは承認制。`/skills pending` で確認）の扱いは [`hermes-telegram.md`](hermes-telegram.md) の「使うときの注意」「Hermes の自己改善」（Telegram 時代の記録だが Matrix でも同じ）
 - ホームチャンネル（定期実行の結果や gateway の終了通知の送り先）は設定していない（Telegram の `/sethome` は停止とともに無効。定期実行のジョブも無い）。必要になったら Hermes の部屋で `/sethome` を送る
 - 一覧にある「garden.home.arpa Admin」は Tuwunel の管理用の部屋。書いた文が管理コマンドとして扱われるので、普段は開かない
 - サーバーを起動すれば Tuwunel・Caddy・gateway は自動で立ち上がる

@@ -175,14 +175,51 @@ Hermes を後で専用ユーザーへ移すときは、`~/.hermes`（`.env` を�
 
 ## 7. バックアップ
 
-garden ユーザーの crontab（`sudo -u garden crontab -e`）:
+systemd のタイマーで毎日 3:15 に、DB を曜日ごとのファイル（7世代）に、uploads を `/var/backups/garden/uploads/` にコピーする（同じディスクの中だけ）。`Persistent=true` なので、3:15 にサーバーが止まっていた日は、次に起動した直後に1回実行する（2026-10-23 に cron から置き換え。cron は止まっていた日の分を実行せず、10/18 から5日分抜けていた）。
 
-```cron
-15 3 * * * sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-$(date +\%a).db'"
-30 3 * * * rsync -a --delete /opt/garden-app/app/static/uploads/ /var/backups/garden/uploads/
+```bash
+sudo mkdir -p /var/backups/garden && sudo chown garden:garden /var/backups/garden && sudo chmod 700 /var/backups/garden
+sudo tee /usr/local/bin/garden-backup >/dev/null <<'EOF'
+#!/bin/sh
+# garden-app のバックアップ（garden-backup.service から garden ユーザーで実行）
+set -eu
+sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-$(date +%a).db'"
+rsync -a --delete /opt/garden-app/app/static/uploads/ /var/backups/garden/uploads/
+EOF
+sudo chmod 755 /usr/local/bin/garden-backup
+sudo tee /etc/systemd/system/garden-backup.service >/dev/null <<'EOF'
+[Unit]
+Description=garden-app backup (DB and uploads)
+
+[Service]
+Type=oneshot
+User=garden
+Group=garden
+Environment=LC_ALL=C
+Nice=10
+IOSchedulingClass=idle
+ExecStart=/usr/local/bin/garden-backup
+EOF
+sudo tee /etc/systemd/system/garden-backup.timer >/dev/null <<'EOF'
+[Unit]
+Description=Daily garden-app backup
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl start garden-backup.service      # 1回目を手で実行して確かめる
+sudo systemctl enable --now garden-backup.timer
+sudo touch /var/lib/systemd/timers/stamp-garden-backup.timer && sudo systemctl daemon-reload && sudo systemctl restart garden-backup.timer
 ```
 
-（`sudo mkdir -p /var/backups/garden && sudo chown garden:garden /var/backups/garden && sudo chmod 700 /var/backups/garden`。曜日ごとに7世代残る）
+- **最後の `touch` を省かない**。`Persistent=true` は前回の実行時刻（`/var/lib/systemd/timers/stamp-garden-backup.timer`）と比べて追いつくか決める。手で `start` した分は記録されず、記録が無いと「起動後の 3:15」を次の予定にするため、3:15 前に止める使い方では一度も実行されない。`systemctl list-timers garden-backup.timer` の LAST が `-` でなければよい
+- 確認: `systemctl list-timers garden-backup.timer`（LAST・NEXT）、`journalctl -u garden-backup.service`（`Finished` が出れば成功）、`sudo ls -l --time-style=long-iso /var/backups/garden/`。失敗しても通知はない
+- サーバーをたまにしか起動しないと、曜日によっては古いファイルが残る（7世代＝直近7日分とは限らない）
 
 ## 8. 動作確認と Hermes 側の切り替え
 
@@ -215,7 +252,7 @@ sudo -u garden -H bash -c 'cd /opt/garden-app && git pull && ~/.local/bin/uv syn
 sudo systemctl restart garden-app
 ```
 
-起動時にマイグレーションが自動で走るので、更新前にバックアップ（手順 7 のコマンドを手で実行）を取る。
+起動時にマイグレーションが自動で走るので、更新前にバックアップを取る（下の別名の DB。uploads も取り直すなら `sudo systemctl start garden-backup.service` だが、DB は曜日のファイルを上書きする）。
 
 - 手で取るバックアップは、曜日ごとのファイルを上書きしないよう別名にする: `sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`
 - 再起動の直後（1秒ほど）は接続できない。`curl` で確かめるときは少し待つ（`journalctl -u garden-app` の `Serving on` が出ていれば起動済み）
