@@ -121,6 +121,52 @@ def test_create_dm_is_unencrypted_and_marks_direct():
     assert fake.calls[1]['headers']['Authorization'] == 'Bearer AT'
 
 
+def test_create_dm_encrypted_sets_megolm_and_keeps_existing_direct():
+    fake = FakeTransport({
+        ('GET', '/_matrix/client/v3/account/whoami'): [
+            (200, {'user_id': '@me:garden.home.arpa'}),
+        ],
+        ('POST', '/_matrix/client/v3/createRoom'): [(200, {'room_id': '!e'})],
+        ('GET', '/_matrix/client/v3/user/%40me%3Agarden.home.arpa/account_data/m.direct'): [
+            (200, {'@hermes:garden.home.arpa': ['!old']}),
+        ],
+        ('PUT', '/_matrix/client/v3/user/%40me%3Agarden.home.arpa/account_data/m.direct'): [
+            (200, {}),
+        ],
+    })
+    client = mh.Client('http://127.0.0.1:8008', token='AT', transport=fake)
+
+    room_id = client.create_dm('@hermes:garden.home.arpa', encrypted=True)
+
+    assert room_id == '!e'
+    create = _json(fake.calls[1])
+    assert create['is_direct'] is True
+    assert create['preset'] == 'private_chat'
+    assert create['name'] == 'Hermes（暗号化）'
+    assert create['initial_state'] == [{
+        'type': 'm.room.encryption', 'state_key': '',
+        'content': {'algorithm': 'm.megolm.v1.aes-sha2'},
+    }]
+    assert _json(fake.calls[3]) == {'@hermes:garden.home.arpa': ['!old', '!e']}
+
+
+def test_cli_create_dm_encrypted_flag(tmp_path, monkeypatch, capsys):
+    token_file = tmp_path / 't.env'
+    token_file.write_text('MATRIX_ACCESS_TOKEN=AT\n', encoding='utf-8')
+    seen = {}
+
+    def fake_create_dm(self, invitee, encrypted=False):
+        seen.update(invitee=invitee, encrypted=encrypted)
+        return '!e'
+
+    monkeypatch.setattr(mh.Client, 'create_dm', fake_create_dm)
+
+    assert mh.main(['--token-file', str(token_file), 'create-dm', '--encrypted',
+                    '@hermes:garden.home.arpa']) == 0
+    assert seen == {'invitee': '@hermes:garden.home.arpa', 'encrypted': True}
+    assert capsys.readouterr().out.strip() == '!e'
+
+
 def test_send_image_uploads_then_sends_m_image(tmp_path):
     img = tmp_path / 'leaf.jpg'
     img.write_bytes(b'\xff\xd8\xff\xe0jpegdata')

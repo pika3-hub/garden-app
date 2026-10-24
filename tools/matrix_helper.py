@@ -105,15 +105,23 @@ class Client:
     def whoami(self):
         return self._request('GET', '/_matrix/client/v3/account/whoami')[1]['user_id']
 
-    def create_dm(self, invitee):
-        """暗号化なしの1対1の部屋を作り、自分の m.direct にも登録する（Element X で DM として出る）"""
+    def create_dm(self, invitee, encrypted=False):
+        """1対1の部屋を作り、自分の m.direct にも登録する（Element X で DM として出る）。
+        既定は暗号化なし。encrypted=True で E2EE の部屋にする（後から暗号化を外すことはできない）"""
         me = self.whoami()
-        _, data = self._request('POST', '/_matrix/client/v3/createRoom', {
+        body = {
             'preset': 'private_chat',
             'is_direct': True,
             'invite': [invitee],
             'name': 'Hermes',
-        })
+        }
+        if encrypted:
+            body['name'] = 'Hermes（暗号化）'
+            body['initial_state'] = [{
+                'type': 'm.room.encryption', 'state_key': '',
+                'content': {'algorithm': 'm.megolm.v1.aes-sha2'},
+            }]
+        _, data = self._request('POST', '/_matrix/client/v3/createRoom', body)
         room_id = data['room_id']
         path = f'/_matrix/client/v3/user/{_q(me)}/account_data/m.direct'
         status, direct = self._request('GET', path, ok=(200, 404))
@@ -184,7 +192,9 @@ def main(argv=None):
     sub.add_parser('register').add_argument('username')
     sub.add_parser('login').add_argument('username')
     sub.add_parser('whoami')
-    sub.add_parser('create-dm').add_argument('invitee')
+    cd = sub.add_parser('create-dm')
+    cd.add_argument('invitee')
+    cd.add_argument('--encrypted', action='store_true', help='暗号化（E2EE）ありの部屋にする')
     sub.add_parser('join').add_argument('room_id')
     st = sub.add_parser('send-text')
     st.add_argument('room_id')
@@ -218,7 +228,7 @@ def main(argv=None):
         if args.cmd == 'whoami':
             print(client.whoami())
         elif args.cmd == 'create-dm':
-            print(client.create_dm(args.invitee))
+            print(client.create_dm(args.invitee, encrypted=args.encrypted))
         elif args.cmd == 'join':
             print(client.join(args.room_id))
         elif args.cmd == 'send-text':
