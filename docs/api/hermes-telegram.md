@@ -2,7 +2,7 @@
 
 スマホ（iPhone の Telegram）から Hermes に依頼し、写真付きで菜園データを登録するための設定。2026-10-10 にサーバーで接続した。
 
-> **2026-10-23 に停止した。** 今は LAN 内の Matrix（Element X）で依頼している（[`hermes-local-chat.md`](hermes-local-chat.md)）。Bot は BotFather の `/deletebot` で削除し、サーバーでは `~/.hermes/.env` の `TELEGRAM_*` の行を消して、`~/.hermes/config.yaml` の `platforms.telegram.enabled` を `false` にした（退避した元の版は同日に削除した。`.env.bak-before-matrix` などに残る Telegram のトークンは Bot の削除で使えない）。下は使っていた頃の記録。セッションの区切り（`/new`）・自己改善・SKILL.md の承認制の注意は Matrix でも同じ。
+> **2026-10-23 に停止した。** 今は LAN 内の Matrix（Element X）で依頼している（[`hermes-local-chat.md`](hermes-local-chat.md)）。Bot は BotFather の `/deletebot` で削除し、サーバーでは `~/.hermes/.env` の `TELEGRAM_*` の行を消して、`~/.hermes/config.yaml` の `platforms.telegram.enabled` を `false` にした（退避した元の版は同日に削除した。`.env.bak-before-matrix` などに残る Telegram のトークンは Bot の削除で使えない）。下は使っていた頃の記録。自己改善・SKILL.md の承認制の注意は Matrix でも同じ。セッションは 2026-10-24 から自動でリセットされる（[`hermes-local-chat.md`](hermes-local-chat.md) の「会話の自動リセット」）ので、下の「自動ではリセットされない」は当時の話。
 >
 > 戻すときは、BotFather で Bot を作り直し（`/setjoingroups` は `Disable`）、下の「構成」の手順でトークンと許可ユーザーを `.env` に追記し、`platforms.telegram.enabled` を `true` に戻して gateway を再起動し、Bot との会話で `/sethome` を送る。
 

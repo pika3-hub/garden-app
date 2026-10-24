@@ -40,7 +40,7 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 
 - Hermes の部屋で文面・写真を送る。写真（カメラロール）として送れば Element X が **JPEG に変換・縮小して送る**（例 1536×2048）ので、HEIC で断られない。「ファイル」として送ると HEIC のまま届き、受け取りで断られる見込み（Telegram と同じ。[`hermes-skill/SKILL.md`](hermes-skill/SKILL.md) の HEIC の注意）
 - `/new` を送ると確認が出る。Matrix にはボタンが無いので、**`!approve`（今回だけ）・`!always`（以後確認しない）・`!cancel`** を文字で返す
-- セッションは自動ではリセットされない。その日最初の依頼の前と、SKILL.md をサーバーに送った後は `/new` する（2026-10-22、10/18 から続いていた会話で Hermes が「今日」を 10/18 と思い込み、途中の `date +%F` で気づいて直した。サーバーの時計は正しかった）。理由と、自己改善（SKILL.md の書き換えは承認制。`/skills pending` で確認）の扱いは [`hermes-telegram.md`](hermes-telegram.md) の「使うときの注意」「Hermes の自己改善」（Telegram 時代の記録だが Matrix でも同じ）
+- セッションは**毎朝4時以降の最初の依頼と、6時間あいた後の依頼で自動で新しくなる**（2026-10-24 から。下の「会話の自動リセット」）。SKILL.md をサーバーに送った後は、自動を待たずに `/new` する。自己改善（SKILL.md の書き換えは承認制。`/skills pending` で確認）の扱いは [`hermes-telegram.md`](hermes-telegram.md) の「Hermes の自己改善」（Telegram 時代の記録だが Matrix でも同じ）
 - ホームチャンネル（定期実行の結果や gateway の終了通知の送り先）は設定していない（Telegram の `/sethome` は停止とともに無効。定期実行のジョブも無い）。必要になったら Hermes の部屋で `/sethome` を送る
 - 一覧にある「garden.home.arpa Admin」は Tuwunel の管理用の部屋。書いた文が管理コマンドとして扱われるので、普段は開かない
 - サーバーを起動すれば Tuwunel・Caddy・gateway は自動で立ち上がる
@@ -236,10 +236,39 @@ rm ~/garden-ca.crt
 
 `/root` の中の `*` は `<user>` のシェルでは展開できないので、`sudo bash -c '...'` の中に書く。
 
+## 会話の自動リセット
+
+Hermes のセッションは、放っておくと何日でも続く。毎回会話全体をモデルに送るので料金が増え、SKILL.md の更新も読み直されず、2026-10-22 には 10/18 から続いていた会話で Hermes が「今日」を 10/18 と思い込んだ（途中の `date +%F` で気づいて直した。サーバーの時計は正しかった）。
+
+Hermes 本体の時間によるリセット（`config.yaml` の `session_reset`）は、v2026.9.11 のコミット `1d5d059`（stop time-triggered conversation rotation）で働かなくなった。今は `/new` と `/stop` でしか区切られない。そこで、公式のプラグイン一覧に community として載っている **`hermes-session-reset-policy`** を入れ、`session_reset` を働かせている（2026-10-24、Hermes v2026.9.24）。
+
+- 仕組み: メッセージが届いたとき、前回のユーザーの依頼から `idle_minutes` たっているか、`at_hour` 時を過ぎているかを確かめ、そうなら `/new` と同じ処理で新しい会話にしてから、そのメッセージを処理する。タイマーは持たない。Hermes が作業している最中にはリセットしない。`/` で始まるコマンドは数えない
+- **`!approve` の確認は出ない**（`/new` を手で送ったときだけ出る）。新しい会話になったことはモデルにも知らされない
+- 中身: 一覧の版（`0.3.0 @ 0f2ea5ad`）を 2026-10-24 に読んだ。標準ライブラリだけで、外への通信・コマンドの実行は無く、使う権限はフック1つ（`pre_gateway_dispatch`）
+
+```bash
+hermes plugins search session-reset            # Pinned の版を確かめる（中身を読んだ版と同じか）
+hermes plugins install hermes-session-reset-policy   # 「Enable now?」に y
+hermes plugins doctor hermes-session-reset-policy    # OK ... 1 hook(s)
+cp ~/.hermes/config.yaml ~/.hermes/config.yaml.bak-before-session-reset && cat >> ~/.hermes/config.yaml <<'EOF'
+
+session_reset:
+  mode: both          # idle と daily の両方
+  idle_minutes: 360   # 6時間あいたら
+  at_hour: 4          # 毎朝4時（サーバーの時刻）を過ぎたら
+EOF
+systemctl --user restart hermes-gateway.service
+```
+
+- 確かめ方: リセットされると `gateway.log` に `Invalidated run generation for agent:main:matrix:... (session_reset)` の行が出る（手で `/new` したときと同じ行）。プラグイン自身のログ（`session-reset-policy v0.3.0 armed` など）は `gateway.log` に出ない
+- 試すときは `idle_minutes: 2` にして、2分以内なら前の依頼を覚えていること、3分あけると覚えていないことを確かめた
+- やめる: `hermes plugins disable hermes-session-reset-policy` か、`session_reset` を `mode: none` にして gateway を再起動
+
 ## 更新
 
 - Tuwunel・Caddy は apt の普段の更新に含まれる。Caddy の更新で reload に失敗した旨が出たら（`admin off` のため reload できない）`sudo systemctl restart caddy`
-- Hermes を `hermes update` したら、`hermes pm status` が ok か、`gateway.log` に `matrix connected` が出るかを見る
+- Hermes を `hermes update` したら、`hermes pm status` が ok か、`gateway.log` に `matrix connected` が出るかを見る。あわせて `hermes plugins doctor hermes-session-reset-policy` が OK か、6時間以上あけた依頼で `(session_reset)` の行が出るかを見る（プラグインは Hermes の内部の関数を使っているので、本体の更新で動かなくなりうる。動かなくてもエラーにはならず、リセットされなくなるだけ）
+- プラグインの更新は `hermes plugins check-updates` で分かる。更新する前に、新しい版の中身を読む
 
 ## バックアップと戻し方
 
