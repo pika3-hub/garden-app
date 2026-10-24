@@ -1,6 +1,6 @@
 # LAN 内のチャット（Matrix＋Element X）で Hermes に依頼する
 
-スマホから Hermes への依頼を、Telegram 社のサーバーを通さず自宅の LAN の中だけで済ませるための構成と手順。**2026-10-18 に構築済み**。2026-10-23 からはこれだけを使っている（Telegram は停止。[`hermes-telegram.md`](hermes-telegram.md)）。設計の経緯は [`../superpowers/specs/2026-10-18-hermes-matrix-design.md`](../superpowers/specs/2026-10-18-hermes-matrix-design.md)、構築時の計画は [`../superpowers/plans/2026-10-18-hermes-matrix.md`](../superpowers/plans/2026-10-18-hermes-matrix.md)。
+スマホから Hermes への依頼を、Telegram 社のサーバーを通さず自宅の LAN の中だけで済ませるための構成と手順。**2026-10-18 に構築済み**。2026-10-23 からはこれだけを使っている（Telegram は停止。[`hermes-telegram.md`](hermes-telegram.md)）。2026-10-24 から、ふだんは**暗号化（E2EE）ありの部屋**を使う（下の「E2EE（暗号化ありの部屋）」）。設計の経緯は [`../superpowers/specs/2026-10-18-hermes-matrix-design.md`](../superpowers/specs/2026-10-18-hermes-matrix-design.md)、構築時の計画は [`../superpowers/plans/2026-10-18-hermes-matrix.md`](../superpowers/plans/2026-10-18-hermes-matrix.md)。
 
 固有値は記号で書く（`<サーバーのIP>`・`<LANの範囲>`・`<user>` = Hermes の実行ユーザー）。実際の値はリポジトリ外の `local-env.md`。
 
@@ -25,7 +25,8 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 | Caddy | apt（cloudsmith の公式リポジトリ）、`caddy.service`、`/etc/caddy/Caddyfile`、発行元 `/var/lib/caddy/.local/share/caddy/pki/authorities/local/` | `*:8448` で待ち受ける（TCP と HTTP/3 の UDP）。LAN 以外を止めているのは ufw。**管理用 API を止めている**（下記） |
 | ufw | `8448/tcp ALLOW IN <LANの範囲>` | 8008 は開けない。既存の 22・5000 と `<user>` → 5000 の遮断はそのまま。**tuwunel ユーザーからの新しい接続をすべて拒否**（下記） |
 | アカウント | `@<user>:garden.home.arpa`（管理者）、`@hermes:garden.home.arpa`（Bot） | 先に登録したほうが管理者になる |
-| Hermes | `~/.hermes/.env` の `MATRIX_*`、部品は `hermes pm install --extra matrix` | Telegram の設定は 2026-10-23 に外した |
+| Hermes | `~/.hermes/.env` の `MATRIX_*`、部品は `hermes pm install --extra matrix` | Telegram の設定は 2026-10-23 に外した。E2EE の鍵は `~/.hermes/platforms/matrix/store/crypto.db` |
+| 部屋 | 「Hermes（暗号化）」（ふだん使い、E2EE あり）、「Hermes」（予備、E2EE なし） | どちらも @hermes との DM。DM は `MATRIX_ALLOWED_ROOMS` の対象外（下記） |
 | スマホ | Element X（App Store では「Element X - Secure Chat & Call」、開発元 Vector Creations Limited） | 発行元の証明書を入れて信頼させる。**通知はオフ**（下記） |
 
 ### 守っていること
@@ -38,7 +39,8 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 
 ## 使い方
 
-- Hermes の部屋で文面・写真を送る。写真（カメラロール）として送れば Element X が **JPEG に変換・縮小して送る**（例 1536×2048）ので、HEIC で断られない。「ファイル」として送ると HEIC のまま届き、受け取りで断られる見込み（Telegram と同じ。[`hermes-skill/SKILL.md`](hermes-skill/SKILL.md) の HEIC の注意）
+- 「Hermes（暗号化）」の部屋で文面・写真を送る。暗号化ありの部屋が返事をしなくなったら「Hermes」（暗号なし）の部屋で依頼でき、その間に下の「E2EE の鍵が壊れたとき」で直す
+- 写真（カメラロール）として送れば Element X が **JPEG に変換・縮小して送る**（例 1536×2048）ので、HEIC で断られない。「ファイル」として送ると HEIC のまま届き、受け取りで断られる見込み（Telegram と同じ。[`hermes-skill/SKILL.md`](hermes-skill/SKILL.md) の HEIC の注意）
 - `/new` を送ると確認が出る。Matrix にはボタンが無いので、**`!approve`（今回だけ）・`!always`（以後確認しない）・`!cancel`** を文字で返す
 - セッションは**毎朝4時以降の最初の依頼と、6時間あいた後の依頼で自動で新しくなる**（2026-10-24 から。下の「会話の自動リセット」）。SKILL.md をサーバーに送った後は、自動を待たずに `/new` する。自己改善（SKILL.md の書き換えは承認制。`/skills pending` で確認）の扱いは [`hermes-telegram.md`](hermes-telegram.md) の「Hermes の自己改善」（Telegram 時代の記録だが Matrix でも同じ）
 - ホームチャンネル（定期実行の結果や gateway の終了通知の送り先）は設定していない（Telegram の `/sethome` は停止とともに無効。定期実行のジョブも無い）。必要になったら Hermes の部屋で `/sethome` を送る
@@ -53,6 +55,7 @@ grep -h 'matrix connected' ~/.hermes/logs/gateway.log | tail -1
 ```
 
 - **gateway のログは `~/.hermes/logs/gateway.log` を見る**。`journalctl --user -u hermes-gateway` には WARNING 以上しか出ず、Matrix の接続や受け取った画像（`Cached user image at ...`）の行が見えない
+- **暗号の失敗は `~/.hermes/logs/errors.log` にだけ出る**（暗号ライブラリ mautrix のログ。`gateway.log` には出ない）。暗号化ありの部屋で返事が無いときは `grep 'Failed to decrypt' ~/.hermes/logs/errors.log | tail -3`
 - Tuwunel は `sudo journalctl -u tuwunel`、Caddy は `sudo journalctl -u caddy`
 
 ## 構築手順
@@ -205,7 +208,7 @@ ls ~/.config/matrix-test-user.env    # No such file or directory を確かめる
 
 `matrix-test-user.env` は管理者（`@<user>`）のトークンで、同じユーザーで動く Hermes からも読める。途中で失敗しても、必ず消えたことを確かめる。
 
-Element X で部屋を作ると既定で暗号化ありになる（後からオフにできない）ので、部屋はこのスクリプトで作る。
+Element X で部屋を作ると既定で暗号化ありになる（後からオフにできない）ので、部屋はこのスクリプトで作る。暗号化ありの部屋も同じスクリプトで作る（「E2EE（暗号化ありの部屋）」。Element X で @hermes とのチャットを始めると、既存の DM が開くだけで新しい部屋はできない）。
 
 ### 5. スマホ
 
@@ -235,6 +238,68 @@ rm ~/garden-ca.crt
 ```
 
 `/root` の中の `*` は `<user>` のシェルでは展開できないので、`sudo bash -c '...'` の中に書く。
+
+## E2EE（暗号化ありの部屋）
+
+2026-10-24 に有効にした（Hermes v2026.9.24）。暗号化すると、文面と写真は Tuwunel の DB に暗号文で保存される（暗号なしの部屋は平文）。通信路は前から HTTPS。復号は Hermes がサーバーの中で行う。
+
+- `MATRIX_E2EE_MODE=required`: 暗号の部品が無いと接続そのものを拒否する（`optional` は暗号なしに黙って戻るので使わない）。暗号なしの部屋もそのまま使える
+- Bot の相互署名（cross-signing）: `MATRIX_RECOVERY_KEY`（Bot のアカウントの復元キー。ユーザーの Element の復元キーではない）で、起動のたびに Bot のデバイスに署名する（ログに `cross-signing verified via recovery key`）。Tuwunel は初回の相互署名の鍵の登録にパスワードの再入力を求めなかった
+- 部品（`olm`・`asyncpg`・`aiosqlite`・mautrix の暗号）は構築手順 4 の `hermes pm install --extra matrix` で入っている
+- 暗号化ありの部屋の写真も受け取れる（Hermes が復号して `Cached user image at ...`）
+- iPhone の Element X で写真を送ると、自分のメッセージの写真がぼかし（読み込み中の表示）のまま残ることがある。押せば全画面で見え、部屋を開き直せば直る。iPad では最初から見える。サーバーにエラーは無く、Element X の表示の問題
+
+### 有効にする手順
+
+```bash
+cd ~/.hermes && cp -p .env .env.bak-before-e2ee
+# 1. required にし、Bot の復元キーを1度だけ書き出させる
+grep -c '^MATRIX_E2EE_MODE=off$' .env && sed -i 's/^MATRIX_E2EE_MODE=off$/MATRIX_E2EE_MODE=required/' .env && echo "MATRIX_RECOVERY_KEY_OUTPUT_FILE=$HOME/.hermes/matrix-recovery-key.txt" >> .env
+systemctl --user restart hermes-gateway.service && sleep 20 && grep -h 'Matrix' ~/.hermes/logs/gateway.log | tail -6
+# → bootstrapped cross-signing ... written to ...、E2EE enabled
+# 2. 復元キーを .env に移す（画面に出さない）
+K="$(tr -d '\n' < matrix-recovery-key.txt)" && [ -n "$K" ] && printf 'MATRIX_RECOVERY_KEY="%s"\n' "$K" >> .env && unset K && sed -i '/^MATRIX_RECOVERY_KEY_OUTPUT_FILE=/d' .env
+systemctl --user restart hermes-gateway.service && sleep 20 && grep -h 'cross-signing' ~/.hermes/logs/gateway.log | tail -1
+# → cross-signing verified via recovery key を確かめてから
+rm matrix-recovery-key.txt
+chmod 700 ~/.hermes/platforms/matrix/store && chmod 600 ~/.hermes/platforms/matrix/store/crypto.db*
+```
+
+部屋は構築手順 4 と同じく自分のアカウントで一時的にログインして作る（`--encrypted`）。Hermes は DM の招待を受けると自分の DM の一覧に登録し、DM は `MATRIX_ALLOWED_ROOMS` の対象外なので、足さなくても応答する（`MATRIX_ALLOWED_USERS` は効く。DM でない部屋はメンションが必須）:
+
+```bash
+(umask 077; python3 ~/matrix_helper.py login <user> > ~/.config/matrix-test-user.env) && python3 ~/matrix_helper.py --token-file ~/.config/matrix-test-user.env create-dm --encrypted @hermes:garden.home.arpa
+python3 ~/matrix_helper.py --token-file ~/.config/matrix-test-user.env logout; rm -f ~/.config/matrix-test-user.env; ls ~/.config/matrix-test-user.env
+grep -h 'Matrix' ~/.hermes/logs/gateway.log | tail -3     # joined、recorded ... as DM room
+```
+
+暗号文で保存されているかは、Hermes のトークンで部屋のメッセージの種類を見て確かめた（すべて `m.room.encrypted`。返信先などの `m.relates_to` と取り消しは仕様で平文）。
+
+### E2EE の鍵が壊れたとき
+
+`crypto.db` を失う（消える・古いものに戻す）と、**暗号化ありの部屋だけが黙って返事をしなくなる**。2026-10-24 にわざと消して確かめた:
+
+- 起動すると Hermes は新しい鍵を作り、Tuwunel は同じデバイスの鍵の差し替えを受け入れる。`gateway.log` は `server has stale keys ... attempting re-upload` の後 `E2EE enabled` で正常に見え、`required` でも止まらない
+- Element X は Bot の古い鍵あてに部屋の鍵を送り続けるので、Hermes は復号できない。`gateway.log` には受け取った形跡すら無く、`errors.log` に `mau.client.crypto: Failed to decrypt ... no session with given ID ... found` が出る
+- 暗号なしの部屋は使える
+
+直し方（Bot のデバイスを作り直す。**@hermes のパスワードが要る**）。順番が大事で、新しくログインしてから `logout/all` すると新しいトークンも消える:
+
+```bash
+# 1. 止めて、今のトークンで Bot の全デバイスをログアウトする（パスワードの再入力は要らない）
+systemctl --user stop hermes-gateway.service && cp -p ~/.hermes/.env ~/.hermes/.env.bak-before-new-token && T="$(sed -n 's/^MATRIX_ACCESS_TOKEN=//p' ~/.hermes/.env | tr -d '"')" && curl -s -X POST -H "Authorization: Bearer $T" -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8008/_matrix/client/v3/logout/all; echo; unset T
+# → {}
+# 2. 新しくログインして .env のトークンを差し替え、起動する
+(umask 077; python3 ~/matrix_helper.py login hermes > ~/.config/m-hermes.env) && NEW="$(sed -n 's/^MATRIX_ACCESS_TOKEN=//p' ~/.config/m-hermes.env)" && [ -n "$NEW" ] && sed -i "s|^MATRIX_ACCESS_TOKEN=.*|MATRIX_ACCESS_TOKEN=$NEW|" ~/.hermes/.env && unset NEW && grep -c '^MATRIX_ACCESS_TOKEN=' ~/.hermes/.env; rm -f ~/.config/m-hermes.env; ls ~/.config/m-hermes.env
+systemctl --user start hermes-gateway.service && sleep 25 && grep -h 'Matrix' ~/.hermes/logs/gateway.log | tail -6
+# → access token belongs to a new device (... -> ...) — resetting local Olm account、cross-signing verified via recovery key、E2EE enabled
+```
+
+Element X 側の操作（`/discardsession` など）は要らなかった。壊れる前に送ったメッセージは Bot には読めないまま。1 の `logout/all` が失敗したとき（古いトークンが無効など）は、Tuwunel の管理用の部屋で古いデバイスを消すことになる（未確認）。
+
+- **`crypto.db` はバックアップしない**。古いものに戻すと、上と同じ食い違いが起きる。壊れたら上の手順で作り直す
+- **@hermes のパスワードを控えておく**（iPhone の「パスワード」アプリなど。Windows では iCloud for Windows の「iCloud パスワード」で同じものが見える）。忘れたら Tuwunel の管理用の部屋で再設定することになる（未確認）
+- 復元キーは `.env` にしか無い。`.env` を失って復元キーも無くなると、Bot のデバイスに署名できず、Element X で「所有者に確認されていない」と出る（Hermes は相互署名の鍵がサーバーにあると作り直さない）
 
 ## 会話の自動リセット
 
@@ -269,10 +334,12 @@ systemctl --user restart hermes-gateway.service
 - Tuwunel・Caddy は apt の普段の更新に含まれる。Caddy の更新で reload に失敗した旨が出たら（`admin off` のため reload できない）`sudo systemctl restart caddy`
 - Hermes を `hermes update` したら、`hermes pm status` が ok か、`gateway.log` に `matrix connected` が出るかを見る。あわせて `hermes plugins doctor hermes-session-reset-policy` が OK か、6時間以上あけた依頼で `(session_reset)` の行が出るかを見る（プラグインは Hermes の内部の関数を使っているので、本体の更新で動かなくなりうる。動かなくてもエラーにはならず、リセットされなくなるだけ）
 - プラグインの更新は `hermes plugins check-updates` で分かる。更新する前に、新しい版の中身を読む
+- `hermes update` の後は、`gateway.log` に `cross-signing verified via recovery key` と `E2EE enabled` が出るかを見て、暗号化ありの部屋で1度依頼する（返事が無ければ `errors.log` の `Failed to decrypt`）
 
 ## バックアップと戻し方
 
-- Tuwunel の DB はバックアップしない（残すべき記録はアプリの DB に入る）。消えたら 3・4 をやり直す
+- Tuwunel の DB はバックアップしない（残すべき記録はアプリの DB に入る）。消えたら 3・4 と E2EE の手順をやり直す（相互署名の鍵も消えるので、`MATRIX_RECOVERY_KEY` を外して `MATRIX_RECOVERY_KEY_OUTPUT_FILE` から）
+- E2EE をやめる: `.env` を `MATRIX_E2EE_MODE=off` にして gateway を再起動し、「Hermes」（暗号なし）の部屋を使う。暗号化ありの部屋は暗号なしに戻せない
 - Caddy の発行元の鍵は `/root/caddy-pki-backup-YYYYMMDD.tgz`（root だけ）。無くなるとスマホに証明書を入れ直すことになる
 - Telegram に戻す: Bot は削除済みなので作り直す（[`hermes-telegram.md`](hermes-telegram.md) の冒頭）。`~/.hermes/.env.bak-before-matrix` などのバックアップの中の Telegram のトークンは使えない
 - 全部やめる: `sudo systemctl disable --now tuwunel caddy`、`sudo ufw delete allow from <LANの範囲> to any port 8448 proto tcp`、`before.rules`／`before6.rules` の tuwunel の行を消して `sudo ufw reload`。`/var/lib/tuwunel` は purge でも消えないので手で消す
@@ -282,10 +349,6 @@ systemctl --user restart hermes-gateway.service
 - **Hermes の API サーバー＋Open WebUI**: チャットで送った写真をファイルに保存しない（`gateway/platforms/api_server.py` は画像を `image_url` のままモデルに渡すだけ）ので、写真をアプリに登録できない
 - **SSH でターミナルの `hermes`**: スマホでの操作性が悪い
 - **Matrix サーバーのソフト**: Synapse は重い（本格運用は PostgreSQL 推奨）。Continuwuity はボランティアの保守で `.deb` のビルドが落ちていた。Tuwunel（Conduit の後継、有給の開発者あり）を選んだ。Tuwunel で問題が出たら Synapse に切り替える（Caddy・ufw・証明書はそのまま使える）
-
-## 次の段階
-
-- E2EE（暗号化ありの新しい部屋）を試す。`MATRIX_E2EE_MODE`、鍵の保管場所（crypto store）が壊れると Bot が黙って読めなくなる点に注意
 
 ## 参考
 

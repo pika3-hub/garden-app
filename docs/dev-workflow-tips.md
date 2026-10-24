@@ -118,5 +118,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - **root しか読めない場所の `*` は `sudo bash -c '...'` の中に書く**。`sudo chmod /root/x-*.tgz` は、`*` を一般ユーザーのシェルが展開できず失敗する
 - `scp` など、メイン PC 側で実行する手順は結果も貼ってもらう。サーバー側の結果だけ見て「送ったはずのファイルが無い」と後で気づいた
 - Hermes の gateway のログは `~/.hermes/logs/gateway.log` を見る。`journalctl --user -u hermes-gateway` には WARNING 以上しか出ず、Matrix の接続などの INFO が見えない（「つながっていない」と誤解した）
-- Hermes の部品は仮想環境ではなく `hermes pm`（`~/.hermes/tools/` の専用 Python）で管理されている。`~/.local/bin/hermes` は sh のラッパーなので、1行目から Python の場所は分からない
+- 暗号ライブラリ（mautrix）など Hermes 本体以外のログは `gateway.log` に出ず、`~/.hermes/logs/errors.log` に出る。E2EE の復号の失敗はそこにしか無かった
+- Hermes の部品は仮想環境ではなく `hermes pm`（`~/.hermes/tools/` の専用 Python）で管理されている。`~/.local/bin/hermes` は sh のラッパーなので、1行目から Python の場所は分からない。部品の import を試すときは `find ~ -type d -name mautrix` で `~/.hermes/installs/.../venv` を探し、その `bin/python` を使う
+- **Hermes が古い値（移設前の IP など）を使ったら、Hermes 自身の記憶 `~/.hermes/memories/MEMORY.md` を疑う**。環境変数は正しく渡っていたのに、移設前に覚えた「API は <メインPCのIP>:5001」を信じていた（2026-10-24）。直したら Element X で `/new`。サーバーの構成を変えたときは、記憶に古い値が無いか `grep` する
 - iPhone のアプリから LAN 内のサーバーにつながらず Safari では開けるときは、iOS の「ローカルネットワーク」の許可を疑う
