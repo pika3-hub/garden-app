@@ -5,7 +5,9 @@ Flask に依存しない。APIキーは環境変数 ANTHROPIC_API_KEY、
 """
 import logging
 import os
+import re
 import time
+from urllib.parse import unquote, urlsplit
 
 import anthropic
 
@@ -43,7 +45,6 @@ MODEL_INFO = {
 MAX_TOKENS = 16000
 REQUEST_TIMEOUT_SECONDS = 180.0
 MAX_PAUSE_CONTINUATIONS = 3
-MAX_SEARCH_RESULT_SOURCES = 5
 FALLBACK_BETA = 'server-side-fallback-2026-07-01'
 WEB_SEARCH_TOOL = {
     'name': 'web_search',
@@ -64,7 +65,11 @@ SYSTEM_PROMPT = """あなたは日本の家庭菜園に詳しいアドバイザ�
 - 時期はユーザーの地域・栽培環境を基準に書く。種まきと苗の植え付けを区別する。
 - 品種が指定された場合、親作物の一般論ではなく、その品種固有の特徴（味・サイズ・耐病性・草勢など）を優先して書く。
 - 確かでない情報は推測で書かず「情報なし」と書く。
-- 参考URLや出典リストは本文に書かない。
+- 本文中にURLや出典は書かない。
+
+# Web検索を使う場合
+- 家庭菜園の話題だと分かるよう、作物名に「栽培」「育て方」「野菜」などの語を付けて検索する（同じ名前の別の物のページを避ける）。
+- 最後に「## 参考URL」の見出しを足し、本文を書くのに実際に参考にしたページだけを `- [ページのタイトル](URL)` の形で並べる。URLは検索結果に出てきたものをそのまま書き、推測で作らない。
 
 # 見出し構成
 ## 植え付け時期
@@ -109,7 +114,7 @@ def is_available():
     return bool((os.environ.get('ANTHROPIC_API_KEY') or '').strip())
 
 
-def _build_user_message(crop_name, crop_type, variety_name, region):
+def _build_user_message(crop_name, crop_type, variety_name, region, use_web_search):
     lines = [f'作物名: {crop_name}']
     if crop_type:
         lines.append(f'作物種類: {crop_type}')
@@ -122,6 +127,9 @@ def _build_user_message(crop_name, crop_type, variety_name, region):
                      '品種固有の特徴を優先してください。')
     else:
         lines.append(f'「{crop_name}」の栽培メモを作成してください。')
+    if use_web_search:
+        # 実API確認で、Sonnet が Web 検索を使わずに書いたことがあったため明示する
+        lines.append('Web検索で調べてから書いてください。')
     return '\n'.join(lines)
 
 
@@ -161,11 +169,7 @@ def _extract_text_and_sources(blocks):
 
 
 def _extract_search_result_sources(blocks):
-    """web_search_tool_result の検索結果から (title, url) を重複なしで集める。
-
-    web_search_20260209 は動的フィルタリング（コード実行経由で結果を読む）のため
-    本文に citations が付かないことがあり、その場合の補完に使う。
-    """
+    """web_search_tool_result の検索結果から (title, url) を重複なしで集める"""
     sources = []
     seen = set()
     for block in blocks:
@@ -183,8 +187,53 @@ def _extract_search_result_sources(blocks):
     return sources
 
 
-def _format_sources(sources, heading='## 参考URL'):
-    lines = [heading]
+_SOURCES_HEADING_RE = re.compile(r'^## 参考URL[^\n]*$', re.MULTILINE)
+_NEXT_HEADING_RE = re.compile(r'^## ', re.MULTILINE)
+# URL 中の括弧（例: カブ_(植物)）を残すため、閉じ括弧の後が空白か行末のものを終わりとみなす
+_MD_LINK_URL_RE = re.compile(r'\]\((https?://\S+?)\)(?=\s|$)')
+_BARE_URL_RE = re.compile(r'https?://\S+')
+
+
+def _split_sources_section(text):
+    """本文から「## 参考URL」の節を取り除き、(本文, 節に書かれた URL のリスト) を返す"""
+    urls = []
+    while (heading := _SOURCES_HEADING_RE.search(text)):
+        next_heading = _NEXT_HEADING_RE.search(text, heading.end())
+        end = next_heading.start() if next_heading else len(text)
+        for line in text[heading.end():end].splitlines():
+            urls.extend(_MD_LINK_URL_RE.findall(line) or _BARE_URL_RE.findall(line))
+        text = text[:heading.start()] + text[end:]
+    return text.strip(), urls
+
+
+def _normalize_url(url):
+    """照合用のキー。http/https・ホストの大小・末尾の /・%エンコードの有無は無視し、クエリは区別する"""
+    parts = urlsplit(unquote(url.strip()))
+    return parts.netloc.lower(), parts.path.rstrip('/'), parts.query
+
+
+def _verify_sources(urls, known_sources):
+    """AI が書いた URL のうち、検索結果・citations に実在するものだけを (title, url) で返す。
+
+    web_search_20260209 は動的フィルタリングのため citations が付かないことが多く、
+    参考にしたページは AI に書かせている。架空の URL を消すために照合し、
+    タイトルと URL の表記は検索結果側のものを使う。
+    """
+    known = {}
+    for title, url in known_sources:
+        known.setdefault(_normalize_url(url), (title, url))
+    sources = []
+    seen = set()
+    for url in urls:
+        key = _normalize_url(url)
+        if key in known and key not in seen:
+            seen.add(key)
+            sources.append(known[key])
+    return sources
+
+
+def _format_sources(sources):
+    lines = ['## 参考URL']
     for title, url in sources:
         safe_title = title.replace('[', '［').replace(']', '］')
         lines.append(f'- [{safe_title}]({url})')
@@ -221,7 +270,8 @@ def generate_notes(crop_name, crop_type, variety_name, region, use_web_search,
         client = anthropic.Anthropic(timeout=REQUEST_TIMEOUT_SECONDS, max_retries=0)
 
     params = _build_request_params(
-        model, _build_user_message(crop_name, crop_type, variety_name, region), use_web_search)
+        model, _build_user_message(crop_name, crop_type, variety_name, region, use_web_search),
+        use_web_search)
 
     try:
         blocks, stop_reason = _call_api(client, params)
@@ -247,14 +297,12 @@ def generate_notes(crop_name, crop_type, variety_name, region, use_web_search,
     if stop_reason == 'max_tokens':
         raise AiNotesError(_MSG_INCOMPLETE)
 
-    text, sources = _extract_text_and_sources(blocks)
+    text, cited = _extract_text_and_sources(blocks)
+    text, written_urls = _split_sources_section(text)
     if not text:
         raise AiNotesError('生成結果が空でした。もう一度お試しください')
-    if not use_web_search:
-        return text
+    # AI が参考URLを書かなかったときは、実際に引用された citations を使う
+    sources = _verify_sources(written_urls, _extract_search_result_sources(blocks) + cited) or cited
     if sources:
         return f'{text}\n\n{_format_sources(sources)}'
-    search_sources = _extract_search_result_sources(blocks)[:MAX_SEARCH_RESULT_SOURCES]
-    if search_sources:
-        return f'{text}\n\n{_format_sources(search_sources, "## 参考URL（検索で見つかったページ）")}'
     return text
