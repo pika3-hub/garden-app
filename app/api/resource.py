@@ -7,12 +7,13 @@ from flask import g, request
 
 from app.api import images as img
 from app.api import urls as api_urls
+from app.api import youtube as api_youtube
 from app.api.errors import ApiError, detail, ok, validation_error
 from app.api.payload import parse_request
 from app.api.serialize import image_url, plain, web_url
 from app.api.validation import SQLITE_MAX_INT, Field, check_value, validate_payload
 from app.database import get_db
-from app.models.supplement import Supplement
+from app.models.supplement import Supplement, parse_youtube_content
 
 DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
@@ -118,6 +119,11 @@ class Resource:
                 {'supplement_id': s['id'], 'url': s['content'], 'title': s['ogp_title']}
                 for s in supplements if s['supplement_type'] == 'url'
             ]
+            data['extra_youtube'] = [
+                {'supplement_id': s['id'], 'url': api_youtube.watch_url(*parse_youtube_content(s['content'])),
+                 'title': s['title']}
+                for s in supplements if s['supplement_type'] == 'youtube'
+            ]
         data['created_at'] = plain(row.get('created_at'))
         data['updated_at'] = plain(row.get('updated_at'))
         data['web_url'] = web_url(self.web_path.format(id=row['id']))
@@ -133,21 +139,27 @@ def load_or_404(res, obj_id):
 
 
 def _validate_body(res, payload, files, row):
-    """本文を検証して (merged, inputs, urls, reserved) を返す。誤りがあれば 422"""
+    """本文を検証して (merged, inputs, urls, videos, reserved) を返す。誤りがあれば 422
+
+    YouTube への問い合わせは、ほかに誤りが無いときだけ行う。
+    """
     values, errors = validate_payload(
         res.fields, payload, creating=row is None,
-        reserved=(*img.IMAGE_KEYS, *api_urls.URL_KEYS, *res.reserved_keys),
+        reserved=(*img.IMAGE_KEYS, *api_urls.URL_KEYS, *api_youtube.YOUTUBE_KEYS, *res.reserved_keys),
         read_only=(*res.COMMON_READ_ONLY, *res.read_only))
     inputs = img.collect_image_inputs(payload, files, errors, res)
     urls = api_urls.collect_urls(payload, errors, res)
+    videos = api_youtube.collect_videos(payload, errors, res)
     reserved = res.parse_reserved(payload, row, errors)
     merged = {**(res.to_api(row) if row else {}), **values}
     if not errors:
         res.check(values, merged, row, errors)
+    if not errors:
+        videos = api_youtube.lookup_videos(videos, res, row, errors)
     if errors:
         raise validation_error(errors)
     img.check_files(inputs)
-    return merged, inputs, urls, reserved
+    return merged, inputs, urls, videos, reserved
 
 
 def list_items(res):
@@ -204,7 +216,7 @@ def get_item(res, obj_id):
 
 def create_item(res):
     payload, files = parse_request(('image', 'extra_images'))
-    values, inputs, urls, reserved = _validate_body(res, payload, files, None)
+    values, inputs, urls, videos, reserved = _validate_body(res, payload, files, None)
     with img.SavedFiles() as saved:
         model_data = res.to_model(values)
         if res.image_folder:
@@ -217,6 +229,7 @@ def create_item(res):
             img.finish_main_image(inputs, res.usage_type, obj_id, model_data['image_path'], None)
         img.add_extra_images(inputs, saved, res.supplement_type, obj_id)
     api_urls.add_extra_urls(urls, res.supplement_type, obj_id)
+    api_youtube.add_extra_youtube(videos, res.supplement_type, obj_id)
     return ok(res.serialize(res.fetch(obj_id)), 201)
 
 
@@ -224,7 +237,7 @@ def patch_item(res, obj_id):
     row = load_or_404(res, obj_id)
     g.api_target_id = obj_id
     payload, files = parse_request(('image', 'extra_images'))
-    merged, inputs, urls, reserved = _validate_body(res, payload, files, row)
+    merged, inputs, urls, videos, reserved = _validate_body(res, payload, files, row)
     with img.SavedFiles() as saved:
         model_data = res.to_model(merged)
         old_path = row.get('image_path') if res.image_folder else None
@@ -237,6 +250,7 @@ def patch_item(res, obj_id):
             img.finish_main_image(inputs, res.usage_type, obj_id, model_data['image_path'], old_path)
         img.add_extra_images(inputs, saved, res.supplement_type, obj_id)
     api_urls.add_extra_urls(urls, res.supplement_type, obj_id)
+    api_youtube.add_extra_youtube(videos, res.supplement_type, obj_id)
     return ok(res.serialize(res.fetch(obj_id)))
 
 

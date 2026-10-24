@@ -85,7 +85,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | POST | `/{res}` | 作成 |
 | PATCH | `/{res}/{id}` | 部分更新（送った項目だけ変わる） |
 | GET | `/{res}/{id}/image` | 本体画像のファイル（`?size=thumb` でサムネイル）。本体画像を持つリソースのみ（[6章](#画像の取得)） |
-| POST | `/{res}/{id}/images` | 追加画像の添付（URL の追加は PATCH の `extra_urls`、[6章](#追加-url補足情報の-url)）（`extra_images` ファイル、または JSON `{"extra_photo_pool_ids": [...]}`）。本体画像・補足情報を持つリソースのみ |
+| POST | `/{res}/{id}/images` | 追加画像の添付（URL・YouTube の追加は PATCH の `extra_urls`・`extra_youtube`、[6章](#追加-url補足情報の-url)）（`extra_images` ファイル、または JSON `{"extra_photo_pool_ids": [...]}`）。本体画像・補足情報を持つリソースのみ |
 
 知らない検索条件は 422。
 
@@ -230,6 +230,16 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 - そのデータに同じ URL の補足情報が既にあれば追加しない（やり直しても重複しない）。既存の URL を消す・書き換える API はない（画面から操作する）
 - 詳細・一覧の `extra_urls` に `[{"supplement_id", "url", "title"}]`（`title` は OGP のタイトル。取れなければ `null`）
 - OGP はインターネット上のアドレスにだけ取りに行く（LAN・ループバックなどのアドレスやそこへのリダイレクトは取得せず、URL だけ保存）。アプリ本体は Hermes から遮断している Web 画面（5000番）にも接続できるため、API 経由で間接的に読まれないようにしている
+- 植え付け・栽培記録に送ると 422
+
+### 追加 YouTube（補足情報の YouTube）
+
+`extra_urls` と同じリソースは、POST / PATCH の本文に `"extra_youtube": ["https://www.youtube.com/watch?v=…", …]` を入れると、YouTube の補足情報として追加される（画面の補足情報「YouTube」と同じ。詳細画面に動画が埋め込まれる）。
+
+- 受け付ける URL: `www.youtube.com` / `m.youtube.com` / `youtube.com` の `watch?v=`・`shorts/`・`embed/`、`youtu.be/`。`t=90`（開始秒）は残し、`utm_source` などほかのパラメータは捨てる。1件2000文字まで、1リクエスト10件まで
+- 保存の前に YouTube の oEmbed（`https://www.youtube.com/oembed`）で動画があるかを確かめ、動画のタイトルを補足情報のタイトルにする。動画が無い・非公開・埋め込み不可なら 422（`extra_youtube[i]`）、YouTube に問い合わせられなければ 422（時間をおいてやり直す）。1件でも 422 なら本体も含めて何も保存しない。問い合わせ先は www.youtube.com だけなので、Hermes の遮断の抜け道にはならない
+- そのデータに同じ動画（動画 ID が同じ。URL の書き方は問わない）が既にあれば追加せず、問い合わせもしない。既存の動画を消す・書き換える API はない（画面から操作する）
+- 詳細・一覧の `extra_youtube` に `[{"supplement_id", "url", "title"}]`（`url` は `https://www.youtube.com/watch?v=<ID>`、開始秒があれば `&t=<秒>s`。画面から追加してタイトルが空なら `title` は `null`）
 - 植え付け・栽培記録に送ると 422
 
 ## 7. 関連（relations）
