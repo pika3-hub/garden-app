@@ -13,17 +13,30 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = 'claude-opus-5-5'
 
-# 許可するモデルと、モーダルに表示する目安（1ドル=150円で概算）
+# 許可するモデルと、モーダルに表示する目安（1ドル=150円で概算）。
+# fallbacks: サーバー側フォールバック（拒否時に別モデルで再実行）に対応しているか
+# web_search: 使う Web 検索ツールの版（20260209 は Opus / Sonnet のみ公式対応）
 MODEL_INFO = {
     'claude-opus-5-5': {
         'label': 'Claude Opus 5.5',
         'estimate_off': '10〜30秒・約10円',
         'estimate_on': '30〜90秒・約35〜40円',
+        'fallbacks': True,
+        'web_search': 'web_search_20260209',
     },
     'claude-sonnet-5-5': {
         'label': 'Claude Sonnet 5.5',
         'estimate_off': '10〜20秒・約5円',
         'estimate_on': '30〜60秒・約20円',
+        'fallbacks': True,
+        'web_search': 'web_search_20260209',
+    },
+    'claude-haiku-5-5': {
+        'label': 'Claude Haiku 5.5',
+        'estimate_off': '5〜15秒・1円未満',
+        'estimate_on': '10〜30秒・約2〜5円',
+        'fallbacks': False,
+        'web_search': 'web_search_20250305',
     },
 }
 
@@ -33,7 +46,6 @@ MAX_PAUSE_CONTINUATIONS = 3
 MAX_SEARCH_RESULT_SOURCES = 5
 FALLBACK_BETA = 'server-side-fallback-2026-07-01'
 WEB_SEARCH_TOOL = {
-    'type': 'web_search_20260209',
     'name': 'web_search',
     'max_uses': 5,
     'user_location': {'type': 'approximate', 'country': 'JP'},
@@ -114,17 +126,19 @@ def _build_user_message(crop_name, crop_type, variety_name, region):
 
 
 def _build_request_params(model, user_message, use_web_search):
+    info = MODEL_INFO[model]
     params = {
         'model': model,
         'max_tokens': MAX_TOKENS,
         'system': SYSTEM_PROMPT,
         'output_config': {'effort': 'medium'},
-        'betas': [FALLBACK_BETA],
-        'fallbacks': 'default',
         'messages': [{'role': 'user', 'content': user_message}],
     }
+    if info['fallbacks']:
+        params['betas'] = [FALLBACK_BETA]
+        params['fallbacks'] = 'default'
     if use_web_search:
-        params['tools'] = [WEB_SEARCH_TOOL]
+        params['tools'] = [{'type': info['web_search'], **WEB_SEARCH_TOOL}]
     return params
 
 

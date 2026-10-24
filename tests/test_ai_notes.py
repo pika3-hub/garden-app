@@ -64,6 +64,7 @@ def test_resolve_model_defaults_when_unset():
 
 def test_resolve_model_accepts_allowed_values():
     assert resolve_model('claude-sonnet-5-5') == 'claude-sonnet-5-5'
+    assert resolve_model('claude-haiku-5-5') == 'claude-haiku-5-5'
     assert resolve_model(' claude-opus-5-5 ') == 'claude-opus-5-5'
 
 
@@ -73,7 +74,7 @@ def test_resolve_model_falls_back_on_unknown(caplog):
 
 
 def test_model_info_covers_allowed_models():
-    for model in ('claude-opus-5-5', 'claude-sonnet-5-5'):
+    for model in ('claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'):
         info = ai_notes.MODEL_INFO[model]
         assert info['label'] and info['estimate_off'] and info['estimate_on']
 
@@ -110,6 +111,21 @@ def test_request_params_with_web_search():
     call(client, use_web_search=True)
     assert client.calls[0]['tools'] == [{
         'type': 'web_search_20260209', 'name': 'web_search', 'max_uses': 5,
+        'user_location': {'type': 'approximate', 'country': 'JP'},
+    }]
+
+
+def test_haiku_request_has_no_fallbacks_and_uses_basic_web_search():
+    # Haiku 5.5 はサーバー側フォールバックが無く、web_search_20260209 も公式の対応外
+    client = FakeClient(response([text_block('本文')]))
+    call(client, model='claude-haiku-5-5', use_web_search=True)
+    params = client.calls[0]
+    assert params['model'] == 'claude-haiku-5-5'
+    assert params['output_config'] == {'effort': 'medium'}
+    assert 'betas' not in params
+    assert 'fallbacks' not in params
+    assert params['tools'] == [{
+        'type': 'web_search_20250305', 'name': 'web_search', 'max_uses': 5,
         'user_location': {'type': 'approximate', 'country': 'JP'},
     }]
 
