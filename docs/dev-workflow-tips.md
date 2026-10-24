@@ -5,7 +5,7 @@ AI アシスタント（Claude Code など）がこのリポジトリで作業�
 ## 改行コード（Windows 環境）
 
 - リポジトリのファイルは原則 **LF**（`core.autocrlf` は `false`）。ただし一部 **CRLF のまま登録されているファイル** がある（`server.py`、`app/routes/` の一部など。`git ls-files --eol | grep i/crlf` で確認）。スクリプトで編集するときは元の改行コードを判定して保ち、勝手に統一しない
-- Git Bash から `python` で文字列置換スクリプトを書く場合、`open(p, 'w')` のままだと Windows の Python が **CRLF で書き出し、ファイル全体が差分になる**。必ず `open(p, encoding='utf-8', newline='')` で読み書きする（または Edit ツールを使う）
+- Git Bash から `python` で文字列置換スクリプトを書く場合、`open(p, 'w')` のままだと Windows の Python が **CRLF で書き出し、ファイル全体が差分になる**。必ず `open(p, encoding='utf-8', newline='')` で読み書きする（または Edit ツールを使う）。`Path.write_text` も同じく CRLF になるので、`read_bytes().decode()` → `write_bytes(s.encode())` にする（2026-10-24 に `write_text` で `resource.py` 全体が差分になった）
 - 改行コードの確認は `grep -c $'\r' <file>`（0 なら LF）。`od -c | grep '\\r'` は誤判定するので使わない
 - 編集後は `git diff --stat` で差分行数が想定どおりかを必ず見る。行数が異常に多ければ改行コードの変化を疑う
 
@@ -80,6 +80,8 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - メイン PC でユーザーに実行してもらうコマンドは PowerShell の書き方で示す（ユーザーは VS Code の PowerShell で実行する）。Git Bash 用の `/tmp`・`/d/...` のパスや `diff` を渡したら、scp が失敗し、`diff`（PowerShell では `Compare-Object` の別名）はパスの文字列を比べるだけだった。一時ファイルは `$env:TEMP`、ファイルの比較は `git diff --no-index`
 - Hermes の回答は、件数などを DB の読み取り専用接続（`sqlite3.connect('file:instance/garden.db?mode=ro', uri=True)`）で突き合わせる。見た目がもっともらしくても、一覧の既定件数（50件）で切れた結果を総数として答えていた。SKILL.md を直したら scp でサーバーに送り、ターミナルの `hermes` は起動し直す。Telegram（gateway）で試すときは `systemctl --user restart hermes-gateway.service` もする（再起動中に送ったメッセージは捨てられる）
 - SKILL.md の対応表に書いていない組み合わせを、Hermes は「できない」と判断しがち。収穫の行に `image` が無かったため、写真付きの依頼でも収穫に添付しなかった（API は対応済み）。対応表の各行には使えるパラメータを省かずに書く
+- **依頼のあとに続けてやらせたい手順は、対応表のその行に「→ 続けて○○（下の「…」の節）」と書く**。別の節の途中に1行書いただけでは、Hermes が飛ばす（2026-10-24、作物の登録後の YouTube を付け忘れた。対応表に作物の新規登録の行が無く、必須の `crop_type` も入れ忘れた）。依頼の種類を足したら、対応表に行があるかも確かめる
+- Hermes が何を送って何で失敗したかは `gateway.log` に残らない（API 側は `journalctl -u garden-app` の `app.api` の行で、メソッド・パス・ステータスだけ分かる）。理由は、同じ会話のまま（`/new` せずに）Hermes 本人に「送った項目と error.details、〜しなかった理由を教えて。データは変更しないで」と聞くと分かる
 
 ## ブラウザ自動操作（Claude in Chrome）
 
