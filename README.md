@@ -49,11 +49,11 @@ uv run python -c "from app import create_app; from app.database import init_db; 
 
 ```
 ANTHROPIC_API_KEY=発行したキー
-# 任意: claude-opus-5-5（既定・品質重視）または claude-sonnet-5-5（コスト・速度重視）
+# 任意: claude-opus-5-5（既定・品質重視）/ claude-sonnet-5-5（コスト・速度重視）/ claude-haiku-5-5（最安・最速）
 ANTHROPIC_MODEL=claude-opus-5-5
 ```
 
-起動後、ナビバーの「設定」で地域・栽培環境を登録してください。API の利用料は 1 件あたり約5〜40円です（モデルと Web 検索の有無による）。
+起動後、ナビバーの「設定」で地域・栽培環境を登録してください。API の利用料は 1 件あたり1円未満〜約40円です（モデルと Web 検索の有無による）。
 
 ### 4. 起動
 

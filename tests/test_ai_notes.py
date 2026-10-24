@@ -64,6 +64,7 @@ def test_resolve_model_defaults_when_unset():
 
 def test_resolve_model_accepts_allowed_values():
     assert resolve_model('claude-sonnet-5-5') == 'claude-sonnet-5-5'
+    assert resolve_model('claude-haiku-5-5') == 'claude-haiku-5-5'
     assert resolve_model(' claude-opus-5-5 ') == 'claude-opus-5-5'
 
 
@@ -73,7 +74,7 @@ def test_resolve_model_falls_back_on_unknown(caplog):
 
 
 def test_model_info_covers_allowed_models():
-    for model in ('claude-opus-5-5', 'claude-sonnet-5-5'):
+    for model in ('claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'):
         info = ai_notes.MODEL_INFO[model]
         assert info['label'] and info['estimate_off'] and info['estimate_on']
 
@@ -114,6 +115,21 @@ def test_request_params_with_web_search():
     }]
 
 
+def test_haiku_request_has_no_fallbacks_and_uses_basic_web_search():
+    # Haiku 5.5 はサーバー側フォールバックが無く、web_search_20260209 も公式の対応外
+    client = FakeClient(response([text_block('本文')]))
+    call(client, model='claude-haiku-5-5', use_web_search=True)
+    params = client.calls[0]
+    assert params['model'] == 'claude-haiku-5-5'
+    assert params['output_config'] == {'effort': 'medium'}
+    assert 'betas' not in params
+    assert 'fallbacks' not in params
+    assert params['tools'] == [{
+        'type': 'web_search_20250305', 'name': 'web_search', 'max_uses': 5,
+        'user_location': {'type': 'approximate', 'country': 'JP'},
+    }]
+
+
 def test_user_message_for_crop_contains_crop_and_region():
     client = FakeClient(response([text_block('本文')]))
     call(client)
@@ -143,28 +159,6 @@ def test_uses_given_model():
 def test_returns_joined_text_without_sources_when_search_off():
     client = FakeClient(response([text_block('## 植え付け時期\n'), text_block('4月〜5月')]))
     assert call(client) == '## 植え付け時期\n4月〜5月'
-
-
-def test_appends_deduplicated_sources_from_citations():
-    blocks = [
-        SimpleNamespace(type='server_tool_use', id='s1', name='web_search', input={}),
-        SimpleNamespace(type='web_search_tool_result', tool_use_id='s1', content=[]),
-        text_block('アイコは甘い。', [citation('https://a.example/aiko', 'アイコ | 種苗A')]),
-        text_block('裂果しにくい。', [citation('https://a.example/aiko', 'アイコ | 種苗A'),
-                                     citation('https://b.example/x', 'B [特集]')]),
-    ]
-    result = call(FakeClient(response(blocks)), use_web_search=True)
-    assert result == (
-        'アイコは甘い。裂果しにくい。\n\n'
-        '## 参考URL\n'
-        '- [アイコ | 種苗A](https://a.example/aiko)\n'
-        '- [B ［特集］](https://b.example/x)'
-    )
-
-
-def test_no_sources_section_when_search_on_but_no_citations():
-    result = call(FakeClient(response([text_block('本文')])), use_web_search=True)
-    assert '参考URL' not in result
 
 
 def test_empty_text_raises():
@@ -262,7 +256,11 @@ def test_overall_deadline_exceeded_raises_timeout(monkeypatch):
     assert len(client.calls) == 1
 
 
-# --- 参考URL: citations が無い場合は検索結果から補完（実API確認で判明: web_search_20260209 は動的フィルタリングで citations が付かない） ---
+
+
+# --- 参考URL: AI が書いた「## 参考URL」を検索結果・citations と照合し、実在するものだけ残す ---
+# （web_search_20260209 は動的フィルタリングで citations が付かないことが多い。
+#   検索結果の上位をそのまま付けると、読んでいないページ（カブ→バイクのカブ）が混ざる）
 
 def search_result_block(*pairs):
     return SimpleNamespace(type='web_search_tool_result', tool_use_id='s1',
@@ -270,38 +268,117 @@ def search_result_block(*pairs):
                                     for u, t in pairs])
 
 
-def test_falls_back_to_search_results_when_no_citations():
+BODY = '## 植え付け時期\n9月'
+
+
+def test_sources_written_by_ai_are_kept_only_if_in_search_results():
     blocks = [
-        search_result_block(('https://a.example/1', 'A'), ('https://b.example/2', 'B [種苗]')),
-        search_result_block(('https://a.example/1', 'A'), ('https://c.example/3', '')),
-        text_block('緑嶺は花蕾の締まりがよい。'),
+        search_result_block(('https://a.example/1', 'A [種苗]'), ('https://b.example/2', 'B')),
+        text_block(BODY + '\n\n## 参考URL\n'
+                   '- [Aのページ](https://a.example/1)\n'
+                   '- [架空](https://fake.example/x)\n'),
+    ]
+    result = call(FakeClient(response(blocks)), use_web_search=True)
+    assert result == BODY + '\n\n## 参考URL\n- [A ［種苗］](https://a.example/1)'
+
+
+def test_url_variants_are_matched():
+    # 末尾の /・http/https・ホストの大文字・%エンコードの有無は同一とみなす
+    blocks = [
+        search_result_block(('https://a.example/kabu/', 'A'),
+                            ('https://b.example/%E3%82%AB%E3%83%96', 'B'),
+                            ('http://c.example/x', 'C')),
+        text_block(BODY + '\n\n## 参考URL\n'
+                   '- [a](http://A.example/kabu)\n'
+                   '- [b](https://b.example/カブ)\n'
+                   '- https://c.example/x/\n'),
+    ]
+    result = call(FakeClient(response(blocks)), use_web_search=True)
+    assert result == (BODY + '\n\n## 参考URL\n'
+                      '- [A](https://a.example/kabu/)\n'
+                      '- [B](https://b.example/%E3%82%AB%E3%83%96)\n'
+                      '- [C](http://c.example/x)')
+
+
+def test_query_string_difference_is_not_matched():
+    blocks = [
+        search_result_block(('https://a.example/?p=1', 'A')),
+        text_block(BODY + '\n\n## 参考URL\n- [a](https://a.example/?p=2)\n'),
+    ]
+    assert call(FakeClient(response(blocks)), use_web_search=True) == BODY
+
+
+def test_url_with_parentheses_in_markdown_link():
+    blocks = [
+        search_result_block(('https://w.example/カブ_(植物)', 'カブ (植物)')),
+        text_block(BODY + '\n\n## 参考URL\n- [カブ](https://w.example/カブ_(植物))\n'),
+    ]
+    result = call(FakeClient(response(blocks)), use_web_search=True)
+    assert result.endswith('- [カブ (植物)](https://w.example/カブ_(植物))')
+
+
+def test_duplicate_sources_are_listed_once_in_ai_order():
+    blocks = [
+        search_result_block(('https://a.example/1', 'A'), ('https://b.example/2', 'B')),
+        text_block(BODY + '\n\n## 参考URL\n'
+                   '- [b](https://b.example/2)\n- [a](https://a.example/1)\n'
+                   '- [b again](https://b.example/2/)\n'),
+    ]
+    result = call(FakeClient(response(blocks)), use_web_search=True)
+    assert result.endswith('## 参考URL\n- [B](https://b.example/2)\n- [A](https://a.example/1)')
+
+
+def test_cited_urls_count_as_known():
+    blocks = [
+        text_block('9月まき。', [citation('https://cited.example/', 'Cited')]),
+        text_block('\n\n## 参考URL\n- [c](https://cited.example/)\n'),
+    ]
+    result = call(FakeClient(response(blocks)), use_web_search=True)
+    assert result == '9月まき。\n\n## 参考URL\n- [Cited](https://cited.example/)'
+
+
+def test_section_in_middle_is_removed_and_rest_kept():
+    blocks = [
+        search_result_block(('https://a.example/1', 'A')),
+        text_block('## 特性\n甘い\n\n## 参考URL\n- [a](https://a.example/1)\n\n## 栽培のコツ\n- 株間: 10cm'),
+    ]
+    result = call(FakeClient(response(blocks)), use_web_search=True)
+    assert result == ('## 特性\n甘い\n\n## 栽培のコツ\n- 株間: 10cm\n\n'
+                      '## 参考URL\n- [A](https://a.example/1)')
+
+
+def test_no_section_when_all_urls_unknown():
+    blocks = [
+        search_result_block(('https://a.example/1', 'A')),
+        text_block(BODY + '\n\n## 参考URL\n- [x](https://fake.example/)\n'),
+    ]
+    assert call(FakeClient(response(blocks)), use_web_search=True) == BODY
+
+
+def test_search_results_alone_are_not_appended():
+    blocks = [search_result_block(('https://bike.example/cub', 'スーパーカブ')), text_block(BODY)]
+    assert call(FakeClient(response(blocks)), use_web_search=True) == BODY
+
+
+def test_citations_used_when_ai_wrote_no_section():
+    blocks = [
+        search_result_block(('https://other.example/', 'Other')),
+        text_block('アイコは甘い。', [citation('https://a.example/aiko', 'アイコ | 種苗A')]),
+        text_block('裂果しにくい。', [citation('https://a.example/aiko', 'アイコ | 種苗A'),
+                                     citation('https://b.example/x', 'B [特集]')]),
     ]
     result = call(FakeClient(response(blocks)), use_web_search=True)
     assert result == (
-        '緑嶺は花蕾の締まりがよい。\n\n'
-        '## 参考URL（検索で見つかったページ）\n'
-        '- [A](https://a.example/1)\n'
-        '- [B ［種苗］](https://b.example/2)\n'
-        '- [https://c.example/3](https://c.example/3)'
+        'アイコは甘い。裂果しにくい。\n\n'
+        '## 参考URL\n'
+        '- [アイコ | 種苗A](https://a.example/aiko)\n'
+        '- [B ［特集］](https://b.example/x)'
     )
 
 
-def test_search_result_fallback_is_capped_at_five():
-    pairs = [(f'https://x.example/{i}', f'T{i}') for i in range(8)]
-    result = call(FakeClient(response([search_result_block(*pairs), text_block('本文')])),
-                  use_web_search=True)
-    assert result.count('\n- [') == 5
-    assert 'https://x.example/4' in result and 'https://x.example/5' not in result
-
-
-def test_citations_take_precedence_over_search_results():
-    blocks = [
-        search_result_block(('https://other.example/', 'Other')),
-        text_block('本文', [citation('https://cited.example/', 'Cited')]),
-    ]
-    result = call(FakeClient(response(blocks)), use_web_search=True)
-    assert '## 参考URL\n- [Cited](https://cited.example/)' in result
-    assert 'other.example' not in result
+def test_section_removed_when_search_off():
+    text = BODY + '\n\n## 参考URL\n- [x](https://a.example/1)\n'
+    assert call(FakeClient(response([text_block(text)]))) == BODY
 
 
 def test_search_error_result_is_ignored():
@@ -310,3 +387,21 @@ def test_search_error_result_is_ignored():
                                                     error_code='max_uses_exceeded'))
     result = call(FakeClient(response([error, text_block('本文')])), use_web_search=True)
     assert result == '本文'
+
+
+def test_title_falls_back_to_url():
+    blocks = [
+        search_result_block(('https://a.example/1', '')),
+        text_block(BODY + '\n\n## 参考URL\n- [a](https://a.example/1)\n'),
+    ]
+    assert call(FakeClient(response(blocks)), use_web_search=True).endswith(
+        '- [https://a.example/1](https://a.example/1)')
+
+
+def test_user_message_asks_to_search_when_web_search_on():
+    client = FakeClient(response([text_block('本文')]))
+    call(client, use_web_search=True)
+    assert 'Web検索' in client.calls[0]['messages'][0]['content']
+    client = FakeClient(response([text_block('本文')]))
+    call(client)
+    assert 'Web検索' not in client.calls[0]['messages'][0]['content']

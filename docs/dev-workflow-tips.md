@@ -65,7 +65,8 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 ## 外部 API を使う機能
 
 - 外部 API のレスポンス構造に依存する設計（例: 引用情報の有無、ブロックの種類）は、**設計の段階で最小リクエスト（数円程度）を1回実際に投げて確認する**。ドキュメントや SDK の型だけで判断しない
-  - 実例: Claude の `web_search_20260209` は動的フィルタリング（コード実行経由で結果を読む）のため、本文に citations が付かなかった。citations 前提で作った「参考URL」が実 API 確認まで出ず、手戻りになった（現在は `web_search_tool_result` から補完している）
+  - 実例: Claude の `web_search_20260209` は動的フィルタリング（コード実行経由で結果を読む）のため、本文に citations が付かなかった。citations 前提で作った「参考URL」が実 API 確認まで出ず、手戻りになった（現在は AI に参考URLを書かせ、`web_search_tool_result` の検索結果と照合して実在するものだけ残している）
+- **許可するモデルを増やすときは、モデルごとに実 API で確かめる**。同じ指示でもモデルで振る舞いが違う。AI メモ下書きでは、Sonnet が「Webで調べる」なのに検索せずに書いた回があり、Haiku は自分で `## 参考URL` を書いた上に citations も付けて見出しが2重になった（2026-10-24）。また Haiku 5.5 は、claude-api スキルの対応表に無い `web_search_20260209` を送っても 400 にならなかった。「受け付けるか」ではなく公式の対応表で選ぶ（Haiku は `web_search_20250305`、サーバー側フォールバックも無い）
 - 課金が発生する確認は、金額の目安を伝えてユーザーの了承を得てから行う。課金なしで確認できる部分（無効なダミーキーでの認証エラー表示など）は先に済ませる
 - 自動テストは SDK クライアントを差し替えて実 API を呼ばない（`tests/test_ai_notes.py` の `FakeClient` 参照）。ただしフェイクは型を検査しないので、SDK の引数名・フィールド名は `inspect.signature(...)` や `Model.model_fields` で別途確認する
 - Anthropic Python SDK は既定で `max_retries=2`（タイムアウトも再試行）。長時間・高コストのリクエストでは待ち時間と課金が倍増するので、`max_retries=0` にして全体の期限を自前で管理する
@@ -93,7 +94,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - `server.py` は `FLASK_ENV` 未設定だと本番設定（`ProductionConfig`、`SECRET_KEY` は `.env` から）で起動する。`run.py`（開発設定）では起きない不具合が出ることがある。以前は `SECRET_KEY` 未設定で、保存後の `flash()` が 500 になっていた（保存自体は済んでいる）。今は `create_app` が起動ごとのランダム値で補う。`server.py` を使う変更は、本番設定でも確認する
 - `server.py` のログは、waitress が `serve()` のときにルートロガーへ `basicConfig()` するため、何もしないと Flask の既定ハンドラーと合わせて2重に出る。`server.py` ではアプリ生成より前に `logging.basicConfig()` している（これを消さない）
 - Bash ツールのヒアドキュメントで Python にファイルを書き換えさせると、書き込む文字列の中の `\\x00` が本物の NUL 文字としてファイルに入った（`SyntaxError: source code string cannot contain null bytes`。Markdown でも起き、git diff で `Bin` と表示される。2026-10-12 に3回）。バックスラッシュを含む文字列（`b'\x00'`、ログの引用など）の編集は Edit ツールで行う
-- Python スクリプトの日本語の出力は Git Bash で文字化けする。`PYTHONIOENCODING=utf-8 uv run python ...` で実行する
+- Python スクリプトの日本語の出力は Git Bash で文字化けする。`PYTHONIOENCODING=utf-8 uv run python ...` で実行する。ただし `python -I`（隔離モード）では `PYTHON*` の環境変数が無視されて効かない。そのときはスクリプトで `open(..., encoding='utf-8')` のファイルに書き、Read で読む
 
 ## ツール・環境
 
