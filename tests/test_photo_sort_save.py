@@ -243,3 +243,36 @@ def test_harvest_rows_render_for_selected_plantings(app, client, photo, seed):
 def test_planting_kinds_render(app, client, photo, seed, kind):
     html = client.get(f'/photo_pool/sort/?ids={photo["id"]}&kind={kind}').get_data(as_text=True)
     assert 'action="/photo_pool/sort/save"' in html
+
+
+# --- 最終レビューの指摘 ---
+
+def test_missing_photo_file_is_an_error(app, client, photo, seed):
+    with app.app_context():
+        db = get_db()
+        missing = db.execute("INSERT INTO photo_pool (image_path) VALUES ('photo_pool/missing.jpg')").lastrowid
+        db.commit()
+    res = client.post('/photo_pool/sort/save', data={
+        'ids': str(missing), 'pos': '0', 'photo_id': str(missing), 'kind': 'cooking', 'action': 'next',
+        'title': 'マリネ', 'cooked_date': '2026-10-25'})
+    assert res.status_code == 200
+    assert '写真のファイルが見つかりません' in res.get_data(as_text=True)
+    assert _rows(app, 'SELECT id FROM cooking') == []
+
+
+def test_next_position_follows_saved_photo_when_earlier_photo_deleted(app, client, photo, seed):
+    with app.app_context():
+        db = get_db()
+        earlier = db.execute("INSERT INTO photo_pool (image_path, taken_at) VALUES "
+                             "('photo_pool/p.jpg', '2026-10-01 09:00:00')").lastrowid
+        db.commit()
+    ids = f'{earlier},{photo["id"]},{photo["second"]}'
+    with app.app_context():
+        db = get_db()
+        db.execute('DELETE FROM photo_pool WHERE id = ?', (earlier,))  # 別タブで削除された
+        db.commit()
+    res = client.post('/photo_pool/sort/save', data={
+        'ids': ids, 'pos': '1', 'photo_id': str(photo['id']), 'kind': 'cooking', 'action': 'next',
+        'title': 'マリネ', 'cooked_date': '2026-10-25'})
+    assert res.headers['Location'].endswith(
+        f'/photo_pool/sort/?ids={photo["id"]},{photo["second"]}&pos=1&done={photo["id"]}')

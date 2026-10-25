@@ -368,6 +368,9 @@ def save():
         return render_sort_page(ids, pos, done, None, form)
 
     try:
+        # 元ファイルが無いと画像なしで登録されてしまうので、作る前に止める
+        if not os.path.exists(os.path.join(current_app.config['UPLOAD_FOLDER'], photo['image_path'])):
+            raise _FormError('写真のファイルが見つかりません')
         message = saver(form, photo)
     except _FormError as e:
         flash(str(e), 'danger')
@@ -378,8 +381,11 @@ def save():
 
     flash(message, 'success')
     done.add(photo['id'])
-    next_pos = pos if form.get('action') == 'stay' else pos + 1
-    return redirect(sort_url(ids, next_pos, done))
+    # 別タブで前の写真が消されていても、保存した写真の次へ進む
+    ordered = [p['id'] for p in _ordered_photos(ids)]
+    current = ordered.index(photo['id']) if photo['id'] in ordered else pos
+    next_pos = current if form.get('action') == 'stay' else current + 1
+    return redirect(sort_url(ordered, next_pos, done))
 
 
 def _draft_error(message, status=400):
