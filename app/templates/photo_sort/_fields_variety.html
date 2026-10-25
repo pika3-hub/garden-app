@@ -36,7 +36,7 @@
                value="{{ fv.get('image_color') or '#4CAF50' }}">
         <div class="form-check">
             <input class="form-check-input" type="checkbox" id="use_parent_color" name="use_parent_color" value="1"
-                   {% if not fv or fv.get('use_parent_color') %}checked{% endif %}>
+                   {% if not fv.get('photo_id') or fv.get('use_parent_color') %}checked{% endif %}>
             <label class="form-check-label" for="use_parent_color">親作物の色を使う</label>
         </div>
     </div>

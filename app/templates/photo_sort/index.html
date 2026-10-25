@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block extra_js %}
-{% if kind in ('cooking', 'diary') %}
+{% if kind in ('cooking', 'diary', 'planting_record', 'harvest') %}
 <script src="{{ url_for('static', filename='js/entity-select-modal.js') }}"></script>
 {% endif %}
 {% if kind in ('crop', 'variety') %}

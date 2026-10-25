@@ -138,3 +138,108 @@ def test_fields_render_for_kind(app, client, photo, seed, kind):
     assert 'action="/photo_pool/sort/save"' in html
     assert 'name="action" value="next"' in html
     assert 'name="action" value="stay"' in html
+
+
+# --- 植え付けに結び付く種類（Task 5） ---
+
+def test_planting_creates_planting_and_first_record(app, client, photo, seed):
+    res = _post(client, photo, 'planting', {
+        'crop_variety': f'crop:{seed["crop"]}', 'location_id': str(seed['location']),
+        'planted_date': '2026-10-20', 'quantity': '3', 'planting_notes': '苗3株', 'notes': '本葉4枚'})
+
+    plantings = _rows(app, "SELECT id, crop_id, variety_id, position_x, notes, quantity FROM plantings "
+                           "WHERE planted_date = '2026-10-20'")
+    assert len(plantings) == 1
+    p = plantings[0]
+    assert (p['crop_id'], p['variety_id'], p['position_x'], p['notes'], p['quantity']) == \
+        (seed['crop'], None, None, '苗3株', 3)
+    records = _rows(app, 'SELECT id, recorded_at, notes, image_path FROM planting_records WHERE location_crop_id = ?',
+                    (p['id'],))
+    assert len(records) == 1
+    assert str(records[0]['recorded_at']) == '2026-10-20'
+    assert records[0]['notes'] == '本葉4枚'
+    assert records[0]['image_path'].startswith('growth_records/')
+    assert _usages(app, photo['id']) == [{'entity_type': 'planting_record', 'entity_id': records[0]['id'],
+                                          'copied_image_path': records[0]['image_path']}]
+    assert '/place' not in res.headers['Location']
+    assert '/photo_pool/sort/' in res.headers['Location']
+
+
+def test_planting_with_variety(app, client, photo, seed):
+    with app.app_context():
+        db = get_db()
+        variety = db.execute("INSERT INTO varieties (crop_id, name) VALUES (?, 'アイコ')", (seed['crop'],)).lastrowid
+        db.commit()
+    _post(client, photo, 'planting', {'crop_variety': f'variety:{variety}', 'location_id': str(seed['location']),
+                                      'planted_date': '2026-10-20'})
+    rows = _rows(app, "SELECT crop_id, variety_id FROM plantings WHERE planted_date = '2026-10-20'")
+    assert rows == [{'crop_id': None, 'variety_id': variety}]
+
+
+def test_planting_requires_location_and_crop(app, client, photo, seed):
+    res = _post(client, photo, 'planting', {'crop_variety': '', 'location_id': str(seed['location']),
+                                            'planted_date': '2026-10-20', 'notes': '下書き'})
+    assert res.status_code == 200
+    assert '場所と作物（または品種）は必須です' in res.get_data(as_text=True)
+    assert _rows(app, "SELECT id FROM plantings WHERE planted_date = '2026-10-20'") == []
+
+
+def test_planting_record_multiple_plantings_share_notes(app, client, photo, seed):
+    res = client.post('/photo_pool/sort/save', data={
+        'ids': str(photo['id']), 'pos': '0', 'photo_id': str(photo['id']), 'kind': 'planting_record',
+        'action': 'next', 'recorded_at': '2026-10-25', 'notes': '花が咲いた',
+        'location_crop_id': [str(seed['planting']), str(seed['planting2'])]})
+    assert res.status_code == 302
+    rows = _rows(app, 'SELECT id, location_crop_id, notes, image_path FROM planting_records ORDER BY id')
+    assert [r['location_crop_id'] for r in rows] == [seed['planting'], seed['planting2']]
+    assert {r['notes'] for r in rows} == {'花が咲いた'}
+    assert rows[0]['image_path'] != rows[1]['image_path']
+    assert [u['entity_id'] for u in _usages(app, photo['id'])] == [rows[0]['id'], rows[1]['id']]
+
+
+def test_planting_record_requires_planting(app, client, photo, seed):
+    res = _post(client, photo, 'planting_record', {'recorded_at': '2026-10-25', 'notes': '下書き'})
+    assert res.status_code == 200
+    assert '植え付けを選んでください' in res.get_data(as_text=True)
+    assert _rows(app, 'SELECT id FROM planting_records') == []
+
+
+def test_harvest_quantity_per_planting(app, client, photo, seed):
+    a, b = seed['planting'], seed['planting2']
+    client.post('/photo_pool/sort/save', data={
+        'ids': str(photo['id']), 'pos': '0', 'photo_id': str(photo['id']), 'kind': 'harvest',
+        'action': 'next', 'harvest_date': '2026-10-25', 'notes': '赤く熟した',
+        'location_crop_id': [str(a), str(b)],
+        f'quantity_{a}': '25', f'unit_{a}': '個', f'quantity_{b}': '3', f'unit_{b}': '本'})
+    rows = _rows(app, 'SELECT location_crop_id, quantity, unit, notes FROM harvests ORDER BY id')
+    assert rows == [
+        {'location_crop_id': a, 'quantity': 25, 'unit': '個', 'notes': '赤く熟した'},
+        {'location_crop_id': b, 'quantity': 3, 'unit': '本', 'notes': '赤く熟した'},
+    ]
+    assert len(_usages(app, photo['id'])) == 2
+
+
+def test_harvest_invalid_quantity_keeps_values(app, client, photo, seed):
+    a = seed['planting']
+    res = client.post('/photo_pool/sort/save', data={
+        'ids': str(photo['id']), 'pos': '0', 'photo_id': str(photo['id']), 'kind': 'harvest',
+        'action': 'next', 'harvest_date': '2026-10-21', 'notes': '下書き',
+        'location_crop_id': str(a), f'quantity_{a}': 'abc'})
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+    assert '収穫量は数値で入力してください' in html
+    assert 'value="abc"' in html and 'value="2026-10-21"' in html
+    assert _rows(app, 'SELECT id FROM harvests') == []
+
+
+def test_harvest_rows_render_for_selected_plantings(app, client, photo, seed):
+    a = seed['planting']
+    html = client.get(f'/photo_pool/sort/?ids={photo["id"]}&kind=harvest&location_crop_id={a}').get_data(as_text=True)
+    assert f'name="quantity_{a}"' in html
+    assert f'name="location_crop_id" value="{a}"' in html
+
+
+@pytest.mark.parametrize('kind', ['planting', 'planting_record', 'harvest'])
+def test_planting_kinds_render(app, client, photo, seed, kind):
+    html = client.get(f'/photo_pool/sort/?ids={photo["id"]}&kind={kind}').get_data(as_text=True)
+    assert 'action="/photo_pool/sort/save"' in html

@@ -74,7 +74,7 @@ def _finish(done_count):
     return redirect(url_for('photo_pool.index'))
 
 
-def _kind_context(kind):
+def _kind_context(kind, form_values=None):
     """種類ごとの入力欄に要るデータ"""
     from app.routes.crop_routes import _get_crop_icon_list
     if kind == 'crop':
@@ -84,6 +84,19 @@ def _kind_context(kind):
                 'crops': sorted(Crop.get_all(), key=lambda c: c.get('name') or '')}
     if kind in ('cooking', 'diary'):
         return _relation_context(include_locations=(kind == 'diary'))
+    if kind == 'planting':
+        return {'crops': sorted(Crop.get_all(), key=lambda c: c.get('name') or ''),
+                'varieties': sorted((Variety.apply_inheritance(v) for v in Variety.get_all()),
+                                    key=lambda v: (v.get('crop_name') or '', v.get('name') or '')),
+                'locations': Location.get_all()}
+    if kind in ('planting_record', 'harvest'):
+        from app.routes.planting_routes import _build_planting_multi_select_data
+        data = _build_planting_multi_select_data()
+        selected_ids = (form_values or MultiDict()).getlist('location_crop_id', type=int)
+        by_id = {p['id']: p for p in data['active_plantings']}
+        data['selected_location_crop_ids'] = [str(i) for i in selected_ids]
+        data['selected_plantings'] = [by_id[i] for i in selected_ids if i in by_id]
+        return data
     return {}
 
 
@@ -131,7 +144,7 @@ def render_sort_page(ids, pos, done, kind, form_values=None):
                            sort_url=sort_url,
                            default_date=default_date(photo),
                            form_values=form_values if form_values is not None else MultiDict(),
-                           **_kind_context(kind))
+                           **_kind_context(kind, form_values))
 
 
 @bp.route('/')
@@ -140,7 +153,8 @@ def index():
     ids = _parse_ids(request.args.get('ids'))
     pos = max(request.args.get('pos', 0, type=int), 0)
     done = set(_parse_ids(request.args.get('done')))
-    return render_sort_page(ids, pos, done, request.args.get('kind'))
+    # 収穫量の入力欄を出すため、選んだ植え付けなどを GET で受け取って入力欄に戻す
+    return render_sort_page(ids, pos, done, request.args.get('kind'), request.args)
 
 
 class _FormError(Exception):
@@ -248,7 +262,81 @@ def _save_diary(form, photo):
     return f'日記「{data["title"]}」を登録しました'
 
 
+def _selected_plantings(form):
+    """選んだ植え付け（location_crop_id を複数）。1つも無ければ _FormError"""
+    from app.models.planting import Planting
+    plantings = [p for p in (Planting.get_by_id(i) for i in form.getlist('location_crop_id', type=int)) if p]
+    if not plantings:
+        raise _FormError('植え付けを選んでください')
+    return plantings
+
+
+def _save_planting(form, photo):
+    """植え付けと、この写真を付けた最初の栽培記録を作る（見取り図の配置には移らない）"""
+    from app.models.planting import Planting
+    from app.models.planting_record import PlantingRecord
+    kind, _, target_id = (form.get('crop_variety') or '').partition(':')
+    location_id = form.get('location_id', type=int)
+    data = {
+        'location_id': location_id,
+        'crop_id': int(target_id) if kind == 'crop' and target_id.isdigit() else None,
+        'variety_id': int(target_id) if kind == 'variety' and target_id.isdigit() else None,
+        'planted_date': form.get('planted_date') or None,
+        'quantity': form.get('quantity') or None,
+        'notes': form.get('planting_notes') or None,
+    }
+    if not location_id or not (data['crop_id'] or data['variety_id']):
+        raise _FormError('場所と作物（または品種）は必須です')
+    planting_id = Planting.plant(data)
+    recorded_at = data['planted_date'] or default_date(photo)
+    _create_with_photo(photo, 'growth_records', 'planting_record', lambda path: PlantingRecord.create({
+        'location_crop_id': planting_id, 'recorded_at': recorded_at,
+        'notes': form.get('notes') or None, 'image_path': path}))
+    return '植え付けと栽培記録を登録しました'
+
+
+def _save_planting_record(form, photo):
+    """選んだ植え付けごとに栽培記録を作る（メモは共通、写真は1件ずつ別のコピー）"""
+    from app.models.planting_record import PlantingRecord
+    recorded_at = form.get('recorded_at')
+    if not recorded_at:
+        raise _FormError('記録日は必須です')
+    plantings = _selected_plantings(form)
+    notes = form.get('notes') or None
+    for p in plantings:
+        _create_with_photo(photo, 'growth_records', 'planting_record', lambda path, p=p: PlantingRecord.create({
+            'location_crop_id': p['id'], 'recorded_at': recorded_at, 'notes': notes, 'image_path': path}))
+    return f'{len(plantings)}件の栽培記録を登録しました'
+
+
+def _save_harvest(form, photo):
+    """選んだ植え付けごとに収穫を作る（メモは共通、収穫量・単位は植え付けごと）"""
+    from app.models.harvest import Harvest
+    harvest_date = form.get('harvest_date')
+    if not harvest_date:
+        raise _FormError('収穫日は必須です')
+    plantings = _selected_plantings(form)
+    rows = []
+    for p in plantings:
+        raw = form.get(f'quantity_{p["id"]}') or ''
+        try:
+            quantity = float(raw) if raw else None
+        except ValueError:
+            raise _FormError(f'「{p.get("crop_name")}」の収穫量は数値で入力してください')
+        rows.append((p['id'], quantity, form.get(f'unit_{p["id"]}') or None))
+    notes = form.get('notes') or None
+    for lc_id, quantity, unit in rows:
+        _create_with_photo(photo, 'harvests', 'harvest', lambda path, lc_id=lc_id, quantity=quantity, unit=unit:
+                           Harvest.create({'location_crop_id': lc_id, 'harvest_date': harvest_date,
+                                           'quantity': quantity, 'unit': unit, 'notes': notes,
+                                           'image_path': path}))
+    return f'{len(rows)}件の収穫を登録しました'
+
+
 _SAVERS = {
+    'planting': _save_planting,
+    'planting_record': _save_planting_record,
+    'harvest': _save_harvest,
     'crop': _save_crop,
     'variety': _save_variety,
     'location': _save_location,

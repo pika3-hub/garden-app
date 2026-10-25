@@ -1,0 +1,15 @@
+{# 対象の植え付け（複数可）。hidden 名は location_crop_id（まとめて登録と同じ） #}
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="form-label mb-0">植え付け <span class="text-danger">*</span> <small class="text-muted">複数選べます</small></span>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#plantingMultiSelectModal">
+            <i class="bi bi-list-check"></i> 選択
+        </button>
+    </div>
+    <div id="selected-plantings-display" class="selected-items-chips mb-1"></div>
+    <div id="planting-hidden-inputs" data-input-name="location_crop_id">
+        {% for id in fv.getlist('location_crop_id') %}
+        <input type="hidden" name="location_crop_id" value="{{ id }}">
+        {% endfor %}
+    </div>
+</div>

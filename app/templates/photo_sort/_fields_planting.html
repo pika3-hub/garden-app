@@ -1,0 +1,49 @@
+{% set cv_value = fv.get('crop_variety', '') %}
+<div class="mb-3">
+    <label for="crop_variety" class="form-label">作物・品種 <span class="text-danger">*</span></label>
+    <select class="form-select" id="crop_variety" name="crop_variety" required>
+        <option value="">選んでください</option>
+        <optgroup label="作物">
+            {% for c in crops %}
+            <option value="crop:{{ c.id }}"{% if cv_value == 'crop:' ~ c.id %} selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </optgroup>
+        <optgroup label="品種">
+            {% for v in varieties %}
+            <option value="variety:{{ v.id }}"{% if cv_value == 'variety:' ~ v.id %} selected{% endif %}>{{ v.crop_name }}（{{ v.name }}）</option>
+            {% endfor %}
+        </optgroup>
+    </select>
+</div>
+<div class="mb-3">
+    <label for="location_id" class="form-label">場所 <span class="text-danger">*</span></label>
+    <select class="form-select" id="location_id" name="location_id" required>
+        <option value="">選んでください</option>
+        {% for l in locations %}
+        <option value="{{ l.id }}"{% if fv.get('location_id')|string == l.id|string %} selected{% endif %}>{{ l.name }}{% if l.location_type %}（{{ l.location_type }}）{% endif %}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="row">
+    <div class="col-7 mb-3">
+        <label for="planted_date" class="form-label">植え付け日</label>
+        <input type="date" class="form-control" id="planted_date" name="planted_date"
+               value="{{ fv.get('planted_date') or default_date }}" data-ai-date>
+    </div>
+    <div class="col-5 mb-3">
+        <label for="quantity" class="form-label">数量</label>
+        <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="{{ fv.get('quantity', '') }}">
+    </div>
+</div>
+<div class="mb-3">
+    <label for="planting_notes" class="form-label">植え付けのメモ</label>
+    <textarea class="form-control" id="planting_notes" name="planting_notes" rows="2">{{ fv.get('planting_notes', '') }}</textarea>
+</div>
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <label for="notes" class="form-label mb-0">栽培記録のメモ（この写真を付けます）</label>
+        {% include 'photo_sort/_ai_draft_button.html' ignore missing %}
+    </div>
+    <textarea class="form-control" id="notes" name="notes" rows="4" data-ai-field="notes">{{ fv.get('notes', '') }}</textarea>
+    <div class="form-text">見取り図への配置は、あとで場所の見取り図から行えます</div>
+</div>

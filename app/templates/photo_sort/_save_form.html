@@ -9,7 +9,7 @@
         <input type="hidden" name="kind" value="{{ kind }}">
 
         <h2 class="h5 mb-3">{{ kind_label }}</h2>
-        {% include 'photo_sort/_fields_' ~ kind ~ '.html' ignore missing %}
+        {% include 'photo_sort/_fields_' ~ kind ~ '.html' %}
 
         <div class="d-grid gap-2 mt-3">
             <button type="submit" name="action" value="next" class="btn btn-success">
@@ -22,4 +22,5 @@
     </div>
 </form>
 {% if kind in ('cooking', 'diary') %}{% include 'photo_sort/_relation_modals.html' %}{% endif %}
+{% if kind in ('planting_record', 'harvest') %}{% include '_planting_select_multi_modal.html' %}{% endif %}
 {% if kind in ('crop', 'variety') %}{% include '_ai_notes_modal.html' %}{% endif %}

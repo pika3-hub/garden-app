@@ -93,8 +93,11 @@
 
         if (typeof MultiSelectModal !== 'undefined') {
             RELATIONS.forEach(function (config) {
-                if (document.getElementById(config.modalId) && document.getElementById(config.inputContainerId)) {
-                    new MultiSelectModal(config);
+                var container = document.getElementById(config.inputContainerId);
+                if (document.getElementById(config.modalId) && container) {
+                    // 栽培記録・収穫の対象の植え付けは hidden 名が location_crop_id（data-input-name で指定）
+                    var name = container.dataset.inputName || config.inputName;
+                    new MultiSelectModal(Object.assign({}, config, { inputName: name }));
                 }
             });
         }
