@@ -48,3 +48,41 @@
     border-radius: 6px;
     cursor: zoom-in;
 }
+
+.sort-icon-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.sort-icon-item {
+    cursor: pointer;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid transparent;
+}
+
+.sort-icon-item.selected {
+    border-color: #4CAF50;
+}
+
+.sort-icon-preview,
+.sort-icon-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.sort-icon-preview {
+    object-fit: cover;
+    border: 3px solid #4CAF50;
+}
+
+.sort-icon-placeholder {
+    border: 2px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

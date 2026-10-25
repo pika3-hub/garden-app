@@ -1,0 +1,25 @@
+{# 振り分け画面の保存フォーム。種類ごとの入力欄は _fields_{kind}.html。form_values は入力エラー時の再表示用 #}
+{% set fv = form_values %}
+<form method="POST" action="{{ url_for('photo_sort.save') }}" id="sort-save-form" class="card">
+    <div class="card-body">
+        <input type="hidden" name="ids" value="{{ ids|join(',') }}">
+        <input type="hidden" name="pos" value="{{ pos }}">
+        <input type="hidden" name="done" value="{{ ids|select('in', done)|join(',') }}">
+        <input type="hidden" name="photo_id" value="{{ photo.id }}">
+        <input type="hidden" name="kind" value="{{ kind }}">
+
+        <h2 class="h5 mb-3">{{ kind_label }}</h2>
+        {% include 'photo_sort/_fields_' ~ kind ~ '.html' ignore missing %}
+
+        <div class="d-grid gap-2 mt-3">
+            <button type="submit" name="action" value="next" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> 保存して次へ
+            </button>
+            <button type="submit" name="action" value="stay" class="btn btn-outline-success btn-sm">
+                保存して、この写真で続けて登録
+            </button>
+        </div>
+    </div>
+</form>
+{% if kind in ('cooking', 'diary') %}{% include 'photo_sort/_relation_modals.html' %}{% endif %}
+{% if kind in ('crop', 'variety') %}{% include '_ai_notes_modal.html' %}{% endif %}

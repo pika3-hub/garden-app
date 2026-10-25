@@ -1,0 +1,33 @@
+<div class="mb-3">
+    <label for="name" class="form-label">場所名 <span class="text-danger">*</span></label>
+    <input type="text" class="form-control" id="name" name="name" value="{{ fv.get('name', '') }}" required>
+</div>
+<div class="mb-3">
+    <label for="location_type" class="form-label">場所種類 <span class="text-danger">*</span></label>
+    <input type="text" class="form-control" id="location_type" name="location_type"
+           value="{{ fv.get('location_type', '') }}" placeholder="例: 畑、プランター" required>
+</div>
+<div class="row">
+    <div class="col-6 mb-3">
+        <label for="area_size" class="form-label">面積（㎡）</label>
+        <input type="number" step="0.01" class="form-control" id="area_size" name="area_size" value="{{ fv.get('area_size', '') }}">
+    </div>
+    <div class="col-6 mb-3">
+        <label for="sun_exposure" class="form-label">日当たり</label>
+        <select class="form-select" id="sun_exposure" name="sun_exposure">
+            <option value="">選択してください</option>
+            {% for v in ['全日', '半日', '日陰'] %}
+            <option value="{{ v }}"{% if fv.get('sun_exposure') == v %} selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+<div class="mb-3">
+    {% set ai_target = 'notes' %}
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <label for="notes" class="form-label mb-0">メモ</label>
+        {% include 'photo_sort/_ai_draft_button.html' ignore missing %}
+    </div>
+    <textarea class="form-control" id="notes" name="notes" rows="4" data-ai-field="notes">{{ fv.get('notes', '') }}</textarea>
+    <div class="form-text">見取り図の背景画像は、登録後に場所の編集画面で選べます</div>
+</div>

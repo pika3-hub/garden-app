@@ -1,0 +1,43 @@
+<div class="mb-3">
+    <label for="crop_id" class="form-label">親作物 <span class="text-danger">*</span></label>
+    {# ai-notes.js は品種のとき #crop_id_hidden から親作物を読む #}
+    {% set selected_crop = crops|selectattr('id', 'equalto', (fv.get('crop_id') or 0)|int)|first %}
+    <select class="form-select" id="crop_id" name="crop_id" required
+            onchange="document.getElementById('crop_id_hidden').value = this.value;
+                      document.getElementById('selected-crop-display').textContent = this.value ? this.selectedOptions[0].text : '';
+                      document.getElementById('crop-select-error').style.display = 'none';">
+        <option value="">選んでください</option>
+        {% for c in crops %}
+        <option value="{{ c.id }}"{% if selected_crop and selected_crop.id == c.id %} selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+    </select>
+    <input type="hidden" id="crop_id_hidden" value="{{ selected_crop.id if selected_crop else '' }}">
+    <span id="selected-crop-display" class="d-none">{{ selected_crop.name if selected_crop else '' }}</span>
+    <div id="crop-select-error" class="text-danger small" style="display: none;">親作物を選んでください</div>
+</div>
+<div class="mb-3">
+    <label for="name" class="form-label">品種名 <span class="text-danger">*</span></label>
+    <input type="text" class="form-control" id="name" name="name" value="{{ fv.get('name', '') }}" required>
+</div>
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <label for="notes" class="form-label mb-0">メモ</label>
+        {% set ai_mode = 'variety' %}
+        {% include '_ai_notes_button.html' %}
+    </div>
+    <textarea class="form-control" id="notes" name="notes" rows="6">{{ fv.get('notes', '') }}</textarea>
+</div>
+{% set icon_hint = '未選択なら親作物のアイコン' %}
+{% include 'photo_sort/_icon_picker.html' %}
+<div class="mb-3">
+    <label for="image_color" class="form-label">イメージカラー</label>
+    <div class="d-flex align-items-center gap-2">
+        <input type="color" class="form-control form-control-color" id="image_color" name="image_color"
+               value="{{ fv.get('image_color') or '#4CAF50' }}">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="use_parent_color" name="use_parent_color" value="1"
+                   {% if not fv or fv.get('use_parent_color') %}checked{% endif %}>
+            <label class="form-check-label" for="use_parent_color">親作物の色を使う</label>
+        </div>
+    </div>
+</div>

@@ -6,6 +6,17 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/photo_sort.css') }}">
 {% endblock %}
 
+{% block extra_js %}
+{% if kind in ('cooking', 'diary') %}
+<script src="{{ url_for('static', filename='js/entity-select-modal.js') }}"></script>
+{% endif %}
+{% if kind in ('crop', 'variety') %}
+<script src="{{ url_for('static', filename='js/ai-notes.js') }}"></script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/photo-sort.js') }}"
+        data-crop-icon-base="{{ url_for('static', filename='images/crop_icons/') }}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0"><i class="bi bi-images"></i> 写真の振り分け（{{ pos + 1 }} / {{ photos|length }}枚目）</h1>

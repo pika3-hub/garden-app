@@ -1,0 +1,30 @@
+<div class="row">
+    <div class="col-md-7 mb-3">
+        <label for="title" class="form-label">タイトル <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="title" name="title" value="{{ fv.get('title', '') }}"
+               data-ai-field="title" required>
+    </div>
+    <div class="col-md-5 mb-3">
+        <label for="cooked_date" class="form-label">調理日 <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" id="cooked_date" name="cooked_date"
+               value="{{ fv.get('cooked_date') or default_date }}" data-ai-date required>
+    </div>
+</div>
+<div class="mb-3">
+    <label for="category" class="form-label">カテゴリ</label>
+    <input type="text" class="form-control" id="category" name="category" value="{{ fv.get('category', '') }}"
+           list="category-suggestions" placeholder="例: サラダ、炒め物、スープ" data-ai-field="category">
+    {% if categories %}
+    <datalist id="category-suggestions">
+        {% for cat in categories %}<option value="{{ cat }}">{% endfor %}
+    </datalist>
+    {% endif %}
+</div>
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <label for="notes" class="form-label mb-0">メモ</label>
+        {% include 'photo_sort/_ai_draft_button.html' ignore missing %}
+    </div>
+    <textarea class="form-control" id="notes" name="notes" rows="4" data-ai-field="notes">{{ fv.get('notes', '') }}</textarea>
+</div>
+{% include 'photo_sort/_relations.html' %}

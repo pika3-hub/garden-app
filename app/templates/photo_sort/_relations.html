@@ -1,0 +1,29 @@
+{# 関連付け（作物・品種・場所・植え付け・収穫）。モーダル本体は _relation_modals.html（フォームの外に置く） #}
+{% set relation_groups = [
+    ('crop', '作物', 'crop_ids', 'cropMultiSelectModal', 'btn-outline-success'),
+    ('variety', '品種', 'variety_ids', 'varietyMultiSelectModal', 'btn-outline-success'),
+    ('location', '場所', 'location_ids', 'locationMultiSelectModal', 'btn-outline-info'),
+    ('planting', '植え付け', 'location_crop_ids', 'plantingMultiSelectModal', 'btn-outline-warning'),
+    ('harvest', '収穫', 'harvest_ids', 'harvestMultiSelectModal', 'btn-outline-danger'),
+] %}
+<div class="mb-2 fw-bold small"><i class="bi bi-link-45deg"></i> 関連付け</div>
+<div class="row">
+    {% for key, label, input_name, modal_id, btn_class in relation_groups %}
+    {% if key != 'location' or include_locations %}
+    <div class="col-6 mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small">{{ label }}</span>
+            <button type="button" class="btn btn-sm {{ btn_class }}" data-bs-toggle="modal" data-bs-target="#{{ modal_id }}">
+                <i class="bi bi-list-check"></i> 選択
+            </button>
+        </div>
+        <div id="selected-{{ 'varieties' if key == 'variety' else key ~ 's' }}-display" class="selected-items-chips"></div>
+        <div id="{{ key }}-hidden-inputs" data-relation-label>
+            {% for id in fv.getlist(input_name) %}
+            <input type="hidden" name="{{ input_name }}" value="{{ id }}">
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
