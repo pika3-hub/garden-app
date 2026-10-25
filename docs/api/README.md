@@ -87,7 +87,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | GET | `/{res}/{id}/image` | 本体画像のファイル（`?size=thumb` でサムネイル）。本体画像を持つリソースのみ（[6章](#画像の取得)） |
 | POST | `/{res}/{id}/images` | 追加画像の添付（URL・YouTube の追加は PATCH の `extra_urls`・`extra_youtube`、[6章](#追加-url補足情報の-url)）（`extra_images` ファイル、または JSON `{"extra_photo_pool_ids": [...]}`）。本体画像・補足情報を持つリソースのみ |
 
-知らない検索条件は 422。
+知らない検索条件は 422。`date_from` はその日以降、`date_to` はその日以前（どちらも当日を含む）。1日だけ取るときは両方に同じ日付を入れる。`q` はひらがな・カタカナ・漢字を区別する（`じゃがいも` で `ジャガイモ` は見つからない）。
 
 ## 5. リソース別の項目
 
