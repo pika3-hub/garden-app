@@ -42,7 +42,7 @@
 <div class="mb-3">
     <div class="d-flex justify-content-between align-items-start mb-2">
         <label for="notes" class="form-label mb-0">栽培記録のメモ（この写真を付けます）</label>
-        {% include 'photo_sort/_ai_draft_button.html' ignore missing %}
+        {% include 'photo_sort/_ai_draft_button.html' %}
     </div>
     <textarea class="form-control" id="notes" name="notes" rows="4" data-ai-field="notes">{{ fv.get('notes', '') }}</textarea>
     <div class="form-text">見取り図への配置は、あとで場所の見取り図から行えます</div>

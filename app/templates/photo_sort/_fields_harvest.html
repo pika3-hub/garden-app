@@ -30,7 +30,7 @@
 <div class="mb-3">
     <div class="d-flex justify-content-between align-items-start mb-2">
         <label for="notes" class="form-label mb-0">メモ <small class="text-muted">選んだ植え付けすべてに同じメモ</small></label>
-        {% include 'photo_sort/_ai_draft_button.html' ignore missing %}
+        {% include 'photo_sort/_ai_draft_button.html' %}
     </div>
     <textarea class="form-control" id="notes" name="notes" rows="4" data-ai-field="notes">{{ fv.get('notes', '') }}</textarea>
 </div>

@@ -2,9 +2,11 @@
 
 状態は URL のパラメーターだけで持つ: ids=写真IDの並び, pos=今の位置, done=登録済みの写真ID, kind=登録する種類
 """
+import io
+import os
 from datetime import date
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, current_app, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.datastructures import MultiDict
 
 from app.models.cooking import Cooking
@@ -14,7 +16,9 @@ from app.models.location import Location
 from app.models.photo_pool import PhotoPool
 from app.models.variety import Variety
 from app.routes.photo_pool_routes import usage_url
-from app.utils.upload import copy_image, delete_image
+from app.utils.ai_notes import NO_API_KEY_MESSAGE, AiNotesError, is_available
+from app.utils.ai_photo_drafts import DRAFT_FIELDS, generate_photo_draft
+from app.utils.upload import THUMBNAIL_SIZE, copy_image, delete_image
 
 bp = Blueprint('photo_sort', __name__, url_prefix='/photo_pool/sort')
 
@@ -376,3 +380,83 @@ def save():
     done.add(photo['id'])
     next_pos = pos if form.get('action') == 'stay' else pos + 1
     return redirect(sort_url(ids, next_pos, done))
+
+
+def _draft_error(message, status=400):
+    return jsonify({'ok': False, 'error': message}), status
+
+
+def _photo_jpeg(photo):
+    """AI に送る JPEG: サムネイルがあればそれ、無ければ元画像を縮小して JPEG にする"""
+    from PIL import Image, ImageOps
+    folder = current_app.config['UPLOAD_FOLDER']
+    base = os.path.splitext(os.path.basename(photo['image_path']))[0]
+    thumb = os.path.join(folder, os.path.dirname(photo['image_path']), 'thumbs', f'{base}.jpg')
+    if os.path.exists(thumb):
+        with open(thumb, 'rb') as f:
+            return f.read()
+    original = os.path.join(folder, photo['image_path'])
+    if not os.path.exists(original):
+        return None
+    with Image.open(original) as img:
+        img = ImageOps.exif_transpose(img).convert('RGB')
+        img.thumbnail(THUMBNAIL_SIZE)
+        buf = io.BytesIO()
+        img.save(buf, format='JPEG', quality=80)
+        return buf.getvalue()
+
+
+def _planting_label(p):
+    crop = f'{p["crop_name"]}（{p["variety"]}）' if p.get('variety') else p['crop_name']
+    return f'{crop}／{p["location_name"]}'
+
+
+def _draft_context(kind, payload):
+    """AI に渡す文脈。入力不足は _FormError"""
+    from app.models.planting import Planting
+    from app.models.planting_record import PlantingRecord
+    day = (payload.get('date') or '').strip() or date.today().isoformat()
+    related = [str(r) for r in (payload.get('related') or []) if str(r).strip()]
+    if kind in ('planting_record', 'harvest'):
+        ids = [i for i in (payload.get('location_crop_ids') or []) if str(i).isdigit()]
+        plantings = [p for p in (Planting.get_by_id(int(i)) for i in ids) if p]
+        if not plantings:
+            raise _FormError('先に植え付けを選んでください')
+        return {'date': day, 'plantings': [
+            {'label': _planting_label(p), 'previous_notes': PlantingRecord.get_previous_notes(p['id'], day)}
+            for p in plantings]}
+    if kind == 'planting':
+        label = (payload.get('planting_label') or '').strip()
+        return {'date': day, 'plantings': [{'label': label or '（未選択）', 'previous_notes': None}]}
+    if kind == 'cooking':
+        return {'date': day, 'categories': Cooking.get_categories(), 'related': related}
+    if kind == 'diary':
+        return {'date': day, 'related': related}
+    return {'name': (payload.get('name') or '').strip()}
+
+
+@bp.route('/ai-draft', methods=['POST'])
+def ai_draft():
+    """写真を見て、種類ごとの項目の下書きを返す（JSON）。保存はしない"""
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _draft_error('不正なリクエストです')
+    kind = payload.get('kind')
+    photo_id = payload.get('photo_id')
+    photo = PhotoPool.get_by_id(photo_id) if isinstance(photo_id, int) else None
+    if kind not in DRAFT_FIELDS or not photo:
+        return _draft_error('不正なリクエストです')
+    try:
+        context = _draft_context(kind, payload)
+    except _FormError as e:
+        return _draft_error(str(e))
+    if not is_available():
+        return _draft_error(NO_API_KEY_MESSAGE)
+    image = _photo_jpeg(photo)
+    if not image:
+        return _draft_error('写真のファイルが見つかりません')
+    try:
+        fields = generate_photo_draft(kind, image, context)
+    except AiNotesError as e:
+        return _draft_error(str(e), status=502)
+    return jsonify({'ok': True, 'fields': fields})

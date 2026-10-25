@@ -145,6 +145,18 @@ class PlantingRecord:
                 dict(next_record) if next_record else None)
 
     @staticmethod
+    def get_previous_notes(location_crop_id, before_date):
+        """記録日が before_date より前で最新の栽培記録のメモ（無ければ None）"""
+        db = get_db()
+        row = db.execute(
+            '''SELECT notes FROM planting_records
+               WHERE location_crop_id = ? AND recorded_at < ?
+               ORDER BY recorded_at DESC, id DESC LIMIT 1''',
+            (location_crop_id, before_date)
+        ).fetchone()
+        return row['notes'] if row else None
+
+    @staticmethod
     def create(data):
         """栽培記録を作成"""
         db = get_db()

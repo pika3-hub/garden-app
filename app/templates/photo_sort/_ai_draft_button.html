@@ -1,0 +1,9 @@
+{# 写真を見て AI が入力欄（data-ai-field）を下書きするボタン。APIキーが無ければ出さない #}
+{% if ai_available %}
+<span class="text-end">
+    <button type="button" class="btn btn-sm btn-outline-primary" data-ai-draft-btn
+            data-url="{{ url_for('photo_sort.ai_draft') }}">✨ AIで下書き</button>
+    <button type="button" class="btn btn-sm btn-link d-none" data-ai-draft-undo>元に戻す</button>
+    <span class="d-block small text-muted" data-ai-draft-status></span>
+</span>
+{% endif %}

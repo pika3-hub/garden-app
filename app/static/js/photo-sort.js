@@ -2,6 +2,7 @@
  * 写真プールの振り分け画面（photo_sort/index.html）
  * - アイコン選択（作物・品種）
  * - 関連付けモーダルの初期化（料理・日記。diary/form.html と同じ設定）
+ * - 「✨ AIで下書き」: 写真と今の入力を送り、返った項目を data-ai-field の欄に入れる（「元に戻す」で直前の値へ）
  */
 (function () {
     'use strict';
@@ -88,8 +89,86 @@
         }
     ];
 
+    function selectedText(id) {
+        var el = document.getElementById(id);
+        return el && el.value ? el.selectedOptions[0].text : '';
+    }
+
+    function draftPayload(form) {
+        var val = function (name) { var el = form.querySelector('[name="' + name + '"]'); return el ? el.value : ''; };
+        var dateEl = form.querySelector('[data-ai-date]');
+        var nameEl = form.querySelector('#name');
+        return {
+            photo_id: parseInt(val('photo_id'), 10),
+            kind: val('kind'),
+            date: dateEl ? dateEl.value : '',
+            name: nameEl ? nameEl.value : '',
+            location_crop_ids: Array.from(form.querySelectorAll('input[name="location_crop_id"]'))
+                .map(function (el) { return parseInt(el.value, 10); }),
+            related: Array.from(form.querySelectorAll('.selected-items-chips > *'))
+                .map(function (el) { return el.textContent.replace(/[×✕]/g, '').trim(); })
+                .filter(Boolean),
+            planting_label: [selectedText('crop_variety'), selectedText('location_id')].filter(Boolean).join('／')
+        };
+    }
+
+    function initAiDraft(btn) {
+        var form = btn.closest('form');
+        var wrap = btn.parentElement;
+        var undoBtn = wrap.querySelector('[data-ai-draft-undo]');
+        var statusEl = wrap.querySelector('[data-ai-draft-status]');
+        var previous = null;
+
+        btn.addEventListener('click', function () {
+            var started = Date.now();
+            btn.disabled = true;
+            statusEl.classList.remove('text-danger');
+            statusEl.textContent = '生成中… 0秒';
+            var timer = setInterval(function () {
+                statusEl.textContent = '生成中… ' + Math.round((Date.now() - started) / 1000) + '秒';
+            }, 1000);
+
+            fetch(btn.dataset.url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(draftPayload(form))
+            }).then(function (res) {
+                return res.json().catch(function () { return { ok: false, error: '応答を読み取れませんでした' }; });
+            }).then(function (data) {
+                if (!data.ok) throw new Error(data.error || '生成に失敗しました');
+                previous = {};
+                Object.keys(data.fields).forEach(function (key) {
+                    var el = form.querySelector('[data-ai-field="' + key + '"]');
+                    if (!el) return;
+                    previous[key] = el.value;
+                    el.value = data.fields[key];
+                });
+                undoBtn.classList.remove('d-none');
+                statusEl.textContent = '下書きを入れました。確認・修正してから保存してください';
+            }).catch(function (err) {
+                statusEl.classList.add('text-danger');
+                statusEl.textContent = err.message === 'Failed to fetch' ? '通信エラーです' : err.message;
+            }).finally(function () {
+                clearInterval(timer);
+                btn.disabled = false;
+            });
+        });
+
+        undoBtn.addEventListener('click', function () {
+            if (!previous) return;
+            Object.keys(previous).forEach(function (key) {
+                var el = form.querySelector('[data-ai-field="' + key + '"]');
+                if (el) el.value = previous[key];
+            });
+            previous = null;
+            undoBtn.classList.add('d-none');
+            statusEl.textContent = '元に戻しました';
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('[data-icon-picker]').forEach(initIconPicker);
+        document.querySelectorAll('[data-ai-draft-btn]').forEach(initAiDraft);
 
         if (typeof MultiSelectModal !== 'undefined') {
             RELATIONS.forEach(function (config) {
