@@ -98,11 +98,13 @@
         var val = function (name) { var el = form.querySelector('[name="' + name + '"]'); return el ? el.value : ''; };
         var dateEl = form.querySelector('[data-ai-date]');
         var nameEl = form.querySelector('#name');
+        var compareEl = form.querySelector('[data-ai-compare]');
         return {
             photo_id: parseInt(val('photo_id'), 10),
             kind: val('kind'),
             date: dateEl ? dateEl.value : '',
             name: nameEl ? nameEl.value : '',
+            compare: compareEl ? compareEl.checked : false,
             location_crop_ids: Array.from(form.querySelectorAll('input[name="location_crop_id"]'))
                 .map(function (el) { return parseInt(el.value, 10); }),
             related: Array.from(form.querySelectorAll('.selected-items-chips > *'))

@@ -22,13 +22,14 @@ DRAFT_FIELDS = {
 }
 
 PHOTO_SYSTEM_PROMPT = """あなたは日本の家庭菜園の記録係です。
-ユーザーが撮った写真1枚を見て、記録の入力欄の下書きを日本語で書きます。
+ユーザーが撮った今回の写真を見て、記録の入力欄の下書きを日本語で書きます。
 
 # 書き方
-- 写真に写っている様子だけを書く。アドバイス・作業の提案・病気などの推測は書かない。
+- 今回の写真に写っている様子だけを書く。アドバイス・作業の提案・病気などの推測は書かない。
 - 写真から分からないこと（収穫した数・重さ、味、品種名など）は書かない。
 - 短く、だ・である調で書く。メモは2〜4文程度。Markdown の見出しは使わない。
-- 栽培記録・収穫で前回の記録のメモが渡されたら、前回からの変化を1〜2文添える。
+- 前回の写真が渡されたら、今回の写真と見比べて、前回からの変化を1〜2文添える。前回のメモは前回の写真を読み取る補助として使い、写真で確かめられない内容は変化として書かない。
+- 前回の写真が渡されなければ、前回との比較は書かない。
 - 植え付けが複数渡されたら、全体で1つのメモにまとめる。
 - 料理のカテゴリは候補から選ぶ。合うものが無ければ短い新しい名前にする。
 """
@@ -51,7 +52,6 @@ def _build_user_text(kind, context):
         lines.append(f'名前: {context["name"]}')
     for p in context.get('plantings') or []:
         lines.append(f'植え付け: {p["label"]}')
-        lines.append(f'  前回の記録のメモ: {p.get("previous_notes") or "（なし）"}')
     if context.get('categories'):
         lines.append('カテゴリの候補: ' + '、'.join(context['categories']))
     if context.get('related'):
@@ -81,9 +81,32 @@ def _parse(blocks, fields):
     return {f: data[f].strip() for f in fields}
 
 
+def _image_block(image_bytes):
+    return {'type': 'image', 'source': {
+        'type': 'base64', 'media_type': 'image/jpeg',
+        'data': base64.standard_b64encode(image_bytes).decode('ascii')}}
+
+
+def _build_content(kind, image_bytes, context):
+    """今回の写真、前回の写真（あれば植え付けごと。直前にどの写真かを書く）、指示文の順に並べる"""
+    content = [{'type': 'text', 'text': '今回の写真:'}, _image_block(image_bytes)]
+    for p in context.get('plantings') or []:
+        prev = p.get('previous')
+        if not prev:
+            continue
+        content.append({'type': 'text', 'text': (
+            f'前回の写真（植え付け: {p["label"]}、{prev["date"]}）。'
+            f'前回のメモ: {prev.get("notes") or "（なし）"}')})
+        content.append(_image_block(prev['image']))
+    content.append({'type': 'text', 'text': _build_user_text(kind, context)})
+    return content
+
+
 def generate_photo_draft(kind, image_bytes, context, client=None, model=None):
     """写真（JPEG）から kind に応じた項目の下書きを {項目: 文字列} で返す。
 
+    context['plantings'][*]['previous'] に {'date', 'notes', 'image'(JPEG)} があれば、
+    前回の写真として一緒に送り、変化を書かせる。
     失敗時は AiNotesError、未対応の kind は ValueError を送出する。
     """
     if kind not in DRAFT_FIELDS:
@@ -98,12 +121,7 @@ def generate_photo_draft(kind, image_bytes, context, client=None, model=None):
         'max_tokens': MAX_TOKENS,
         'system': PHOTO_SYSTEM_PROMPT,
         'output_config': {'effort': 'low', 'format': {'type': 'json_schema', 'schema': _schema(fields)}},
-        'messages': [{'role': 'user', 'content': [
-            {'type': 'image', 'source': {
-                'type': 'base64', 'media_type': 'image/jpeg',
-                'data': base64.standard_b64encode(image_bytes).decode('ascii')}},
-            {'type': 'text', 'text': _build_user_text(kind, context)},
-        ]}],
+        'messages': [{'role': 'user', 'content': _build_content(kind, image_bytes, context)}],
     }
     if MODEL_INFO[model]['fallbacks']:
         params['betas'] = [FALLBACK_BETA]

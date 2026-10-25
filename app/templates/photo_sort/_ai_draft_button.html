@@ -1,6 +1,13 @@
-{# 写真を見て AI が入力欄（data-ai-field）を下書きするボタン。APIキーが無ければ出さない #}
+{# 写真を見て AI が入力欄（data-ai-field）を下書きするボタン。APIキーが無ければ出さない。
+   ai_compare を set すると「前回からの変化も書く」（前回の写真＋メモも送る）を出す #}
 {% if ai_available %}
 <span class="text-end">
+    {% if ai_compare %}
+    <span class="form-check form-check-inline small me-1">
+        <input class="form-check-input" type="checkbox" id="ai-compare" data-ai-compare checked>
+        <label class="form-check-label" for="ai-compare">前回からの変化も書く</label>
+    </span>
+    {% endif %}
     <button type="button" class="btn btn-sm btn-outline-primary" data-ai-draft-btn
             data-url="{{ url_for('photo_sort.ai_draft') }}">✨ AIで下書き</button>
     <button type="button" class="btn btn-sm btn-link d-none" data-ai-draft-undo>元に戻す</button>
