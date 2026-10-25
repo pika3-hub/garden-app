@@ -104,6 +104,10 @@
     <button type="button" class="btn btn-sm btn-outline-secondary" id="bulk-clear">
         選択をクリア
     </button>
+    <button type="button" class="btn btn-sm btn-success" id="bulk-sort"
+            data-url="{{ url_for('photo_sort.index') }}">
+        <i class="bi bi-arrow-right-circle"></i> 選んだ写真を振り分ける
+    </button>
     <form method="POST" action="{{ url_for('photo_pool.bulk_delete') }}" id="bulk-delete-form"
           class="d-inline"
           onsubmit="return confirm('選択した ' + document.querySelectorAll('.photo-select-check:checked').length + '枚を削除しますか？（既に登録済みのエンティティ画像は残ります）');">
@@ -457,6 +461,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 cb.checked = false;
                 cb.dispatchEvent(new Event('change'));
             });
+        });
+    }
+
+    const sortBtn = document.getElementById('bulk-sort');
+    if (sortBtn) {
+        sortBtn.addEventListener('click', function() {
+            const ids = Array.from(document.querySelectorAll('.photo-select-check:checked'))
+                .map(cb => cb.dataset.photoId);
+            if (ids.length) location.href = sortBtn.dataset.url + '?ids=' + ids.join(',');
         });
     }
 
