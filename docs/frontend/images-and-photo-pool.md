@@ -51,7 +51,7 @@
 - **種類の切り替え**は GET で再描画（JS なし）。種類ごとの入力欄は `photo_sort/_fields_{kind}.html`、保存フォームは `_save_form.html`
 - **既存の部品の使い回し**: 関連付け（料理・日記）は `_*_select_multi_modal.html` + `entity-select-modal.js`（初期化は `photo-sort.js`）。対象の植え付け（栽培記録・収穫）は `_planting_select_multi_modal.html` で、hidden 名は `location_crop_id`（`#planting-hidden-inputs` の `data-input-name`）。作物・品種のメモは `_ai_notes_button.html` / `ai-notes.js`（品種の親作物は `#crop_id_hidden` と `#selected-crop-display` を置く）
 - **収穫量の欄**は植え付けごと。`MultiSelectModal` に変更通知が無いので、「選んだ植え付けで収穫量を入力」ボタン（`formaction` で GET）で同じ画面を再描画して作る。入力中の値は GET のパラメーターで引き継ぐ
-- **AI 下書き**（`_ai_draft_button.html` + `photo-sort.js`）: 入力欄に `data-ai-field="notes"` などを付けると、返った項目がそこに入る。日付は `data-ai-date` の欄から読む。上書き前の値は「元に戻す」で戻せる。APIキーが無ければボタンを出さない
+- **AI 下書き**（`_ai_draft_button.html` + `photo-sort.js`）: 入力欄に `data-ai-field="notes"` などを付けると、返った項目がそこに入る。日付は `data-ai-date` の欄から読む。上書き前の値は「元に戻す」で戻せる。APIキーが無ければボタンを出さない。栽培記録だけ、include の前に `ai_compare` を set して「前回からの変化も書く」チェック（`data-ai-compare`、既定オン）を出す。オンなら植え付けごとに、記録日より前で写真のある最新の栽培記録（メモだけの記録は飛ばす）の写真とメモを一緒に送る（`PlantingRecord.get_previous_with_photo`）
 - **写真のコピー**は保存1件ごとに `copy_image()` で別ファイルにし、`PhotoPool.record_usage()` で記録する（植え付けを複数選ぶと、その数だけコピーができる）
 
 ## スライドショー機能

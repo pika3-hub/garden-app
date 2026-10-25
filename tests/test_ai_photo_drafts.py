@@ -37,33 +37,44 @@ class FakeClient:
         return r
 
 
+PREV_IMAGE = b'\xff\xd8\xff\xe0previous-jpeg'
+
 RECORD_CONTEXT = {
     'date': '2026-10-25',
     'plantings': [
-        {'label': 'ミニトマト（アイコ）／南の畑', 'previous_notes': '第2花房が開花。下葉に黄変なし'},
-        {'label': 'なす／南の畑', 'previous_notes': None},
+        {'label': 'ミニトマト（アイコ）／南の畑',
+         'previous': {'date': '2026-10-18', 'notes': '第2花房が開花。下葉に黄変なし', 'image': PREV_IMAGE}},
+        {'label': 'なす／南の畑', 'previous': None},
     ],
 }
 
 
 def _user_text(call):
-    return next(b['text'] for b in call['messages'][0]['content'] if b['type'] == 'text')
+    return '\n'.join(b['text'] for b in call['messages'][0]['content'] if b['type'] == 'text')
 
 
-def test_planting_record_draft_sends_image_and_previous_notes():
+def _b64(data):
+    return base64.standard_b64encode(data).decode('ascii')
+
+
+def test_planting_record_draft_sends_current_and_previous_photos():
     client = FakeClient(response([thinking_block(), text_block('{"notes": "第3花房まで開花"}')]))
     result = generate_photo_draft('planting_record', IMAGE, RECORD_CONTEXT,
                                   client=client, model='claude-opus-5-5')
 
     assert result == {'notes': '第3花房まで開花'}
     call = client.calls[0]
-    image = call['messages'][0]['content'][0]
-    assert image['type'] == 'image'
-    assert image['source'] == {'type': 'base64', 'media_type': 'image/jpeg',
-                               'data': base64.standard_b64encode(IMAGE).decode('ascii')}
+    content = call['messages'][0]['content']
+    images = [b for b in content if b['type'] == 'image']
+    assert [b['source']['data'] for b in images] == [_b64(IMAGE), _b64(PREV_IMAGE)]
+    assert images[0]['source']['media_type'] == 'image/jpeg'
+    # それぞれの写真の直前に、どの写真かを書いた文がある
+    assert '今回の写真' in content[content.index(images[0]) - 1]['text']
+    prev_label = content[content.index(images[1]) - 1]['text']
+    assert '前回' in prev_label and 'ミニトマト（アイコ）／南の畑' in prev_label and '2026-10-18' in prev_label
+    assert '第2花房が開花。下葉に黄変なし' in prev_label
     text = _user_text(call)
-    assert 'ミニトマト（アイコ）／南の畑' in text
-    assert '第2花房が開花。下葉に黄変なし' in text
+    assert 'なす／南の畑' in text
     assert '2026-10-25' in text
     assert 'tools' not in call
     fmt = call['output_config']['format']
@@ -141,3 +152,19 @@ def test_missing_api_key_raises_without_client(monkeypatch):
     monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
     with pytest.raises(AiNotesError, match='ANTHROPIC_API_KEY'):
         generate_photo_draft('location', IMAGE, {'name': '畑'})
+
+
+def test_without_previous_sends_only_current_photo():
+    context = {'date': '2026-10-25', 'plantings': [{'label': 'なす／南の畑', 'previous': None}]}
+    client = FakeClient(response([text_block('{"notes": "x"}')]))
+    generate_photo_draft('planting_record', IMAGE, context, client=client, model='claude-opus-5-5')
+    content = client.calls[0]['messages'][0]['content']
+    assert [b['source']['data'] for b in content if b['type'] == 'image'] == [_b64(IMAGE)]
+    assert '前回の写真' not in _user_text(client.calls[0])
+
+
+def test_system_prompt_treats_notes_as_supplement_to_photo():
+    client = FakeClient(response([text_block('{"notes": "x"}')]))
+    generate_photo_draft('planting_record', IMAGE, RECORD_CONTEXT, client=client, model='claude-opus-5-5')
+    system = client.calls[0]['system']
+    assert '前回の写真' in system and '補助' in system

@@ -392,16 +392,16 @@ def _draft_error(message, status=400):
     return jsonify({'ok': False, 'error': message}), status
 
 
-def _photo_jpeg(photo):
-    """AI に送る JPEG: サムネイルがあればそれ、無ければ元画像を縮小して JPEG にする"""
+def _photo_jpeg(image_path):
+    """AI に送る JPEG: サムネイルがあればそれ、無ければ元画像を縮小して JPEG にする。どちらも無ければ None"""
     from PIL import Image, ImageOps
     folder = current_app.config['UPLOAD_FOLDER']
-    base = os.path.splitext(os.path.basename(photo['image_path']))[0]
-    thumb = os.path.join(folder, os.path.dirname(photo['image_path']), 'thumbs', f'{base}.jpg')
+    base = os.path.splitext(os.path.basename(image_path))[0]
+    thumb = os.path.join(folder, os.path.dirname(image_path), 'thumbs', f'{base}.jpg')
     if os.path.exists(thumb):
         with open(thumb, 'rb') as f:
             return f.read()
-    original = os.path.join(folder, photo['image_path'])
+    original = os.path.join(folder, image_path)
     if not os.path.exists(original):
         return None
     with Image.open(original) as img:
@@ -417,10 +417,19 @@ def _planting_label(p):
     return f'{crop}／{p["location_name"]}'
 
 
+def _previous_photo(location_crop_id, day):
+    """前回からの変化を書かせるための、写真のある前回の栽培記録 {date, notes, image}（無ければ None）"""
+    from app.models.planting_record import PlantingRecord
+    prev = PlantingRecord.get_previous_with_photo(location_crop_id, day)
+    image = _photo_jpeg(prev['image_path']) if prev else None
+    if not image:
+        return None
+    return {'date': str(prev['recorded_at']), 'notes': prev['notes'], 'image': image}
+
+
 def _draft_context(kind, payload):
     """AI に渡す文脈。入力不足は _FormError"""
     from app.models.planting import Planting
-    from app.models.planting_record import PlantingRecord
     day = (payload.get('date') or '').strip() or date.today().isoformat()
     related = [str(r) for r in (payload.get('related') or []) if str(r).strip()]
     if kind in ('planting_record', 'harvest'):
@@ -428,12 +437,14 @@ def _draft_context(kind, payload):
         plantings = [p for p in (Planting.get_by_id(int(i)) for i in ids) if p]
         if not plantings:
             raise _FormError('先に植え付けを選んでください')
+        # 前回との比較は栽培記録で「前回からの変化も書く」が選ばれたときだけ（収穫は比べない）
+        compare = kind == 'planting_record' and payload.get('compare') is True
         return {'date': day, 'plantings': [
-            {'label': _planting_label(p), 'previous_notes': PlantingRecord.get_previous_notes(p['id'], day)}
+            {'label': _planting_label(p), 'previous': _previous_photo(p['id'], day) if compare else None}
             for p in plantings]}
     if kind == 'planting':
         label = (payload.get('planting_label') or '').strip()
-        return {'date': day, 'plantings': [{'label': label or '（未選択）', 'previous_notes': None}]}
+        return {'date': day, 'plantings': [{'label': label or '（未選択）', 'previous': None}]}
     if kind == 'cooking':
         return {'date': day, 'categories': Cooking.get_categories(), 'related': related}
     if kind == 'diary':
@@ -458,7 +469,7 @@ def ai_draft():
         return _draft_error(str(e))
     if not is_available():
         return _draft_error(NO_API_KEY_MESSAGE)
-    image = _photo_jpeg(photo)
+    image = _photo_jpeg(photo['image_path'])
     if not image:
         return _draft_error('写真のファイルが見つかりません')
     try:
