@@ -1,0 +1,13 @@
+{% include 'photo_sort/_planting_picker.html' %}
+<div class="mb-3">
+    <label for="recorded_at" class="form-label">記録日 <span class="text-danger">*</span></label>
+    <input type="date" class="form-control" id="recorded_at" name="recorded_at"
+           value="{{ fv.get('recorded_at') or default_date }}" data-ai-date required>
+</div>
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <label for="notes" class="form-label mb-0">メモ <small class="text-muted">選んだ植え付けすべてに同じメモ</small></label>
+        {% include 'photo_sort/_ai_draft_button.html' %}
+    </div>
+    <textarea class="form-control" id="notes" name="notes" rows="5" data-ai-field="notes">{{ fv.get('notes', '') }}</textarea>
+</div>

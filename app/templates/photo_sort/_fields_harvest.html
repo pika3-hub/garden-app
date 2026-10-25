@@ -1,0 +1,36 @@
+{% include 'photo_sort/_planting_picker.html' %}
+<div class="mb-3">
+    <label for="harvest_date" class="form-label">収穫日 <span class="text-danger">*</span></label>
+    <input type="date" class="form-control" id="harvest_date" name="harvest_date"
+           value="{{ fv.get('harvest_date') or default_date }}" data-ai-date required>
+</div>
+
+{# 収穫量は植え付けごと。選び直したら「収穫量を入力」で欄を作り直す（入力中の値は GET で引き継ぐ） #}
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="form-label mb-0">収穫量</span>
+        <button type="submit" class="btn btn-sm btn-outline-secondary"
+                formaction="{{ url_for('photo_sort.index') }}" formmethod="get" formnovalidate>
+            <i class="bi bi-arrow-repeat"></i> 選んだ植え付けで収穫量を入力
+        </button>
+    </div>
+    {% for lc in selected_plantings %}
+    <div class="input-group input-group-sm mb-1">
+        <span class="input-group-text sort-harvest-label">{{ lc.variety ~ '(' ~ lc.crop_name ~ ')' if lc.variety else lc.crop_name }} @ {{ lc.location_name }}</span>
+        <input type="text" inputmode="decimal" class="form-control" name="quantity_{{ lc.id }}"
+               value="{{ fv.get('quantity_' ~ lc.id, '') }}" placeholder="量">
+        <input type="text" class="form-control" name="unit_{{ lc.id }}"
+               value="{{ fv.get('unit_' ~ lc.id, '') }}" placeholder="例: kg, 個, 本">
+    </div>
+    {% else %}
+    <div class="form-text">植え付けを選んでから押すと、植え付けごとの欄が出ます（量は空でも保存できます）</div>
+    {% endfor %}
+</div>
+
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <label for="notes" class="form-label mb-0">メモ <small class="text-muted">選んだ植え付けすべてに同じメモ</small></label>
+        {% include 'photo_sort/_ai_draft_button.html' %}
+    </div>
+    <textarea class="form-control" id="notes" name="notes" rows="4" data-ai-field="notes">{{ fv.get('notes', '') }}</textarea>
+</div>

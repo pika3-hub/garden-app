@@ -104,6 +104,10 @@
     <button type="button" class="btn btn-sm btn-outline-secondary" id="bulk-clear">
         選択をクリア
     </button>
+    <button type="button" class="btn btn-sm btn-success" id="bulk-sort"
+            data-url="{{ url_for('photo_sort.index') }}">
+        <i class="bi bi-arrow-right-circle"></i> 選んだ写真を振り分ける
+    </button>
     <form method="POST" action="{{ url_for('photo_pool.bulk_delete') }}" id="bulk-delete-form"
           class="d-inline"
           onsubmit="return confirm('選択した ' + document.querySelectorAll('.photo-select-check:checked').length + '枚を削除しますか？（既に登録済みのエンティティ画像は残ります）');">
@@ -141,6 +145,24 @@
                 {% endif %}
                 {% if photo.notes %}
                 <p class="mb-2 small">{{ photo.notes }}</p>
+                {% endif %}
+                {% set links = usage_links.get(photo.id, []) %}
+                {% if links %}
+                <details class="usage-links small mb-2">
+                    <summary class="text-muted">使用先（{{ links|length }}）</summary>
+                    <ul class="list-unstyled mb-0 mt-1">
+                        {% for link in links %}
+                        {% set href = usage_url(link) %}
+                        <li class="text-truncate">
+                            {% if href %}
+                            <a href="{{ href }}">{{ link.label }}</a>
+                            {% else %}
+                            <span class="text-muted">削除済み</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </details>
                 {% endif %}
 
                 <button type="button"
@@ -439,6 +461,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 cb.checked = false;
                 cb.dispatchEvent(new Event('change'));
             });
+        });
+    }
+
+    const sortBtn = document.getElementById('bulk-sort');
+    if (sortBtn) {
+        sortBtn.addEventListener('click', function() {
+            const ids = Array.from(document.querySelectorAll('.photo-select-check:checked'))
+                .map(cb => cb.dataset.photoId);
+            if (ids.length) location.href = sortBtn.dataset.url + '?ids=' + ids.join(',');
         });
     }
 

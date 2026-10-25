@@ -1,0 +1,95 @@
+/* 写真プールの振り分け画面 */
+.sort-thumbs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.sort-thumb {
+    position: relative;
+    flex: none;
+    width: 64px;
+    height: 48px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+.sort-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sort-thumb.is-current {
+    border-color: #f0b400;
+}
+
+.sort-thumb.is-done img {
+    opacity: 0.45;
+}
+
+.sort-thumb-done {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #198754;
+    font-size: 1.4rem;
+}
+
+.sort-photo {
+    width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    background: #f1f3ef;
+    border-radius: 6px;
+    cursor: zoom-in;
+}
+
+.sort-icon-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.sort-icon-item {
+    cursor: pointer;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid transparent;
+}
+
+.sort-icon-item.selected {
+    border-color: #4CAF50;
+}
+
+.sort-icon-preview,
+.sort-icon-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.sort-icon-preview {
+    object-fit: cover;
+    border: 3px solid #4CAF50;
+}
+
+.sort-icon-placeholder {
+    border: 2px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sort-harvest-label {
+    max-width: 50%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

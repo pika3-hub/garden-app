@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}写真の振り分け - 家庭菜園管理アプリ{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/photo_sort.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+{% if kind in ('cooking', 'diary', 'planting_record', 'harvest') %}
+<script src="{{ url_for('static', filename='js/entity-select-modal.js') }}"></script>
+{% endif %}
+{% if kind in ('crop', 'variety') %}
+<script src="{{ url_for('static', filename='js/ai-notes.js') }}"></script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/photo-sort.js') }}"
+        data-crop-icon-base="{{ url_for('static', filename='images/crop_icons/') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0"><i class="bi bi-images"></i> 写真の振り分け（{{ pos + 1 }} / {{ photos|length }}枚目）</h1>
+    <a href="{{ url_for('photo_pool.index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> 写真プールへ
+    </a>
+</div>
+
+<!-- サムネイル列（済・現在・未） -->
+<div class="sort-thumbs mb-3">
+    {% for p in photos %}
+    <a href="{{ sort_url(ids, loop.index0, done) }}"
+       class="sort-thumb{% if loop.index0 == pos %} is-current{% endif %}{% if p.id in done %} is-done{% endif %}"
+       data-sort-photo-id="{{ p.id }}"{% if p.id in done %} data-done="1"{% endif %}
+       title="{{ p.taken_at.strftime('%Y-%m-%d %H:%M') if p.taken_at else '' }}">
+        <img src="{{ url_for('static', filename='uploads/' + p.image_path | thumb_path) }}"
+             onerror="this.onerror=null;this.src='{{ url_for('static', filename='uploads/' + p.image_path) }}';"
+             alt="" loading="lazy">
+        {% if p.id in done %}<span class="sort-thumb-done"><i class="bi bi-check-lg"></i></span>{% endif %}
+    </a>
+    {% endfor %}
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <img src="{{ url_for('static', filename='uploads/' + photo.image_path | thumb_path) }}"
+             onerror="this.onerror=null;this.src='{{ url_for('static', filename='uploads/' + photo.image_path) }}';"
+             class="sort-photo lightbox-target"
+             data-full="{{ url_for('static', filename='uploads/' + photo.image_path) }}"
+             alt="{{ photo.original_filename or '' }}">
+        <div class="small text-muted mt-1">
+            {% if photo.taken_at %}<i class="bi bi-camera"></i> {{ photo.taken_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}
+            {% if photo.notes %}<span class="ms-2">{{ photo.notes }}</span>{% endif %}
+        </div>
+        {% if usage_links %}
+        <div class="card mt-2">
+            <div class="card-body p-2 small">
+                <div class="text-muted mb-1">この写真で登録済み</div>
+                <ul class="list-unstyled mb-0">
+                    {% for link in usage_links %}
+                    {% set href = usage_url(link) %}
+                    <li>{% if href %}<a href="{{ href }}" target="_blank" rel="noopener">{{ link.label }}</a>{% else %}<span class="text-muted">削除済み</span>{% endif %}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-5">
+        <form method="GET" action="{{ url_for('photo_sort.index') }}" class="mb-3">
+            <input type="hidden" name="ids" value="{{ ids|join(',') }}">
+            <input type="hidden" name="pos" value="{{ pos }}">
+            {% if done %}<input type="hidden" name="done" value="{{ ids|select('in', done)|join(',') }}">{% endif %}
+            <label for="sort-kind" class="form-label fw-bold">種類</label>
+            <select id="sort-kind" name="kind" class="form-select" onchange="this.form.submit()">
+                <option value=""{% if not kind %} selected{% endif %}>選んでください</option>
+                {% for value, label in kinds %}
+                <option value="{{ value }}"{% if value == kind %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <noscript><button type="submit" class="btn btn-sm btn-outline-secondary mt-1">切り替え</button></noscript>
+        </form>
+
+        {% if kind %}
+        {% include 'photo_sort/_save_form.html' ignore missing %}
+        {% endif %}
+
+        <div class="d-flex justify-content-end mt-3">
+            <a href="{{ skip_url }}" class="btn btn-outline-secondary">スキップ <i class="bi bi-skip-forward"></i></a>
+        </div>
+    </div>
+</div>
+{% endblock %}

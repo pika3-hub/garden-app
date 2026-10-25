@@ -5,7 +5,7 @@ AI アシスタント（Claude Code など）がこのリポジトリで作業�
 ## 改行コード（Windows 環境）
 
 - リポジトリのファイルは原則 **LF**（`core.autocrlf` は `false`）。ただし一部 **CRLF のまま登録されているファイル** がある（`server.py`、`app/routes/` の一部など。`git ls-files --eol | grep i/crlf` で確認）。スクリプトで編集するときは元の改行コードを判定して保ち、勝手に統一しない
-- Git Bash から `python` で文字列置換スクリプトを書く場合、`open(p, 'w')` のままだと Windows の Python が **CRLF で書き出し、ファイル全体が差分になる**。必ず `open(p, encoding='utf-8', newline='')` で読み書きする（または Edit ツールを使う）。`Path.write_text` も同じく CRLF になるので、`read_bytes().decode()` → `write_bytes(s.encode())` にする（2026-10-24 に `write_text` で `resource.py` 全体が差分になった）
+- Git Bash から `python` で文字列置換スクリプトを書く場合、`open(p, 'w')` のままだと Windows の Python が **CRLF で書き出し、ファイル全体が差分になる**。必ず `open(p, encoding='utf-8', newline='')` で読み書きする（または Edit ツールを使う）。`Path.write_text` も同じく CRLF になるので、`read_bytes().decode()` → `write_bytes(s.encode())` にする（2026-10-24 に `write_text` で `resource.py` 全体が差分になった。2026-10-25 にも `python - <<'EOF'` のヒアドキュメントで同じことをして、**新規ファイル4つが CRLF のままコミット**された。新規ファイルは `git diff --stat` に異常が出ないので気づきにくい。コミット前に `git diff --name-only main...HEAD | xargs git ls-files --eol | grep crlf` で確かめる）
 - 改行コードの確認は `grep -c $'\r' <file>`（0 なら LF）。`od -c | grep '\\r'` は誤判定するので使わない
 - 編集後は `git diff --stat` で差分行数が想定どおりかを必ず見る。行数が異常に多ければ改行コードの変化を疑う
 
@@ -88,6 +88,8 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - `javascript_tool` の実行は **約45秒でタイムアウト** する。長い処理（AI 生成など）を JS 内で待たない。開始だけして、`wait` → 状態確認の短い呼び出しを繰り返す
 - フォームの入力チェックやモーダルの状態確認は、クリック＋スクリーンショットより、JS で要素の class・値を読む方が速く確実
 - 反映処理などの確認では `window.fetch` を一時的に差し替えると、課金や外部通信なしで UI の分岐を確認できる（終わったら必ず元に戻す）
+- `resize_window` で幅を変えても、ウィンドウが最大化されていると効かない（`innerWidth` が変わらない）。スマホ幅の確認は、同じ URL を幅 375px の `iframe` に読み込み、`contentDocument.documentElement.scrollWidth` と、右端がはみ出す要素を数えて測る（2026-10-25）
+- brainstorming スキルの画面モック用サーバー（visual companion）は `node` が無いので起動できない。モックは HTML ファイルをスクラッチ領域に書き、`Start-Process` でブラウザに開いて見てもらう
 
 ## Windows のコンソール・文字コード
 

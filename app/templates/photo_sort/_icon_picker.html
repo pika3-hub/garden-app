@@ -1,0 +1,18 @@
+{# アイコン選択（作物・品種）。crops/form.html と同じ選択肢・同じ hidden 名 icon_path #}
+<div class="mb-3" data-icon-picker data-icon-base="{{ url_for('static', filename='images/crop_icons/') }}">
+    <label class="form-label">アイコン{% if icon_hint %} <small class="text-muted">{{ icon_hint }}</small>{% endif %}</label>
+    <input type="hidden" name="icon_path" value="{{ fv.get('icon_path', '') }}" data-icon-input>
+    <div class="d-flex align-items-center gap-2 mb-2">
+        <div data-icon-preview></div>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-icon-clear>
+            <i class="bi bi-x-circle"></i> 選択解除
+        </button>
+    </div>
+    <div class="border rounded p-2 sort-icon-grid">
+        {% for icon in crop_icon_list %}
+        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon) }}"
+             class="sort-icon-item{% if fv.get('icon_path') == icon %} selected{% endif %}"
+             data-icon="{{ icon }}" title="{{ icon }}" width="40" height="40" loading="lazy" alt="">
+        {% endfor %}
+    </div>
+</div>
