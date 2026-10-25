@@ -19,11 +19,14 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 | 料理 | cooking | /cooking/ | /cooking/{id} | /cooking/new | /cooking/{id}/edit |
 | 補足情報 | supplements | - | - | POST /supplements/{entity_type}/{entity_id}/add | POST /supplements/{id}/update |
 | 写真プール | photo_pool | /photo_pool/ | - | POST /photo_pool/upload | POST /photo_pool/{id}/update |
+| 写真の振り分け | photo_sort | /photo_pool/sort/?ids=&pos=&done=&kind= | - | POST /photo_pool/sort/save | - |
 | 設定 | settings | - | - | - | GET/POST /settings/ |
 
 補足情報・写真プールはページ単位のCRUDではなく、他画面に埋め込まれるモーダル/フォーム部品からのPOST操作が中心（詳細は `docs/frontend/supplements.md` / `docs/frontend/images-and-photo-pool.md` を参照）。
 
 `settings` Blueprint は設定画面に加え、作物・品種フォーム共通の AI メモ下書き API `POST /settings/ai/notes-draft`（JSON）を持つ。リクエストは `{"mode": "crop", "crop_name", "crop_type", "use_web_search"}` または `{"mode": "variety", "crop_id", "variety_name", "use_web_search"}`。成功 200 `{"ok": true, "markdown"}`、入力不備 400（地域未設定は `need_settings: true`）、生成失敗 502。Claude API 呼び出しは `app/utils/ai_notes.py` に集約している。
+
+`photo_sort` Blueprint（写真の振り分け）は、画面 `GET /photo_pool/sort/`（GET の値はそのまま入力欄に戻す。収穫量の欄の再描画に使う）、保存 `POST /photo_pool/sort/save`（`action=next` で次の写真、`stay` で同じ写真へリダイレクト。入力エラーは同じ写真を入力値つきで再描画）、AI 下書き `POST /photo_pool/sort/ai-draft`（JSON。`{photo_id, kind, date, location_crop_ids, name, related, planting_label}` → 成功 200 `{ok, fields}`、入力不備・キー未設定 400、生成失敗 502。保存はしない）を持つ。種類ごとの入力欄は `app/templates/photo_sort/_fields_{kind}.html`。
 
 植え付け（plantings）は `?status=active|ended|all` でタブフィルター。
 
@@ -68,7 +71,7 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 
 - Blueprint名はファイル名から `_routes` を除き、複数形にする（例: `crop_routes.py` → Blueprint名 `crops`、`location_routes.py` → `locations`、`harvest_routes.py` → `harvests`、`task_routes.py` → `tasks`、`supplement_routes.py` → `supplements`）
 - 不規則複数形の例外: `variety_routes.py` → `varieties`、`planting_routes.py` → `plantings`
-- 単数・集合的な概念を表すものは複数形にしない: `diary_routes.py` → `diary`、`calendar_routes.py` → `calendar`、`cooking_routes.py` → `cooking`、`photo_pool_routes.py` → `photo_pool`
+- 単数・集合的な概念を表すものは複数形にしない: `diary_routes.py` → `diary`、`calendar_routes.py` → `calendar`、`cooking_routes.py` → `cooking`、`photo_pool_routes.py` → `photo_pool`、`photo_sort_routes.py` → `photo_sort`
 - テンプレートフォルダは Blueprint 名と揃える（`app/templates/{blueprint}/`）
 
 ## 新機能追加チェックリスト

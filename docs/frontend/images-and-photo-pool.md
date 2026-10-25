@@ -43,6 +43,17 @@
 - `_photo_pool_preselected.html` は固定フィールド名（`photo_pool_id`, `image`）前提なので、行ごとの欄では使わずマークアップを直接複製し、`name` 属性だけ行のID付きに変える（例: `photo_pool_id_{{ lc.id }}`, `image_override_{{ lc.id }}`）。クラス名（`.photo-pool-id-input`, `.photo-pool-file-input` 等）は変えずに揃えること。
 - サーバー側で「行が独自の画像を選ばなかった場合は共通の既定画像を使う」というフォールバック解決を行う（`harvest_routes.py`/`planting_routes.py` の `bulk_create()` を参照）。
 
+## 写真の振り分け画面（`/photo_pool/sort/`）
+
+写真プールの選択バーの「選んだ写真を振り分ける」から開く。選んだ写真を撮影日時の古い順（無いものは登録順で後ろ）に1枚ずつ表示し、種類を選んで登録する。
+
+- **状態は URL だけ**: `ids`（並べ直し済みの写真ID）、`pos`（今の位置）、`done`（登録済み）、`kind`（種類）。サムネイル列から前後の写真へ戻れる。最後まで進むと写真プールへ戻り「n枚の写真を登録しました」
+- **種類の切り替え**は GET で再描画（JS なし）。種類ごとの入力欄は `photo_sort/_fields_{kind}.html`、保存フォームは `_save_form.html`
+- **既存の部品の使い回し**: 関連付け（料理・日記）は `_*_select_multi_modal.html` + `entity-select-modal.js`（初期化は `photo-sort.js`）。対象の植え付け（栽培記録・収穫）は `_planting_select_multi_modal.html` で、hidden 名は `location_crop_id`（`#planting-hidden-inputs` の `data-input-name`）。作物・品種のメモは `_ai_notes_button.html` / `ai-notes.js`（品種の親作物は `#crop_id_hidden` と `#selected-crop-display` を置く）
+- **収穫量の欄**は植え付けごと。`MultiSelectModal` に変更通知が無いので、「選んだ植え付けで収穫量を入力」ボタン（`formaction` で GET）で同じ画面を再描画して作る。入力中の値は GET のパラメーターで引き継ぐ
+- **AI 下書き**（`_ai_draft_button.html` + `photo-sort.js`）: 入力欄に `data-ai-field="notes"` などを付けると、返った項目がそこに入る。日付は `data-ai-date` の欄から読む。上書き前の値は「元に戻す」で戻せる。APIキーが無ければボタンを出さない
+- **写真のコピー**は保存1件ごとに `copy_image()` で別ファイルにし、`PhotoPool.record_usage()` で記録する（植え付けを複数選ぶと、その数だけコピーができる）
+
 ## スライドショー機能
 
 画像付き一覧画面でフルスクリーンのスライドショー表示を提供する汎用コンポーネント。
