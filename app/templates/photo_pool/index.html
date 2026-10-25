@@ -142,6 +142,24 @@
                 {% if photo.notes %}
                 <p class="mb-2 small">{{ photo.notes }}</p>
                 {% endif %}
+                {% set links = usage_links.get(photo.id, []) %}
+                {% if links %}
+                <details class="usage-links small mb-2">
+                    <summary class="text-muted">使用先（{{ links|length }}）</summary>
+                    <ul class="list-unstyled mb-0 mt-1">
+                        {% for link in links %}
+                        {% set href = usage_url(link) %}
+                        <li class="text-truncate">
+                            {% if href %}
+                            <a href="{{ href }}">{{ link.label }}</a>
+                            {% else %}
+                            <span class="text-muted">削除済み</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </details>
+                {% endif %}
 
                 <button type="button"
                         class="btn btn-success btn-sm w-100 mb-2 js-open-entity-modal"

@@ -17,6 +17,29 @@ TARGET_ENDPOINTS = {
 }
 
 
+# 使用先の種類 → (詳細画面のエンドポイント, ID の引数名)
+_DETAIL_ENDPOINTS = {
+    'crop': ('crops.detail', 'crop_id'),
+    'variety': ('varieties.detail', 'variety_id'),
+    'location': ('locations.detail', 'location_id'),
+    'planting_record': ('plantings.record_detail', 'record_id'),
+    'harvest': ('harvests.detail', 'harvest_id'),
+    'cooking': ('cooking.detail', 'cooking_id'),
+    'diary': ('diary.detail', 'diary_id'),
+    'task': ('tasks.detail', 'task_id'),
+}
+
+
+def usage_url(link):
+    """PhotoPool.get_usage_links() の1件から詳細画面の URL を返す。削除済みなら None"""
+    if link.get('label') is None:
+        return None
+    endpoint = _DETAIL_ENDPOINTS.get(link.get('target_type'))
+    if not endpoint:
+        return None
+    return url_for(endpoint[0], **{endpoint[1]: link['target_id']})
+
+
 def _extract_taken_at(file_path):
     """EXIFから撮影日時を取得。失敗時はNone"""
     try:
@@ -50,8 +73,11 @@ def index():
             icons = filter_type_icons.setdefault(t, [])
             if not any(i['icon_path'] == icon for i in icons):
                 icons.append({'icon_path': icon, 'image_color': p.get('image_color') or '#4CAF50'})
+    usage_links = PhotoPool.get_usage_links([p['id'] for p in photos])
     return render_template('photo_pool/index.html',
                            photos=photos,
+                           usage_links=usage_links,
+                           usage_url=usage_url,
                            active_plantings=active_plantings,
                            filter_types=filter_types,
                            filter_type_icons=filter_type_icons,
