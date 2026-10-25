@@ -259,20 +259,16 @@ def _call_api(client, params):
     raise AiNotesError(_MSG_INCOMPLETE)
 
 
-def generate_notes(crop_name, crop_type, variety_name, region, use_web_search,
-                   client=None, model=None):
-    """メモの Markdown 下書きを返す。失敗時は AiNotesError を送出する。"""
-    model = model or current_model()
-    if client is None:
-        if not is_available():
-            raise AiNotesError(NO_API_KEY_MESSAGE)
-        # SDK の自動再試行は待ち時間と課金を倍増させるため無効化（全体の期限は _call_api で管理）
-        client = anthropic.Anthropic(timeout=REQUEST_TIMEOUT_SECONDS, max_retries=0)
+def new_client():
+    """API クライアントを作る。キー未設定なら AiNotesError"""
+    if not is_available():
+        raise AiNotesError(NO_API_KEY_MESSAGE)
+    # SDK の自動再試行は待ち時間と課金を倍増させるため無効化（全体の期限は _call_api で管理）
+    return anthropic.Anthropic(timeout=REQUEST_TIMEOUT_SECONDS, max_retries=0)
 
-    params = _build_request_params(
-        model, _build_user_message(crop_name, crop_type, variety_name, region, use_web_search),
-        use_web_search)
 
+def request(client, params):
+    """API を呼んで全 content ブロックを返す。失敗・拒否・途中終了は AiNotesError"""
     try:
         blocks, stop_reason = _call_api(client, params)
     except anthropic.APITimeoutError:
@@ -296,6 +292,20 @@ def generate_notes(crop_name, crop_type, variety_name, region, use_web_search,
         raise AiNotesError('この内容は生成できませんでした')
     if stop_reason == 'max_tokens':
         raise AiNotesError(_MSG_INCOMPLETE)
+    return blocks
+
+
+def generate_notes(crop_name, crop_type, variety_name, region, use_web_search,
+                   client=None, model=None):
+    """メモの Markdown 下書きを返す。失敗時は AiNotesError を送出する。"""
+    model = model or current_model()
+    if client is None:
+        client = new_client()
+
+    params = _build_request_params(
+        model, _build_user_message(crop_name, crop_type, variety_name, region, use_web_search),
+        use_web_search)
+    blocks = request(client, params)
 
     text, cited = _extract_text_and_sources(blocks)
     text, written_urls = _split_sources_section(text)
