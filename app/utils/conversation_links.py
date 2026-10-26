@@ -14,7 +14,7 @@ RESOURCE_TYPES = {
 }
 
 _URL_RE = re.compile(r'(?:\$GARDEN_API_URL|\$\{GARDEN_API_URL\}|/api/v1)/([^?#\s"\']*)')
-_ID_RE = re.compile(r'[0-9]+')
+_ID_RE = re.compile(r'[0-9]{1,19}')
 _MAX_ID = 9223372036854775807  # SQLite の INTEGER の上限
 _SEPARATORS = {'&&', '||', ';', '|', '&', '(', ')', '\n'}
 # 値を1つ取るオプション（URL を探すとき値を飛ばす）

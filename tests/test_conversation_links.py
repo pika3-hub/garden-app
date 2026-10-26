@@ -115,3 +115,8 @@ def test_out_of_range_ids_are_ignored():
             call(3, f'curl -sS -X POST {TOKEN_HDR} "$GARDEN_API_URL/photos"', 'c'),
             result(4, '{"data": [{"id": 99999999999999999999999}, {"id": true}, {"id": 0}, {"id": "5"}, {"id": 9}]}', 'c')]
     assert extract_links(msgs) == [link('photo_pool', 9, 'created', 3)]
+
+
+def test_huge_digit_id_does_not_raise():
+    msgs = [call(1, 'curl -sS "$GARDEN_API_URL/crops/' + '9' * 5000 + '"')]
+    assert extract_links(msgs) == []
