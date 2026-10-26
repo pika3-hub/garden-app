@@ -7,6 +7,7 @@ from flask import Flask, render_template, url_for
 from app.config import config
 from app.database import init_db, get_db
 from app.utils.markdown_render import render_markdown
+from app.models.conversation import Conversation, KIND_LABELS
 
 
 def _thumb_path_filter(image_path):
@@ -28,6 +29,12 @@ def _crop_display_name(name, variety=None):
     if variety:
         return f"{variety}（{name}）"
     return name
+
+
+def _hermes_conversations(entity_type, entity_id):
+    """そのデータに結び付いた Hermes との会話（区分の表示名付き、新しい順）"""
+    return [dict(c, kind_label=KIND_LABELS[c['kind']])
+            for c in Conversation.get_by_entity(entity_type, entity_id)]
 
 
 def create_app(config_name='default'):
@@ -53,6 +60,7 @@ def create_app(config_name='default'):
 
     # Jinja2 グローバル関数登録
     app.jinja_env.globals['crop_display_name'] = _crop_display_name
+    app.jinja_env.globals['hermes_conversations'] = _hermes_conversations
 
     # ブループリント登録
     from app.routes import (

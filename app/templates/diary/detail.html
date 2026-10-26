@@ -101,6 +101,8 @@
         {% set supplement_entity_type = 'diary' %}
         {% set supplement_entity_id = entry.id %}
         {% include '_supplements_section.html' %}
+        {% set conv_items = hermes_conversations('diary', entry.id) %}
+        {% include '_hermes_conversations_section.html' %}
     </div>
 
     <div class="col-md-4">

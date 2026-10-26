@@ -76,6 +76,8 @@
         {% set supplement_entity_type = 'task' %}
         {% set supplement_entity_id = task.id %}
         {% include '_supplements_section.html' %}
+        {% set conv_items = hermes_conversations('task', task.id) %}
+        {% include '_hermes_conversations_section.html' %}
     </div>
 
     <div class="col-md-4">

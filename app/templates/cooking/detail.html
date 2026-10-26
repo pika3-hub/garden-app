@@ -80,6 +80,8 @@
         {% set supplement_entity_type = 'cooking' %}
         {% set supplement_entity_id = item.id %}
         {% include '_supplements_section.html' %}
+        {% set conv_items = hermes_conversations('cooking', item.id) %}
+        {% include '_hermes_conversations_section.html' %}
     </div>
 
     <div class="col-md-4">

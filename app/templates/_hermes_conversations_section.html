@@ -1,0 +1,19 @@
+{# 呼び出し側で conv_items（hermes_conversations(種類, ID) の結果）を set してから include する #}
+{% if conv_items %}
+<div class="card mb-3" id="hermes-conversations">
+    <div class="card-header bg-secondary text-white">
+        <i class="bi bi-chat-dots"></i> Hermes との会話 <span class="badge bg-light text-dark">{{ conv_items|length }}</span>
+    </div>
+    <div class="list-group list-group-flush">
+        {% for c in conv_items %}
+        <a href="{{ url_for('conversations.detail', conversation_id=c.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <span>{{ c.title or '（題名なし）' }}</span>
+            <span class="text-muted small text-nowrap ms-2">
+                <span class="badge bg-secondary">{{ c.kind_label }}</span>
+                {{ (c.last_activity_at|string)[:16] }}
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
