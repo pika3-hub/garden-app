@@ -2,10 +2,12 @@ import logging
 import os
 import random
 import secrets
+import click
 from flask import Flask, render_template, url_for
 from app.config import config
 from app.database import init_db, get_db
 from app.utils.markdown_render import render_markdown
+from app.models.conversation import Conversation, KIND_LABELS
 
 
 def _thumb_path_filter(image_path):
@@ -27,6 +29,13 @@ def _crop_display_name(name, variety=None):
     if variety:
         return f"{variety}（{name}）"
     return name
+
+
+def _hermes_conversations(entity_type, entity_id):
+    """そのデータに結び付いた Hermes との会話（区分の表示名付き、新しい順）"""
+    return [dict(c, kind_label=KIND_LABELS[c['kind']],
+                 shown_at=str(c['last_activity_at'] or c['started_at'] or '')[:16])
+            for c in Conversation.get_by_entity(entity_type, entity_id)]
 
 
 def create_app(config_name='default'):
@@ -52,13 +61,14 @@ def create_app(config_name='default'):
 
     # Jinja2 グローバル関数登録
     app.jinja_env.globals['crop_display_name'] = _crop_display_name
+    app.jinja_env.globals['hermes_conversations'] = _hermes_conversations
 
     # ブループリント登録
     from app.routes import (
         crop_routes, variety_routes, location_routes, diary_routes,
         harvest_routes, calendar_routes, task_routes, planting_routes,
         supplement_routes, photo_pool_routes, cooking_routes, settings_routes,
-        photo_sort_routes
+        photo_sort_routes, conversation_routes
     )
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(variety_routes.bp)
@@ -73,6 +83,7 @@ def create_app(config_name='default'):
     app.register_blueprint(photo_sort_routes.bp)
     app.register_blueprint(cooking_routes.bp)
     app.register_blueprint(settings_routes.bp)
+    app.register_blueprint(conversation_routes.bp)
 
     # AIメモ下書きの request_id 等を INFO でサーバーログへ出す（Flask の 'app' ロガーのハンドラーへ伝播）
     app.logger  # 既定ハンドラーを生成
@@ -375,6 +386,14 @@ def create_app(config_name='default'):
                              upcoming_tasks=upcoming_tasks,
                              upcoming_tasks_by_urgency=upcoming_tasks_by_urgency,
                              carousel_images=carousel_images)
+
+    @app.cli.command('relink-conversations')
+    def relink_conversations():
+        """全会話の結び付け（作った・変えた・見たデータ）を保存済みの発言から作り直す"""
+        from app.models.conversation import Conversation
+        ids = Conversation.all_ids()
+        total = sum(Conversation.relink(i) for i in ids)
+        click.echo(f'{len(ids)}件の会話から結び付けを{total}件作り直しました')
 
     return app
 

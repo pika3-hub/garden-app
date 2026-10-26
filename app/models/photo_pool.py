@@ -21,6 +21,10 @@ _LABEL_QUERIES = {
                 f'JOIN plantings lc ON lc.id = h.location_crop_id {_CV_JOIN} '
                 f'WHERE h.id IN ({{ph}})',
                 lambda r: f"収穫 {_crop_label(r['crop_name'], r['variety'])} {r['harvest_date']}"),
+    'planting': (f'SELECT lc.id, cv.crop_name, cv.variety, l.name AS location_name FROM plantings lc '
+                 f'JOIN locations l ON l.id = lc.location_id {_CV_JOIN} '
+                 f'WHERE lc.id IN ({{ph}})',
+                 lambda r: f"{_crop_label(r['crop_name'], r['variety'])} {r['location_name']}"),
     'cooking': ('SELECT id, title FROM cooking WHERE id IN ({ph})', lambda r: r['title']),
     'diary': ('SELECT id, title FROM diary_entries WHERE id IN ({ph})', lambda r: r['title']),
     'task': ('SELECT id, title FROM tasks WHERE id IN ({ph})', lambda r: r['title']),

@@ -252,6 +252,9 @@ if (fullscreenBtn) {
             栽培記録はまだありません。{% if location_crop.status == 'active' %}「新規記録追加」ボタンから記録を追加できます。{% endif %}
         </div>
         {% endif %}
+
+        {% set conv_items = hermes_conversations('planting', location_crop.id) %}
+        {% include '_hermes_conversations_section.html' %}
     </div>
 
     <div class="col-lg-4">

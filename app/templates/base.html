@@ -91,6 +91,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        {% set is_conversations = request.endpoint and request.endpoint.startswith('conversations.') %}
+                        <a class="nav-link {% if is_conversations %}active{% endif %}" href="{{ url_for('conversations.list') }}" {% if is_conversations %}aria-current="page"{% endif %}>
+                            <i class="bi bi-chat-dots icon-img-lg"></i> Hermes
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         {% set is_photo_pool = request.endpoint and request.endpoint.startswith('photo_pool.') %}
                         <a class="nav-link {% if is_photo_pool %}active{% endif %}" href="{{ url_for('photo_pool.index') }}" {% if is_photo_pool %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_photo.webp') }}" alt="" class="icon-img icon-img-lg">  写真プール

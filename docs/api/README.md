@@ -263,6 +263,28 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | GET | `/photos/{id}` | 詳細（`usages` 付き） |
 | GET | `/photos/{id}/image` | 写真のファイル（`?size=thumb` でサムネイル、[6章](#画像の取得)） |
 
+### 会話の履歴（同期スクリプト専用）
+
+`POST /conversations` は、Hermes との会話を同期スクリプトがアプリへ送るための入口。Hermes 自身は使わない（Hermes の SKILL.md には書かない）。何度送っても結果が同じで（会話は `session.id`、発言は `messages[].id` で上書き。送られなかった発言は消さない）、削除はできない。
+
+本文（JSON、または multipart の `data`）の最上位は `session` と `messages` だけ。
+
+```json
+{"session": {"id": "20261025_165529_f52993ca", "source": "matrix", "title": "…",
+             "started_at": 1761378929.5, "ended_at": null, "last_activity_at": 1761379000.0,
+             "end_reason": null, "parent_session_id": null},
+ "messages": [{"id": 1045, "role": "user", "content": "…", "tool_calls": null,
+               "tool_call_id": null, "tool_name": null, "timestamp": 1761378929.6, "display_kind": null}]}
+```
+
+- `session.id`（英数字と `_ . -` の128文字まで）・`source`・`started_at` が必須。時刻は UNIX 秒で、日本時間の文字列にして保存する
+- `messages` は最大5000件。`role` は `user` / `assistant` / `tool`、`id` と `timestamp` が必須。`tool_calls` は配列か null
+- 写真は multipart の `images` パーツ（最大20枚）。ファイル名（`img_xxxx.jpg` のまま。英数字と `_ . -` の100文字まで）で会話ごとに区別し、同じ名前は2回目以降は何もしない。保存するのは縮小版（800×600 以内の JPEG）だけ。画像として読めない写真は 415 にせず `skipped_images` に入れて続ける
+- 保存後、全発言から Hermes が curl で作った・変えた・見たデータの結び付けを作り直す
+- 応答（新規は 201、更新は 200）: `{"id", "hermes_id", "message_count", "image_count", "skipped_images"}`。`message_count` は保存済みの全発言数、`image_count` は保存済みの写真数
+
+結び付けの規則を直したときは `uv run flask --app app relink-conversations` で全会話を作り直せる。
+
 ## 9. 監査ログ
 
 POST / PATCH はサーバーログ（ロガー `app.api`）に1行ずつ出る。トークンや本文は出さない。

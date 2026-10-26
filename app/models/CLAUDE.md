@@ -20,6 +20,10 @@
 | cooking_relations | 料理×関連エンティティ（多対多、relation_type で区別） | id |
 | photo_pool | 写真プール（先行アップロードした画像のプール） | id |
 | photo_pool_usages | 写真プール画像の使用履歴（多対多） | id |
+| conversations | Hermes との会話（1会話1行、Hermes のセッションID `hermes_id` で上書き） | id |
+| conversation_messages | 会話の発言（user/assistant と terminal の tool のみ） | id |
+| conversation_images | 会話の写真（縮小版のみ） | id |
+| conversation_links | 会話×Hermes が作った・変えた・見たデータ（作り直し可能） | id |
 | supplements | 補足情報（作物/品種/場所/日記/タスク/収穫/料理に添付） | id |
 | app_settings | アプリ設定（キーバリュー形式。`region` = 地域・栽培環境） | key |
 
@@ -216,6 +220,52 @@
 | entity_id | INTEGER | 使用先エンティティID |
 | copied_image_path | VARCHAR(255) | コピー先の相対パス（追跡用） |
 | created_at | TIMESTAMP | 使用日時 |
+
+#### conversations
+Hermes との会話（`app/models/conversation.py`、マイグレーション 023）。同期スクリプトが `POST /api/v1/conversations` で送る。アプリからは削除しない。
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| hermes_id | TEXT | Hermes のセッションID（UNIQUE。上書きの鍵） |
+| source | TEXT | 会話の種類（現状は `matrix` のみ取り込む） |
+| title | TEXT | 題名 |
+| started_at / ended_at / last_activity_at | TIMESTAMP | 開始・終了・最終発言（日本時間の文字列） |
+| end_reason | TEXT | 終了理由（`session_reset` など） |
+| parent_hermes_id | TEXT | 続き元の会話の `hermes_id` |
+| created_at / updated_at | TIMESTAMP | アプリでの登録・更新日時 |
+
+#### conversation_messages
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| conversation_id | INTEGER | 会話ID（FK、ON DELETE CASCADE） |
+| hermes_message_id | INTEGER | Hermes の発言ID（会話内で UNIQUE。上書きの鍵） |
+| role | TEXT | user / assistant / tool |
+| content | TEXT | 本文（写真の印 `[Image attached at: …]` を含む） |
+| tool_calls | TEXT | assistant の terminal 呼び出し（JSON） |
+| tool_call_id / tool_name | TEXT | tool の対応づけ（tool は terminal のみ保存） |
+| display_kind | TEXT | `failed_turn` など |
+| timestamp | TIMESTAMP | 発言日時 |
+
+#### conversation_images
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| conversation_id | INTEGER | 会話ID（FK、ON DELETE CASCADE） |
+| file_name | TEXT | 元のファイル名（`img_xxxx.jpg`。会話内で UNIQUE） |
+| image_path | TEXT | 縮小版（800×600 以内の JPEG）の相対パス |
+| created_at | TIMESTAMP | 保存日時 |
+
+#### conversation_links
+発言の curl から解析した、Hermes が触れたデータ。保存のたびと `flask relink-conversations` で作り直す。UNIQUE(conversation_id, entity_type, entity_id, kind)、索引 (entity_type, entity_id)。
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| conversation_id | INTEGER | 会話ID（FK、ON DELETE CASCADE） |
+| entity_type | TEXT | crop/variety/location/planting/planting_record/harvest/diary/task/cooking/photo_pool |
+| entity_id | INTEGER | 対象のID |
+| kind | TEXT | created / updated / viewed（CHECK） |
+| hermes_message_id | INTEGER | 根拠の発言ID |
 
 #### supplements
 | カラム | 型 | 説明 |

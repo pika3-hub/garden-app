@@ -92,6 +92,8 @@
         {% set supplement_entity_type = 'harvest' %}
         {% set supplement_entity_id = harvest.id %}
         {% include '_supplements_section.html' %}
+        {% set conv_items = hermes_conversations('harvest', harvest.id) %}
+        {% include '_hermes_conversations_section.html' %}
     </div>
 
     <div class="col-md-4">

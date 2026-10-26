@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}{{ conversation.title or '会話' }} - Hermes との会話{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/conversations.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="fs-3"><i class="bi bi-chat-dots"></i> {{ conversation.title or '（題名なし）' }}</h1>
+        <p class="text-muted mb-0">
+            始まり: {{ conversation.started_at or '-' }}
+            {% if conversation.last_activity_at %} / 最後: {{ conversation.last_activity_at }}{% endif %}
+        </p>
+        {% if conversation.parent_hermes_id %}
+        <p class="mb-0">
+            前の会話:
+            {% if parent %}
+            <a href="{{ url_for('conversations.detail', conversation_id=parent.id) }}">{{ parent.title or '（題名なし）' }}</a>
+            {% else %}
+            <span class="text-muted">アプリにありません</span>
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('conversations.list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-list"></i> 一覧に戻る
+        </a>
+    </div>
+</div>
+
+{% set prev_nav = {'url': url_for('conversations.detail', conversation_id=prev_item.id),
+                   'button_text': '前の会話',
+                   'label': (prev_item.last_activity_at or '') ~ ' ' ~ (prev_item.title or '')} if prev_item else None %}
+{% set next_nav = {'url': url_for('conversations.detail', conversation_id=next_item.id),
+                   'button_text': '次の会話',
+                   'label': (next_item.last_activity_at or '') ~ ' ' ~ (next_item.title or '')} if next_item else None %}
+{% set nav_label = '会話ナビゲーション' %}
+{% with prev_item = prev_nav, next_item = next_nav %}
+{% include '_detail_nav.html' %}
+{% endwith %}
+
+<div class="chat mb-4">
+    {% for m in messages %}
+    <div class="chat-msg chat-msg-{{ m.role }}">
+        {% if m.display_kind == 'failed_turn' %}
+        <span class="badge bg-warning text-dark mb-1">失敗したやりとり</span>
+        {% endif %}
+        {% if m.text or not m.photos %}
+        <div class="chat-bubble">{% if m.role == 'assistant' %}{{ m.text|markdown }}{% else %}{{ m.text }}{% endif %}</div>
+        {% endif %}
+        {% for p in m.photos %}
+            {% if p.image_path %}
+            <img src="{{ url_for('static', filename='uploads/' + p.image_path) }}" class="chat-photo" alt="添付の写真" loading="lazy">
+            {% else %}
+            <div class="chat-photo-missing"><i class="bi bi-image"></i> 写真あり（保存されていません）</div>
+            {% endif %}
+        {% endfor %}
+        {% if m.time %}<div class="chat-time">{{ m.time[5:16] }}</div>{% endif %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">表示できる発言がありません。</div>
+    {% endfor %}
+</div>
+
+<div class="card mb-4">
+    <div class="card-header"><h6 class="mb-0">この会話で Hermes が作った・変えた・見たデータ</h6></div>
+    {% if links %}
+    <ul class="list-group list-group-flush">
+        {% for l in links %}
+        <li class="list-group-item d-flex gap-2 align-items-center">
+            <span class="badge {{ 'bg-success' if l.kind == 'created' else ('bg-primary' if l.kind == 'updated' else 'bg-secondary') }}">{{ l.kind_label }}</span>
+            {% if l.label is none %}
+            <span class="text-muted">削除済み</span>
+            {% elif l.url %}
+            <a href="{{ l.url }}">{{ l.label }}</a>
+            {% else %}
+            <span>{{ l.label }}</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="card-body text-muted">結び付いたデータはありません。</div>
+    {% endif %}
+</div>
+{% endblock %}

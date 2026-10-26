@@ -4,6 +4,9 @@
 
 | 発見日 | 箇所 | 内容 | 影響 | 対応案 |
 |---|---|---|---|---|
+| 2026-10-26 | `app/utils/conversation_links.py`（`_tokenize`） | 引用符の閉じ忘れなどで shlex が失敗すると空白で分割し直すため、改行で区切った複数の curl が1つにまとまる。`--json` の値を飛ばさないので、本文に API の URL があると拾うことがある | 壊れたコマンドでまれに結び付けを取りこぼす・誤る（例外は出ない） | 分割し直すときも改行で区切る、`--json` を値を取る引数に加える |
+| 2026-10-26 | `app/api/conversations.py`（`POST /conversations`） | 単独のサロゲート（`"\ud800"`）を含む文字列で SQLite が失敗して 500。縮小版を保存した後に `add_image` で失敗するとファイルが残る。`parent_session_id` の形を検査しない | 送り手は同期スクリプトだけなので、まず起きない | 文字列を `encode('utf-8')` で検査して 422、失敗時にファイルを消す、`parent_session_id` にも `_ID_RE` |
+| 2026-10-26 | `tools/hermes_conversation_sync.py` | 発言が 5000 件を超えた会話は毎回 422 になり送れない。状態のファイルの保存（`save_state`）の OSError を捕まえない | Matrix の会話は数百件規模なので当面起きない。保存の失敗は次の回に送り直すだけ | 古い発言から分けて送る（API 側も分割を受け付ける）、保存の失敗をエラーとして終了コード 1 にする |
 | 2026-10-25 | `app/routes/photo_sort_routes.py`（`_save_planting` / `_save_planting_record` / `_save_harvest` / 料理・日記の関連の保存） | 複数件を作る保存の途中で失敗すると、前半だけ登録済みのまま同じ写真の入力画面に戻る（各 `create` が個別に commit する） | 保存し直すと前半が二重登録になる（ディスク不足・DB ロックなど、まれな場合のみ） | 1つのトランザクションにまとめるか、登録済みの件数を表示して次へ進める |
 | 2026-10-25 | `app/static/js/photo-sort.js` ほか関連付けのチップ表示（`diary/form.html` 等の badgeRenderer も同じ） | 作物名・場所名などをエスケープせずに `innerHTML` に入れる | 名前に HTML を書くとチップでスクリプトが動く（自分のデータ・LAN 内なので実害は小さい） | 共通のエスケープ関数を作り、各 badgeRenderer で使う |
 | 2026-10-25 | `app/routes/photo_sort_routes.py`（`_save_harvest`、`ai_draft`） | 収穫量に `nan` / `inf` を入れると通る。AI 下書きの `photo_id` に JSON の `true` を送ると写真 1 として扱われる。「選んだ植え付けで収穫量を入力」の再描画でメモも URL（ブラウザの履歴）に載る | 画面の通常の操作ではほぼ起きない | `math.isfinite` で判定、`photo_id` は `bool` を除外、再描画は POST にする |
