@@ -27,7 +27,9 @@ _VALUE_OPTS = {
 
 def _tokenize(command):
     try:
-        lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+        # 改行は空白ではなく区切りにする（引用符の中の改行と \ 改行は shlex が保つ）
+        lexer = shlex.shlex(command, posix=True, punctuation_chars='();<>|&\n')
+        lexer.whitespace = ' \t\r'
         lexer.whitespace_split = True
         return list(lexer)
     except ValueError:
@@ -37,7 +39,7 @@ def _tokenize(command):
 def _segments(tokens):
     seg = []
     for t in tokens:
-        if t in _SEPARATORS:
+        if t in _SEPARATORS or not t.strip('();<>|&\n'):
             if seg:
                 yield seg
             seg = []
@@ -93,6 +95,29 @@ def _valid_id(value):
     return isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= _MAX_ID
 
 
+def _load_json(text):
+    """全体が JSON ならそれを、だめなら最初の `{` から1つ目のオブジェクトを読む。読めなければ None"""
+    try:
+        return json.loads(text)
+    except (TypeError, ValueError):
+        pass
+    start = text.find('{') if isinstance(text, str) else -1
+    if start < 0:
+        return None
+    try:
+        return json.JSONDecoder().raw_decode(text, start)[0]
+    except ValueError:
+        return None
+
+
+def _api_response(content):
+    """terminal ツールの結果 {"output": ..., "exit_code": ...} なら output を、素の応答ならそのまま読む"""
+    data = _load_json(content or '')
+    if isinstance(data, dict) and isinstance(data.get('output'), str):
+        return _load_json(data['output'])
+    return data
+
+
 def _created_ids(call_id, messages):
     ids = []
     if not call_id:
@@ -100,10 +125,7 @@ def _created_ids(call_id, messages):
     for m in messages:
         if m.get('role') != 'tool' or m.get('tool_call_id') != call_id:
             continue
-        try:
-            data = json.loads(m.get('content') or '')
-        except (TypeError, ValueError):
-            continue
+        data = _api_response(m.get('content'))
         if not isinstance(data, dict):
             continue
         data = data.get('data')

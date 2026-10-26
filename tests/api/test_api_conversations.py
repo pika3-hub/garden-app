@@ -140,3 +140,10 @@ def test_relink_command(api_app, api, sql):
     result = web.test_cli_runner().invoke(args=['relink-conversations'])
     assert result.exit_code == 0, result.output
     assert counts(sql)[2] == 1
+
+
+def test_huge_number_timestamp_is_422_not_500(api):
+    body = payload(messages=[msg(1)])
+    body['messages'][0]['timestamp'] = 10 ** 400
+    assert api.post(URL, data=json.dumps(body),
+                    content_type='application/json').status_code == 422

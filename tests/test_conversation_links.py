@@ -120,3 +120,50 @@ def test_out_of_range_ids_are_ignored():
 def test_huge_digit_id_does_not_raise():
     msgs = [call(1, 'curl -sS "$GARDEN_API_URL/crops/' + '9' * 5000 + '"')]
     assert extract_links(msgs) == []
+
+
+def test_newline_separates_curls():
+    cmd = (f'curl -s {TOKEN_HDR} "$GARDEN_API_URL/crops/3"\n'
+           f'curl -s -X PATCH {TOKEN_HDR} "$GARDEN_API_URL/varieties/5"')
+    assert extract_links([call(1, cmd)]) == [link('crop', 3, 'viewed', 1), link('variety', 5, 'updated', 1)]
+
+
+def test_newline_separated_posts_do_not_guess_created():
+    cmd = (f'curl -X POST {TOKEN_HDR} "$GARDEN_API_URL/plantings" -d \'{{}}\' -o /dev/null\n'
+           f'curl -X POST {TOKEN_HDR} "$GARDEN_API_URL/planting_records" -d \'{{}}\'')
+    msgs = [call(1, cmd), result(2, '{"ok": true, "data": {"id": 77}}')]
+    assert extract_links(msgs) == []
+
+
+def test_newline_inside_quotes_is_kept():
+    cmd = f"curl -s -X PATCH {TOKEN_HDR} \"$GARDEN_API_URL/crops/3\" -d '{{\"memo\":\"a\nb\"}}'"
+    assert extract_links([call(1, cmd)]) == [link('crop', 3, 'updated', 1)]
+
+
+def test_backslash_newline_continues_one_curl():
+    cmd = f'curl -s -X PATCH {TOKEN_HDR} \\n  "$GARDEN_API_URL/crops/3"'
+    assert extract_links([call(1, cmd)]) == [link('crop', 3, 'updated', 1)]
+
+
+def _wrapped(output, **kw):
+    return json.dumps({'output': output, 'exit_code': 0, 'error': None, **kw}, ensure_ascii=False)
+
+
+def _post_msgs(body):
+    return [call(1, f'curl -sS -X POST {TOKEN_HDR} "$GARDEN_API_URL/planting_records" -d \'{{}}\''),
+            result(2, body)]
+
+
+def test_created_from_terminal_wrapped_result():
+    msgs = _post_msgs(_wrapped('{"ok": true, "data": {"id": 312}}'))
+    assert extract_links(msgs) == [link('planting_record', 312, 'created', 1)]
+
+
+def test_created_from_output_with_trailing_http_code():
+    msgs = _post_msgs(_wrapped('{"ok": true, "data": {"id": 312}}\n201'))
+    assert extract_links(msgs) == [link('planting_record', 312, 'created', 1)]
+
+
+def test_wrapped_output_not_json_is_ignored():
+    msgs = _post_msgs(_wrapped('curl: (7) Failed to connect', exit_code=7))
+    assert extract_links(msgs) == []

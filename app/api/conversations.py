@@ -35,7 +35,12 @@ _JST = timezone(timedelta(hours=9))
 
 
 def _is_number(v):
-    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+    if not isinstance(v, (int, float)) or isinstance(v, bool):
+        return False
+    try:
+        return math.isfinite(v)
+    except OverflowError:  # 10**400 のような巨大な整数
+        return False
 
 
 def _jst(ts):

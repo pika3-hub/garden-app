@@ -125,7 +125,7 @@ python3 ~/hermes_conversation_sync.py --dry-run
 sudo -u garden -H bash -c 'cd /opt/garden-app && ~/.local/bin/uv run flask --app app relink-conversations'
 ```
 
-`<件数>件の会話から結び付けを<件数>件作り直しました` と出れば成功。開発 PC では `uv run flask --app app relink-conversations`。事前にバックアップを取る（[`../db-validation-safety.md`](../db-validation-safety.md)）。
+`<件数>件の会話から結び付けを<件数>件作り直しました` と出れば成功。開発 PC では `uv run flask --app app relink-conversations`。本番では事前に [`migration-to-ubuntu.md`](migration-to-ubuntu.md) の手でバックアップを取る（`sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`）。開発 PC では [`../db-validation-safety.md`](../db-validation-safety.md) に従う。
 
 ## うまくいかないとき
 
@@ -133,6 +133,6 @@ sudo -u garden -H bash -c 'cd /opt/garden-app && ~/.local/bin/uv run flask --app
 |---|---|
 | `エラー: env ファイルを読めません` | `~/.config/garden-api.env` があるか、`GARDEN_API_URL` と `GARDEN_API_TOKEN` が入っているか |
 | `HTTP 401` | トークンが `.env` の `API_TOKEN` と同じか |
-| `HTTP 422` | 発言が 5000 件を超えていないか、`code` / `message` の表示を見る |
+| `HTTP 422` | まず表示される `code` / `message` を見る（型の不一致、`session.id` の形、発言が 5000 件超など）。`--dry-run` は送る内容の型を確かめないので、最初の取り込みで初めて 422 が出ることがある |
 | `失敗 URLError` など | アプリ（`garden-app.service`）が動いているか、`GARDEN_API_URL` の API ポートが合っているか |
 | `エラー: state.db を読めません` | `--db` のパス、Hermes が書き込み中でロックが長引いていないか（10 秒待つ。次の回に再試行される） |

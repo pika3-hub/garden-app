@@ -301,7 +301,7 @@ def main(argv=None, transport=None):
                     err = _body.get('error') if isinstance(_body.get('error'), dict) else {}
                     print(f'{sid} HTTP 422: アプリが内容を受け付けません'
                           f'（code={err.get("code")} message={err.get("message")}）。'
-                          '発言が5000件を超えていないか確認してください', file=sys.stderr)
+                          'code / message を見て原因を確認してください（型の不一致、session.id の形、発言が5000件超など）', file=sys.stderr)
                 failed += 1
     except sqlite3.Error as e:
         print(f'エラー: state.db の読み取りに失敗しました（{type(e).__name__}: {e}）', file=sys.stderr)
