@@ -14,6 +14,8 @@ RESOURCE_TYPES = {
 }
 
 _URL_RE = re.compile(r'(?:\$GARDEN_API_URL|\$\{GARDEN_API_URL\}|/api/v1)/([^?#\s"\']*)')
+_ID_RE = re.compile(r'[0-9]+')
+_MAX_ID = 9223372036854775807  # SQLite の INTEGER の上限
 _SEPARATORS = {'&&', '||', ';', '|', '&', '(', ')', '\n'}
 # 値を1つ取るオプション（URL を探すとき値を飛ばす）
 _VALUE_OPTS = {
@@ -87,6 +89,10 @@ def _parse_curl(seg):
     return method, [p for p in path.split('/') if p]
 
 
+def _valid_id(value):
+    return isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= _MAX_ID
+
+
 def _created_ids(call_id, messages):
     ids = []
     if not call_id:
@@ -103,7 +109,7 @@ def _created_ids(call_id, messages):
         data = data.get('data')
         rows = [data] if isinstance(data, dict) else data if isinstance(data, list) else []
         for r in rows:
-            if isinstance(r, dict) and isinstance(r.get('id'), int) and not isinstance(r.get('id'), bool):
+            if isinstance(r, dict) and _valid_id(r.get('id')):
                 ids.append(r['id'])
     return ids
 
@@ -150,7 +156,9 @@ def extract_links(messages):
                 etype = RESOURCE_TYPES.get(parts[0]) if parts else None
                 if etype is None:
                     continue
-                eid = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else None
+                eid = int(parts[1]) if len(parts) > 1 and _ID_RE.fullmatch(parts[1]) else None
+                if eid is not None and not _valid_id(eid):
+                    continue
                 n = len(parts)
                 if method == 'POST' and n == 1:
                     if post_count == 1:

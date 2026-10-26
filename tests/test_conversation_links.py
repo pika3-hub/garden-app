@@ -101,3 +101,17 @@ def test_broken_json_is_ignored():
 def test_pipe_and_heredoc_and_japanese():
     cmd = f'curl -sS {TOKEN_HDR} "$GARDEN_API_URL/crops/2" | python3 -c "import sys,json\nprint(json.load(sys.stdin))"'
     assert extract_links([call(1, cmd)]) == [link('crop', 2, 'viewed', 1)]
+
+
+def test_non_ascii_digit_ids_are_ignored():
+    msgs = [call(1, 'curl -sS "$GARDEN_API_URL/crops/²"', 'a'),
+            call(2, 'curl -sS "$GARDEN_API_URL/crops/٣"', 'b')]
+    assert extract_links(msgs) == []
+
+
+def test_out_of_range_ids_are_ignored():
+    msgs = [call(1, 'curl -sS "$GARDEN_API_URL/crops/99999999999999999999999"', 'a'),
+            call(2, 'curl -sS "$GARDEN_API_URL/crops/0"', 'b'),
+            call(3, f'curl -sS -X POST {TOKEN_HDR} "$GARDEN_API_URL/photos"', 'c'),
+            result(4, '{"data": [{"id": 99999999999999999999999}, {"id": true}, {"id": 0}, {"id": "5"}, {"id": 9}]}', 'c')]
+    assert extract_links(msgs) == [link('photo_pool', 9, 'created', 3)]
