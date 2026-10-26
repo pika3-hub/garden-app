@@ -8,6 +8,7 @@ AI アシスタント（Claude Code など）がこのリポジトリで作業�
 - Git Bash から `python` で文字列置換スクリプトを書く場合、`open(p, 'w')` のままだと Windows の Python が **CRLF で書き出し、ファイル全体が差分になる**。必ず `open(p, encoding='utf-8', newline='')` で読み書きする（または Edit ツールを使う）。`Path.write_text` も同じく CRLF になるので、`read_bytes().decode()` → `write_bytes(s.encode())` にする（2026-10-24 に `write_text` で `resource.py` 全体が差分になった。2026-10-25 にも `python - <<'EOF'` のヒアドキュメントで同じことをして、**新規ファイル4つが CRLF のままコミット**された。新規ファイルは `git diff --stat` に異常が出ないので気づきにくい。コミット前に `git diff --name-only main...HEAD | xargs git ls-files --eol | grep crlf` で確かめる）
 - 改行コードの確認は `grep -c $'\r' <file>`（0 なら LF）。`od -c | grep '\\r'` は誤判定するので使わない
 - 編集後は `git diff --stat` で差分行数が想定どおりかを必ず見る。行数が異常に多ければ改行コードの変化を疑う
+- **サブエージェントに実装を任せるときは、指示に改行コードの注意を書く**（「`git ls-files --eol` で元の改行を確かめて保つ、新規は LF、Python のテキストモードで書かない、Edit ツールを使う」）。2026-10-26 は注意を書かなかった回で、修正のコミットがテンプレートとテストを CRLF に書き換えた。書いた回は起きなかった
 
 ## 実データ DB を汚さないブラウザ確認
 
@@ -89,6 +90,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - フォームの入力チェックやモーダルの状態確認は、クリック＋スクリーンショットより、JS で要素の class・値を読む方が速く確実
 - 反映処理などの確認では `window.fetch` を一時的に差し替えると、課金や外部通信なしで UI の分岐を確認できる（終わったら必ず元に戻す）
 - `resize_window` で幅を変えても、ウィンドウが最大化されていると効かない（`innerWidth` が変わらない）。スマホ幅の確認は、同じ URL を幅 375px の `iframe` に読み込み、`contentDocument.documentElement.scrollWidth` と、右端がはみ出す要素を数えて測る（2026-10-25）
+- 植え付けの詳細（見取り図のある重い画面）は、スクロール後のスクリーンショットが CDP のタイムアウトで失敗することがある。表示された文字を確かめるだけなら `get_page_text` を使う（2026-10-26）
 - brainstorming スキルの画面モック用サーバー（visual companion）は `node` が無いので起動できない。モックは HTML ファイルをスクラッチ領域に書き、`Start-Process` でブラウザに開いて見てもらう
 
 ## Windows のコンソール・文字コード
@@ -127,3 +129,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - Hermes の部品は仮想環境ではなく `hermes pm`（`~/.hermes/tools/` の専用 Python）で管理されている。`~/.local/bin/hermes` は sh のラッパーなので、1行目から Python の場所は分からない。部品の import を試すときは `find ~ -type d -name mautrix` で `~/.hermes/installs/.../venv` を探し、その `bin/python` を使う
 - **Hermes が古い値（移設前の IP など）を使ったら、Hermes 自身の記憶 `~/.hermes/memories/MEMORY.md` を疑う**。環境変数は正しく渡っていたのに、移設前に覚えた「API は <メインPCのIP>:5001」を信じていた（2026-10-24）。直したら Element X で `/new`。サーバーの構成を変えたときは、記憶に古い値が無いか `grep` する
 - iPhone のアプリから LAN 内のサーバーにつながらず Safari では開けるときは、iOS の「ローカルネットワーク」の許可を疑う
+- サーバーに `pika3`（Hermes の実行ユーザー）でログインして `curl http://127.0.0.1:5000/...` すると `000` になる。遮断のルールどおりで、異常ではない。Web 画面の確認はメイン PC かスマホのブラウザで行う（2026-10-26）
+- `/var/backups/garden/` は `pika3` から読めない。中を見るときは `sudo ls -l /var/backups/garden/`（バックアップ自体は `sudo -u garden sqlite3 ...` で取れている）
+- 再起動直後の `journalctl -u garden-app` に `Migration applied: ...` が出ないことがある（`print` の出力がバッファされる）。マイグレーションが入ったかは `sudo -u garden sqlite3 -readonly /opt/garden-app/instance/garden.db "SELECT name FROM sqlite_master WHERE ..."` で直接確かめる
+- **Hermes の内部のデータの形（`state.db` の列、ツールの結果の形、写真のキャッシュの期限など）は、サーバーと同じ版の Hermes のソースで確かめる**。`git -C ~/.hermes/hermes-agent log -1 --format=%h` で版を聞き、メイン PC のスクラッチ領域に `git clone --filter=blob:none --no-checkout https://github.com/NousResearch/hermes-agent.git` → `git checkout <版>`（Web サイトの文書の一部が「Filename too long」で失敗するが本体は読める）。貼ってもらう往復が減る。2026-10-26 は terminal ツールの結果が `{"output": "...", "exit_code": 0, ...}` で包まれていることを確かめずに設計し、最終レビューで初めて気づいた（`tools/terminal_tool_result.py`）。外から渡ってくるデータの形は、設計の段階で1件実物かソースを見る
