@@ -33,7 +33,8 @@ def _crop_display_name(name, variety=None):
 
 def _hermes_conversations(entity_type, entity_id):
     """そのデータに結び付いた Hermes との会話（区分の表示名付き、新しい順）"""
-    return [dict(c, kind_label=KIND_LABELS[c['kind']])
+    return [dict(c, kind_label=KIND_LABELS[c['kind']],
+                 shown_at=str(c['last_activity_at'] or c['started_at'] or '')[:16])
             for c in Conversation.get_by_entity(entity_type, entity_id)]
 
 

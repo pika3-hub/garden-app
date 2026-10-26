@@ -171,7 +171,7 @@ class Conversation:
     def get_by_entity(entity_type, entity_id):
         """そのデータに結び付いた会話（新しい順）。複数の区分は優先の高い1つにまとめる"""
         rows = get_db().execute(
-            f'''SELECT c.id, c.title, c.last_activity_at, l.kind
+            f'''SELECT c.id, c.title, c.last_activity_at, c.started_at, l.kind
                 FROM conversation_links l
                 JOIN conversations c ON c.id = l.conversation_id
                 WHERE l.entity_type = ? AND l.entity_id = ?

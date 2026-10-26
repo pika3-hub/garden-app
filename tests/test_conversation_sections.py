@@ -77,3 +77,31 @@ def test_crop_page_excludes_variety_links(app, client):
     _link(app, 'variety', ids['variety'])
     body = client.get(f'/crops/{ids["crop"]}').get_data(as_text=True)
     assert 'Hermes との会話' not in body
+
+
+def _link_session(app, entity_id, **kw):
+    with app.app_context():
+        s = {'hermes_id': 'h2', 'source': 'matrix', 'title': 'トマトの相談',
+             'started_at': '2026-10-25 16:55:29', 'ended_at': None,
+             'last_activity_at': None, 'end_reason': None, 'parent_hermes_id': None}
+        s.update(kw)
+        cid, _ = Conversation.upsert(s)
+        Conversation.replace_links(cid, [
+            {'entity_type': 'crop', 'entity_id': entity_id, 'kind': 'created',
+             'hermes_message_id': None}])
+
+
+def test_section_falls_back_to_started_at(app, client):
+    ids = _seed(app)
+    _link_session(app, ids['crop'])
+    body = client.get(f'/crops/{ids["crop"]}').get_data(as_text=True)
+    assert '2026-10-25 16:55' in body
+    assert 'None' not in body
+
+
+def test_section_escapes_title(app, client):
+    ids = _seed(app)
+    _link_session(app, ids['crop'], title='<script>x</script>')
+    body = client.get(f'/crops/{ids["crop"]}').get_data(as_text=True)
+    assert '<script>x</script>' not in body
+    assert '&lt;script&gt;x&lt;/script&gt;' in body
