@@ -82,6 +82,28 @@ def test_detail_shows_deleted_link(app, client):
     assert '削除済み' in r.get_data(as_text=True)
 
 
+def test_user_bubble_has_no_extra_whitespace(app, client):
+    cid = _make(app, messages=[_msg(1, 'user', 'じゃがいも')])
+    body = client.get(f'/conversations/{cid}').get_data(as_text=True)
+    assert 'chat-bubble">じゃがいも</div>' in body
+
+
+def test_detail_shows_planting_link(app, client):
+    from app.models.location import Location
+    from app.models.planting import Planting
+    cid = _make(app, messages=[_msg(1)])
+    with app.app_context():
+        crop_id = Crop.create({'name': 'ミニトマト', 'crop_type': '果菜類'})
+        loc_id = Location.create({'name': '南の畑', 'location_type': '畑'})
+        pid = Planting.plant({'location_id': loc_id, 'crop_id': crop_id,
+                              'planted_date': '2026-05-01'})
+        Conversation.replace_links(cid, [
+            {'entity_type': 'planting', 'entity_id': pid, 'kind': 'created'}])
+    body = client.get(f'/conversations/{cid}').get_data(as_text=True)
+    assert f'href="/plantings/{pid}"' in body
+    assert 'ミニトマト 南の畑' in body and '削除済み' not in body
+
+
 def test_detail_photo_pool_link(app, client):
     from app.models.photo_pool import PhotoPool
     cid = _make(app, messages=[_msg(1)])

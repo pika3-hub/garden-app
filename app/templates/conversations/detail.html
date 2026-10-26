@@ -50,9 +50,7 @@
         <span class="badge bg-warning text-dark mb-1">失敗したやりとり</span>
         {% endif %}
         {% if m.text or not m.photos %}
-        <div class="chat-bubble">
-            {% if m.role == 'assistant' %}{{ m.text|markdown }}{% else %}{{ m.text }}{% endif %}
-        </div>
+        <div class="chat-bubble">{% if m.role == 'assistant' %}{{ m.text|markdown }}{% else %}{{ m.text }}{% endif %}</div>
         {% endif %}
         {% for p in m.photos %}
             {% if p.image_path %}
