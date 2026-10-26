@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import secrets
+import click
 from flask import Flask, render_template, url_for
 from app.config import config
 from app.database import init_db, get_db
@@ -375,6 +376,14 @@ def create_app(config_name='default'):
                              upcoming_tasks=upcoming_tasks,
                              upcoming_tasks_by_urgency=upcoming_tasks_by_urgency,
                              carousel_images=carousel_images)
+
+    @app.cli.command('relink-conversations')
+    def relink_conversations():
+        """全会話の結び付け（作った・変えた・見たデータ）を保存済みの発言から作り直す"""
+        from app.models.conversation import Conversation
+        ids = Conversation.all_ids()
+        total = sum(Conversation.relink(i) for i in ids)
+        click.echo(f'{len(ids)}件の会話から結び付けを{total}件作り直しました')
 
     return app
 

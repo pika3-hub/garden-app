@@ -1,4 +1,5 @@
 from app.database import get_db
+from app.utils.conversation_links import extract_links
 
 KIND_PRIORITY = {'created': 3, 'updated': 2, 'viewed': 1}
 KIND_LABELS = {'created': '作った', 'updated': '変えた', 'viewed': '見た'}
@@ -149,6 +150,13 @@ class Conversation:
                  link.get('hermes_message_id'))
             )
         db.commit()
+
+    @staticmethod
+    def relink(conversation_id):
+        """保存済みの全発言から結び付けを作り直す。件数を返す"""
+        links = extract_links(Conversation.get_messages(conversation_id, include_tools=True))
+        Conversation.replace_links(conversation_id, links)
+        return len(links)
 
     @staticmethod
     def get_links(conversation_id):
