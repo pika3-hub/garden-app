@@ -329,6 +329,10 @@ systemctl --user restart hermes-gateway.service
 - 試すときは `idle_minutes: 2` にして、2分以内なら前の依頼を覚えていること、3分あけると覚えていないことを確かめた
 - やめる: `hermes plugins disable hermes-session-reset-policy` か、`session_reset` を `mode: none` にして gateway を再起動
 
+## 会話の履歴
+
+この部屋の会話をアプリで見られるようにする同期スクリプトの配置と運用は [`hermes-conversation-sync.md`](hermes-conversation-sync.md)。
+
 ## 更新
 
 - Tuwunel・Caddy は apt の普段の更新に含まれる。Caddy の更新で reload に失敗した旨が出たら（`admin off` のため reload できない）`sudo systemctl restart caddy`
