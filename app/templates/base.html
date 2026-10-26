@@ -93,7 +93,7 @@
                     <li class="nav-item">
                         {% set is_conversations = request.endpoint and request.endpoint.startswith('conversations.') %}
                         <a class="nav-link {% if is_conversations %}active{% endif %}" href="{{ url_for('conversations.list') }}" {% if is_conversations %}aria-current="page"{% endif %}>
-                            <i class="bi bi-chat-dots icon-img-lg"></i> Hermes
+                            <img src="{{ url_for('static', filename='images/icon_hermes.webp') }}" alt="" class="icon-img icon-img-lg"> Hermes
                         </a>
                     </li>
                     <li class="nav-item">
@@ -111,7 +111,7 @@
                     <li class="nav-item">
                         {% set is_settings = request.endpoint and request.endpoint.startswith('settings.') %}
                         <a class="nav-link {% if is_settings %}active{% endif %}" href="{{ url_for('settings.index') }}" {% if is_settings %}aria-current="page"{% endif %}>
-                            <i class="bi bi-gear"></i> 設定
+                            <img src="{{ url_for('static', filename='images/icon_settings.webp') }}" alt="" class="icon-img icon-img-lg"> 設定
                         </a>
                     </li>
                 </ul>

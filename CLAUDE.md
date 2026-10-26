@@ -234,6 +234,7 @@ f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
 ## 開発ノウハウと既知の課題
 
 - [`docs/dev-workflow-tips.md`](docs/dev-workflow-tips.md): 過去のセッションで得た実務ノウハウ（Windows の改行コード、コピーDBでのブラウザ確認、外部 API の早期実確認、ブラウザ自動操作の注意、未インストールのツールなど）。**作業を始める前に一読すること**
+- [`docs/image-generation.md`](docs/image-generation.md): OpenAI の画像モデル（`gpt-image-2`）で既存と同じ絵柄のアイコンを作る手順とノウハウ（`tools/make_icon.py`、透明背景の代わりにマゼンタを抜く、費用）
 - [`docs/known-issues.md`](docs/known-issues.md): 見つかったが対応を見送った課題・改善候補の一覧。関連箇所を触るときは確認し、対応したら行を削除する
 - [`docs/wishlist.md`](docs/wishlist.md): ユーザーがやりたいと言った作業・検証の一覧。「次に何をするか」を聞かれたら確認する
 
