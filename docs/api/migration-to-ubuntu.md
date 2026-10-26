@@ -247,12 +247,31 @@ Windows 側のファイアウォールのルール（[`firewall-windows.md`](fir
 
 ## 9. 更新の手順
 
-```bash
-sudo -u garden -H bash -c 'cd /opt/garden-app && git pull && ~/.local/bin/uv sync'
-sudo systemctl restart garden-app
-```
+**サーバーで動作を確かめてから PR をマージする**（2026-10-26 から）。マージした後に本番で不具合が見つかると、そのたびに直す PR が要るため。PR のブランチで本番を動かして確かめ、問題があれば同じ PR にコミットを足し、確認が済んでからマージする。開発者も利用者も1人なので、確認中に本番が PR のブランチで動いていても困る人はいない（複数人で使うようになったら、確認中はほかの人のアクセスを止める仕組みを考える）。
 
-起動時にマイグレーションが自動で走るので、更新前にバックアップを取る（下の別名の DB。uploads も取り直すなら `sudo systemctl start garden-backup.service` だが、DB は曜日のファイルを上書きする）。
+1. PR を作る（マージしない）
+2. バックアップを取り（下の別名の DB）、PR のブランチに切り替えて再起動する:
+
+   ```bash
+   sudo -u garden -H bash -c 'cd /opt/garden-app && git fetch origin && git switch <ブランチ名> && ~/.local/bin/uv sync'
+   sudo systemctl restart garden-app
+   ```
+
+   初めて切り替えるブランチでも、`git switch <ブランチ名>` は `origin/<ブランチ名>` を追う手元のブランチを作る。
+3. 本番で動作を確かめる。直すときは同じ PR にコミットを足して push し、サーバーでは `git pull` → `uv sync` → 再起動（2 のコマンドの `git switch` を `git pull` にしたもの）
+4. 確認が済んだら GitHub で PR をマージする（マージコミットの方式。Squash にすると、サーバーで確かめたコミットと main のコミットが別物になる）
+5. サーバーを main に戻す:
+
+   ```bash
+   sudo -u garden -H bash -c 'cd /opt/garden-app && git switch main && git pull && ~/.local/bin/uv sync'
+   sudo systemctl restart garden-app
+   ```
+
+   中身は 3 で確かめたものと同じ。`git status` が `On branch main` で、`git log -1` がマージコミットになっていることを確かめる。手元のブランチは `git branch -d <ブランチ名>` で消してよい
+
+**取りやめるとき**（確認で大きな問題が出て、PR を閉じる・作り直すとき）: 5 と同じく main に戻して再起動する。PR にマイグレーションがあり、データを書き換える・消す種類のときは、2 で取ったバックアップの DB に戻す（テーブル・列を足すだけなら、残っても害はない）。戻すときはアプリを止めてから `cp -p` で置き換える。
+
+起動時にマイグレーションが自動で走るので、切り替える前に必ずバックアップを取る（下の別名の DB。uploads も取り直すなら `sudo systemctl start garden-backup.service` だが、DB は曜日のファイルを上書きする）。
 
 - 手で取るバックアップは、曜日ごとのファイルを上書きしないよう別名にする: `sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`
 - 再起動の直後（1秒ほど）は接続できない。`curl` で確かめるときは少し待つ（`journalctl -u garden-app` の `Serving on` が出ていれば起動済み）
