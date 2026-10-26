@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Hermes との会話 - 家庭菜園管理アプリ{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/conversations.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-7">
+        <h1><i class="bi bi-chat-dots"></i> Hermes との会話<span class="text-muted fs-6"> ({{ conversations|length }}件)</span></h1>
+        <p class="text-muted mb-0">Hermes に依頼した会話の記録です。</p>
+    </div>
+    <div class="col-md-5 text-end d-flex justify-content-end align-items-center gap-2">
+        <form method="GET" action="{{ url_for('conversations.list') }}" class="d-flex gap-2">
+            <input type="text" name="keyword" class="form-control form-control-sm" placeholder="題名、内容で検索" value="{{ keyword }}" style="width: 180px;">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-search"></i>
+            </button>
+            {% if keyword %}
+            <a href="{{ url_for('conversations.list') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x-circle"></i>
+            </a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% if years %}
+<div class="mb-3">
+    <div id="date-badge-filter">
+        <div class="badge-group badge-group-year">
+            <span class="badge-group-label">年:</span>
+            {% for year in years %}
+            <span class="badge badge-filter badge-filter-inactive" data-year="{{ year }}">{{ year }}年</span>
+            {% endfor %}
+        </div>
+        <div class="badge-group badge-group-season">
+            <span class="badge-group-label">季節:</span>
+            <span class="badge badge-filter badge-filter-inactive" data-season="春" data-months="3,4,5">春(3-5月)</span>
+            <span class="badge badge-filter badge-filter-inactive" data-season="夏" data-months="6,7,8">夏(6-8月)</span>
+            <span class="badge badge-filter badge-filter-inactive" data-season="秋" data-months="9,10,11">秋(9-11月)</span>
+            <span class="badge badge-filter badge-filter-inactive" data-season="冬" data-months="12,1,2">冬(12-2月)</span>
+        </div>
+        <div class="badge-group badge-group-month">
+            <span class="badge-group-label">月:</span>
+            {% for m in range(1, 13) %}
+            <span class="badge badge-filter badge-filter-inactive" data-month="{{ m }}">{{ m }}月</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if conversations %}
+<div id="filter-empty-msg" class="alert alert-info" style="display:none;">
+    <i class="bi bi-info-circle"></i> 該当する会話がありません。
+</div>
+{% for ym, group in grouped_conversations %}
+<section class="date-group" data-group-key="{{ ym }}">
+    <h3 class="date-group-heading">
+        {% if ym %}{{ ym[:4] }}年{{ ym[5:7]|int }}月{% else %}日付なし{% endif %}
+        <small class="text-muted">({{ group|length }}件)</small>
+    </h3>
+    <div class="mb-4">
+        {% for c in group %}
+        <div data-filter-year="{{ c.ts[:4] }}" data-filter-month="{{ c.ts[5:7]|int }}">
+            <a href="{{ url_for('conversations.detail', conversation_id=c.id) }}" class="conv-row">
+                <span class="conv-row-time">{{ c.ts[5:16] if c.ts else '日時なし' }}</span>
+                <span class="conv-row-title">{{ c.title or '（題名なし）' }}</span>
+                <span class="conv-row-meta">
+                    <i class="bi bi-chat-left-text"></i> {{ c.message_count }}
+                    {% if c.has_image_marker or c.image_count %}<i class="bi bi-image ms-2" title="写真あり"></i>{% endif %}
+                    {% if c.link_count %}<i class="bi bi-link-45deg ms-2" title="結び付いたデータ"></i> {{ c.link_count }}{% endif %}
+                </span>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endfor %}
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    {% if keyword %}検索条件に一致する会話が見つかりませんでした。{% else %}まだ会話が取り込まれていません。{% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/date-badge-filter.js') }}"></script>
+{% endblock %}

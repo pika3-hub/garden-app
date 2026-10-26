@@ -59,7 +59,7 @@ def create_app(config_name='default'):
         crop_routes, variety_routes, location_routes, diary_routes,
         harvest_routes, calendar_routes, task_routes, planting_routes,
         supplement_routes, photo_pool_routes, cooking_routes, settings_routes,
-        photo_sort_routes
+        photo_sort_routes, conversation_routes
     )
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(variety_routes.bp)
@@ -74,6 +74,7 @@ def create_app(config_name='default'):
     app.register_blueprint(photo_sort_routes.bp)
     app.register_blueprint(cooking_routes.bp)
     app.register_blueprint(settings_routes.bp)
+    app.register_blueprint(conversation_routes.bp)
 
     # AIメモ下書きの request_id 等を INFO でサーバーログへ出す（Flask の 'app' ロガーのハンドラーへ伝播）
     app.logger  # 既定ハンドラーを生成

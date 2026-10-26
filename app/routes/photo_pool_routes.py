@@ -23,6 +23,7 @@ _DETAIL_ENDPOINTS = {
     'variety': ('varieties.detail', 'variety_id'),
     'location': ('locations.detail', 'location_id'),
     'planting_record': ('plantings.record_detail', 'record_id'),
+    'planting': ('plantings.detail', 'location_crop_id'),
     'harvest': ('harvests.detail', 'harvest_id'),
     'cooking': ('cooking.detail', 'cooking_id'),
     'diary': ('diary.detail', 'diary_id'),
