@@ -208,3 +208,41 @@ def test_dry_run_sends_nothing(tmp_path, capsys):
     out = capsys.readouterr().out
     assert 's' in out and '発言 1' in out
     assert not (tmp_path / 'state.json').exists()
+
+
+def test_images_batched_by_twenty(tmp_path):
+    db, cache, argv = setup_run(tmp_path)
+    add_session(db, 's')
+    names = [f'img_{i:02d}.jpg' for i in range(25)]
+    for n in names:
+        (cache / n).write_bytes(b'x')
+    add_msg(db, 's', 'user', ' '.join(f'[Image attached at: {cache / n}]' for n in names), mid=1)
+    t = FakeTransport(201)
+    assert hs.main(argv, transport=t) == 0
+    assert t.calls[0]['body'].count(b'name="images"') == 20
+    state = json.loads((tmp_path / 'state.json').read_text(encoding='utf-8'))
+    assert len(state['sessions']['s']['sent_images']) == 20
+    assert state['sessions']['s']['fingerprint'] != [1, 't', None, None]
+    assert hs.main(argv, transport=t) == 0
+    assert len(t.calls) == 2
+    assert t.calls[1]['body'].count(b'name="images"') == 5
+    state = json.loads((tmp_path / 'state.json').read_text(encoding='utf-8'))
+    assert len(state['sessions']['s']['sent_images']) == 25
+    assert state['sessions']['s']['fingerprint'] == [1, 't', None, None]
+    assert hs.main(argv, transport=t) == 0
+    assert len(t.calls) == 2
+
+
+def test_bad_image_name_skipped_and_422_logged(tmp_path, capsys):
+    db, cache, argv = setup_run(tmp_path)
+    add_session(db, 's')
+    (cache / 'img bad.jpg').write_bytes(b'x')
+    add_msg(db, 's', 'user', f'[Image attached at: {cache / "img bad.jpg"}]', mid=1)
+
+    def t422(url, headers, body):
+        assert b'name="images"' not in body
+        return 422, json.dumps({'ok': False, 'error': {'code': 'validation_error', 'message': 'bad'}}).encode()
+    assert hs.main(argv, transport=t422) == 1
+    err = capsys.readouterr()
+    assert 'validation_error' in err.err and 'HTTP 422' in err.err
+    assert '不正な名前の写真 1' in err.out

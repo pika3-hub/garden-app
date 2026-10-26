@@ -18,6 +18,8 @@ import uuid
 
 DB_TIMEOUT = 10  # state.db を開いて待つ秒数（Hermes が書き込み中でも読めるが、ロック時は待つ）
 IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif')
+MAX_IMAGES_PER_REQUEST = 20  # アプリの MAX_FILES_PER_REQUEST に合わせる
+_IMAGE_NAME_RE = re.compile(r'[A-Za-z0-9_.-]{1,100}')
 _IMAGE_MARKER_RE = re.compile(r'\[Image attached at: ([^\]\r\n]+)\]')
 
 REQUIRED_COLUMNS = {
@@ -35,7 +37,7 @@ class SchemaError(Exception):
 def open_db(path, timeout=None):
     if timeout is None:
         timeout = DB_TIMEOUT
-    uri = 'file:' + path.replace('?', '%3f').replace('#', '%23') + '?mode=ro'
+    uri = 'file:' + path.replace('%', '%25').replace('?', '%3f').replace('#', '%23') + '?mode=ro'
     conn = sqlite3.connect(uri, uri=True, timeout=timeout)
     conn.row_factory = sqlite3.Row
     return conn
@@ -244,7 +246,7 @@ def main(argv=None, transport=None):
     if not args.dry_run:
         try:
             env = read_env(args.env)
-        except OSError as e:
+        except (OSError, UnicodeDecodeError) as e:
             print(f'エラー: env ファイルを読めません（{type(e).__name__}）', file=sys.stderr)
             return 1
         url, token = env.get('GARDEN_API_URL'), env.get('GARDEN_API_TOKEN')
@@ -262,8 +264,12 @@ def main(argv=None, transport=None):
             fp = fingerprint(conn, row)
             payload = build_payload(conn, row)
             sent = set(state['sessions'].get(sid, {}).get('sent_images', []))
-            images = [p for p in image_refs(payload, args.cache_dir)
-                      if os.path.basename(p) not in sent]
+            candidates = [p for p in image_refs(payload, args.cache_dir)
+                          if os.path.basename(p) not in sent]
+            valid = [p for p in candidates if _IMAGE_NAME_RE.fullmatch(os.path.basename(p))]
+            bad_names = len(candidates) - len(valid)
+            images = valid[:MAX_IMAGES_PER_REQUEST]
+            more = len(valid) > len(images)
             n_msg, n_img = len(payload['messages']), len(images)
             if args.dry_run:
                 print(f'[dry-run] {sid} 発言 {n_msg} 写真 {n_img}')
@@ -274,13 +280,28 @@ def main(argv=None, transport=None):
                 print(f'{sid} 発言 {n_msg} 写真 {n_img} 失敗 {type(e).__name__}', file=sys.stderr)
                 failed += 1
                 continue
-            print(f'{sid} 発言 {n_msg} 写真 {n_img} HTTP {status}')
+            line = f'{sid} 発言 {n_msg} 写真 {n_img} HTTP {status}'
+            if bad_names:
+                line += f' 不正な名前の写真 {bad_names} 件は送らない'
+            print(line)
             if 200 <= status < 300:
-                state['sessions'][sid] = {
-                    'fingerprint': fp,
-                    'sent_images': sorted(sent | {os.path.basename(p) for p in images}),
-                }
+                skipped = (_body.get('data') or {}).get('skipped_images')
+                if skipped:
+                    print(f'{sid} 縮小できずアプリが読み飛ばした写真 {len(skipped)} 件')
+                prev = state['sessions'].get(sid, {})
+                new = {'fingerprint': prev.get('fingerprint') if more else fp,
+                       'sent_images': sorted(sent | {os.path.basename(p) for p in images})}
+                if more:
+                    print(f'{sid} 写真が残っているので次の回に続きを送る')
+                if new['fingerprint'] is None:
+                    new['fingerprint'] = []  # 未送信のままにして次の回も選ばれるようにする
+                state['sessions'][sid] = new
             else:
+                if status == 422:
+                    err = _body.get('error') if isinstance(_body.get('error'), dict) else {}
+                    print(f'{sid} HTTP 422: アプリが内容を受け付けません'
+                          f'（code={err.get("code")} message={err.get("message")}）。'
+                          '発言が5000件を超えていないか確認してください', file=sys.stderr)
                 failed += 1
     except sqlite3.Error as e:
         print(f'エラー: state.db の読み取りに失敗しました（{type(e).__name__}: {e}）', file=sys.stderr)
