@@ -2,7 +2,7 @@
 {% if conv_items %}
 <div class="card mb-3" id="hermes-conversations">
     <div class="card-header bg-secondary text-white">
-        <i class="bi bi-chat-dots"></i> Hermes との会話 <span class="badge bg-light text-dark">{{ conv_items|length }}</span>
+        <img src="{{ url_for('static', filename='images/icon_hermes.webp') }}" alt="" class="icon-img"> Hermes との会話 <span class="badge bg-light text-dark">{{ conv_items|length }}</span>
     </div>
     <div class="list-group list-group-flush">
         {% for c in conv_items %}

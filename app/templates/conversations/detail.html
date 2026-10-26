@@ -9,7 +9,7 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <h1 class="fs-3"><i class="bi bi-chat-dots"></i> {{ conversation.title or '（題名なし）' }}</h1>
+        <h1 class="fs-3"><img src="{{ url_for('static', filename='images/icon_hermes.webp') }}" alt="" class="icon-img icon-img-lg"> {{ conversation.title or '（題名なし）' }}</h1>
         <p class="text-muted mb-0">
             始まり: {{ conversation.started_at or '-' }}
             {% if conversation.last_activity_at %} / 最後: {{ conversation.last_activity_at }}{% endif %}
