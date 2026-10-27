@@ -91,7 +91,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        {% set is_conversations = request.endpoint and request.endpoint.startswith('conversations.') %}
+                        {% set is_conversations = request.endpoint and (request.endpoint.startswith('conversations.') or request.endpoint.startswith('advices.')) %}
                         <a class="nav-link {% if is_conversations %}active{% endif %}" href="{{ url_for('conversations.list') }}" {% if is_conversations %}aria-current="page"{% endif %}>
                             <img src="{{ url_for('static', filename='images/icon_hermes.webp') }}" alt="" class="icon-img icon-img-lg"> Hermes
                         </a>

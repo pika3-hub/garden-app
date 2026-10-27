@@ -1,0 +1,9 @@
+{# Hermes の会話とアドバイスの切り替えタブ。呼び出し側で hermes_tab（'conversations' / 'advices'）を set してから include する #}
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if hermes_tab == 'conversations' %}active{% endif %}" href="{{ url_for('conversations.list') }}">会話</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if hermes_tab == 'advices' %}active{% endif %}" href="{{ url_for('advices.list') }}">アドバイス</a>
+    </li>
+</ul>

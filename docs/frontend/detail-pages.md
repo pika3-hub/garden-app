@@ -269,3 +269,20 @@ CSS: `display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;`（モ�
 | 日記詳細 | `DiaryEntry.get_adjacent(diary_id)` | `entry_date DESC` | 日付 タイトル |
 | タスク詳細 | `Task.get_adjacent(task_id)` | ステータス順→期限日（Python側でインデックス検索） | タイトル |
 | 料理詳細 | `Cooking.get_adjacent(cooking_id)` | `cooked_date DESC` | 調理日 料理名 |
+
+---
+
+## Hermes のアドバイスの欄と会話の欄
+
+作物・品種・植え付けの詳細画面には、Hermes のアドバイスの欄を、会話の欄（`_hermes_conversations_section.html`）のすぐ上に置く。どちらも `{% set %}` で変数を作ってから `{% include %}` する。0件なら欄ごと出さない。
+
+```html
+{% set advice_items = hermes_advice('planting', location_crop.id) %}
+{% include '_hermes_advice_section.html' %}
+{% set conv_items = hermes_conversations('planting', location_crop.id) %}
+{% include '_hermes_conversations_section.html' %}
+```
+
+- `hermes_advice(種類, ID)`（種類は `crop` / `variety` / `planting`）は `Advice.get_for_entity` の結果に、元の会話の ID（`origin_conversation_id`。「作った」会話、無ければ「変えた」会話、どちらも無ければ None）を足したもの。作物・品種の画面には配下の品種・植え付けのアドバイスも入り、どれ経由かは `via_labels` のバッジで示す
+- 欄はアコーディオン（すべて閉じた状態で表示）。絞り込みの入力欄は `advice-section.js`（欄の include が読み込む）が、見出し・相談・本文に入力の文字を含まない項目を隠す
+- 相談・アドバイスは `markdown` フィルターで表示する（生 HTML はエスケープ）

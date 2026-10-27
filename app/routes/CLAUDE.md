@@ -20,6 +20,7 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 | 補足情報 | supplements | - | - | POST /supplements/{entity_type}/{entity_id}/add | POST /supplements/{id}/update |
 | 写真プール | photo_pool | /photo_pool/ | - | POST /photo_pool/upload | POST /photo_pool/{id}/update |
 | 写真の振り分け | photo_sort | /photo_pool/sort/?ids=&pos=&done=&kind= | - | POST /photo_pool/sort/save | - |
+| Hermes のアドバイス | advices | /advices/?keyword= | /advices/{id} | -（Hermes の API だけで作る） | /advices/{id}/edit、POST /advices/{id}/update、POST /advices/{id}/delete |
 | Hermes との会話 | conversations | /conversations/?keyword= | /conversations/{id} | - | - |
 | 設定 | settings | - | - | - | GET/POST /settings/ |
 

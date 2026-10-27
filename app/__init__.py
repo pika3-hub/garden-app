@@ -8,6 +8,7 @@ from app.config import config
 from app.database import init_db, get_db
 from app.utils.markdown_render import render_markdown
 from app.models.conversation import Conversation, KIND_LABELS
+from app.models.advice import Advice
 
 
 def _thumb_path_filter(image_path):
@@ -31,11 +32,23 @@ def _crop_display_name(name, variety=None):
     return name
 
 
-def _hermes_conversations(entity_type, entity_id):
-    """そのデータに結び付いた Hermes との会話（区分の表示名付き、新しい順）"""
+def _hermes_conversations(entity_type, entity_id, kinds=None):
+    """そのデータに結び付いた Hermes との会話（区分の表示名付き、新しい順）。
+    kinds を渡すとその区分（'created' / 'updated' / 'viewed'）の会話だけ"""
     return [dict(c, kind_label=KIND_LABELS[c['kind']],
                  shown_at=str(c['last_activity_at'] or c['started_at'] or '')[:16])
-            for c in Conversation.get_by_entity(entity_type, entity_id)]
+            for c in Conversation.get_by_entity(entity_type, entity_id)
+            if kinds is None or c['kind'] in kinds]
+
+
+def _hermes_advice(entity_type, entity_id):
+    """その作物・品種・植え付けのアドバイス（配下の分を含む）に、元の会話の ID を足して返す。
+    元の会話は「作った」会話、無ければ「変えた」会話"""
+    items = []
+    for a in Advice.get_for_entity(entity_type, entity_id):
+        kinds = {c['kind']: c['id'] for c in Conversation.get_by_entity('advice', a['id'])}
+        items.append(dict(a, origin_conversation_id=kinds.get('created') or kinds.get('updated')))
+    return items
 
 
 def create_app(config_name='default'):
@@ -62,13 +75,14 @@ def create_app(config_name='default'):
     # Jinja2 グローバル関数登録
     app.jinja_env.globals['crop_display_name'] = _crop_display_name
     app.jinja_env.globals['hermes_conversations'] = _hermes_conversations
+    app.jinja_env.globals['hermes_advice'] = _hermes_advice
 
     # ブループリント登録
     from app.routes import (
         crop_routes, variety_routes, location_routes, diary_routes,
         harvest_routes, calendar_routes, task_routes, planting_routes,
         supplement_routes, photo_pool_routes, cooking_routes, settings_routes,
-        photo_sort_routes, conversation_routes
+        photo_sort_routes, conversation_routes, advice_routes
     )
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(variety_routes.bp)
@@ -84,6 +98,7 @@ def create_app(config_name='default'):
     app.register_blueprint(cooking_routes.bp)
     app.register_blueprint(settings_routes.bp)
     app.register_blueprint(conversation_routes.bp)
+    app.register_blueprint(advice_routes.bp)
 
     # AIメモ下書きの request_id 等を INFO でサーバーログへ出す（Flask の 'app' ロガーのハンドラーへ伝播）
     app.logger  # 既定ハンドラーを生成

@@ -217,7 +217,7 @@ if (fullscreenBtn) {
 
         {% if records %}
         <p class="text-muted mb-3">{{ records|length }}件の栽培記録</p>
-        <div class="card-auto-grid">
+        <div class="card-auto-grid mb-4">
             {% for record in records %}
             <div>
                 <a href="{{ url_for('plantings.record_detail', record_id=record.id) }}" class="card h-100 card-photo card-bg-location-crop {{ '' if record.image_path else 'card-no-image' }}">
@@ -253,6 +253,8 @@ if (fullscreenBtn) {
         </div>
         {% endif %}
 
+        {% set advice_items = hermes_advice('planting', location_crop.id) %}
+        {% include '_hermes_advice_section.html' %}
         {% set conv_items = hermes_conversations('planting', location_crop.id) %}
         {% include '_hermes_conversations_section.html' %}
     </div>

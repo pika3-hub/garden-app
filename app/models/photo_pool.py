@@ -8,6 +8,7 @@ def _crop_label(crop_name, variety):
 
 # 使用先の種類ごとの (SQL, 行→ラベル)。SQL は id を IN (...) で絞る {ph} を持つ
 _LABEL_QUERIES = {
+    'advice': ('SELECT id, title FROM advices WHERE id IN ({ph})', lambda r: r['title']),
     'crop': ('SELECT id, name FROM crops WHERE id IN ({ph})', lambda r: r['name']),
     'variety': ('SELECT v.id, c.name AS crop_name, v.name AS variety '
                 'FROM varieties v JOIN crops c ON c.id = v.crop_id WHERE v.id IN ({ph})',

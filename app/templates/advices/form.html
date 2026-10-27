@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}アドバイス編集 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <img src="{{ url_for('static', filename='images/icon_hermes.webp') }}" alt="" class="icon-img icon-img-lg">
+            アドバイス編集
+        </h1>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 戻る
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('advices.update', advice_id=advice.id) }}" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="title" class="form-label">見出し <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ advice.title or '' }}" required>
+                            <div class="invalid-feedback">見出しを入力してください</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="advised_on" class="form-label">日付 <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="advised_on" name="advised_on" value="{{ advice.advised_on or '' }}" required>
+                            <div class="invalid-feedback">日付を入力してください</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="question" class="form-label">相談</label>
+                        <textarea class="form-control" id="question" name="question" rows="3" placeholder="Hermes に聞いたこと">{{ advice.question or '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="answer" class="form-label">アドバイス <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="answer" name="answer" rows="10" required>{{ advice.answer or '' }}</textarea>
+                        <div class="form-text">Markdown で書けます</div>
+                        <div class="invalid-feedback">アドバイスを入力してください</div>
+                    </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-1"><i class="bi bi-link-45deg"></i> 関連付け</h5>
+                    <div class="form-text mb-3">関連する作物・品種・植え付けを選択できます。「選択」ボタンからカード形式で複数選択可能です</div>
+
+                    <div class="row">
+                        <div class="col-6 col-md-4 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">作物</label>
+                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#cropMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-crops-display" class="selected-items-chips"></div>
+                            <div id="crop-hidden-inputs">
+                                {% for id in selected_crop_ids %}
+                                <input type="hidden" name="crop_ids" value="{{ id }}">
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">品種</label>
+                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#varietyMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-varieties-display" class="selected-items-chips"></div>
+                            <div id="variety-hidden-inputs">
+                                {% for id in selected_variety_ids %}
+                                <input type="hidden" name="variety_ids" value="{{ id }}">
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">植え付け</label>
+                                <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#plantingMultiSelectModal">
+                                    <i class="bi bi-list-check"></i> 選択
+                                </button>
+                            </div>
+                            <div id="selected-plantings-display" class="selected-items-chips"></div>
+                            <div id="planting-hidden-inputs">
+                                {% for id in selected_location_crop_ids %}
+                                <input type="hidden" name="location_crop_ids" value="{{ id }}">
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('advices.detail', advice_id=advice.id) }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> アドバイスを更新
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% include '_crop_select_multi_modal.html' %}
+{% include '_variety_select_multi_modal.html' %}
+{% include '_planting_select_multi_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/entity-select-modal.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var cropIconBaseUrl = '{{ url_for("static", filename="images/crop_icons/") }}';
+
+    function iconHtml(card) {
+        var iconPath = card.dataset.iconPath;
+        if (!iconPath) return '';
+        return '<img src="' + cropIconBaseUrl + iconPath + '" alt="" class="crop-icon-inline" style="border-color:' + (card.dataset.imageColor || '#4CAF50') + ';"> ';
+    }
+
+    new MultiSelectModal({
+        modalId: 'cropMultiSelectModal',
+        cardSelector: '.crop-ms-card',
+        idAttribute: 'cropId',
+        inputContainerId: 'crop-hidden-inputs',
+        inputName: 'crop_ids',
+        displayContainerId: 'selected-crops-display',
+        badgeRenderer: function(card) {
+            var name = card.dataset.cropName;
+            var variety = card.dataset.variety;
+            return iconHtml(card) + (variety ? variety + '(' + name + ')' : name);
+        },
+        filterMode: 'legacy',
+        filterScope: 'crop-multi',
+        filterCardAttr: 'data-crop-ms-card'
+    });
+
+    new MultiSelectModal({
+        modalId: 'varietyMultiSelectModal',
+        cardSelector: '.variety-ms-card',
+        idAttribute: 'varietyId',
+        inputContainerId: 'variety-hidden-inputs',
+        inputName: 'variety_ids',
+        displayContainerId: 'selected-varieties-display',
+        badgeRenderer: function(card) {
+            return iconHtml(card) + card.dataset.varietyName + '(' + card.dataset.cropName + ')';
+        },
+        filterMode: 'legacy',
+        filterScope: 'variety-multi',
+        filterCardAttr: 'data-variety-ms-card'
+    });
+
+    new MultiSelectModal({
+        modalId: 'plantingMultiSelectModal',
+        cardSelector: '.planting-ms-card',
+        idAttribute: 'plantingId',
+        inputContainerId: 'planting-hidden-inputs',
+        inputName: 'location_crop_ids',
+        displayContainerId: 'selected-plantings-display',
+        badgeRenderer: function(card) {
+            var name = card.dataset.cropName;
+            var variety = card.dataset.variety;
+            return iconHtml(card) + (variety ? variety + '(' + name + ')' : name) +
+                ' <small>@ ' + card.dataset.locationName + '</small>';
+        },
+        filterMode: 'multi'
+    });
+});
+</script>
+{% endblock %}

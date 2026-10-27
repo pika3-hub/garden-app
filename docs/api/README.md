@@ -197,6 +197,29 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 
 画像: **本体画像なし**、追加画像のみ。検索条件: `status`、`date_from` / `date_to`（期限日）、`q`。
 
+### アドバイス `/advices`
+| 項目 | 型 | 備考 |
+|---|---|---|
+| title | 文字列 ≤200 | **必** |
+| question | 文字列 | 聞かれたこと |
+| answer | 文字列 | **必**。Markdown で書く（画面は Markdown で表示） |
+| advised_on | 日付 | 省略すると JST の今日 |
+| relations | 関連 | `crop_ids`, `variety_ids`, `planting_ids` |
+
+Hermes が相談に答えたら、**ユーザーに確認せず**そのまま保存する（POST）。同じ話の続きは同じアドバイスを更新する（PATCH。送った項目だけ変わる）。**削除（DELETE）はなく**、消すのは画面から行う。画像: 本体・追加ともなし。
+
+- 検索条件: `q`（タイトル・質問・回答）、`date_from` / `date_to`（`advised_on`）、`crop_id` / `variety_id` / `planting_id`
+- 範囲の絞り込み: `crop_id` は、その作物に付けたもの、その作物の品種に付けたもの、その作物の植え付けに付けたものを返す。`variety_id` は、その品種に付けたものとその品種の植え付けに付けたもの。`planting_id` はその植え付けに付けたものだけ
+- 会話の履歴（`/conversations/`）には、作った・変えたアドバイスが結び付く
+
+例:
+
+```
+curl -sS -X POST "$GARDEN_API_URL/advices" -H "Authorization: Bearer $GARDEN_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "2回目の追肥はいつ？", "question": "…", "answer": "## 目安\n- 第3花房が膨らんだころ", "relations": {"planting_ids": [45]}}'
+```
+
 ## 6. 画像
 
 | 指定 | 意味 |
@@ -244,7 +267,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 
 ## 7. 関連（relations）
 
-日記・料理・タスクの `relations` は `{"crop_ids": [1], "planting_ids": [5]}` の形。
+日記・料理・タスク・アドバイスの `relations` は `{"crop_ids": [1], "planting_ids": [5]}` の形。
 
 - **PATCH では送ったキーだけ置き換え、送らなかったキーはそのまま**。`[]` でその種類を全解除
 - ID は存在チェックする。重複は1件にまとめる

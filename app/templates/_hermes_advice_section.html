@@ -1,0 +1,46 @@
+{# 呼び出し側で advice_items（hermes_advice(種類, ID) の結果）を set してから include する。0件なら出さない #}
+{% if advice_items %}
+<div class="card mb-3" id="hermes-advice">
+    <div class="card-header bg-success text-white">
+        <img src="{{ url_for('static', filename='images/icon_hermes.webp') }}" alt="" class="icon-img"> Hermes のアドバイス <span class="badge bg-light text-dark">{{ advice_items|length }}</span>
+    </div>
+    <div class="p-2 border-bottom">
+        <input type="search" class="form-control form-control-sm" id="advice-filter" placeholder="アドバイスを絞り込み（例: 追肥）" aria-label="アドバイスを絞り込み">
+    </div>
+    <div class="accordion accordion-flush" id="advice-accordion">
+        {% for a in advice_items %}
+        <div class="accordion-item advice-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#advice-{{ a.id }}" aria-expanded="false">
+                    <div>
+                        <div class="fw-semibold">{{ a.title }}</div>
+                        <div class="small text-muted">
+                            {{ a.advised_on }}
+                            {% for label in a.via_labels %}<span class="badge bg-secondary ms-1">{{ label }}</span>{% endfor %}
+                        </div>
+                    </div>
+                </button>
+            </h2>
+            <div id="advice-{{ a.id }}" class="accordion-collapse collapse" data-bs-parent="#advice-accordion">
+                <div class="accordion-body">
+                    {% if a.question %}
+                    <div class="fw-bold">相談</div>
+                    <div class="markdown-body mb-2">{{ a.question|markdown }}</div>
+                    {% endif %}
+                    <div class="fw-bold">アドバイス</div>
+                    <div class="markdown-body mb-2">{{ a.answer|markdown }}</div>
+                    <div class="small">
+                        {% if a.origin_conversation_id %}
+                        <a href="{{ url_for('conversations.detail', conversation_id=a.origin_conversation_id) }}" class="me-3"><i class="bi bi-box-arrow-up-right"></i> 元の会話を見る</a>
+                        {% endif %}
+                        <a href="{{ url_for('advices.detail', advice_id=a.id) }}"><i class="bi bi-info-circle"></i> 詳細</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="p-3 text-muted small d-none" id="advice-no-match">該当なし</div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/advice-section.js') }}"></script>
+{% endif %}

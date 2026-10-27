@@ -15,6 +15,8 @@
 | diary_relations | 日記×関連エンティティ（多対多、relation_type で区別） | id |
 | tasks | タスク | id |
 | task_relations | タスク×関連エンティティ（多対多） | id |
+| advices | Hermes のアドバイス（タイトル・質問・回答・日付） | id |
+| advice_relations | アドバイス×関連エンティティ（多対多、crop/variety/location_crop） | id |
 | planting_records | 栽培観察記録（植え付けに紐づく） | id |
 | cooking | 料理記録 | id |
 | cooking_relations | 料理×関連エンティティ（多対多、relation_type で区別） | id |
@@ -150,6 +152,32 @@
 | location_id | INTEGER | 場所ID（FK、任意） |
 | location_crop_id | INTEGER | 植え付けID（FK、任意） |
 | created_at | TIMESTAMP | 作成日時 |
+
+#### advices
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| title | VARCHAR(200) | タイトル（必須） |
+| question | TEXT | 質問（任意） |
+| answer | TEXT | 回答（必須） |
+| advised_on | DATE | アドバイスの日付（必須） |
+| created_at / updated_at | TIMESTAMP | 作成・更新日時 |
+
+#### advice_relations
+| カラム | 型 | 説明 |
+|--------|-----|------|
+| id | INTEGER | 主キー |
+| advice_id | INTEGER | アドバイスID（FK） |
+| relation_type | VARCHAR(20) | 関連タイプ（crop/variety/location_crop） |
+| crop_id | INTEGER | 作物ID（FK、任意） |
+| variety_id | INTEGER | 品種ID（FK、任意） |
+| location_crop_id | INTEGER | 植え付けID（FK、任意） |
+| created_at | TIMESTAMP | 作成日時 |
+
+- トリガー `trg_promote_variety_advice_relations_before_delete`: 品種を消すと、その品種へのアドバイスの関連は親作物への関連に付け替わる（親作物に既にあれば品種側の行だけ消す）
+- このトリガーは 024 で `CREATE TRIGGER IF NOT EXISTS` により作られ、マイグレーションは起動のたびに走るので、本体を変えるときは新しいマイグレーションで DROP して作り直す（024 を直しても既存の DB には届かない）
+- 範囲の取得は `Advice.scope_clause()` / `Advice.get_for_entity()`: 作物の画面は作物・その品種・作物の植え付け（品種経由を含む）、品種の画面は品種・その品種の植え付け、植え付けの画面はその植え付けのみ
+- `PRAGMA foreign_keys` は無効なので CASCADE は動かない。`Advice.delete()` は関連行を明示的に消す
 
 #### diary_relations
 | カラム | 型 | 説明 |
