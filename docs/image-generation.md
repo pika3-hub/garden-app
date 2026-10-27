@@ -1,8 +1,55 @@
 # OpenAI の画像モデルでアイコンを作る
 
-アプリのアイコン（`app/static/images/icon_*.webp`）と同じ絵柄の画像を、OpenAI の画像モデル（`gpt-image-2`）で作る手順とノウハウ。2026-10-26 にナビの「Hermes」「設定」のアイコン（`icon_hermes.webp` / `icon_settings.webp`）をこの方法で作った。
+アプリのアイコン（`app/static/images/icon_*.webp`）と同じ絵柄の画像を、OpenAI の画像モデルで作る手順とノウハウ。2026-10-26 にナビの「Hermes」「設定」のアイコン（`icon_hermes.webp` / `icon_settings.webp`）を API の `gpt-image-2` で作った。
+
+作り方は2つある。**既定は Codex**（2026-10-27 に検証して決めた）。
+
+| | Codex（ChatGPT Plus の枠） | API（`gpt-image-2`） |
+|---|---|---|
+| 費用 | ChatGPT Plus の枠から引かれる（1枚で5時間枠の約2%）。別の課金なし | 1枚 $0.06 前後。前払いのクレジット |
+| キー | 不要（ChatGPT でログイン済みの Codex） | `OPENAI_API_KEY`（期限付きで作るので切れたら作り直す） |
+| 背景 | 最初から透明 | 透明にできず、マゼンタを抜く |
+| 速さ | 1枚 約100秒 | 1枚 数十秒、まとめて作れる |
+| 使う場面 | ふだん | Plus の枠が残り少ないとき（Hermes のふだんのモデルと同じ枠） |
 
 画像を作るのはメイン PC の作業だけで、アプリ本体や本番のサーバーは OpenAI を使わない。
+
+## Codex で作る（既定）
+
+Codex のデスクトップアプリに CLI（`codex.exe`）が同梱されているので、別にインストールしない。フォルダ名のハッシュはアプリの更新で変わるので、毎回探す:
+
+```powershell
+$cx = (Get-ChildItem "$env:LOCALAPPDATA\OpenAI\Codex\bin\*\codex.exe" | Sort-Object LastWriteTime | Select-Object -Last 1).FullName
+& $cx login status   # Logged in using ChatGPT
+```
+
+1. 見本のアイコン（既定は料理・タスク・カレンダーの3枚）を PNG に変換して出力先の `refs/` に置く（WebP のまま渡せるかは未確認）
+2. 指示を出力先の `prompt.txt` に書く。絵柄の文は `tools/make_icon.py` の `STYLE` と同じで、背景の文だけ透明にする:
+   ```text
+   Use the imagegen skill with the built-in image_gen tool (do not use the CLI fallback or any API key).
+   The attached images are reference icons only (style references, not edit targets).
+   Generate ONE new app menu icon in exactly the same art style as the reference icons:
+   （STYLE の絵柄の部分）
+   Background: genuinely transparent (alpha), not a painted checkerboard and not a solid color.
+   Subject: <題材（英語）>
+   After generating, copy the generated PNG into the current working directory as <名前>.png.
+   ```
+3. 実行する。`OPENAI_API_KEY` を外しておくと、誤って API（課金される）に切り替わらない:
+   ```powershell
+   $env:OPENAI_API_KEY = $null
+   Get-Content <出力先>\prompt.txt -Raw | & $cx exec -C <出力先> --skip-git-repo-check -s workspace-write `
+       -i <出力先>\refs\icon_cooking.png -i <出力先>\refs\icon_tasklist.png -i <出力先>\refs\icon_calendar.png -
+   ```
+   候補を複数作るときは、題材ごとに1回ずつ実行する（1回の指示で複数枚を頼む形は未検証）
+4. できた PNG（1254×1254、透明背景）を出力先の `raw/` に置き、縮小と一覧だけ作る:
+   ```powershell
+   uv run --no-project --with pillow --with numpy python tools/make_icon.py --out <出力先> --cut-only --transparent
+   ```
+   `cut/` の WebP と `compare.png` の扱いは API のときと同じ（下の「作り方」）
+
+- 元の画像は `~/.codex/generated_images/<スレッド>/` にも残る
+- 物の部分の不透明度が 255 ではなく 250〜253 になっている（わずかに透ける）。`--transparent` は 240 以上を 255 にそろえる
+- 使った枠は `~/.codex/sessions/<年>/<月>/<日>/rollout-*.jsonl` の最後の `rate_limits`（`primary` が5時間枠、`secondary` が週の枠の使用率）で分かる
 
 ## 絵柄（既存アイコンの特徴）
 
@@ -12,7 +59,9 @@
 - 透明背景、正方形に収まる1つの物、文字なし
 - 100×100 の WebP
 
-## API キーの準備
+## API で作る
+
+### API キーの準備
 
 1. https://platform.openai.com にログイン（ChatGPT と同じアカウントでよいが、API の請求は ChatGPT Plus とは別）
 2. Settings → Billing で前払いのクレジットを入れる（$5 程度で足りる。自動チャージは切る）
@@ -27,7 +76,7 @@
 
 キーの値はチャットに貼らない・表示しない・ファイルに書かない。
 
-## 作り方
+### 作り方
 
 `tools/make_icon.py` を使う。題材は英語で、`名前="題材"` の形で並べる。出力先はリポジトリの外（Claude Code ならスクラッチ領域）にする。
 
@@ -54,7 +103,7 @@ uv run --no-project --with openai --with pillow --with numpy python tools/make_i
 - 小さく表示したときの見え方で選ぶ。ナビでは 1.3em 程度になるので、込み入った絵（道具を2つ重ねるなど）や細い葉は目立たなくなる。`compare.png` の 100px で判断する
 - 「Hermes」のような名前そのものを題材にすると（羽付きサンダル）、名前を知らない人には何の画面か分かりにくい
 
-## 費用
+## 費用（API）
 
 - 1024×1024・`quality: medium` で、1枚あたり出力 1756 トークン、入力（見本3枚と文章）約 320 トークン。公式の目安では約 $0.053 + 入力分で、**1枚 $0.06 前後**
 - 2026-10-26 の5枚で約 $0.3 の見込み

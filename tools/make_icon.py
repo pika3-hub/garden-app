@@ -9,6 +9,8 @@
         --out <出力先> hermes_a="a speech bubble with three dots inside, ..." settings_a="a gear ..."
     # 生成し直さずに切り抜きと一覧だけ作り直す
     uv run --no-project --with pillow --with numpy python tools/make_icon.py --out <出力先> --cut-only
+    # Codex（ChatGPT の枠）で作った透明背景の PNG を raw/ に置いて、縮小と一覧だけ作る
+    uv run --no-project --with pillow --with numpy python tools/make_icon.py --out <出力先> --cut-only --transparent
 """
 import argparse
 import base64
@@ -26,6 +28,7 @@ KEY = np.array([255, 0, 255], dtype=np.float32)
 T0, T1 = 60.0, 150.0  # キー色からの距離: T0 未満は完全に透明、T1 以上は不透明
 SIZE = 100
 MARGIN = 4  # 既存アイコンと同じくらいの余白（100px 中）
+OPAQUE = 240  # --transparent: この不透明度以上は完全に不透明にする
 
 STYLE = (
     'Create a new app menu icon in exactly the same art style as the reference icons: '
@@ -74,8 +77,18 @@ def cutout(path):
     # 縁の半透明部分からマゼンタの混ざりを取り除く
     a = np.maximum(alpha, 1e-3)[..., None]
     color = np.clip((rgb - (1 - a) * KEY) / a, 0, 255)
-    img = Image.fromarray(np.dstack([color, alpha * 255]).astype(np.uint8), 'RGBA')
+    return fit(Image.fromarray(np.dstack([color, alpha * 255]).astype(np.uint8), 'RGBA'))
 
+
+def from_transparent(path):
+    """透明背景で描かれた画像（Codex の image_gen）を使う。物の部分がわずかに透けている（250〜253）のでそろえる"""
+    rgba = np.array(Image.open(path).convert('RGBA'))
+    rgba[..., 3] = np.where(rgba[..., 3] >= OPAQUE, 255, rgba[..., 3])
+    return fit(Image.fromarray(rgba, 'RGBA'))
+
+
+def fit(img):
+    """物の範囲で切り出し、余白を付けて SIZE×SIZE に収める"""
     img = img.crop(img.getchannel('A').point(lambda v: 255 if v > 8 else 0).getbbox())
     scale = (SIZE - MARGIN * 2) / max(img.size)
     img = img.resize((max(1, round(img.width * scale)), max(1, round(img.height * scale))), Image.LANCZOS)
@@ -108,7 +121,11 @@ def main():
     parser.add_argument('--model', default='gpt-image-2')
     parser.add_argument('--quality', default='medium', choices=['low', 'medium', 'high'])
     parser.add_argument('--cut-only', action='store_true', help='生成せず raw/ の画像から作り直す')
+    parser.add_argument('--transparent', action='store_true',
+                        help='raw/ の画像は透明背景（Codex で作った）なので、マゼンタを抜かない。--cut-only と使う')
     args = parser.parse_args()
+    if args.transparent and not args.cut_only:
+        parser.error('--transparent は --cut-only と一緒に使う（API での生成はマゼンタの背景になる）')
 
     (args.out / 'raw').mkdir(parents=True, exist_ok=True)
     (args.out / 'cut').mkdir(exist_ok=True)
@@ -120,7 +137,7 @@ def main():
 
     icons = []
     for path in sorted((args.out / 'raw').glob('*.png')):
-        icon = cutout(path)
+        icon = from_transparent(path) if args.transparent else cutout(path)
         icon.save(args.out / 'cut' / f'{path.stem}.webp', 'WEBP', lossless=True)
         icons.append(icon)
     compare_sheet(icons, args.samples).save(args.out / 'compare.png')
