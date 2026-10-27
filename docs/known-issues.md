@@ -4,6 +4,7 @@
 
 | 発見日 | 箇所 | 内容 | 影響 | 対応案 |
 |---|---|---|---|---|
+| 2026-10-27 | `advice_relations`（`app/models/advice.py`、`app/api/advices.py`） | `PRAGMA foreign_keys` が無効で CASCADE が動かないため、作物・植え付けなどを消すとアドバイスの関連行が孤立して残る（品種の削除だけはトリガーで付け替える）。API の読み取りは削除済みの対象の id を返し、`display_name` は null になる。他の多対多の関連テーブルも同じ | 画面には出ない。API の利用側が存在しない id を見ることがある | 対象の削除時に関連行を消す（モデルの `delete` かトリガー）、または外部キーを有効にする |
 | 2026-10-26 | `app/utils/conversation_links.py`（`_tokenize`） | 引用符の閉じ忘れなどで shlex が失敗すると空白で分割し直すため、改行で区切った複数の curl が1つにまとまる。`--json` の値を飛ばさないので、本文に API の URL があると拾うことがある | 壊れたコマンドでまれに結び付けを取りこぼす・誤る（例外は出ない） | 分割し直すときも改行で区切る、`--json` を値を取る引数に加える |
 | 2026-10-26 | `app/api/conversations.py`（`POST /conversations`） | 単独のサロゲート（`"\ud800"`）を含む文字列で SQLite が失敗して 500。縮小版を保存した後に `add_image` で失敗するとファイルが残る。`parent_session_id` の形を検査しない | 送り手は同期スクリプトだけなので、まず起きない | 文字列を `encode('utf-8')` で検査して 422、失敗時にファイルを消す、`parent_session_id` にも `_ID_RE` |
 | 2026-10-27 | `tools/hermes_conversation_sync.py`（送信後の `sent_images`） | アプリが `skipped_images` で返した写真も送信済みに入れるので、二度と送らない。413・415（大きすぎる・形式が違う）は送り直しても同じなので設計どおりだが、`_store_images` の `except Exception`（縮小版の保存の一時的な失敗など）も同じ扱いになる（Codex のレビューで発見） | 一時的な失敗のときだけ、その写真が会話の履歴に出ない（まれ） | API が読み飛ばしの理由（恒久・一時）を返し、一時的なものは `sent_images` に入れず次の回に送り直す |

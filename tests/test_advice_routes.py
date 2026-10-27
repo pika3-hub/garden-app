@@ -69,6 +69,17 @@ def test_update_requires_title_answer_date(app, client):
         assert Advice.get_by_id(ids['advice'])['title'] == '追肥の時期'
 
 
+def test_update_rejects_invalid_date(app, client):
+    ids = _seed(app)
+    for bad in ('2026-13-45', 'abc'):
+        res = client.post(f"/advices/{ids['advice']}/update",
+                          data={'title': '新題', 'answer': '新回答', 'advised_on': bad})
+        assert res.status_code == 302 and f"/advices/{ids['advice']}/edit" in res.headers['Location']
+    with app.app_context():
+        a = Advice.get_by_id(ids['advice'])
+        assert a['title'] == '追肥の時期' and str(a['advised_on']) == '2026-10-20'
+
+
 def test_update_saves_fields_and_relations(app, client):
     ids = _seed(app)
     res = client.post(f"/advices/{ids['advice']}/update", data={

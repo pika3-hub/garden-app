@@ -99,7 +99,7 @@ description: 家庭菜園アプリに作物・品種・場所・植え付け・�
 - **保存しない**: 作業の依頼（登録・更新・写真の添付など）への返答、あいさつや雑談
 - **1件のまとまり**: 同じ会話で同じ話題が続く間は1件。最初に作ったアドバイスの `id` を覚えておき、続きは `GET /advices/{id}` で今の内容を読み（ユーザーが画面で直した内容を消さないため）、それを元に `title` / `question` / `answer` を、それまでのやりとり全体を整理した内容に書き直して `PATCH` する。話題が変わったら、直後でも新しく `POST`。別の会話では、同じ話題でも常に新しく `POST`
 - **確認しない**: アドバイスの保存・更新は、他の PATCH と違って事前にユーザーへ確認しない
-- 項目: `title`（必須。相談の中身が一覧で分かる短い見出し）、`question`（ユーザーが聞いたことの要約）、`answer`（必須。答えを Markdown で整理。返答の丸写しではなく、あとで読んで分かる形）、`advised_on`（`date +%F` の今日）
+- 項目: `title`（必須。相談の中身が一覧で分かる短い見出し）、`question`（ユーザーが聞いたことの要約）、`answer`（必須。答えを Markdown で整理。返答の丸写しではなく、あとで読んで分かる形）、`advised_on`（省略すると今日。日付を変えるときだけ、`date +%F` などで確かめた実際の日付を指定する）
 - ひも付け（`relations`）: 植え付けについての相談は `planting_ids`、植え付け前の品種・作物についての相談は `variety_ids` / `crop_ids`。植え付けの相談を品種・作物にも重ねて付けない（画面が上位にまとめて出す）。対象が特定できない一般的な相談はひも付けなしでよい
 - 保存したら、返答の最後に「（アドバイスとして保存しました）」と短く添える
 - 過去のアドバイスは、質問に答えるのに必要なときだけ読む（`GET /advices?planting_id=<id>` など）。毎回読んで「前に〜をすすめましたが、どうですか？」と聞かない
@@ -107,11 +107,11 @@ description: 家庭菜園アプリに作物・品種・場所・植え付け・�
 ```bash
 # 新規
 curl -sS -X POST -H "Authorization: Bearer $GARDEN_API_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"title": "2回目の追肥（時期・量）", "question": "2回目の追肥はいつ、どのくらい？", "answer": "## 時期\n- 実が膨らみ始めた頃\n\n## 量\n- 1株あたり化成肥料ひとつかみ", "advised_on": "2026-10-27", "relations": {"planting_ids": [5]}}' \
+  -d '{"title": "2回目の追肥（時期・量）", "question": "2回目の追肥はいつ、どのくらい？", "answer": "## 時期\n- 実が膨らみ始めた頃\n\n## 量\n- 1株あたり化成肥料ひとつかみ", "relations": {"planting_ids": [5]}}' \
   "$GARDEN_API_URL/advices"
 # 同じ話題の続き（読んでから、全体を書き直して送る）
 curl -sS -X PATCH -H "Authorization: Bearer $GARDEN_API_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"title": "2回目の追肥（時期・量・液肥）", "answer": "..."}' "$GARDEN_API_URL/advices/12"
+  -d '{"title": "2回目の追肥（時期・量・液肥）", "question": "...", "answer": "..."}' "$GARDEN_API_URL/advices/12"
 ```
 
 ## 生育状況の診断

@@ -1,3 +1,4 @@
+import datetime
 from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.advice import Advice
@@ -112,6 +113,11 @@ def update(advice_id):
     }
     if not data['title'] or not data['answer'] or not data['advised_on']:
         flash('見出し・日付・アドバイスは必須です', 'danger')
+        return redirect(url_for('advices.edit', advice_id=advice_id))
+    try:
+        datetime.date.fromisoformat(data['advised_on'])
+    except ValueError:
+        flash('日付の形式が正しくありません', 'danger')
         return redirect(url_for('advices.edit', advice_id=advice_id))
 
     try:

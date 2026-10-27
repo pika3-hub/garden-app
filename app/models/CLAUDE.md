@@ -175,6 +175,7 @@
 | created_at | TIMESTAMP | 作成日時 |
 
 - トリガー `trg_promote_variety_advice_relations_before_delete`: 品種を消すと、その品種へのアドバイスの関連は親作物への関連に付け替わる（親作物に既にあれば品種側の行だけ消す）
+- このトリガーは 024 で `CREATE TRIGGER IF NOT EXISTS` により作られ、マイグレーションは起動のたびに走るので、本体を変えるときは新しいマイグレーションで DROP して作り直す（024 を直しても既存の DB には届かない）
 - 範囲の取得は `Advice.scope_clause()` / `Advice.get_for_entity()`: 作物の画面は作物・その品種・作物の植え付け（品種経由を含む）、品種の画面は品種・その品種の植え付け、植え付けの画面はその植え付けのみ
 - `PRAGMA foreign_keys` は無効なので CASCADE は動かない。`Advice.delete()` は関連行を明示的に消す
 
