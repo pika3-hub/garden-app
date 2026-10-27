@@ -41,3 +41,6 @@ docs/local-env.md
 
 # Claude Code の個人設定（共有設定は .claude/settings.json）
 .claude/settings.local.json
+
+# superpowers のスキルが作る作業用フォルダ（見本・作業記録）
+.superpowers/

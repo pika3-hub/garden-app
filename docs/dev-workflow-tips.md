@@ -8,7 +8,7 @@ AI アシスタント（Claude Code など）がこのリポジトリで作業�
 - Git Bash から `python` で文字列置換スクリプトを書く場合、`open(p, 'w')` のままだと Windows の Python が **CRLF で書き出し、ファイル全体が差分になる**。必ず `open(p, encoding='utf-8', newline='')` で読み書きする（または Edit ツールを使う）。`Path.write_text` も同じく CRLF になるので、`read_bytes().decode()` → `write_bytes(s.encode())` にする（2026-10-24 に `write_text` で `resource.py` 全体が差分になった。2026-10-25 にも `python - <<'EOF'` のヒアドキュメントで同じことをして、**新規ファイル4つが CRLF のままコミット**された。新規ファイルは `git diff --stat` に異常が出ないので気づきにくい。コミット前に `git diff --name-only main...HEAD | xargs git ls-files --eol | grep crlf` で確かめる）
 - 改行コードの確認は `grep -c $'\r' <file>`（0 なら LF）。`od -c | grep '\\r'` は誤判定するので使わない
 - 編集後は `git diff --stat` で差分行数が想定どおりかを必ず見る。行数が異常に多ければ改行コードの変化を疑う
-- **サブエージェントに実装を任せるときは、指示に改行コードの注意を書く**（「`git ls-files --eol` で元の改行を確かめて保つ、新規は LF、Python のテキストモードで書かない、Edit ツールを使う」）。2026-10-26 は注意を書かなかった回で、修正のコミットがテンプレートとテストを CRLF に書き換えた。書いた回は起きなかった
+- **サブエージェントに実装を任せるときは、指示に改行コードの注意を書く**（「`git ls-files --eol` で元の改行を確かめて保つ、新規は LF、Python のテキストモードで書かない、Edit ツールを使う」）。2026-10-26 は注意を書かなかった回で、修正のコミットがテンプレートとテストを CRLF に書き換えた。書いた回は起きなかった。2026-10-27 は注意を書いた回でも、LF のファイル2つに CR が1行ずつ混ざった（タスクレビューで発見）。レビューでは変更前後の CR の数を比べる: `git show <base>:<file> | tr -cd '\r' | wc -c` と `git show HEAD:<file> | ...`。**`git show ... | grep -c $'\r'` は Git Bash では混ざった CR を数えず 0 になった**ので使わない
 
 ## 実データ DB を汚さないブラウザ確認
 
@@ -68,6 +68,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - 外部 API のレスポンス構造に依存する設計（例: 引用情報の有無、ブロックの種類）は、**設計の段階で最小リクエスト（数円程度）を1回実際に投げて確認する**。ドキュメントや SDK の型だけで判断しない
   - 実例: Claude の `web_search_20260209` は動的フィルタリング（コード実行経由で結果を読む）のため、本文に citations が付かなかった。citations 前提で作った「参考URL」が実 API 確認まで出ず、手戻りになった（現在は AI に参考URLを書かせ、`web_search_tool_result` の検索結果と照合して実在するものだけ残している）
 - **許可するモデルを増やすときは、モデルごとに実 API で確かめる**。同じ指示でもモデルで振る舞いが違う。AI メモ下書きでは、Sonnet が「Webで調べる」なのに検索せずに書いた回があり、Haiku は自分で `## 参考URL` を書いた上に citations も付けて見出しが2重になった（2026-10-24）。また Haiku 5.5 は、claude-api スキルの対応表に無い `web_search_20260209` を送っても 400 にならなかった。「受け付けるか」ではなく公式の対応表で選ぶ（Haiku は `web_search_20250305`、サーバー側フォールバックも無い）
+- Hermes の `SKILL.md` に書く curl の例には、**具体的な日付など、毎回変わる値を入れない**（省略できる項目は省き、入れるなら `<date +%F の結果>` のような置き場所にする）。エージェントは例をそのまま写しやすい。2026-10-27 にアドバイスの例へ `"advised_on": "2026-10-27"` を書き、最終レビューで「保存されるすべてのアドバイスがこの日付になりうる」と指摘された
 - 課金が発生する確認は、金額の目安を伝えてユーザーの了承を得てから行う。課金なしで確認できる部分（無効なダミーキーでの認証エラー表示など）は先に済ませる
 - 自動テストは SDK クライアントを差し替えて実 API を呼ばない（`tests/test_ai_notes.py` の `FakeClient` 参照）。ただしフェイクは型を検査しないので、SDK の引数名・フィールド名は `inspect.signature(...)` や `Model.model_fields` で別途確認する
 - Anthropic Python SDK は既定で `max_retries=2`（タイムアウトも再試行）。長時間・高コストのリクエストでは待ち時間と課金が倍増するので、`max_retries=0` にして全体の期限を自前で管理する
@@ -95,7 +96,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 
 ## Windows のコンソール・文字コード
 
-- Git Bash の `curl` で日本語のクエリ（`?q=トマト`）や JSON を送ると、引数の文字コードの都合で正しく届かないことがある（`/lookup?q=トマト` が空になった）。日本語を含む API の確認は、Python（`urllib`）のスクリプトで行う
+- Git Bash の `curl` で日本語のクエリ（`?q=トマト`）や JSON を送ると、引数の文字コードの都合で正しく届かないことがある（`/lookup?q=トマト` が空になった）。日本語を含む API の確認は、Python（`urllib`）のスクリプトで行う。POST・PATCH の本文なら、Write で UTF-8 のファイルに JSON を書き、`curl --data-binary @<ファイル>` で送れば正しく届く。2026-10-27 はこの項目を読まずに日本語の JSON を引数に書き、2件が**エラーにならず文字化けしたまま登録された**（`〜` を含む1件は `Invalid \escape` で弾かれた）
 - `curl ... | uv run python -c "...json.load(sys.stdin)..."` のようにパイプすると、Python 側が cp932 で読んで文字化けする。スクリプト側で `sys.stdout.reconfigure(encoding='utf-8')` し、HTTP の応答は `urllib` で直接読む
 - `server.py` は `FLASK_ENV` 未設定だと本番設定（`ProductionConfig`、`SECRET_KEY` は `.env` から）で起動する。`run.py`（開発設定）では起きない不具合が出ることがある。以前は `SECRET_KEY` 未設定で、保存後の `flash()` が 500 になっていた（保存自体は済んでいる）。今は `create_app` が起動ごとのランダム値で補う。`server.py` を使う変更は、本番設定でも確認する
 - `server.py` のログは、waitress が `serve()` のときにルートロガーへ `basicConfig()` するため、何もしないと Flask の既定ハンドラーと合わせて2重に出る。`server.py` ではアプリ生成より前に `logging.basicConfig()` している（これを消さない）
