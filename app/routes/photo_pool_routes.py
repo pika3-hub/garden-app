@@ -28,6 +28,7 @@ _DETAIL_ENDPOINTS = {
     'cooking': ('cooking.detail', 'cooking_id'),
     'diary': ('diary.detail', 'diary_id'),
     'task': ('tasks.detail', 'task_id'),
+    'advice': ('advices.detail', 'advice_id'),
 }
 
 

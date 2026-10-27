@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}{{ advice.title }} - アドバイス{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><img src="{{ url_for('static', filename='images/icon_hermes.webp') }}" alt="" class="icon-img icon-img-lg"> {{ advice.title }}</h1>
+    </div>
+    <div class="col-md-4 text-end d-flex justify-content-end align-items-center">
+        <a href="{{ url_for('advices.list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-list"></i> 一覧に戻る
+        </a>
+    </div>
+</div>
+
+{% set prev_item = {'url': url_for('advices.detail', advice_id=prev_advice.id),
+                    'button_text': '前のアドバイス',
+                    'label': prev_advice.title} if prev_advice else None %}
+{% set next_item = {'url': url_for('advices.detail', advice_id=next_advice.id),
+                    'button_text': '次のアドバイス',
+                    'label': next_advice.title} if next_advice else None %}
+{% set nav_label = 'アドバイスナビゲーション' %}
+{% include '_detail_nav.html' %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3 card-photo-detail card-no-image card-bg-diary">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><img src="{{ url_for('static', filename='images/icon_hermes.webp') }}" alt="" class="icon-img"> アドバイス</h6>
+            </div>
+            <div class="card-photo-detail-overlay">
+                <h4 class="card-photo-detail-title">{{ advice.title }}</h4>
+                <div class="detail-fields">
+                    <div class="detail-field">
+                        <span class="detail-field-label">日付:</span>
+                        <span class="detail-field-value">{{ advice.advised_on }}</span>
+                    </div>
+                </div>
+                {% if advice.question %}
+                <h6 class="mt-3">相談</h6>
+                <div class="detail-notes markdown-body">{{ advice.question|markdown }}</div>
+                {% endif %}
+                <h6 class="mt-3">アドバイス</h6>
+                <div class="detail-notes markdown-body">{{ advice.answer|markdown }}</div>
+                <div class="detail-timestamps">
+                    登録日時: {{ advice.created_at }} / 更新日時: {{ advice.updated_at }}
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group-action">
+            <a href="{{ url_for('advices.edit', advice_id=advice.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> アドバイスを編集
+            </a>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAdviceModal">
+                <i class="bi bi-trash"></i> アドバイスを削除
+            </button>
+        </div>
+
+        {% set conv_items = hermes_conversations('advice', advice.id, kinds=('created', 'updated')) %}
+        {% include '_hermes_conversations_section.html' %}
+    </div>
+
+    <div class="col-md-4">
+        {% set related_crops = relations.crops %}
+        {% include '_related_crops_card.html' %}
+
+        {% set related_varieties = relations.varieties %}
+        {% include '_related_varieties_card.html' %}
+
+        {% set related_plantings = relations.location_crops %}
+        {% include '_related_plantings_card.html' %}
+
+        {% if not relations.crops and not relations.varieties and not relations.location_crops %}
+        <div class="card">
+            <div class="card-body text-muted text-center">
+                <i class="bi bi-link-45deg"></i> 関連付けなし
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal fade" id="deleteAdviceModal" tabindex="-1" aria-labelledby="deleteAdviceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('advices.delete', advice_id=advice.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteAdviceModalLabel">アドバイスを削除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+                </div>
+                <div class="modal-body">
+                    「{{ advice.title }}」を削除します。元に戻せません。よろしいですか？
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> 削除する</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

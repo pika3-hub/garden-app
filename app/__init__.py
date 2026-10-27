@@ -31,11 +31,13 @@ def _crop_display_name(name, variety=None):
     return name
 
 
-def _hermes_conversations(entity_type, entity_id):
-    """そのデータに結び付いた Hermes との会話（区分の表示名付き、新しい順）"""
+def _hermes_conversations(entity_type, entity_id, kinds=None):
+    """そのデータに結び付いた Hermes との会話（区分の表示名付き、新しい順）。
+    kinds を渡すとその区分（'created' / 'updated' / 'viewed'）の会話だけ"""
     return [dict(c, kind_label=KIND_LABELS[c['kind']],
                  shown_at=str(c['last_activity_at'] or c['started_at'] or '')[:16])
-            for c in Conversation.get_by_entity(entity_type, entity_id)]
+            for c in Conversation.get_by_entity(entity_type, entity_id)
+            if kinds is None or c['kind'] in kinds]
 
 
 def create_app(config_name='default'):
@@ -68,7 +70,7 @@ def create_app(config_name='default'):
         crop_routes, variety_routes, location_routes, diary_routes,
         harvest_routes, calendar_routes, task_routes, planting_routes,
         supplement_routes, photo_pool_routes, cooking_routes, settings_routes,
-        photo_sort_routes, conversation_routes
+        photo_sort_routes, conversation_routes, advice_routes
     )
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(variety_routes.bp)
@@ -84,6 +86,7 @@ def create_app(config_name='default'):
     app.register_blueprint(cooking_routes.bp)
     app.register_blueprint(settings_routes.bp)
     app.register_blueprint(conversation_routes.bp)
+    app.register_blueprint(advice_routes.bp)
 
     # AIメモ下書きの request_id 等を INFO でサーバーログへ出す（Flask の 'app' ロガーのハンドラーへ伝播）
     app.logger  # 既定ハンドラーを生成
