@@ -112,3 +112,4 @@ uv run --no-project --with openai --with pillow --with numpy python tools/make_i
 
 - ナビは `app/templates/base.html` の `<img src="{{ url_for('static', filename='images/icon_xxx.webp') }}" alt="" class="icon-img icon-img-lg">`
 - 画面の見出しは同じ `icon-img icon-img-lg`、カードの見出し（`h6`）は `icon-img`
+- 画像を足したら、画像の一覧 [`image-catalog.html`](image-catalog.html) の該当する節（アイコンなら「メニューアイコン画像」）にも足す
