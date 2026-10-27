@@ -167,3 +167,12 @@ def test_created_from_output_with_trailing_http_code():
 def test_wrapped_output_not_json_is_ignored():
     msgs = _post_msgs(_wrapped('curl: (7) Failed to connect', exit_code=7))
     assert extract_links(msgs) == []
+
+
+def test_advice_post_and_patch_are_linked():
+    msgs = [
+        call(1, f'curl -sS -X POST {TOKEN_HDR} "$GARDEN_API_URL/advices" -H "Content-Type: application/json" -d \'{{"title":"a"}}\'', 'a'),
+        result(2, '{"ok": true, "data": {"id": 7}}', 'a'),
+        call(3, f'curl -sS -X PATCH {TOKEN_HDR} "$GARDEN_API_URL/advices/7" -d \'{{"answer":"b"}}\'', 'b'),
+    ]
+    assert extract_links(msgs) == [link('advice', 7, 'created', 1), link('advice', 7, 'updated', 3)]

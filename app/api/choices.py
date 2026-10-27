@@ -14,6 +14,7 @@ WEATHERS = ['晴れ', '曇り', '雨', '雪', '晴れ時々曇り', '曇り時�
 DIARY_RELATION_KEYS = ('crop_ids', 'variety_ids', 'location_ids', 'planting_ids', 'harvest_ids')
 COOKING_RELATION_KEYS = ('crop_ids', 'variety_ids', 'planting_ids', 'harvest_ids')
 TASK_RELATION_KEYS = ('crop_ids', 'variety_ids', 'location_ids', 'planting_ids')
+ADVICE_RELATION_KEYS = ('crop_ids', 'variety_ids', 'planting_ids')
 
 
 def crop_icons():

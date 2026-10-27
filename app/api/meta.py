@@ -3,7 +3,7 @@ from flask import current_app, request
 
 from app.api import bp
 from app.api.choices import (
-    COOKING_RELATION_KEYS, DIARY_RELATION_KEYS, PLANTING_STATUSES, SUN_EXPOSURES,
+    ADVICE_RELATION_KEYS, COOKING_RELATION_KEYS, DIARY_RELATION_KEYS, PLANTING_STATUSES, SUN_EXPOSURES,
     TASK_RELATION_KEYS, TASK_STATUSES, WEATHERS, bg_images, crop_icons, distinct_values,
 )
 from app.api.errors import detail, ok, validation_error
@@ -13,7 +13,7 @@ from app.database import get_db
 from app.models.app_settings import AppSettings
 
 RESOURCE_NAMES = ['crops', 'varieties', 'locations', 'plantings', 'planting_records', 'harvests',
-                  'cooking_records', 'diary_entries', 'tasks', 'photos']
+                  'cooking_records', 'diary_entries', 'tasks', 'advices', 'photos']
 LOOKUP_TYPES = ('crop', 'variety', 'location')
 
 
@@ -42,6 +42,7 @@ def meta():
             'diary_entries': list(DIARY_RELATION_KEYS),
             'cooking_records': list(COOKING_RELATION_KEYS),
             'tasks': list(TASK_RELATION_KEYS),
+            'advices': list(ADVICE_RELATION_KEYS),
         },
         'image_formats': ['jpeg', 'png', 'gif', 'webp'],
         'max_image_mb': current_app.config['API_MAX_IMAGE_MB'],

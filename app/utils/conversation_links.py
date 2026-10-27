@@ -10,7 +10,7 @@ RESOURCE_TYPES = {
     'crops': 'crop', 'varieties': 'variety', 'locations': 'location',
     'plantings': 'planting', 'planting_records': 'planting_record',
     'harvests': 'harvest', 'cooking_records': 'cooking',
-    'diary_entries': 'diary', 'tasks': 'task', 'photos': 'photo_pool',
+    'diary_entries': 'diary', 'tasks': 'task', 'advices': 'advice', 'photos': 'photo_pool',
 }
 
 _URL_RE = re.compile(r'(?:\$GARDEN_API_URL|\$\{GARDEN_API_URL\}|/api/v1)/([^?#\s"\']*)')
