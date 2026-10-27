@@ -17,13 +17,7 @@
             {# タブ切り替え #}
             <ul class="nav nav-tabs nav-fill mb-3" id="supplementTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="tab-text" data-bs-toggle="tab"
-                            data-bs-target="#pane-text" type="button" role="tab">
-                        <i class="bi bi-card-text"></i> テキスト
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tab-image" data-bs-toggle="tab"
+                    <button class="nav-link active" id="tab-image" data-bs-toggle="tab"
                             data-bs-target="#pane-image" type="button" role="tab">
                         <i class="bi bi-image"></i> 画像
                     </button>
@@ -40,25 +34,17 @@
                         <i class="bi bi-youtube"></i> YouTube
                     </button>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-text" data-bs-toggle="tab"
+                            data-bs-target="#pane-text" type="button" role="tab">
+                        <i class="bi bi-card-text"></i> テキスト
+                    </button>
+                </li>
             </ul>
 
             <div class="tab-content" id="supplementTabContent">
-                {# テキストタブ #}
-                <div class="tab-pane fade show active" id="pane-text" role="tabpanel">
-                    <form method="POST" action="{{ url_for('supplements.add', entity_type=supplement_entity_type, entity_id=supplement_entity_id) }}">
-                        <input type="hidden" name="supplement_type" value="text">
-                        <div class="mb-2">
-                            <input type="text" name="title" class="form-control form-control-sm" placeholder="見出し（任意）">
-                        </div>
-                        <div class="mb-2">
-                            <textarea name="content" class="form-control" rows="3" placeholder="補足テキストを入力..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> 追加</button>
-                    </form>
-                </div>
-
                 {# 画像タブ #}
-                <div class="tab-pane fade" id="pane-image" role="tabpanel">
+                <div class="tab-pane fade show active" id="pane-image" role="tabpanel">
                     <form method="POST" action="{{ url_for('supplements.add', entity_type=supplement_entity_type, entity_id=supplement_entity_id) }}" enctype="multipart/form-data">
                         <input type="hidden" name="supplement_type" value="image">
                         <div class="mb-2">
@@ -111,6 +97,20 @@
                             <input type="text" name="content" class="form-control form-control-sm"
                                    placeholder="YouTube URL を貼り付け" required>
                             <div class="form-text">YouTube の URL または埋め込みコードを入力してください</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> 追加</button>
+                    </form>
+                </div>
+
+                {# テキストタブ #}
+                <div class="tab-pane fade" id="pane-text" role="tabpanel">
+                    <form method="POST" action="{{ url_for('supplements.add', entity_type=supplement_entity_type, entity_id=supplement_entity_id) }}">
+                        <input type="hidden" name="supplement_type" value="text">
+                        <div class="mb-2">
+                            <input type="text" name="title" class="form-control form-control-sm" placeholder="見出し（任意）">
+                        </div>
+                        <div class="mb-2">
+                            <textarea name="content" class="form-control" rows="3" placeholder="補足テキストを入力..." required></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> 追加</button>
                     </form>
