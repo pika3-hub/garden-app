@@ -293,7 +293,7 @@ git commit -m "アドバイスの一覧・詳細・編集・削除の画面を�
 - Create: `app/static/js/advice-section.js`（欄の中の絞り込み）
 - Modify: `app/__init__.py`（Jinja グローバル `hermes_advice`）
 - Modify: `app/templates/plantings/detail.html`, `app/templates/varieties/detail.html`, `app/templates/crops/detail.html`（`_hermes_conversations_section.html` の include の直前に追加）
-- Modify: `docs/frontend/` の該当トピック（会話の欄を説明しているファイルに、アドバイスの欄を追記）
+- Modify: `docs/frontend/detail-pages.md`（詳細画面の共通部品として、アドバイスの欄と会話の欄の置き方・呼び方を追記）
 - Test: `tests/test_advice_sections.py`
 
 **Interfaces:**
@@ -338,7 +338,7 @@ Expected: 全件 PASS（HEIC の6件はメイン PC では skip）
 - [ ] **Step 5: コミット**
 
 ```bash
-git add app/templates/_hermes_advice_section.html app/static/js/advice-section.js app/__init__.py app/templates/plantings/detail.html app/templates/varieties/detail.html app/templates/crops/detail.html docs/frontend tests/test_advice_sections.py
+git add app/templates/_hermes_advice_section.html app/static/js/advice-section.js app/__init__.py app/templates/plantings/detail.html app/templates/varieties/detail.html app/templates/crops/detail.html docs/frontend/detail-pages.md tests/test_advice_sections.py
 git commit -m "植え付け・品種・作物の詳細画面に Hermes のアドバイスの欄を追加"
 ```
 
