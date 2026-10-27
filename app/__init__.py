@@ -8,6 +8,7 @@ from app.config import config
 from app.database import init_db, get_db
 from app.utils.markdown_render import render_markdown
 from app.models.conversation import Conversation, KIND_LABELS
+from app.models.advice import Advice
 
 
 def _thumb_path_filter(image_path):
@@ -40,6 +41,16 @@ def _hermes_conversations(entity_type, entity_id, kinds=None):
             if kinds is None or c['kind'] in kinds]
 
 
+def _hermes_advice(entity_type, entity_id):
+    """その作物・品種・植え付けのアドバイス（配下の分を含む）に、元の会話の ID を足して返す。
+    元の会話は「作った」会話、無ければ「変えた」会話"""
+    items = []
+    for a in Advice.get_for_entity(entity_type, entity_id):
+        kinds = {c['kind']: c['id'] for c in Conversation.get_by_entity('advice', a['id'])}
+        items.append(dict(a, origin_conversation_id=kinds.get('created') or kinds.get('updated')))
+    return items
+
+
 def create_app(config_name='default'):
     """Flaskアプリケーションファクトリ"""
     app = Flask(__name__, instance_relative_config=True)
@@ -64,6 +75,7 @@ def create_app(config_name='default'):
     # Jinja2 グローバル関数登録
     app.jinja_env.globals['crop_display_name'] = _crop_display_name
     app.jinja_env.globals['hermes_conversations'] = _hermes_conversations
+    app.jinja_env.globals['hermes_advice'] = _hermes_advice
 
     # ブループリント登録
     from app.routes import (
