@@ -64,7 +64,13 @@
                                 {% endif %}
                                 {% endif %}
                                 <div class="card-photo-badge-top">
+                                    {% if p.status == 'ended' %}
+                                    <span class="badge bg-secondary"><i class="bi bi-check-circle"></i> 栽培終了</span>
+                                    {% elif p.status == 'removed' %}
+                                    <span class="badge bg-dark">削除済み</span>
+                                    {% else %}
                                     <span class="badge bg-success"><i class="bi bi-flower1"></i> 栽培中</span>
+                                    {% endif %}
                                     {% if p.days_from_planting is not none %}
                                     <span class="badge bg-success">{{ p.days_from_planting }}日目</span>
                                     {% endif %}

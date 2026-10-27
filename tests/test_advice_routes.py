@@ -98,6 +98,10 @@ def test_edit_keeps_ended_planting_relation(app, client):
     ids = _seed(app, status='ended')
     body = client.get(f"/advices/{ids['advice']}/edit").get_data(as_text=True)
     assert f'data-planting-id="{ids["planting"]}"' in body
+    # 選択モーダルのカードには実際の状態を出す（栽培終了を「栽培中」と表示しない）
+    modal = body.split('id="plantingMultiSelectModal"')[1]
+    assert '栽培終了' in modal
+    assert '栽培中</span>' not in modal
 
 
 def test_edit_after_planting_deleted(app, client):
