@@ -4,7 +4,7 @@ import random
 import secrets
 import click
 from flask import Flask, render_template, url_for
-from app.config import config
+from app.config import config, DEV_SECRET_KEY
 from app.database import init_db, get_db
 from app.utils.markdown_render import render_markdown
 from app.models.conversation import Conversation, KIND_LABELS
@@ -58,12 +58,16 @@ def create_app(config_name='default'):
     # 設定読み込み
     app.config.from_object(config[config_name])
 
-    # 本番設定は SECRET_KEY を .env から読む。未設定だと flash() が 500 になるため、
-    # 起動ごとのランダム値で補う（セッションは flash 用のみ。再起動で未表示の通知が消えるだけ）
-    if not app.config.get('SECRET_KEY'):
+    # SECRET_KEY は .env から読む。セッションには持ち主のログイン（owner_passkey_id）と
+    # CSRF トークンが入るので、未設定のときや公開されている開発用の既定値のままのときは
+    # （知られた鍵だとログインのセッションを偽造できる）起動ごとのランダム値で補う。
+    # その場合は再起動のたびにログインが外れる（テストでは既定値のままでよい）
+    secret_key = app.config.get('SECRET_KEY')
+    if not secret_key or (secret_key == DEV_SECRET_KEY and not app.config.get('TESTING')):
         app.config['SECRET_KEY'] = secrets.token_hex(32)
         logging.getLogger(__name__).warning(
-            'SECRET_KEY が未設定のため、起動ごとのランダム値を使います')
+            'SECRET_KEY が未設定か開発用の既定値のため、起動ごとのランダム値を使います。'
+            '再起動のたびにログインが外れます。.env に SECRET_KEY を設定してください')
 
     # データベース初期化
     init_db(app)

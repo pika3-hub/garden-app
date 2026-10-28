@@ -136,7 +136,10 @@ def login_verify():
     if challenge is None or credential is None:
         return _json_error(LOGIN_FAILED_MESSAGE)
 
-    passkey = Passkey.get_by_credential_id(credential.get('id') or '')
+    credential_id = credential.get('id')
+    if not isinstance(credential_id, str):
+        return _json_error(LOGIN_FAILED_MESSAGE)
+    passkey = Passkey.get_by_credential_id(credential_id)
     if passkey is None:
         return _json_error('このパスキーは登録されていません')
 
@@ -237,9 +240,14 @@ def register_verify():
     if Passkey.get_by_credential_id(credential_id) is not None:
         return _json_error('このパスキーはすでに登録されています')
 
-    # 非常口: 登録の直前にトークンを使い切る（同時に2回送られても1回だけ通す）
+    # 非常口: 登録の直前にトークンを使い切る。consume は DB の行を消せた1回だけ True なので、
+    # 同時に2回送られても1回だけ通す
     if not owner and not Passkey.consume_registration_token(token):
         return _json_error(REGISTRATION_EXPIRED_MESSAGE, 401)
+    if owner and token:
+        # ログイン中でも、開いた非常口の URL は登録に使ったので使い切る（15分残さない）
+        Passkey.consume_registration_token(token)
+    session.pop(SESSION_REGISTRATION_TOKEN, None)
 
     name = (body.get('name') or '').strip()[:NAME_MAX_LENGTH] \
         if isinstance(body.get('name'), str) else ''

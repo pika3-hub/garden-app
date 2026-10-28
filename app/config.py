@@ -9,9 +9,13 @@ def _env_flag(name, default):
     return value.strip().lower() not in ('', '0', 'false', 'no', 'off')
 
 
+# 公開リポジトリに書いてある開発用の値。テスト以外では create_app がランダム値に差し替える
+DEV_SECRET_KEY = 'dev-secret-key-change-in-production'
+
+
 class Config:
     """基本設定"""
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or DEV_SECRET_KEY
     # 起動ディレクトリに依存しないよう、絶対パスで上書きできる（Ubuntu 移設時の systemd 用）
     DATABASE = os.environ.get('DATABASE') or os.path.join(os.getcwd(), 'instance', 'garden.db')
 

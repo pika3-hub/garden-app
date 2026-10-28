@@ -106,13 +106,21 @@ class Passkey:
 
     @staticmethod
     def consume_registration_token(token):
-        """確かめて、有効ならトークンを消す（1回限り）"""
+        """確かめて、有効ならトークンを消す（1回限り）
+
+        ハッシュの行を「キーと値の両方が一致する」条件で消し、消せた1件のときだけ True にする
+        （同時に2つの要求が確かめを通っても、消せるのは片方だけ）
+        """
         if not Passkey.check_registration_token(token):
             return False
         db = get_db()
-        db.execute(
-            'DELETE FROM app_settings WHERE key IN (?, ?)',
-            (_TOKEN_HASH_KEY, _TOKEN_EXPIRES_KEY)
+        cursor = db.execute(
+            'DELETE FROM app_settings WHERE key = ? AND value = ?',
+            (_TOKEN_HASH_KEY, _hash_token(token))
         )
+        if cursor.rowcount != 1:
+            db.commit()
+            return False
+        db.execute('DELETE FROM app_settings WHERE key = ?', (_TOKEN_EXPIRES_KEY,))
         db.commit()
         return True

@@ -76,3 +76,21 @@ def test_registration_token_reissue_invalidates_old(app):
         t2 = Passkey.issue_registration_token()
         assert Passkey.check_registration_token(t1) is False
         assert Passkey.check_registration_token(t2) is True
+
+
+def test_registration_token_wrong_value_keeps_real_token(app):
+    with app.app_context():
+        t = Passkey.issue_registration_token()
+        assert Passkey.consume_registration_token('wrong') is False
+        assert Passkey.check_registration_token(t) is True
+        assert Passkey.consume_registration_token(t) is True
+
+
+def test_registration_token_consume_is_atomic(app, monkeypatch):
+    """2つの要求が同時に確かめを通っても、消せた1つだけが True になる"""
+    with app.app_context():
+        t = Passkey.issue_registration_token()
+        monkeypatch.setattr(Passkey, 'check_registration_token',
+                            staticmethod(lambda token: True))
+        assert Passkey.consume_registration_token(t) is True
+        assert Passkey.consume_registration_token(t) is False

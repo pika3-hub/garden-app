@@ -362,3 +362,28 @@ def test_cli_register_link(app):
     assert '15分以内に1回だけ使えます' in result.output
     with app.app_context():
         assert Passkey.check_registration_token(m.group(1)) is True
+
+
+def test_login_verify_rejects_non_string_credential_id(anon_client, registered, fake_auth):
+    fake_auth()
+    token = _csrf(anon_client)
+    _post_json(anon_client, '/auth/login/options', token)
+    credential = dict(_auth_credential(), id={'x': 1})
+    resp = _post_json(anon_client, '/auth/login/verify', token, {'credential': credential})
+    assert resp.status_code == 400
+    assert resp.json['ok'] is False
+    assert not _logged_in(anon_client)
+
+
+def test_owner_register_consumes_session_token(app, client, fake_reg):
+    """ログイン中に非常口の URL を開いて登録しても、トークンを使い切る"""
+    fake_reg(credential_id=b'\x31\x32\x33')
+    with app.app_context():
+        t = Passkey.issue_registration_token()
+    assert client.get(f'/auth/register/{t}').status_code == 200
+    client.post('/auth/passkeys/register/options', json={})
+    resp = client.post('/auth/passkeys/register/verify',
+                       json={'credential': _reg_credential(), 'name': 'iPad'})
+    assert resp.status_code == 200
+    with app.app_context():
+        assert Passkey.check_registration_token(t) is False
