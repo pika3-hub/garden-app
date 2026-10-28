@@ -325,7 +325,7 @@ publish-aaaa-on-ipv4=no
 
 - `disable-user-service-publishing=yes`: 一般ユーザー（Hermes の実行ユーザー）が LAN に名前を流すのを禁止する
 - `use-ipv6=no`・`publish-aaaa-on-ipv4=no`: ufw は IPv4 の LAN だけ許可しているため
-- PC・iPhone・iPad から `<サーバーのホスト名>.local` が引けることを確かめる（PC なら `ping <サーバーのホスト名>.local`）。**iPad は「セキュリティ Wi-Fi」の SSID で `.local` を引けない**（サーバーの mDNS の答えが届かない）。iPad で編集するときは 5G の SSID につなぐ。閲覧は IP の HTTP で今までどおりできる
+- PC・iPhone・iPad から `<サーバーのホスト名>.local` が引けることを確かめる（PC なら `ping <サーバーのホスト名>.local`）。**iPhone・iPad は「セキュリティ Wi-Fi」の SSID で `.local` を引けない**（サーバーの mDNS の答えが届かない）。2026-10-28 からどちらもふだんの接続先を 5G の SSID にした。閲覧は IP の HTTP で今までどおりできる
 
 ### 10.2 Caddy のサイトと ufw の 443 番
 
@@ -447,7 +447,7 @@ sudo -u garden -H bash -c 'cd /opt/garden-app && ~/.local/bin/uv sync' && sudo s
 成功時の出力: `grep -c` が `1`、続く `grep` が上の4行、`ls -l` が `-rw------- 1 garden garden`。`SESSION_COOKIE_SECURE` は本番の既定が有効なので書かない（HTTP だけで使うときだけ `0`）。再起動の直後は1秒ほど接続できない。
 
 - `.env.bak-owner-login` には `SECRET_KEY`・トークンが入っている。確認が済んだら `sudo rm` する
-- `WEB_BASE_URL` が HTTPS になるので、API の応答の `web_url` や Hermes が Matrix の返事に付けるリンクが HTTPS の入口になり、ログイン済みならそのまま編集できる。iPad がセキュリティ Wi-Fi のときはリンクが開けない（5G の SSID にする）
+- `WEB_BASE_URL` が HTTPS になるので、API の応答の `web_url` や Hermes が Matrix の返事に付けるリンクが HTTPS の入口になり、ログイン済みならそのまま編集できる。iPhone・iPad がセキュリティ Wi-Fi のときはリンクが開けない（5G の SSID にする）
 
 ### 10.6 PC に Caddy の発行元の証明書を入れる
 
@@ -483,7 +483,7 @@ sudo -u garden -H bash -c 'cd /opt/garden-app && ~/.local/bin/uv run flask --app
 
 1. **PC**: 上の URL をブラウザで開き、Windows Hello（顔認証）で登録する。そのままログイン済みになる
 2. **iPhone**: Safari で `https://<サーバーのホスト名>.local/` を開き、ログインしてから設定画面（`/settings/`）の「この端末のパスキーを追加」で Face ID で登録する（ログイン中の人だけが追加できる。最初の1つ目と同じく、先に PC で登録しておく）
-3. **iPad**: iPhone で登録したパスキーは iCloud キーチェーンで同期されるので、登録せずにログインできる（2026-10-28 の試作で確認）。セキュリティ Wi-Fi では `.local` を引けないので 5G の SSID につなぐ
+3. **iPad**: iPhone で登録したパスキーは iCloud キーチェーンで同期されるので、登録せずにログインできる（2026-10-28 の試作で確認）。iPhone・iPad ともセキュリティ Wi-Fi では `.local` を引けないので 5G の SSID につなぐ
 4. 設定画面の「パスキー」の欄で、名前の変更・削除ができる。端末をなくしたときは、その端末のパスキーを消せばその端末のログインはすぐ切れる。全部の端末をなくしたときは、このコマンドで登録し直したあと古いパスキーを全部消す
 
 ### 10.8 動作確認
