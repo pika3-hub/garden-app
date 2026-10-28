@@ -102,18 +102,21 @@
                 {% if location.notes %}
                 <div class="detail-notes markdown-body">{{ location.notes|markdown }}</div>
                 {% endif %}
+                {% if is_owner() %}
                 <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
                     <a href="{{ url_for('plantings.plant_new') }}?location_id={{ location.id }}"
                        class="btn btn-success">
                         <i class="bi bi-plus-circle"></i> 作物を植え付ける
                     </a>
                 </div>
+                {% endif %}
                 <div class="detail-timestamps">
                     登録日時: {{ location.created_at }} / 更新日時: {{ location.updated_at }}
                 </div>
             </div>
         </div>
 
+        {% if is_owner() %}
         <div class="btn-group-action">
             <a href="{{ url_for('locations.edit', location_id=location.id) }}" class="btn btn-primary">
                 <i class="bi bi-pencil"></i> 場所を編集
@@ -125,6 +128,7 @@
                 </button>
             </form>
         </div>
+        {% endif %}
         </div>
 
         <!-- 見取り図カード -->
@@ -136,9 +140,11 @@
                     <button type="button" class="btn btn-sm btn-outline-light" id="fullscreen-btn">
                         <i class="bi bi-arrows-fullscreen"></i> 拡大
                     </button>
+                    {% if is_owner() %}
                     <a href="{{ url_for('locations.canvas', location_id=location.id) }}" class="btn btn-sm btn-light">
                         <i class="bi bi-pencil"></i> 編集
                     </a>
+                    {% endif %}
                 </div>
             </div>
             <div class="card-body">

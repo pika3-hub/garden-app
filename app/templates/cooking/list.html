@@ -20,9 +20,11 @@
             </a>
             {% endif %}
         </form>
+        {% if is_owner() %}
         <a href="{{ url_for('cooking.new') }}" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> 料理を追加
         </a>
+        {% endif %}
     </div>
 </div>
 
@@ -138,7 +140,11 @@
     {% if keyword or category %}
     検索条件に一致する料理が見つかりませんでした。
     {% else %}
+    {% if is_owner() %}
     まだ料理が登録されていません。<a href="{{ url_for('cooking.new') }}" class="alert-link">新規登録</a>から追加してください。
+    {% else %}
+    まだ料理が登録されていません。
+    {% endif %}
     {% endif %}
 </div>
 {% endif %}

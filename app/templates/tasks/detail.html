@@ -62,6 +62,7 @@
             </div>
         </div>
 
+        {% if is_owner() %}
         <div class="btn-group-action">
             <a href="{{ url_for('tasks.edit', task_id=task.id) }}" class="btn btn-primary">
                 <i class="bi bi-pencil"></i> タスクを編集
@@ -72,6 +73,7 @@
                 </button>
             </form>
         </div>
+        {% endif %}
 
         {% set supplement_entity_type = 'task' %}
         {% set supplement_entity_id = task.id %}

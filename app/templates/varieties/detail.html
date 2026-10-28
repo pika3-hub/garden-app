@@ -63,17 +63,20 @@
                 {% if variety.notes %}
                 <div class="detail-notes markdown-body">{{ variety.notes|markdown }}</div>
                 {% endif %}
+                {% if is_owner() %}
                 <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
                     <a href="{{ url_for('plantings.plant_new', crop_id=variety.crop_id, variety_id=variety.id) }}" class="btn btn-success">
                         <i class="bi bi-plus-circle"></i> この品種を植え付ける
                     </a>
                 </div>
+                {% endif %}
                 <div class="detail-timestamps">
                     登録日時: {{ variety.created_at }} / 更新日時: {{ variety.updated_at }}
                 </div>
             </div>
         </div>
 
+        {% if is_owner() %}
         <div class="btn-group-action">
             <a href="{{ url_for('varieties.edit', variety_id=variety.id) }}" class="btn btn-primary">
                 <i class="bi bi-pencil"></i> 品種を編集
@@ -84,6 +87,7 @@
                 </button>
             </form>
         </div>
+        {% endif %}
 
         {% set supplement_entity_type = 'variety' %}
         {% set supplement_entity_id = variety.id %}

@@ -4,14 +4,17 @@
 <div class="card mb-3" id="supplements">
     <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
         <h6 class="mb-0"><i class="bi bi-paperclip"></i> 補足情報{% if supplements %} ({{ supplements|length }}){% endif %}</h6>
+        {% if is_owner() %}
         <button class="btn btn-sm btn-outline-light" type="button"
                 data-bs-toggle="collapse" data-bs-target="#supplementAddForm"
                 aria-expanded="false" aria-controls="supplementAddForm">
             <i class="bi bi-plus-lg"></i> 補足情報を追加
         </button>
+        {% endif %}
     </div>
 
     {# ── 追加フォーム（折りたたみ） ── #}
+    {% if is_owner() %}
     <div class="collapse" id="supplementAddForm">
         <div class="card-body border-bottom">
             {# タブ切り替え #}
@@ -118,6 +121,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     {# ── 補足一覧 ── #}
     {% if supplements %}
@@ -140,6 +144,7 @@
                         <strong>{{ s.title }}</strong>
                     {% endif %}
                 </div>
+                {% if is_owner() %}
                 <div class="supplement-actions">
                     <button class="btn btn-sm btn-outline-secondary" type="button"
                             data-bs-toggle="collapse" data-bs-target="#editSupplement{{ s.id }}"
@@ -149,6 +154,7 @@
                         <button type="submit" class="btn btn-sm btn-outline-danger" title="削除"><i class="bi bi-trash"></i></button>
                     </form>
                 </div>
+                {% endif %}
             </div>
 
             {# コンテンツ表示 #}
@@ -212,6 +218,7 @@
             {% endif %}
 
             {# 編集フォーム（折りたたみ） #}
+            {% if is_owner() %}
             <div class="collapse mt-2" id="editSupplement{{ s.id }}">
                 <form method="POST" action="{{ url_for('supplements.update', supplement_id=s.id) }}"
                       {% if s.supplement_type == 'image' %}enctype="multipart/form-data"{% endif %}>
@@ -261,6 +268,7 @@
                             data-bs-toggle="collapse" data-bs-target="#editSupplement{{ s.id }}">キャンセル</button>
                 </form>
             </div>
+            {% endif %}
 
             <div class="text-muted small mt-1">{{ s.created_at }}</div>
         </li>
@@ -273,5 +281,7 @@
     {% endif %}
 </div>
 
+{% if is_owner() %}
 {% include '_photo_pool_picker_modal.html' %}
 <script src="{{ url_for('static', filename='js/photo-pool-picker.js') }}"></script>
+{% endif %}

@@ -20,9 +20,11 @@
             </a>
             {% endif %}
         </form>
+        {% if is_owner() %}
         <a href="{{ url_for('tasks.new') }}" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> タスクを追加
         </a>
+        {% endif %}
     </div>
 </div>
 
@@ -118,7 +120,11 @@
     {% if keyword %}
     検索条件に一致するタスクが見つかりませんでした。
     {% else %}
+    {% if is_owner() %}
     まだタスクが登録されていません。<a href="{{ url_for('tasks.new') }}" class="alert-link">新規登録</a>から追加してください。
+    {% else %}
+    まだタスクが登録されていません。
+    {% endif %}
     {% endif %}
 </div>
 {% endif %}

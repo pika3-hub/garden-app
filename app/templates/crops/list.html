@@ -10,9 +10,11 @@
         <p class="text-muted mb-0">育てる作物の名称、種類などを管理できます。</p>
     </div>
     <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
+        {% if is_owner() %}
         <a href="{{ url_for('crops.new') }}" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> 作物を追加
         </a>
+        {% endif %}
     </div>
 </div>
 
@@ -80,7 +82,11 @@
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>
+    {% if is_owner() %}
     まだ作物が登録されていません。<a href="{{ url_for('crops.new') }}" class="alert-link">新規登録</a>から追加してください。
+    {% else %}
+    まだ作物が登録されていません。
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

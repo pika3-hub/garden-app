@@ -120,7 +120,7 @@ if (fullscreenBtn) {
                 {% if location_crop.notes %}
                 <div class="detail-notes markdown-body">{{ location_crop.notes|markdown }}</div>
                 {% endif %}
-                {% if location_crop.status == 'active' %}
+                {% if location_crop.status == 'active' and is_owner() %}
                 <div class="d-flex justify-content-center gap-2 flex-wrap my-3">
                     <a href="{{ url_for('plantings.new', location_crop_id=location_crop.id) }}" class="btn btn-info">
                         <i class="bi bi-plus-circle"></i> 栽培記録を追加
@@ -139,6 +139,7 @@ if (fullscreenBtn) {
             </div>
         </div>
 
+        {% if is_owner() %}
         <div class="btn-group-action">
             {% if location_crop.status == 'active' %}
             <a href="{{ url_for('plantings.planting_edit', location_crop_id=location_crop.id) }}" class="btn btn-primary">
@@ -164,6 +165,7 @@ if (fullscreenBtn) {
             </form>
             {% endif %}
         </div>
+        {% endif %}
         </div>
 
         <!-- 見取り図プレビュー（栽培終了かつ配置なしの場合は非表示） -->
@@ -309,7 +311,7 @@ if (fullscreenBtn) {
     </div>
 </div>
 
-{% if location_crop.status == 'active' %}
+{% if location_crop.status == 'active' and is_owner() %}
 <!-- 栽培終了モーダル -->
 <div class="modal fade" id="endCultivationModal" tabindex="-1" aria-labelledby="endCultivationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
