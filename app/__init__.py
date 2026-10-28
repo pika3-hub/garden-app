@@ -77,6 +77,10 @@ def create_app(config_name='default'):
     app.jinja_env.globals['hermes_conversations'] = _hermes_conversations
     app.jinja_env.globals['hermes_advice'] = _hermes_advice
 
+    # 持ち主のログイン・既定で拒否・CSRF（どのルートよりも先に before_request を登録する）
+    from app.auth import init_auth
+    init_auth(app)
+
     # ブループリント登録
     from app.routes import (
         crop_routes, variety_routes, location_routes, diary_routes,
