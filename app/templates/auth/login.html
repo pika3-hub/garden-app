@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}ログイン - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 col-lg-5 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="h4 card-title"><i class="bi bi-key"></i> ログイン</h1>
+                {% if on_owner_host %}
+                <p>登録・編集をするには、この端末のパスキー（顔認証など）でログインします。</p>
+                <div class="alert d-none" role="alert" data-passkey-message></div>
+                <div class="d-grid">
+                    <button type="button" class="btn btn-success btn-lg"
+                            data-passkey-action="login" data-next="{{ next_url }}">
+                        <i class="bi bi-fingerprint"></i> パスキーでログイン
+                    </button>
+                </div>
+                {% else %}
+                <p>この画面では見るだけができます。登録・編集は次の URL を開いてログインしてください。</p>
+                <p class="mb-0">
+                    <a href="{{ owner_base_url.rstrip('/') }}/auth/login">{{ owner_base_url.rstrip('/') }}/auth/login</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if on_owner_host %}
+<script src="{{ url_for('static', filename='js/passkey.js') }}"></script>
+{% endif %}
+{% endblock %}

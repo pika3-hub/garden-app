@@ -86,7 +86,7 @@ def create_app(config_name='default'):
         crop_routes, variety_routes, location_routes, diary_routes,
         harvest_routes, calendar_routes, task_routes, planting_routes,
         supplement_routes, photo_pool_routes, cooking_routes, settings_routes,
-        photo_sort_routes, conversation_routes, advice_routes
+        photo_sort_routes, conversation_routes, advice_routes, auth_routes
     )
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(variety_routes.bp)
@@ -103,6 +103,7 @@ def create_app(config_name='default'):
     app.register_blueprint(settings_routes.bp)
     app.register_blueprint(conversation_routes.bp)
     app.register_blueprint(advice_routes.bp)
+    app.register_blueprint(auth_routes.bp)
 
     # AIメモ下書きの request_id 等を INFO でサーバーログへ出す（Flask の 'app' ロガーのハンドラーへ伝播）
     app.logger  # 既定ハンドラーを生成
@@ -413,6 +414,17 @@ def create_app(config_name='default'):
         ids = Conversation.all_ids()
         total = sum(Conversation.relink(i) for i in ids)
         click.echo(f'{len(ids)}件の会話から結び付けを{total}件作り直しました')
+
+    @app.cli.command('passkey-register-link')
+    @click.option('--base-url', default=None,
+                  help='URL の先頭（既定は .env の OWNER_BASE_URL）')
+    def passkey_register_link(base_url):
+        """ログインしていなくてもパスキーを1つ登録できる URL を出す（非常口。15分・1回限り）"""
+        from app.models.passkey import Passkey
+        base = (base_url or app.config['OWNER_BASE_URL']).rstrip('/')
+        token = Passkey.issue_registration_token()
+        click.echo(f'{base}/auth/register/{token}')
+        click.echo('15分以内に1回だけ使えます（出し直すと前の URL は使えなくなります）')
 
     return app
 
