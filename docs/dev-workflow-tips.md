@@ -93,6 +93,9 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - `resize_window` で幅を変えても、ウィンドウが最大化されていると効かない（`innerWidth` が変わらない）。スマホ幅の確認は、同じ URL を幅 375px の `iframe` に読み込み、`contentDocument.documentElement.scrollWidth` と、右端がはみ出す要素を数えて測る（2026-10-25）
 - 植え付けの詳細（見取り図のある重い画面）は、スクロール後のスクリーンショットが CDP のタイムアウトで失敗することがある。表示された文字を確かめるだけなら `get_page_text` を使う（2026-10-26）
 - brainstorming スキルの画面モック用サーバー（visual companion）は `node` が無いので起動できない。モックは HTML ファイルをスクラッチ領域に書き、`Start-Process` でブラウザに開いて見てもらう
+- **ログイン・CSRF が関わる画面の確認は Chrome・Edge・Safari で行う**。VS Code の内蔵ブラウザ（ページを iframe に入れる）で保存したら、Cookie の扱いの違いで CSRF の照合が合わず 400 になった（2026-10-28。Chrome では通った）
+- `http://localhost:…` で起動した確認用のサーバーは、メイン PC のブラウザでしか開けない（iPhone・iPad の `localhost` はその端末自身）。スマホでも試してもらう確認は、最初からそう伝える。パスキーはスマホでは HTTPS（Caddy の `https://<サーバーのホスト名>.local`）でしか試せない
+- パスキー（WebAuthn）の確認で、ユーザーの顔認証が要る手順はサブエージェントにはできない。実装担当には飛ばさせ、コントローラーがコピー DB のサーバーを起動して頼む。非常口の URL はサーバーの起動スクリプトの中で `Passkey.issue_registration_token()` を呼んでファイルに書くと、CLI（実データの DB を見る）を使わずに出せる
 
 ## Windows のコンソール・文字コード
 
@@ -142,6 +145,10 @@ Codex（ChatGPT Plus の枠）の `codex review` で、Claude のレビューと
 - **Hermes が古い値（移設前の IP など）を使ったら、Hermes 自身の記憶 `~/.hermes/memories/MEMORY.md` を疑う**。環境変数は正しく渡っていたのに、移設前に覚えた「API は <メインPCのIP>:5001」を信じていた（2026-10-24）。直したら Element X で `/new`。サーバーの構成を変えたときは、記憶に古い値が無いか `grep` する
 - iPhone のアプリから LAN 内のサーバーにつながらず Safari では開けるときは、iOS の「ローカルネットワーク」の許可を疑う
 - サーバーに `pika3`（Hermes の実行ユーザー）でログインして `curl http://127.0.0.1:5000/...` すると `000` になる。遮断のルールどおりで、異常ではない。Web 画面の確認はメイン PC かスマホのブラウザで行う（2026-10-26）
+- **サーバーでの確認の `curl` は `sudo curl` にする**。ログイン用のユーザーは Hermes の実行ユーザーと同じなので、そのまま実行すると 5000 番・443 番の遮断のルールに当たって失敗する（最終レビューで、確認の手順がそのままでは失敗すると指摘された）
+- **Caddy で入口を足したら、Hermes の遮断は TCP と UDP（HTTP/3）の両方に入れる**。Caddy は既定で UDP の 443 番でも待ち受け、ループバックの UDP は `-o lo -j ACCEPT` で通る。また 443 番の遮断は `-o lo` を付けて自ホスト宛てだけにする（付けないと Hermes の外への HTTPS が全部止まる）。2026-10-28 は TCP だけの手順を書き、最終レビューで見つかった
+- 遮断を入れる順番: **Hermes の拒否のルールを先に入れてから、Caddy で入口を開く**（逆だと、一瞬でも Hermes が届く隙間ができる）
+- サーバーの名前（`<サーバーのホスト名>.local`）は avahi で LAN に流している（2026-10-28〜）。**iPhone・iPad は「セキュリティ Wi-Fi」の SSID では `.local` を引けない**（2026-10-28 からどちらもふだんの接続先を 5G の SSID にした）（サーバーの mDNS の答えのマルチキャストが届かない）。名前が引けないときは `sudo tcpdump -ni any 'udp port 5353'` で、問い合わせが来ているか・答えが出ているか・端末が問い合わせを繰り返していないかを見ると切り分けられる
 - `/var/backups/garden/` は `pika3` から読めない。中を見るときは `sudo ls -l /var/backups/garden/`（バックアップ自体は `sudo -u garden sqlite3 ...` で取れている）
 - 再起動直後の `journalctl -u garden-app` に `Migration applied: ...` が出ないことがある（`print` の出力がバッファされる）。マイグレーションが入ったかは `sudo -u garden sqlite3 -readonly /opt/garden-app/instance/garden.db "SELECT name FROM sqlite_master WHERE ..."` で直接確かめる
 - **Hermes の内部のデータの形（`state.db` の列、ツールの結果の形、写真のキャッシュの期限など）は、サーバーと同じ版の Hermes のソースで確かめる**。`git -C ~/.hermes/hermes-agent log -1 --format=%h` で版を聞き、メイン PC のスクラッチ領域に `git clone --filter=blob:none --no-checkout https://github.com/NousResearch/hermes-agent.git` → `git checkout <版>`（Web サイトの文書の一部が「Filename too long」で失敗するが本体は読める）。貼ってもらう往復が減る。2026-10-26 は terminal ツールの結果が `{"output": "...", "exit_code": 0, ...}` で包まれていることを確かめずに設計し、最終レビューで初めて気づいた（`tools/terminal_tool_result.py`）。外から渡ってくるデータの形は、設計の段階で1件実物かソースを見る
