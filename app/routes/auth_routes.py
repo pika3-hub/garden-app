@@ -48,9 +48,18 @@ def _origin():
 
 
 def _safe_next(value):
-    """同じサイトの中のパス（/ で始まり // で始まらない）だけを受ける"""
-    if not isinstance(value, str) or not value.startswith('/') or value.startswith('//') \
-            or '\\' in value:
+    """同じサイトの中のパス（/ で始まり // で始まらない）だけを受ける
+
+    ブラウザは URL の中のタブ・改行を取り除くので（"/\\t/evil" → "//evil"）、制御文字は拒否する
+    """
+    if not isinstance(value, str) or not value.startswith('/'):
+        return '/'
+    if any(ord(ch) < 0x20 or ord(ch) == 0x7f for ch in value):
+        return '/'
+    if value.startswith('//') or '\\' in value:
+        return '/'
+    parts = urlsplit(value)
+    if parts.scheme or parts.netloc:
         return '/'
     return value
 

@@ -129,6 +129,25 @@ def test_login_redirect_rejects_external_next(anon_client, registered, fake_auth
     assert resp.json['redirect'] == '/'
 
 
+CONTROL_CHAR_NEXTS = ['/\t/evil.example', '/\n/evil.example', '/\r/evil.example']
+
+
+@pytest.mark.parametrize('next_url', CONTROL_CHAR_NEXTS)
+def test_login_redirect_rejects_control_chars(anon_client, registered, fake_auth, next_url):
+    fake_auth()
+    token = _csrf(anon_client)
+    resp = _login(anon_client, token, next_url=next_url)
+    assert resp.status_code == 200
+    assert resp.json['redirect'] == '/'
+
+
+@pytest.mark.parametrize('next_url', CONTROL_CHAR_NEXTS)
+def test_login_page_logged_in_rejects_control_chars(client, next_url):
+    resp = client.get('/auth/login', query_string={'next': next_url})
+    assert resp.status_code == 302
+    assert resp.headers['Location'] in ('/', 'http://localhost/')
+
+
 def test_login_unknown_credential(anon_client, registered, fake_auth):
     fake_auth()
     token = _csrf(anon_client)
