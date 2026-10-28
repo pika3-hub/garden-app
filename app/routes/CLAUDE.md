@@ -23,6 +23,7 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 | Hermes のアドバイス | advices | /advices/?keyword= | /advices/{id} | -（Hermes の API だけで作る） | /advices/{id}/edit、POST /advices/{id}/update、POST /advices/{id}/delete |
 | Hermes との会話 | conversations | /conversations/?keyword= | /conversations/{id} | - | - |
 | 設定 | settings | - | - | - | GET/POST /settings/ |
+| ログイン（パスキー） | auth | GET /auth/login | - | GET /auth/register/{token}（非常口の登録ページ） | POST /auth/login/options・/auth/login/verify・/auth/logout・/auth/passkeys/register/options・/auth/passkeys/register/verify・/auth/passkeys/{id}/rename・/auth/passkeys/{id}/delete |
 
 補足情報・写真プールはページ単位のCRUDではなく、他画面に埋め込まれるモーダル/フォーム部品からのPOST操作が中心（詳細は `docs/frontend/supplements.md` / `docs/frontend/images-and-photo-pool.md` を参照）。
 
@@ -69,11 +70,23 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 
 `location_routes.py` にも植え付けに関する操作系エンドポイント（`POST /locations/<id>/plant`（旧・1ステップ植え付け、現在は未使用のレガシー）、`POST /locations/<id>/remove/<location_crop_id>`、および見取り図系 `/locations/<id>/canvas*`）があるが、見取り図系は `app/static/js/CLAUDE.md` を参照。
 
+## ログインと新しいルートの規約
+
+Web アプリは `app/auth.py` の `before_request` で守られている（家族は閲覧だけ、編集は自分だけ。概要はルート `CLAUDE.md` の「ログイン（パスキー）」）。
+
+- **GET・HEAD・OPTIONS 以外のルートは、何もしなくてもログインが無ければ拒否される**（既定で拒否）。`@login_required` のようなデコレーターは付けない。ログインなしで受けたい POST は `ANONYMOUS_POST_ENDPOINTS`（ログイン・パスキー登録の処理だけ）に足すが、普通は足さない
+- **編集のための GET（新規・編集フォーム、見取り図の編集、一括登録、振り分けなど）は `app/auth.py` の `OWNER_ONLY_GET_ENDPOINTS` に `Blueprint名.関数名` で足す**。足したものだけが、ログインしていない人を `/auth/login` へ案内する。足し忘れると誰でも開ける
+- `tests/test_auth_gate.py` の分類のテストは、GET だけのエンドポイントがすべて `OWNER_ONLY_GET_ENDPOINTS` か閲覧用の一覧のどちらかに入っていることを確かめる。新しい GET ルートでこのテストが落ちたら、編集用か閲覧用かを決めて分類する。**閲覧用の判定は名前の形（`*.list`、`*.detail`、`conversations.*`）で信用する部分がある**ので、`xxx.detail` のような名前の編集画面を作ったら、テストが通っても必ず `OWNER_ONLY_GET_ENDPOINTS` に足す
+- GET でデータを変える・外部へ接続する・課金するルートは作らない（ログインしていない人にも開けてしまう）。必ず POST にする
+- ログイン中の POST などはすべて CSRF トークンの照合を受ける（フォームの隠し項目 `csrf_token` か `X-CSRFToken` ヘッダー。合わなければ 400）。**`app/static/js/csrf.js` がページの読み込み時と送信時に、POST のフォームへ隠し項目を、同じ生成元への GET 以外の `fetch` へヘッダーを自動で付ける**ので、普通は何もしなくてよい。自動で付かない例外は2つ: (1) ページを読み込んだ後に JS で作った POST のフォームを `form.submit()` で送る（送信イベントが起きない）ときは、`csrf_token()` の値を隠し項目に自分で入れる、(2) GET のフォームの中の `formmethod="post"` のボタンには対応していない（POST は別のフォームにする）
+- HTTP の入口（`http://<サーバーのIP>:5000`）にはログインの Cookie が届かないので、HTTP からは常にログインしていない扱いになる。ルートの動作をログイン前提にしたときは、テストでログイン済みのフィクスチャを使う
+- 外部 API（`create_api_app`）にはこの仕組みは入れない（Bearer トークンで守る）
+
 ## Blueprint規約
 
 - Blueprint名はファイル名から `_routes` を除き、複数形にする（例: `crop_routes.py` → Blueprint名 `crops`、`location_routes.py` → `locations`、`harvest_routes.py` → `harvests`、`task_routes.py` → `tasks`、`supplement_routes.py` → `supplements`）
 - 不規則複数形の例外: `variety_routes.py` → `varieties`、`planting_routes.py` → `plantings`
-- 単数・集合的な概念を表すものは複数形にしない: `diary_routes.py` → `diary`、`calendar_routes.py` → `calendar`、`cooking_routes.py` → `cooking`、`photo_pool_routes.py` → `photo_pool`、`photo_sort_routes.py` → `photo_sort`
+- 単数・集合的な概念を表すものは複数形にしない: `diary_routes.py` → `diary`、`auth_routes.py` → `auth`、`calendar_routes.py` → `calendar`、`cooking_routes.py` → `cooking`、`photo_pool_routes.py` → `photo_pool`、`photo_sort_routes.py` → `photo_sort`
 - テンプレートフォルダは Blueprint 名と揃える（`app/templates/{blueprint}/`）
 
 ## 新機能追加チェックリスト

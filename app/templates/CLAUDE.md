@@ -16,6 +16,14 @@ Jinja2 テンプレートと関連フロントエンド部品（Bootstrap カス
 | [`docs/frontend/ai-notes.md`](../../docs/frontend/ai-notes.md) | 作物・品種フォームの AI メモ下書き（ボタン・モーダル・`ai-notes.js`） |
 | [`docs/frontend/markdown-notes.md`](../../docs/frontend/markdown-notes.md) | メモ欄・補足テキストの Markdown 表示（`markdown` フィルター、`.markdown-body`、対象/対象外の箇所） |
 
+## 編集の入口は `is_owner()` で囲む
+
+ログインしていない人（家族。HTTP の入口では全員）には、登録・編集・削除・アップロード・AI 下書き・「写真プールから選択」などのボタン、リンク、フォーム、新規作成への入口を出さない。`{% if is_owner() %}…{% endif %}`（`app/auth.py` の Jinja グローバル）で囲む。新しい画面を作るときも同じにする。
+
+- これは見た目の整理で、守っているのはサーバー側（GET・HEAD・OPTIONS 以外は既定で拒否）。囲み忘れても漏れはしないが、押すとログイン画面へ案内されるだけの無駄なボタンが出る
+- POST のフォームには `csrf.js` が CSRF の隠し項目を自動で足す。JS で後から作った POST のフォームを `form.submit()` で送る場合と、GET のフォームの `formmethod="post"` のボタンは自動では付かない（詳しくは `app/routes/CLAUDE.md` の「ログインと新しいルートの規約」）
+- ナビの右端はログインしていなければ「ログイン」、ログイン中は「ログアウト」。設定画面にパスキーの欄がある
+
 ## フォームの初期値は NULL を空文字にする
 
 編集フォームで nullable なカラムを初期値に出すときは `{{ (crop.notes or '') if crop else '' }}` と書く。`{{ crop.notes if crop else '' }}` だと NULL が「None」と表示され、そのまま保存すると文字列 `'None'` が DB に登録される（過去に収穫の単位・作物/品種のメモで発生）。`tests/test_form_empty_values.py` で確認している。

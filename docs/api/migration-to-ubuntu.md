@@ -8,7 +8,8 @@
 移設後の形:
 
 ```
-スマホ ──LAN──▶ 0.0.0.0:5000    Web 画面（認証なし）
+家族 ────LAN──▶ 0.0.0.0:5000    Web 画面（HTTP。誰にとっても閲覧専用）
+自分 ────LAN──▶ Caddy :443 ─▶ 127.0.0.1:5000   Web 画面（HTTPS。パスキーでログインすると編集できる。手順 10）
 Hermes ──────▶ 127.0.0.1:5001  API（Bearer 必須。LAN からは見えない）
 /opt/garden-app/ … ユーザー garden が所有・0700。Hermes の実行ユーザーは読めない
 ```
@@ -16,7 +17,7 @@ Hermes ──────▶ 127.0.0.1:5001  API（Bearer 必須。LAN からは
 **最重要**: Hermes はシェルを実行できるため、同じ PC にあるものには API を通さずに触れてしまう。次の2つを両方行う。
 
 1. **DB・ファイル**: アプリを専用ユーザー `garden` で動かし、Hermes の実行ユーザーからはアプリのフォルダを読めないようにする（手順 1）
-2. **Web 画面（認証なし・削除もできる）**: 同じ PC からは `127.0.0.1:5000` や自分の LAN IP の 5000 番に接続できてしまう（ufw はループバックや自ホスト宛てを止めない）。Hermes の実行ユーザーから 5000 番への接続を OS で拒否する（手順 6）
+2. **Web 画面（ログインすれば削除もできる）**: 同じ PC からは `127.0.0.1:5000` や自分の LAN IP の 5000 番に接続できてしまう（ufw はループバックや自ホスト宛てを止めない）。Hermes の実行ユーザーから 5000 番への接続を OS で拒否する（手順 6）。2026-10-28 からは編集の入口の HTTPS（443番）も同じく拒否する（手順 10）
 
 ## 1. 専用ユーザーとフォルダ
 
@@ -62,6 +63,8 @@ DATABASE=/opt/garden-app/instance/garden.db
 WEB_BASE_URL=http://<サーバーのIP>:5000
 ANTHROPIC_API_KEY=<使う場合>
 ```
+
+パスキーのログイン用の値（`PASSKEY_RP_ID`・`PASSKEY_ORIGIN`・`OWNER_BASE_URL`）と、`WEB_BASE_URL` の HTTPS への変更は手順 10 で足す。`SECRET_KEY` は固定の値にしておく（無いと再起動のたびにログインが外れる）。
 
 秘密の値を画面と履歴に残さずに作る例（`API_TOKEN` は Hermes 用の `~/.config/garden-api.env` と同じものを流用。`SECRET_KEY` はその場で生成）:
 
@@ -276,3 +279,222 @@ Windows 側のファイアウォールのルール（[`firewall-windows.md`](fir
 - 手で取るバックアップは、曜日ごとのファイルを上書きしないよう別名にする: `sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`
 - 再起動の直後（1秒ほど）は接続できない。`curl` で確かめるときは少し待つ（`journalctl -u garden-app` の `Serving on` が出ていれば起動済み）
 - 停止のたびに `status=143` / `Failed with result 'exit-code'` が記録されるが、SIGTERM で終わったという意味で、異常ではない
+
+## 10. ログイン（パスキー）の入口: avahi・Caddy・443番
+
+**2026-10-28 に追加**。閲覧は今までどおり `http://<サーバーのIP>:5000`（誰にとっても閲覧専用）、登録・編集・削除は `https://<サーバーのホスト名>.local/` でパスキーを使ってログインした自分だけ、という2つの入口にする。アプリ側の仕組みはルート `CLAUDE.md` の「ログイン（パスキー）」、設計は [`../superpowers/specs/2026-10-28-owner-login-passkey-design.md`](../superpowers/specs/2026-10-28-owner-login-passkey-design.md)。
+
+```
+家族の端末 ──HTTP──▶ <サーバーのIP>:5000 ───────────▶ waitress（Web アプリ）  閲覧専用
+自分の端末 ──HTTPS─▶ <サーバーのホスト名>.local:443 ─▶ Caddy ─▶ 127.0.0.1:5000  パスキーでログイン → 編集
+Hermes ──────────────────────────────────────────▶ 127.0.0.1:5001（API、今までどおり）
+Hermes ──✕──▶ 5000 番・Caddy の 443 番（ufw のルール）
+```
+
+守っていること（崩さない）:
+
+- **Hermes を 443 番にも届かせない**（10.3）。443 番は Web 画面の入口そのもの
+- **sudo をパスワード無しにしない**（10.4）。非常口のコマンド（10.7）は `sudo` で `garden` として実行する。Hermes はログイン用のユーザーのユーザー systemd で動いているので、`NOPASSWD` を足す、sudo の記憶を端末ごとから変えると、Hermes が登録用 URL を作れてしまう
+- 名前は mDNS（`.local`）で、外部の名前サービス・自分のドメインの DNS・Let's Encrypt には頼らない
+
+### 10.1 avahi（導入済み。やり直すときの記録）
+
+サーバーの名前（`<サーバーのホスト名>.local`）を LAN に流す。サーバーのホスト名がそのまま `.local` の名前になる。
+
+```bash
+sudo -v
+sudo apt install -y avahi-daemon
+sudo cp --update=none /etc/avahi/avahi-daemon.conf /etc/avahi/avahi-daemon.conf.orig
+sudo sed -i \
+  -e 's/^#\?disable-user-service-publishing=.*/disable-user-service-publishing=yes/' \
+  -e 's/^#\?use-ipv6=.*/use-ipv6=no/' \
+  -e 's/^#\?publish-aaaa-on-ipv4=.*/publish-aaaa-on-ipv4=no/' \
+  /etc/avahi/avahi-daemon.conf
+sudo ufw allow from <LANの範囲> to any port 5353 proto udp comment 'mDNS (avahi)'
+sudo systemctl restart avahi-daemon
+grep -E '^(disable-user-service-publishing|use-ipv6|publish-aaaa-on-ipv4)=' /etc/avahi/avahi-daemon.conf
+```
+
+成功時の出力:
+
+```
+use-ipv6=no
+disable-user-service-publishing=yes
+publish-aaaa-on-ipv4=no
+```
+
+- `disable-user-service-publishing=yes`: 一般ユーザー（Hermes の実行ユーザー）が LAN に名前を流すのを禁止する
+- `use-ipv6=no`・`publish-aaaa-on-ipv4=no`: ufw は IPv4 の LAN だけ許可しているため
+- PC・iPhone・iPad から `<サーバーのホスト名>.local` が引けることを確かめる（PC なら `ping <サーバーのホスト名>.local`）。**iPad は「セキュリティ Wi-Fi」の SSID で `.local` を引けない**（サーバーの mDNS の答えが届かない）。iPad で編集するときは 5G の SSID につなぐ。閲覧は IP の HTTP で今までどおりできる
+
+### 10.2 Caddy のサイトと ufw の 443 番
+
+Caddy は Matrix 用に入れてある（[`hermes-local-chat.md`](hermes-local-chat.md)）。`/etc/caddy/Caddyfile` の末尾にサイトを足す（`admin off` などの先頭の設定と Matrix のサイトはそのまま）。Web アプリへは `127.0.0.1:5000` に転送する（アプリのポートは増やさない）:
+
+```bash
+sudo -v
+sudo cp -p /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak-owner-login
+sudo tee -a /etc/caddy/Caddyfile >/dev/null <<'EOF'
+
+https://<サーバーのホスト名>.local {
+	tls internal
+	reverse_proxy 127.0.0.1:5000
+}
+EOF
+caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile \
+  && sudo systemctl restart caddy \
+  && sudo ufw allow from <LANの範囲> to any port 443 proto tcp comment 'Web app HTTPS (Caddy)' \
+  && sudo ss -ltn 'sport = :443'
+```
+
+成功時の出力: `Valid configuration`（`caddy validate`）に続けて、`*:443`（または `[::]:443`）が `LISTEN` の行。設定の反映は `reload` ではなく `restart`（`admin off` のため）。
+
+- 証明書は Caddy の `tls internal`（Matrix と同じ自前の発行元）。初回の接続で発行されるので、最初の1回は数秒かかることがある
+- サイトはホストの名前（SNI）で選ばれる。先頭の `default_sni <サーバーのIP>` は Matrix のスマホ用で、このサイトには影響しない
+
+### 10.3 Hermes から 443 番を遮断する（`-o lo` 必須）
+
+手順 6 の 5000 番のルールと同じ場所（`-o lo -j ACCEPT` の直前）に、Hermes の実行ユーザー（`hermes`）から 443 番への接続を拒否するルールを足す。
+
+> **必ず `-o lo` を付ける**。手順 6 の 5000 番のルールは宛先を絞っていないが、443 番で同じ書き方をすると、Hermes のインターネットへの HTTPS（ChatGPT・OpenRouter・Web 検索）が全部止まる。`-o lo` を付ければ、自分のサーバー宛て（`127.0.0.1` も自分の LAN IP も `lo` を通る）だけが止まり、外への 443 番は通る。Matrix の 8448 番は止めない（Hermes は Matrix に `127.0.0.1:8008` で直接つないでいる）
+
+```bash
+sudo -v
+for f in /etc/ufw/before.rules /etc/ufw/before6.rules; do
+  case "$f" in *before6*) chain=ufw6-before-output ;; *) chain=ufw-before-output ;; esac
+  n=$(sudo grep -c -- "^-A $chain -o lo -j ACCEPT\$" "$f"); echo "$f lo=$n"
+  [ "$n" = 1 ] || { echo "中止: $f"; break; }
+  sudo grep -q -- "--dport 443 -m owner --uid-owner hermes" "$f" && { echo "足し済み: $f"; continue; }
+  sudo cp -p "$f" "$f.bak-owner-login"
+  sudo sed -i "/^-A $chain -o lo -j ACCEPT\$/i # Hermes(hermes) は自分のサーバーの 443 番（Web 画面の HTTPS の入口）に接続できない。-o lo で自ホスト宛てだけを止める（外への HTTPS は通す）。lo の ACCEPT より前に置くこと\n-A $chain -o lo -p tcp --dport 443 -m owner --uid-owner hermes -j REJECT --reject-with tcp-reset" "$f"
+done
+sudo ufw reload
+sudo grep -n -E 'uid-owner|-o lo -j ACCEPT' /etc/ufw/before.rules /etc/ufw/before6.rules
+sudo iptables -S ufw-before-output | head -4
+```
+
+成功時の出力: 各ファイルが `lo=1`。`grep` では `--uid-owner hermes` の2本（5000 番と 443 番）の行が、`-o lo -j ACCEPT` の行より小さい行番号に並ぶ。`iptables -S` の先頭付近にも `-o lo -p tcp -m tcp --dport 443 -m owner --uid-owner ... -j REJECT --reject-with tcp-reset` が `-o lo -j ACCEPT` より上にある。
+
+確認（Hermes の実行ユーザーで。`.local` の名前は自分のサーバーでは引けないことがあるので、`--resolve` で LAN の IP に固定する）:
+
+```bash
+sudo -u hermes curl -sS -m 5 -k https://127.0.0.1/ || true
+sudo -u hermes curl -sS -m 5 --resolve <サーバーのホスト名>.local:443:<サーバーのIP> https://<サーバーのホスト名>.local/ || true
+sudo -u hermes curl -sS -m 5 -o /dev/null -w '%{http_code}\n' -I https://example.com
+sudo -u hermes curl -sS -m 5 -H "Authorization: Bearer $T" http://127.0.0.1:5001/api/v1/health
+```
+
+成功時の出力: 1・2行目は `curl: (7) Failed to connect to ... port 443 ... Connection refused`（拒否）。3行目は `200`（外への HTTPS は通る。`301`・`302` でも可。**止まっていたら `-o lo` の付け忘れ**）。4行目は `{"ok": true, ...}`（API は今までどおり）。
+
+### 10.4 sudo の確認（読み取りだけ）
+
+非常口を自分だけのものにしている前提（パスワード無しで sudo できない）を確かめる。何も変更しない:
+
+```bash
+sudo -v
+sudo -l
+sudo grep -rnE 'NOPASSWD|timestamp_type|timestamp_timeout' /etc/sudoers /etc/sudoers.d/ || echo "該当なし"
+ls -l /etc/sudoers.d/
+setsid -w sudo -n true; echo "exit=$?"
+```
+
+成功時の出力:
+
+- `sudo -l` の権限の行に `NOPASSWD` が無い（`(ALL : ALL) ALL` など）
+- `grep` は `該当なし`（`NOPASSWD` も、sudo の記憶を端末ごとから変える `timestamp_type` も無い。Ubuntu の既定は端末（tty）ごと）。`/etc/sudoers.d/` にファイルがあれば中身を読んで、同じ意味の設定が無いことを確かめる
+- 最後は `sudo: a password is required` と `exit=1`（端末の無いプロセスは、自分が SSH で sudo した直後の記憶を使い回せない。Hermes のプロセスと同じ条件）
+
+`NOPASSWD` や `timestamp_type=global` が見つかったら、先へ進まずに外す。
+
+### 10.5 `.env`（`/opt/garden-app/.env`）
+
+`SECRET_KEY` が固定の値で入っていることを確かめ（値は画面に出さない）、無ければ作る。ログイン用の値を足し、`WEB_BASE_URL` を HTTPS に変える:
+
+```bash
+sudo -v
+sudo cp -p /opt/garden-app/.env /opt/garden-app/.env.bak-owner-login
+[ "$(sudo grep -c '^SECRET_KEY=.\+' /opt/garden-app/.env)" = 1 ] || echo "SECRET_KEY=$(openssl rand -hex 32)" | sudo -u garden tee -a /opt/garden-app/.env >/dev/null
+sudo sed -i '/^WEB_BASE_URL=/d' /opt/garden-app/.env
+sudo -u garden tee -a /opt/garden-app/.env >/dev/null <<'EOF'
+WEB_BASE_URL=https://<サーバーのホスト名>.local
+PASSKEY_RP_ID=<サーバーのホスト名>.local
+PASSKEY_ORIGIN=https://<サーバーのホスト名>.local
+OWNER_BASE_URL=https://<サーバーのホスト名>.local
+EOF
+sudo grep -c '^SECRET_KEY=.\+' /opt/garden-app/.env
+sudo grep -E '^(WEB_BASE_URL|PASSKEY_RP_ID|PASSKEY_ORIGIN|OWNER_BASE_URL)=' /opt/garden-app/.env
+sudo ls -l /opt/garden-app/.env
+sudo -u garden -H bash -c 'cd /opt/garden-app && ~/.local/bin/uv sync' && sudo systemctl restart garden-app
+```
+
+成功時の出力: `grep -c` が `1`、続く `grep` が上の4行、`ls -l` が `-rw------- 1 garden garden`。`SESSION_COOKIE_SECURE` は本番の既定が有効なので書かない（HTTP だけで使うときだけ `0`）。再起動の直後は1秒ほど接続できない。
+
+- `.env.bak-owner-login` には `SECRET_KEY`・トークンが入っている。確認が済んだら `sudo rm` する
+- `WEB_BASE_URL` が HTTPS になるので、API の応答の `web_url` や Hermes が Matrix の返事に付けるリンクが HTTPS の入口になり、ログイン済みならそのまま編集できる。iPad がセキュリティ Wi-Fi のときはリンクが開けない（5G の SSID にする）
+
+### 10.6 PC に Caddy の発行元の証明書を入れる
+
+iPhone・iPad は Matrix のときに発行元の証明書を入れてあるので、同じ証明書で足りる。PC（Windows）には、サーバーから `root.crt` を取り出して「現在のユーザーの信頼されたルート」に入れる。**入れる前に、サーバーと PC で SHA-256 の指紋が同じことを確かめる**（違うものを信頼させない）。
+
+サーバー（発行元は `/var/lib/caddy/.local/share/caddy/pki/authorities/local/`）:
+
+```bash
+sudo -v
+sudo openssl x509 -in /var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt -noout -fingerprint -sha256
+sudo cp /var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt ~/root.crt && sudo chown "$USER": ~/root.crt
+```
+
+PC に `root.crt` を持ってくる（`scp <user>@<サーバーのIP>:root.crt .`）。PC の PowerShell で:
+
+```powershell
+certutil -dump .\root.crt | Select-String -Pattern 'sha256'                         # サーバーの指紋と同じか（コロンの有無・大文字小文字は無視）
+Import-Certificate -FilePath .\root.crt -CertStoreLocation Cert:\CurrentUser\Root    # 同じときだけ。確認のダイアログが出たら「はい」
+```
+
+成功時の出力: 指紋が一致し、`Import-Certificate` が `Thumbprint`・`Subject`（Caddy の発行元の名前）の行を返す。Chrome・Edge を開き直し、`https://<サーバーのホスト名>.local/` を開いて警告が出なければよい。使い終わった `~/root.crt` はサーバーから消す。信頼を外すときは `Cert:\CurrentUser\Root` から該当の Thumbprint を `Remove-Item` する。
+
+### 10.7 パスキーを登録する（非常口と端末の追加）
+
+最初の1つ目は、サーバーで次のコマンドを実行して**登録用の URL**（1回限り・15分）を出す。ここがパスキーの非常口でもある（全部の端末をなくしたときも同じ）:
+
+```bash
+sudo -v
+sudo -u garden -H bash -c 'cd /opt/garden-app && ~/.local/bin/uv run flask --app app passkey-register-link'
+```
+
+成功時の出力: `https://<サーバーのホスト名>.local/auth/register/<トークン>` の形の URL と、有効期限の案内。URL は他人に見せない（使うか期限が切れれば無効）。`--base-url` で URL の先頭を変えられる（既定は `OWNER_BASE_URL`）。
+
+1. **PC**: 上の URL をブラウザで開き、Windows Hello（顔認証）で登録する。そのままログイン済みになる
+2. **iPhone**: Safari で `https://<サーバーのホスト名>.local/` を開き、ログインしてから設定画面（`/settings/`）の「この端末のパスキーを追加」で Face ID で登録する（ログイン中の人だけが追加できる。最初の1つ目と同じく、先に PC で登録しておく）
+3. **iPad**: iPhone で登録したパスキーは iCloud キーチェーンで同期されるので、登録せずにログインできる（2026-10-28 の試作で確認）。セキュリティ Wi-Fi では `.local` を引けないので 5G の SSID につなぐ
+4. 設定画面の「パスキー」の欄で、名前の変更・削除ができる。端末をなくしたときは、その端末のパスキーを消せばその端末のログインはすぐ切れる。全部の端末をなくしたときは、このコマンドで登録し直したあと古いパスキーを全部消す
+
+### 10.8 動作確認
+
+```bash
+curl -sS -m 5 -o /dev/null -w '%{http_code}\n' http://<サーバーのIP>:5000/                                   # → 200（家族の閲覧は今までどおり）
+curl -sS -m 5 -k -o /dev/null -w '%{http_code}\n' --resolve <サーバーのホスト名>.local:443:127.0.0.1 https://<サーバーのホスト名>.local/   # → 200
+curl -sS -m 5 -o /dev/null -w '%{http_code} %{redirect_url}\n' http://<サーバーのIP>:5000/crops/new           # → 302 と /auth/login への URL（ログインしていない人は編集画面に入れない）
+curl -sS -m 5 -o /dev/null -w '%{http_code}\n' -X POST http://<サーバーのIP>:5000/crops/1/delete             # → 302 か 401 か 403（拒否される。データは変わらない）
+```
+
+さらに、ログイン済みの PC などで次を確かめる:
+
+- `https://<サーバーのホスト名>.local/` でパスキーでログインでき、登録・編集・削除ができる。ログアウトするとボタンが消える
+- `http://<サーバーのIP>:5000/` では、ログイン中でも編集のボタンが出ない（HTTP にはログインの Cookie が届かない）。ナビの「ログイン」を押すと HTTPS の URL に移る
+- 家族の端末（証明書を入れていない）で `http://<サーバーのIP>:5000/` の閲覧が今までどおりできる
+- 10.3 の確認（Hermes から 443 番に届かない、外への HTTPS と API は通る）
+
+### 10.9 Hermes の記憶に古い URL が残っていないか
+
+Hermes が以前の返事で覚えた `http://<サーバーのIP>:5000` のリンクを、これからも返すことがある（その URL は閲覧専用）。残っているか調べ、あれば Hermes に「編集は `https://<サーバーのホスト名>.local/`、`http://<サーバーのIP>:5000` は閲覧専用」と伝えて直させる:
+
+```bash
+grep -rIn '<サーバーのIP>:5000' ~/.hermes 2>/dev/null | head
+```
+
+成功時の出力: 何も出ない（あっても、閲覧用の説明として意図して書いた行だけ）。
+
+### 取りやめるとき
+
+`Caddyfile.bak-owner-login`・`.env.bak-owner-login`・`before.rules.bak-owner-login`・`before6.rules.bak-owner-login` で戻し、`sudo ufw delete allow from <LANの範囲> to any port 443 proto tcp`、`sudo ufw reload`、`sudo systemctl restart caddy garden-app`。アプリを手順 9 の要領で以前のブランチに戻すと、編集の入口はまた認証なしになる（`passkeys` 表は残っても害はない）。
