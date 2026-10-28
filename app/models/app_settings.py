@@ -7,6 +7,8 @@ class AppSettings:
 
     使用キー:
         region: 地域・栽培環境（AIメモ下書きの時期の基準）
+        passkey_registration_token_hash: パスキー登録用トークンの SHA-256（Passkey が使う）
+        passkey_registration_token_expires: 同トークンの期限（JST、ISO 形式）
     """
 
     @staticmethod

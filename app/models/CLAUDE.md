@@ -27,7 +27,8 @@
 | conversation_images | 会話の写真（縮小版のみ） | id |
 | conversation_links | 会話×Hermes が作った・変えた・見たデータ（作り直し可能） | id |
 | supplements | 補足情報（作物/品種/場所/日記/タスク/収穫/料理に添付） | id |
-| app_settings | アプリ設定（キーバリュー形式。`region` = 地域・栽培環境） | key |
+| app_settings | アプリ設定（キーバリュー形式。`region` = 地域・栽培環境、`passkey_registration_token_hash` / `passkey_registration_token_expires` = パスキー登録用トークン） | key |
+| passkeys | パスキー（WebAuthn 資格情報。credential_id・公開鍵は base64url、署名カウンタ、名前） | id |
 
 ### ビュー
 
@@ -314,7 +315,7 @@ Hermes との会話（`app/models/conversation.py`、マイグレーション 02
 #### app_settings
 | カラム | 型 | 説明 |
 |--------|-----|------|
-| key | TEXT | 主キー（設定名）。現在の使用キー: `region`（AIメモ下書きの地域・栽培環境） |
+| key | TEXT | 主キー（設定名）。現在の使用キー: `region`（AIメモ下書きの地域・栽培環境）、`passkey_registration_token_hash` / `passkey_registration_token_expires`（パスキー登録用ワンタイムトークンの SHA-256 と期限。`Passkey.issue_registration_token()` が書く） |
 | value | TEXT | 設定値 |
 | updated_at | TIMESTAMP | 更新日時 |
 
