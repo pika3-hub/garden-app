@@ -381,7 +381,7 @@ sudo ip6tables -S ufw6-before-output | grep -E 'uid-owner|-o lo'
 
 （TCP のルールだけを先に足していた場合も、もう一度実行すれば UDP のルールだけが足される。バックアップは最初の1回だけ取る）
 
-成功時の出力: 各ファイルが `lo=1`。`grep` では各ファイルで `--uid-owner hermes` の3本（5000 番、443 番の tcp、443 番の udp）の行が、`-o lo -j ACCEPT` の行より小さい行番号に並ぶ。`iptables -S` と `ip6tables -S` では、次の順に並ぶ（`--uid-owner` の後ろはユーザー名ではなく番号（`<UID>`）。IPv6 は `ufw6-before-output` と `icmp6-port-unreachable`）:
+成功時の出力: 各ファイルが `lo=1`。`grep` では各ファイルで `--uid-owner hermes` の3本（5000 番、443 番の tcp、443 番の udp）の行が、`-o lo -j ACCEPT` の行より小さい行番号に並ぶ。`iptables -S` と `ip6tables -S` では、次の順に並ぶ（`--uid-owner` の後ろはユーザー名ではなく番号（`<UID>`）。IPv6 は `ufw6-before-output` と `icmp6-port-unreachable`。[`hermes-local-chat.md`](hermes-local-chat.md) の tuwunel の `NEW` を拒否する行も一緒に出る）:
 
 ```
 -A ufw-before-output -p tcp -m tcp --dport 5000 -m owner --uid-owner <UID> -j REJECT --reject-with tcp-reset
