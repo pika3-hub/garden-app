@@ -22,8 +22,8 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 | 部品 | 場所・設定 | メモ |
 |---|---|---|
 | Tuwunel | apt（`https://apt.f.dog`）、`tuwunel.service`、ユーザー `tuwunel`、設定 `/etc/tuwunel/tuwunel.toml`（root:tuwunel 640）、DB `/var/lib/tuwunel` | 待ち受け 127.0.0.1:8008 だけ。サーバー名 `garden.home.arpa`（変更不可）。フェデレーションなし、新規登録は閉じている |
-| Caddy | apt（cloudsmith の公式リポジトリ）、`caddy.service`、`/etc/caddy/Caddyfile`、発行元 `/var/lib/caddy/.local/share/caddy/pki/authorities/local/` | `*:8448` で待ち受ける（TCP と HTTP/3 の UDP）。LAN 以外を止めているのは ufw。**管理用 API を止めている**（下記） |
-| ufw | `8448/tcp ALLOW IN <LANの範囲>` | 8008 は開けない。既存の 22・5000 と `<user>` → 5000 の遮断はそのまま。**tuwunel ユーザーからの新しい接続をすべて拒否**（下記） |
+| Caddy | apt（cloudsmith の公式リポジトリ）、`caddy.service`、`/etc/caddy/Caddyfile`、発行元 `/var/lib/caddy/.local/share/caddy/pki/authorities/local/` | `*:8448`（Matrix）と `*:443`（Web アプリのサイト `https://<サーバーのホスト名>.local`、2026-10-28 追加。`tls internal`、`127.0.0.1:5000` へ転送）で待ち受ける（TCP と HTTP/3 の UDP）。LAN 以外を止めているのは ufw。**管理用 API を止めている**（下記） |
+| ufw | `8448/tcp ALLOW IN <LANの範囲>` | 8008 は開けない。既存の 22・5000 と `<user>` → 5000 の遮断はそのまま（2026-10-28 から `<user>` → 自ホストの 443 番（TCP・UDP）も遮断）。**tuwunel ユーザーからの新しい接続をすべて拒否**（下記） |
 | アカウント | `@<user>:garden.home.arpa`（管理者）、`@hermes:garden.home.arpa`（Bot） | 先に登録したほうが管理者になる |
 | Hermes | `~/.hermes/.env` の `MATRIX_*`、部品は `hermes pm install --extra matrix` | Telegram の設定は 2026-10-23 に外した。E2EE の鍵は `~/.hermes/platforms/matrix/store/crypto.db` |
 | 部屋 | 「Hermes（暗号化）」（ふだん使い、E2EE あり）、「Hermes」（予備、E2EE なし） | どちらも @hermes との DM。DM は `MATRIX_ALLOWED_ROOMS` の対象外（下記） |
@@ -32,6 +32,7 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 ### 守っていること
 
 - **Caddy の管理用 API を止める（`admin off`）**。既定の `localhost:2019` はサーバー内のどのユーザーからも設定を書き換えられ、Hermes の実行ユーザーが「5000番へ転送する」設定を足すと、ufw の `<user>` → 5000 の遮断（[`migration-to-ubuntu.md`](migration-to-ubuntu.md) の 6章）をすり抜けられる。代わりに設定の反映は `systemctl reload` ではなく `restart`
+- **Caddy に Web アプリのサイトが増えた**（2026-10-28）。`https://<サーバーのホスト名>.local`（`.local` は avahi の名前）を `127.0.0.1:5000` へ転送する、パスキーでログインして編集する入口。Matrix のサイトとは別で、`admin off` も `default_sni <サーバーのIP>`（Matrix のスマホ用）もそのまま。Caddy を経由すると Hermes が Web 画面に届く道になるので、`before.rules`／`before6.rules` で Hermes の実行ユーザーから自ホスト宛ての 443 番を TCP と UDP（Caddy は HTTP/3 を UDP の 443 番で受けるので、TCP だけでは HTTP/3 で届いてしまう）の両方で拒否している（`-o lo` 付き。付けないと外への HTTPS が全部止まる）。Matrix の 8448 番は止めない。手順は [`migration-to-ubuntu.md`](migration-to-ubuntu.md) の 10章
 - Tuwunel は他の Matrix サーバーに鍵を問い合わせない（`trusted_servers = []`。既定は matrix.org）
 - 設定ファイルは `<user>` から読めない（登録用トークンを一時的に書くため）
 - **Tuwunel は自分から接続しない（ufw）**。Hermes は Tuwunel のトークンを持つので、URL プレビュー（`preview_url`）や通知の送り先（pusher）を使えば、tuwunel ユーザーに代わりに `127.0.0.1:5000` へ接続させられるおそれがある（`<user>` → 5000 の遮断は tuwunel には効かない）。フェデレーションをしない Tuwunel には外への接続がいらないので、`before.rules`／`before6.rules` で tuwunel の `NEW` の接続を拒否している（スマホ・Hermes・Caddy からの接続への返事は止まらない）

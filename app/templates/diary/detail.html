@@ -87,6 +87,7 @@
             </div>
         </div>
 
+        {% if is_owner() %}
         <div class="btn-group-action">
             <a href="{{ url_for('diary.edit', diary_id=entry.id) }}" class="btn btn-primary">
                 <i class="bi bi-pencil"></i> 日記を編集
@@ -97,6 +98,7 @@
                 </button>
             </form>
         </div>
+        {% endif %}
 
         {% set supplement_entity_type = 'diary' %}
         {% set supplement_entity_id = entry.id %}

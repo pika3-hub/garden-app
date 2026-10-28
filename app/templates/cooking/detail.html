@@ -66,6 +66,7 @@
             </div>
         </div>
 
+        {% if is_owner() %}
         <div class="btn-group-action">
             <a href="{{ url_for('cooking.edit', cooking_id=item.id) }}" class="btn btn-primary">
                 <i class="bi bi-pencil"></i> 料理を編集
@@ -76,6 +77,7 @@
                 </button>
             </form>
         </div>
+        {% endif %}
 
         {% set supplement_entity_type = 'cooking' %}
         {% set supplement_entity_id = item.id %}

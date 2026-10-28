@@ -72,6 +72,7 @@
 </div>
 
 <!-- アップロードエリア -->
+{% if is_owner() %}
 <div class="card mb-4">
     <div class="card-body photo-pool-upload-area">
         <form method="POST" action="{{ url_for('photo_pool.upload') }}" enctype="multipart/form-data">
@@ -84,6 +85,7 @@
         </form>
     </div>
 </div>
+{% endif %}
 
 <!-- フィルター -->
 {% if photos %}
@@ -96,6 +98,7 @@
 </div>
 
 <!-- 一括操作バー -->
+{% if is_owner() %}
 <div id="bulk-action-bar" class="bulk-action-bar" style="display:none;">
     <span>選択: <strong id="bulk-count">0</strong>枚</span>
     <button type="button" class="btn btn-sm btn-outline-secondary" id="bulk-select-visible">
@@ -118,6 +121,7 @@
     </form>
 </div>
 {% endif %}
+{% endif %}
 
 <!-- 一覧 -->
 {% if photos %}
@@ -125,9 +129,11 @@
     {% for photo in photos %}
     <div class="photo-item" data-usage-count="{{ photo.usage_count }}">
         <div class="card photo-pool-card h-100">
+            {% if is_owner() %}
             <div class="photo-select-overlay">
                 <input type="checkbox" class="form-check-input photo-select-check" data-photo-id="{{ photo.id }}" aria-label="選択">
             </div>
+            {% endif %}
             <img src="{{ url_for('static', filename='uploads/' + photo.image_path | thumb_path) }}"
                  onerror="this.onerror=null;this.src='{{ url_for('static', filename='uploads/' + photo.image_path) }}';"
                  class="photo-thumb lightbox-target"
@@ -165,6 +171,7 @@
                 </details>
                 {% endif %}
 
+                {% if is_owner() %}
                 <button type="button"
                         class="btn btn-success btn-sm w-100 mb-2 js-open-entity-modal"
                         data-photo-id="{{ photo.id }}">
@@ -181,10 +188,12 @@
                         </button>
                     </form>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
+    {% if is_owner() %}
     <!-- メモ編集モーダル -->
     <div class="modal fade" id="editModal{{ photo.id }}" tabindex="-1">
         <div class="modal-dialog">
@@ -205,14 +214,20 @@
             </div>
         </div>
     </div>
+    {% endif %}
     {% endfor %}
 </div>
 {% else %}
 <div class="alert alert-info">
+    {% if is_owner() %}
     <i class="bi bi-info-circle"></i> まだ写真がプールにありません。上のフォームからアップロードしてください。
+    {% else %}
+    <i class="bi bi-info-circle"></i> まだ写真がプールにありません。
+    {% endif %}
 </div>
 {% endif %}
 
+{% if is_owner() %}
 <!-- 登録先エンティティ選択モーダル -->
 <div class="modal fade" id="entitySelectModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -334,6 +349,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}

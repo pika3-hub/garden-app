@@ -9,9 +9,11 @@
         <p class="text-muted mb-0">畑やプランターなどの栽培場所を登録し、見取り図で作物の配置を管理できます。</p>
     </div>
     <div class="col-md-6 text-end d-flex justify-content-end align-items-center">
+        {% if is_owner() %}
         <a href="{{ url_for('locations.new') }}" class="btn btn-info text-white">
             <i class="bi bi-plus-circle"></i> 場所を追加
         </a>
+        {% endif %}
     </div>
 </div>
 
@@ -87,7 +89,11 @@
 {% else %}
 <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>
+    {% if is_owner() %}
     まだ場所が登録されていません。<a href="{{ url_for('locations.new') }}" class="alert-link">新規登録</a>から追加してください。
+    {% else %}
+    まだ場所が登録されていません。
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

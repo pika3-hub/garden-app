@@ -4,6 +4,8 @@
 
 | 発見日 | 箇所 | 内容 | 影響 | 対応案 |
 |---|---|---|---|---|
+| 2026-10-28 | `app/static/js/passkey.js`（設定画面の「この端末のパスキーを追加」） | 登録済みの端末（Windows の Edge）で押すと、ブラウザの「パスキーの作成」の画面が出るが、閉じても `navigator.credentials.create` の結果がアプリに返らず、画面に何も表示されない（登録の準備 `register/options` までは届き、`register/verify` は来ない。二重登録はされない）。同じ処理の新しい端末の登録・非常口の登録は通る | 表示が無いので、押したのに何も起きないように見える | Edge の開発者ツールのコンソールで、閉じたときに Promise が拒否されるか・待ったままかを確かめる。待ったままなら `AbortController` で期限を切って案内を出す |
+| 2026-10-28 | パスキーでのログイン（`app/auth.py`・`app/routes/auth_routes.py` ほか）のタスクレビューで見送った小さな点 | 文字列でない値の JSON でまれに 500 にならない程度の堅牢化、テストの追加（登録用チャレンジの使い切り、オーナー側の画面の確認を全種類に）、`csrf.js` が `form.submit()`（読み込み後に作ったフォーム）と `formmethod="post"` に付けない、`_on_owner_host` が既定のポートを正規化しない、開発環境では `.env` に `SECRET_KEY` を置かないと再起動のたびにログインが外れる、VS Code の内蔵ブラウザ（iframe）では Cookie の扱いで CSRF の照合が合わず編集できない | どれも今の使い方では起きないか、表示・開発の手間だけ | `csrf.js` の制約は `app/routes/CLAUDE.md` に記載済み。必要になったら個別に対応 |
 | 2026-10-27 | `advice_relations`（`app/models/advice.py`、`app/api/advices.py`） | `PRAGMA foreign_keys` が無効で CASCADE が動かないため、作物・植え付けなどを消すとアドバイスの関連行が孤立して残る（品種の削除だけはトリガーで付け替える）。API の読み取りは削除済みの対象の id を返し、`display_name` は null になる。他の多対多の関連テーブルも同じ | 画面には出ない。API の利用側が存在しない id を見ることがある | 対象の削除時に関連行を消す（モデルの `delete` かトリガー）、または外部キーを有効にする |
 | 2026-10-26 | `app/utils/conversation_links.py`（`_tokenize`） | 引用符の閉じ忘れなどで shlex が失敗すると空白で分割し直すため、改行で区切った複数の curl が1つにまとまる。`--json` の値を飛ばさないので、本文に API の URL があると拾うことがある | 壊れたコマンドでまれに結び付けを取りこぼす・誤る（例外は出ない） | 分割し直すときも改行で区切る、`--json` を値を取る引数に加える |
 | 2026-10-26 | `app/api/conversations.py`（`POST /conversations`） | 単独のサロゲート（`"\ud800"`）を含む文字列で SQLite が失敗して 500。縮小版を保存した後に `add_image` で失敗するとファイルが残る。`parent_session_id` の形を検査しない | 送り手は同期スクリプトだけなので、まず起きない | 文字列を `encode('utf-8')` で検査して 422、失敗時にファイルを消す、`parent_session_id` にも `_ID_RE` |

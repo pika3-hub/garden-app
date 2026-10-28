@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}パスキーの登録 - 家庭菜園管理アプリ{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 col-lg-5 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="h4 card-title"><i class="bi bi-key"></i> パスキーの登録</h1>
+                {% if valid %}
+                <p>この端末のパスキー（顔認証など）を登録します。登録すると、そのままログインした状態になります。この URL は1回だけ使えます。</p>
+                <div class="alert d-none" role="alert" data-passkey-message></div>
+                <div class="mb-3">
+                    <label for="passkey-name" class="form-label">端末名</label>
+                    <input type="text" id="passkey-name" class="form-control" maxlength="50"
+                           placeholder="例: PC、iPhone" data-passkey-name>
+                </div>
+                <div class="d-grid">
+                    <button type="button" class="btn btn-success btn-lg" data-passkey-action="register">
+                        <i class="bi bi-plus-circle"></i> パスキーを登録
+                    </button>
+                </div>
+                {% else %}
+                <div class="alert alert-warning mb-0" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> {{ message }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if valid %}
+<script src="{{ url_for('static', filename='js/passkey.js') }}"></script>
+{% endif %}
+{% endblock %}

@@ -4,7 +4,7 @@ import random
 import secrets
 import click
 from flask import Flask, render_template, url_for
-from app.config import config
+from app.config import config, DEV_SECRET_KEY
 from app.database import init_db, get_db
 from app.utils.markdown_render import render_markdown
 from app.models.conversation import Conversation, KIND_LABELS
@@ -58,12 +58,16 @@ def create_app(config_name='default'):
     # 設定読み込み
     app.config.from_object(config[config_name])
 
-    # 本番設定は SECRET_KEY を .env から読む。未設定だと flash() が 500 になるため、
-    # 起動ごとのランダム値で補う（セッションは flash 用のみ。再起動で未表示の通知が消えるだけ）
-    if not app.config.get('SECRET_KEY'):
+    # SECRET_KEY は .env から読む。セッションには持ち主のログイン（owner_passkey_id）と
+    # CSRF トークンが入るので、未設定のときや公開されている開発用の既定値のままのときは
+    # （知られた鍵だとログインのセッションを偽造できる）起動ごとのランダム値で補う。
+    # その場合は再起動のたびにログインが外れる（テストでは既定値のままでよい）
+    secret_key = app.config.get('SECRET_KEY')
+    if not secret_key or (secret_key == DEV_SECRET_KEY and not app.config.get('TESTING')):
         app.config['SECRET_KEY'] = secrets.token_hex(32)
         logging.getLogger(__name__).warning(
-            'SECRET_KEY が未設定のため、起動ごとのランダム値を使います')
+            'SECRET_KEY が未設定か開発用の既定値のため、起動ごとのランダム値を使います。'
+            '再起動のたびにログインが外れます。.env に SECRET_KEY を設定してください')
 
     # データベース初期化
     init_db(app)
@@ -77,12 +81,16 @@ def create_app(config_name='default'):
     app.jinja_env.globals['hermes_conversations'] = _hermes_conversations
     app.jinja_env.globals['hermes_advice'] = _hermes_advice
 
+    # 持ち主のログイン・既定で拒否・CSRF（どのルートよりも先に before_request を登録する）
+    from app.auth import init_auth
+    init_auth(app)
+
     # ブループリント登録
     from app.routes import (
         crop_routes, variety_routes, location_routes, diary_routes,
         harvest_routes, calendar_routes, task_routes, planting_routes,
         supplement_routes, photo_pool_routes, cooking_routes, settings_routes,
-        photo_sort_routes, conversation_routes, advice_routes
+        photo_sort_routes, conversation_routes, advice_routes, auth_routes
     )
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(variety_routes.bp)
@@ -99,6 +107,7 @@ def create_app(config_name='default'):
     app.register_blueprint(settings_routes.bp)
     app.register_blueprint(conversation_routes.bp)
     app.register_blueprint(advice_routes.bp)
+    app.register_blueprint(auth_routes.bp)
 
     # AIメモ下書きの request_id 等を INFO でサーバーログへ出す（Flask の 'app' ロガーのハンドラーへ伝播）
     app.logger  # 既定ハンドラーを生成
@@ -409,6 +418,17 @@ def create_app(config_name='default'):
         ids = Conversation.all_ids()
         total = sum(Conversation.relink(i) for i in ids)
         click.echo(f'{len(ids)}件の会話から結び付けを{total}件作り直しました')
+
+    @app.cli.command('passkey-register-link')
+    @click.option('--base-url', default=None,
+                  help='URL の先頭（既定は .env の OWNER_BASE_URL）')
+    def passkey_register_link(base_url):
+        """ログインしていなくてもパスキーを1つ登録できる URL を出す（非常口。15分・1回限り）"""
+        from app.models.passkey import Passkey
+        base = (base_url or app.config['OWNER_BASE_URL']).rstrip('/')
+        token = Passkey.issue_registration_token()
+        click.echo(f'{base}/auth/register/{token}')
+        click.echo('15分以内に1回だけ使えます（出し直すと前の URL は使えなくなります）')
 
     return app
 

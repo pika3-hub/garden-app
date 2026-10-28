@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app.models.app_settings import AppSettings
 from app.models.crop import Crop
+from app.models.passkey import Passkey
 from app.utils.ai_notes import AiNotesError, NO_API_KEY_MESSAGE, generate_notes, is_available
 
 bp = Blueprint('settings', __name__, url_prefix='/settings')
@@ -12,7 +13,7 @@ REGION_MAX_LENGTH = 500
 def index():
     """設定画面"""
     return render_template('settings/index.html', region=AppSettings.get('region', ''),
-                           region_max_length=REGION_MAX_LENGTH)
+                           region_max_length=REGION_MAX_LENGTH, passkeys=Passkey.get_all())
 
 
 @bp.route('/', methods=['POST'])
@@ -22,7 +23,8 @@ def update():
     if len(region) > REGION_MAX_LENGTH:
         flash(f'地域・栽培環境は{REGION_MAX_LENGTH}文字以内で入力してください', 'danger')
         return render_template('settings/index.html', region=region,
-                               region_max_length=REGION_MAX_LENGTH), 400
+                               region_max_length=REGION_MAX_LENGTH,
+                               passkeys=Passkey.get_all()), 400
     AppSettings.set('region', region)
     flash('設定を保存しました', 'success')
     return redirect(url_for('settings.index'))
