@@ -354,7 +354,9 @@ caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile \
 
 ### 10.3 Hermes から 443 番を遮断する（`-o lo` 必須）
 
-手順 6 の 5000 番のルールと同じ場所（`-o lo -j ACCEPT` の直前）に、Hermes の実行ユーザー（`hermes`）から 443 番への接続を拒否するルールを足す。
+手順 6 の 5000 番のルールと同じ場所（`-o lo -j ACCEPT` の直前）に、Hermes の実行ユーザー（`hermes`）から 443 番への接続を拒否するルールを TCP と UDP の2本足す。手順 6 と同じく、Hermes はログイン用のユーザーのユーザー systemd サービスで動いているので、下の `hermes` はそのユーザー名に読み替える。
+
+> **UDP も止める**。Caddy は既定で HTTP/3（QUIC、UDP の 443 番）でも待ち受ける（[`hermes-local-chat.md`](hermes-local-chat.md)）。ループバックの UDP は `-o lo -j ACCEPT` で通るので、TCP だけを止めると Hermes は HTTP/3 の使えるクライアントで Web 画面に届いてしまう。
 
 > **必ず `-o lo` を付ける**。手順 6 の 5000 番のルールは宛先を絞っていないが、443 番で同じ書き方をすると、Hermes のインターネットへの HTTPS（ChatGPT・OpenRouter・Web 検索）が全部止まる。`-o lo` を付ければ、自分のサーバー宛て（`127.0.0.1` も自分の LAN IP も `lo` を通る）だけが止まり、外への 443 番は通る。Matrix の 8448 番は止めない（Hermes は Matrix に `127.0.0.1:8008` で直接つないでいる）
 
@@ -364,16 +366,31 @@ for f in /etc/ufw/before.rules /etc/ufw/before6.rules; do
   case "$f" in *before6*) chain=ufw6-before-output ;; *) chain=ufw-before-output ;; esac
   n=$(sudo grep -c -- "^-A $chain -o lo -j ACCEPT\$" "$f"); echo "$f lo=$n"
   [ "$n" = 1 ] || { echo "中止: $f"; break; }
-  sudo grep -q -- "--dport 443 -m owner --uid-owner hermes" "$f" && { echo "足し済み: $f"; continue; }
-  sudo cp -p "$f" "$f.bak-owner-login"
-  sudo sed -i "/^-A $chain -o lo -j ACCEPT\$/i # Hermes(hermes) は自分のサーバーの 443 番（Web 画面の HTTPS の入口）に接続できない。-o lo で自ホスト宛てだけを止める（外への HTTPS は通す）。lo の ACCEPT より前に置くこと\n-A $chain -o lo -p tcp --dport 443 -m owner --uid-owner hermes -j REJECT --reject-with tcp-reset" "$f"
+  sudo test -e "$f.bak-owner-login" || sudo cp -p "$f" "$f.bak-owner-login"
+  for proto in tcp udp; do
+    sudo grep -q -- "^-A $chain -o lo -p $proto --dport 443 -m owner --uid-owner hermes " "$f" && { echo "足し済み: $f $proto"; continue; }
+    case "$proto" in tcp) reject=' --reject-with tcp-reset' ;; *) reject='' ;; esac
+    sudo sed -i "/^-A $chain -o lo -j ACCEPT\$/i # Hermes(hermes) は自分のサーバーの 443 番（Web 画面の HTTPS の入口。udp は HTTP/3）に接続できない。-o lo で自ホスト宛てだけを止める（外への HTTPS は通す）。lo の ACCEPT より前に置くこと\n-A $chain -o lo -p $proto --dport 443 -m owner --uid-owner hermes -j REJECT$reject" "$f"
+  done
 done
 sudo ufw reload
 sudo grep -n -E 'uid-owner|-o lo -j ACCEPT' /etc/ufw/before.rules /etc/ufw/before6.rules
-sudo iptables -S ufw-before-output | head -4
+sudo iptables -S ufw-before-output | grep -E 'uid-owner|-o lo'
+sudo ip6tables -S ufw6-before-output | grep -E 'uid-owner|-o lo'
 ```
 
-成功時の出力: 各ファイルが `lo=1`。`grep` では `--uid-owner hermes` の2本（5000 番と 443 番）の行が、`-o lo -j ACCEPT` の行より小さい行番号に並ぶ。`iptables -S` の先頭付近にも `-o lo -p tcp -m tcp --dport 443 -m owner --uid-owner ... -j REJECT --reject-with tcp-reset` が `-o lo -j ACCEPT` より上にある。
+（TCP のルールだけを先に足していた場合も、もう一度実行すれば UDP のルールだけが足される。バックアップは最初の1回だけ取る）
+
+成功時の出力: 各ファイルが `lo=1`。`grep` では各ファイルで `--uid-owner hermes` の3本（5000 番、443 番の tcp、443 番の udp）の行が、`-o lo -j ACCEPT` の行より小さい行番号に並ぶ。`iptables -S` と `ip6tables -S` では、次の順に並ぶ（`--uid-owner` の後ろはユーザー名ではなく番号（`<UID>`）。IPv6 は `ufw6-before-output` と `icmp6-port-unreachable`）:
+
+```
+-A ufw-before-output -p tcp -m tcp --dport 5000 -m owner --uid-owner <UID> -j REJECT --reject-with tcp-reset
+-A ufw-before-output -o lo -p tcp -m tcp --dport 443 -m owner --uid-owner <UID> -j REJECT --reject-with tcp-reset
+-A ufw-before-output -o lo -p udp -m udp --dport 443 -m owner --uid-owner <UID> -j REJECT --reject-with icmp-port-unreachable
+-A ufw-before-output -o lo -j ACCEPT
+```
+
+UDP（HTTP/3）のルールは、サーバーに HTTP/3 の使えるクライアントが無い（Ubuntu の `curl` は HTTP/3 に非対応）ので接続しての確認はできない。上の一覧に `-o lo -p udp ... --dport 443` の行が `-o lo -j ACCEPT` より上にあることを確認とする。
 
 確認（Hermes の実行ユーザーで。`.local` の名前は自分のサーバーでは引けないことがあるので、`--resolve` で LAN の IP に固定する）:
 
@@ -471,11 +488,23 @@ sudo -u garden -H bash -c 'cd /opt/garden-app && ~/.local/bin/uv run flask --app
 
 ### 10.8 動作確認
 
+ログイン用のユーザーは Hermes の実行ユーザーと同じなので（手順 6）、サーバーでそのまま `curl` すると 5000 番・443 番は遮断のルールで拒否される。`sudo`（root で実行する。遮断のルールは `hermes` のユーザーにだけ当たる）を付けて確かめる:
+
 ```bash
-curl -sS -m 5 -o /dev/null -w '%{http_code}\n' http://<サーバーのIP>:5000/                                   # → 200（家族の閲覧は今までどおり）
-curl -sS -m 5 -k -o /dev/null -w '%{http_code}\n' --resolve <サーバーのホスト名>.local:443:127.0.0.1 https://<サーバーのホスト名>.local/   # → 200
-curl -sS -m 5 -o /dev/null -w '%{http_code} %{redirect_url}\n' http://<サーバーのIP>:5000/crops/new           # → 302 と /auth/login への URL（ログインしていない人は編集画面に入れない）
-curl -sS -m 5 -o /dev/null -w '%{http_code}\n' -X POST http://<サーバーのIP>:5000/crops/1/delete             # → 302 か 401 か 403（拒否される。データは変わらない）
+sudo -v
+sudo curl -sS -m 5 -o /dev/null -w '%{http_code}\n' http://<サーバーのIP>:5000/                                   # → 200（家族の閲覧は今までどおり）
+sudo curl -sS -m 5 -k -o /dev/null -w '%{http_code}\n' --resolve <サーバーのホスト名>.local:443:127.0.0.1 https://<サーバーのホスト名>.local/   # → 200
+sudo curl -sS -m 5 -o /dev/null -w '%{http_code} %{redirect_url}\n' http://<サーバーのIP>:5000/crops/new           # → 302 と /auth/login への URL（ログインしていない人は編集画面に入れない）
+sudo curl -sS -m 5 -o /dev/null -w '%{http_code}\n' -X POST http://<サーバーのIP>:5000/crops/1/delete             # → 302 か 401 か 403（拒否される。データは変わらない）
+```
+
+成功時の出力: 各行の `#` の後ろのとおり（1行目 `200`、2行目 `200`、3行目 `302 http://.../auth/login?next=...`、4行目 `302`・`401`・`403` のどれか）。
+
+PC からなら遮断のルールに当たらないので、PowerShell の `curl.exe` で同じことを確かめられる（10.6 で証明書を入れた後なら `-k` はいらない。`.local` を引けない端末でも `--resolve` で IP に固定できる）:
+
+```powershell
+curl.exe -sS -m 5 -o NUL -w '%{http_code}\n' http://<サーバーのIP>:5000/                                                                      # → 200
+curl.exe -sS -m 5 -o NUL -w '%{http_code}\n' --resolve <サーバーのホスト名>.local:443:<サーバーのIP> https://<サーバーのホスト名>.local/   # → 200
 ```
 
 さらに、ログイン済みの PC などで次を確かめる:
@@ -497,4 +526,23 @@ grep -rIn '<サーバーのIP>:5000' ~/.hermes 2>/dev/null | head
 
 ### 取りやめるとき
 
-`Caddyfile.bak-owner-login`・`.env.bak-owner-login`・`before.rules.bak-owner-login`・`before6.rules.bak-owner-login` で戻し、`sudo ufw delete allow from <LANの範囲> to any port 443 proto tcp`、`sudo ufw reload`、`sudo systemctl restart caddy garden-app`。アプリを手順 9 の要領で以前のブランチに戻すと、編集の入口はまた認証なしになる（`passkeys` 表は残っても害はない）。
+`Caddyfile.bak-owner-login`・`.env.bak-owner-login`・`before.rules.bak-owner-login`・`before6.rules.bak-owner-login` で戻し、443 番の許可を消して反映する:
+
+```bash
+sudo -v
+sudo cp -p /etc/caddy/Caddyfile.bak-owner-login /etc/caddy/Caddyfile \
+  && sudo cp -p /opt/garden-app/.env.bak-owner-login /opt/garden-app/.env \
+  && sudo cp -p /etc/ufw/before.rules.bak-owner-login /etc/ufw/before.rules \
+  && sudo cp -p /etc/ufw/before6.rules.bak-owner-login /etc/ufw/before6.rules \
+  && sudo ufw delete allow from <LANの範囲> to any port 443 proto tcp \
+  && sudo ufw reload \
+  && sudo systemctl restart caddy garden-app
+sudo iptables -S ufw-before-output | grep -c 'dport 443'
+sudo ip6tables -S ufw6-before-output | grep -c 'dport 443'
+```
+
+成功時の出力: `ufw delete` が `Rule deleted`、`ufw reload` が `Firewall reloaded`、最後の2行がどちらも `0`（Hermes の 443 番のルールが消えた）。`0` でなければ `before.rules`／`before6.rules` に 443 番の行が残っているので、`sudo grep -n 'dport 443' /etc/ufw/before.rules /etc/ufw/before6.rules` で探して消し、`sudo ufw reload` する。
+
+- `.env.bak-owner-login` を確認後に消していた（10.5）ときは、2行目の代わりに `.env` から `PASSKEY_RP_ID`・`PASSKEY_ORIGIN`・`OWNER_BASE_URL` の行を消し、`WEB_BASE_URL` を `http://<サーバーのIP>:5000` に戻す（`SECRET_KEY` は残してよい）。途中の行が失敗すると `&&` で後ろは実行されないので、直してから残りを実行する
+
+アプリを手順 9 の要領で以前のブランチに戻すと、編集の入口はまた認証なしになる（`passkeys` 表は残っても害はない）。
