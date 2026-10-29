@@ -27,4 +27,5 @@
 - `innerHTML` に入れてよいのは `history` / `done` の `html`（サーバーで Markdown を変換したもの）だけ。`delta`・コマンド・エラー文は `textContent`
 - キー（`HERMES_API_KEY`）を HTML・JS・JSON に出さない（テストで確認している）
 - fetch の `X-CSRFToken` は `csrf.js` が自動で付ける（`EventSource` は GET なので不要）
+- パネルの幅は `width` ではなく `--bs-offcanvas-width` で指定する（Bootstrap の `.offcanvas.offcanvas-end { width: var(--bs-offcanvas-width) }` のほうが強く、`width` は効かない）
 - 新しい CDN は足さない
