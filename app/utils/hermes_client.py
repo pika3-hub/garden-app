@@ -2,6 +2,7 @@
 
 標準ライブラリ（urllib）だけで書く。API キーはログにも例外メッセージにも出さない。
 """
+import http.client
 import json
 import urllib.error
 import urllib.parse
@@ -75,6 +76,8 @@ def _json(method, path, payload=None, headers=None) -> dict:
         return json.loads(resp.read().decode('utf-8'))
     except ValueError:
         raise HermesError('Hermes の応答を読めませんでした') from None
+    except (TimeoutError, OSError, http.client.HTTPException) as e:
+        raise HermesUnavailable(f'Hermes の応答を読み切れませんでした: {type(e).__name__}') from None
     finally:
         resp.close()
 
@@ -109,7 +112,7 @@ def iter_events(run_id: str) -> Iterator[dict]:
             yield event
             if event.get('event') in TERMINAL_EVENTS:
                 return
-    except (TimeoutError, ConnectionError, OSError) as e:
+    except (TimeoutError, OSError, http.client.HTTPException) as e:
         raise HermesUnavailable(f'Hermes との接続が切れました: {type(e).__name__}') from None
     finally:
         resp.close()

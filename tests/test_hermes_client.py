@@ -1,3 +1,4 @@
+import http.client
 import json
 import urllib.error
 
@@ -115,3 +116,44 @@ def test_is_configured(app):
         assert hermes_client.is_configured() is False
         app.config['HERMES_API_KEY'] = 'k'
         assert hermes_client.is_configured() is True
+
+
+class _BrokenResponse:
+    """読み取り・反復の途中で例外を出す応答"""
+
+    def __init__(self, exc, lines=()):
+        self.exc = exc
+        self.lines = list(lines)
+
+    def read(self):
+        raise self.exc
+
+    def __iter__(self):
+        yield from self.lines
+        raise self.exc
+
+    def close(self):
+        pass
+
+
+@pytest.mark.parametrize('exc', [TimeoutError(), ConnectionResetError(), OSError('x'),
+                                 http.client.IncompleteRead(b'ab'),
+                                 http.client.BadStatusLine('x')])
+def test_body_read_failure_is_unavailable(app, fake_open, monkeypatch, exc):
+    monkeypatch.setattr(hermes_client, '_open', lambda req, timeout: _BrokenResponse(exc))
+    with app.app_context(), pytest.raises(HermesUnavailable) as e:
+        hermes_client.get_run('run_x')
+    assert 'test-hermes-key' not in e.value.message
+
+
+@pytest.mark.parametrize('exc', [http.client.IncompleteRead(b'ab'), ConnectionResetError(),
+                                 TimeoutError()])
+def test_iter_events_midstream_failure_is_unavailable(app, fake_open, monkeypatch, exc):
+    first = b'data: {"event": "message.delta", "delta": "a"}\n'
+    monkeypatch.setattr(hermes_client, '_open',
+                        lambda req, timeout: _BrokenResponse(exc, [first]))
+    with app.app_context():
+        it = hermes_client.iter_events('run_x')
+        assert next(it)['event'] == 'message.delta'
+        with pytest.raises(HermesUnavailable):
+            next(it)
