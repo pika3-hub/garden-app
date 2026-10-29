@@ -22,6 +22,7 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 | 写真の振り分け | photo_sort | /photo_pool/sort/?ids=&pos=&done=&kind= | - | POST /photo_pool/sort/save | - |
 | Hermes のアドバイス | advices | /advices/?keyword= | /advices/{id} | -（Hermes の API だけで作る） | /advices/{id}/edit、POST /advices/{id}/update、POST /advices/{id}/delete |
 | Hermes との会話 | conversations | /conversations/?keyword= | /conversations/{id} | - | - |
+| Hermes に聞くパネル（中継、JSON・SSE） | hermes_ask | - | GET /hermes/ask/{entity_type}/{entity_id}/history、GET /hermes/ask/runs/{run_id}（状態）、GET /hermes/ask/runs/{run_id}/events（SSE） | POST /hermes/ask/{entity_type}/{entity_id}/runs、POST /hermes/ask/{entity_type}/{entity_id}/new | POST /hermes/ask/runs/{run_id}/approval |
 | 設定 | settings | - | - | - | GET/POST /settings/ |
 | ログイン（パスキー） | auth | GET /auth/login | - | GET /auth/register/{token}（非常口の登録ページ） | POST /auth/login/options・/auth/login/verify・/auth/logout・/auth/passkeys/register/options・/auth/passkeys/register/verify・/auth/passkeys/{id}/rename・/auth/passkeys/{id}/delete |
 
@@ -30,6 +31,8 @@ Flask Blueprint ベースのルーティング規約と URL 設計。
 `settings` Blueprint は設定画面に加え、作物・品種フォーム共通の AI メモ下書き API `POST /settings/ai/notes-draft`（JSON）を持つ。リクエストは `{"mode": "crop", "crop_name", "crop_type", "use_web_search"}` または `{"mode": "variety", "crop_id", "variety_name", "use_web_search"}`。成功 200 `{"ok": true, "markdown"}`、入力不備 400（地域未設定は `need_settings: true`）、生成失敗 502。Claude API 呼び出しは `app/utils/ai_notes.py` に集約している。
 
 `photo_sort` Blueprint（写真の振り分け）は、画面 `GET /photo_pool/sort/`（GET の値はそのまま入力欄に戻す。収穫量の欄の再描画に使う）、保存 `POST /photo_pool/sort/save`（`action=next` で次の写真、`stay` で同じ写真へリダイレクト。入力エラーは同じ写真を入力値つきで再描画）、AI 下書き `POST /photo_pool/sort/ai-draft`（JSON。`{photo_id, kind, date, location_crop_ids, name, related, planting_label, compare}`（`compare: true` は栽培記録のときだけ効き、写真のある前回の栽培記録の写真とメモも送る） → 成功 200 `{ok, fields}`、入力不備・キー未設定 400、生成失敗 502。保存はしない）を持つ。種類ごとの入力欄は `app/templates/photo_sort/_fields_{kind}.html`。
+
+`hermes_ask` Blueprint（Hermes に聞くパネル）は、ブラウザと Hermes の API Server の中継だけを持つ（すべてログイン必須。GET の3つは `OWNER_ONLY_GET_ENDPOINTS`）。`entity_type` は `planting` / `crop` / `variety`、対象が無ければ 404 で Hermes に何も送らない。`run_id` を受けるルートは `hermes_chats.last_run_id` にある run だけを中継する（それ以外は 404）。events は Hermes の event を `{type: tool|delta|approval|done|failed}` に言い換えて流し、tool の preview などの生の中身・キーは出さない。Hermes の失敗は届かない・キー違い・未設定が 503、その他 502。Hermes の呼び出しは `app/utils/hermes_client.py`、指示・言い換え・リンクは `app/utils/hermes_context.py` に集約している。
 
 植え付け（plantings）は `?status=active|ended|all` でタブフィルター。
 

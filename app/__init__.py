@@ -51,6 +51,13 @@ def _hermes_advice(entity_type, entity_id):
     return items
 
 
+def _hermes_ask_enabled():
+    """Hermes に聞くパネルを出すか（ログイン中で、Hermes のキーが設定されているとき）"""
+    from app.auth import is_owner
+    from app.utils import hermes_client
+    return is_owner() and hermes_client.is_configured()
+
+
 def create_app(config_name='default'):
     """Flaskアプリケーションファクトリ"""
     app = Flask(__name__, instance_relative_config=True)
@@ -80,6 +87,7 @@ def create_app(config_name='default'):
     app.jinja_env.globals['crop_display_name'] = _crop_display_name
     app.jinja_env.globals['hermes_conversations'] = _hermes_conversations
     app.jinja_env.globals['hermes_advice'] = _hermes_advice
+    app.jinja_env.globals['hermes_ask_enabled'] = _hermes_ask_enabled
 
     # 持ち主のログイン・既定で拒否・CSRF（どのルートよりも先に before_request を登録する）
     from app.auth import init_auth
@@ -90,7 +98,8 @@ def create_app(config_name='default'):
         crop_routes, variety_routes, location_routes, diary_routes,
         harvest_routes, calendar_routes, task_routes, planting_routes,
         supplement_routes, photo_pool_routes, cooking_routes, settings_routes,
-        photo_sort_routes, conversation_routes, advice_routes, auth_routes
+        photo_sort_routes, conversation_routes, advice_routes, auth_routes,
+        hermes_ask_routes
     )
     app.register_blueprint(crop_routes.bp)
     app.register_blueprint(variety_routes.bp)
@@ -108,6 +117,7 @@ def create_app(config_name='default'):
     app.register_blueprint(conversation_routes.bp)
     app.register_blueprint(advice_routes.bp)
     app.register_blueprint(auth_routes.bp)
+    app.register_blueprint(hermes_ask_routes.bp)
 
     # AIメモ下書きの request_id 等を INFO でサーバーログへ出す（Flask の 'app' ロガーのハンドラーへ伝播）
     app.logger  # 既定ハンドラーを生成
