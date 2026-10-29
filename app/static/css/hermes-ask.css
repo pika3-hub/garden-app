@@ -9,7 +9,7 @@
 }
 .hermes-ask-fab .icon-img { width: 22px; height: 22px; vertical-align: -5px; }
 
-.hermes-ask-panel { width: min(460px, 100vw); border-left: 2px solid #2f6b3a; }
+.hermes-ask-panel { width: min(100vw, clamp(460px, 40vw, 720px)); border-left: 2px solid #2f6b3a; }
 .hermes-ask-panel .icon-img { width: 24px; height: 24px; vertical-align: -6px; }
 
 .hermes-ask-context {
