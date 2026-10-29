@@ -62,7 +62,7 @@ def fingerprint(conn, session_row):
 
 def select_sessions(conn, state):
     known = (state or {}).get('sessions', {})
-    rows = conn.execute("SELECT * FROM sessions WHERE source = 'matrix' "
+    rows = conn.execute("SELECT * FROM sessions WHERE source IN ('matrix', 'api_server') "
                         "ORDER BY started_at, id").fetchall()
     selected = []
     for row in rows:

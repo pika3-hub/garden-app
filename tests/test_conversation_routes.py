@@ -1,4 +1,5 @@
 from app.models.conversation import Conversation
+from tests.hermes_fakes import crop_id, planting_id, variety_id  # noqa: F401
 from app.models.crop import Crop
 from app.routes.conversation_routes import strip_image_markers
 
@@ -122,3 +123,40 @@ def test_detail_404_redirects(client):
 
 def test_nav_has_menu(client):
     assert '/conversations/' in client.get('/').get_data(as_text=True)
+
+
+def test_app_conversation_shows_source_and_target(app, client, planting_id):
+    from app.models.hermes_chat import HermesChat
+    with app.app_context():
+        chat = HermesChat.get_or_create_active('planting', planting_id)
+    cid = _make(app, _session(chat['session_id'], '聞いた', source='api_server'))
+    html = client.get('/conversations/').get_data(as_text=True)
+    assert 'アプリ' in html and '植え付け:' in html
+    detail = client.get(f'/conversations/{cid}').get_data(as_text=True)
+    assert 'アプリ' in detail and f'/plantings/{planting_id}' in detail
+
+
+def test_continued_conversation_uses_parent_target(app, client, planting_id):
+    from app.models.hermes_chat import HermesChat
+    with app.app_context():
+        chat = HermesChat.get_or_create_active('planting', planting_id)
+    cid = _make(app, _session('compressed', '続き', source='api_server',
+                              parent_hermes_id=chat['session_id']))
+    detail = client.get(f'/conversations/{cid}').get_data(as_text=True)
+    assert f'/plantings/{planting_id}' in detail
+
+
+def test_deleted_target_shown(app, client, crop_id):
+    from app.models.crop import Crop
+    from app.models.hermes_chat import HermesChat
+    with app.app_context():
+        chat = HermesChat.get_or_create_active('crop', crop_id)
+        Crop.delete(crop_id)
+    _make(app, _session(chat['session_id'], 'x', source='api_server'))
+    assert '（削除済み）' in client.get('/conversations/').get_data(as_text=True)
+
+
+def test_matrix_conversation_badge(app, client):
+    _make(app, _session('mx', 'マトリックス', source='matrix'))
+    html = client.get('/conversations/').get_data(as_text=True)
+    assert 'Element X' in html and '植え付け:' not in html

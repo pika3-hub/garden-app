@@ -30,6 +30,10 @@ class Config:
     # レスポンスの web_url / image_url の基準（スマホから開ける Web 画面の URL）
     WEB_BASE_URL = os.environ.get('WEB_BASE_URL') or 'http://localhost:5000'
 
+    # Hermes の API Server（OpenAI 互換。「Hermes に聞く」パネルが使う）。キーが空なら無効
+    HERMES_API_URL = os.environ.get('HERMES_API_URL') or 'http://127.0.0.1:8642'
+    HERMES_API_KEY = os.environ.get('HERMES_API_KEY') or ''
+
     # 持ち主のログイン（パスキー）。RP ID はホスト名、ORIGIN はパスキーを使う画面の入口
     PASSKEY_RP_ID = os.environ.get('PASSKEY_RP_ID') or 'localhost'
     PASSKEY_ORIGIN = os.environ.get('PASSKEY_ORIGIN') or 'http://localhost:5000'

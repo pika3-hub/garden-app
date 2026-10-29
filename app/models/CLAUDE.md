@@ -29,6 +29,7 @@
 | supplements | 補足情報（作物/品種/場所/日記/タスク/収穫/料理に添付） | id |
 | app_settings | アプリ設定（キーバリュー形式。`region` = 地域・栽培環境、`passkey_registration_token_hash` / `passkey_registration_token_expires` = パスキー登録用トークン） | key |
 | passkeys | パスキー（WebAuthn 資格情報。credential_id・公開鍵は base64url、署名カウンタ、名前） | id |
+| hermes_chats | 「Hermes に聞く」パネルの会話（対象 `entity_type`=planting/crop/variety と `entity_id`、対象なしは NULL。アプリが作る `session_id` UNIQUE、`active`=1 が現在の会話、`last_run_id`）。索引 `(entity_type, entity_id, active)` | id |
 
 ### ビュー
 
@@ -256,7 +257,7 @@ Hermes との会話（`app/models/conversation.py`、マイグレーション 02
 |--------|-----|------|
 | id | INTEGER | 主キー |
 | hermes_id | TEXT | Hermes のセッションID（UNIQUE。上書きの鍵） |
-| source | TEXT | 会話の種類（現状は `matrix` のみ取り込む） |
+| source | TEXT | 会話の種類（`matrix`（Element X）と `api_server`（アプリの「Hermes に聞く」パネル）を取り込む） |
 | title | TEXT | 題名 |
 | started_at / ended_at / last_activity_at | TIMESTAMP | 開始・終了・最終発言（日本時間の文字列） |
 | end_reason | TEXT | 終了理由（`session_reset` など） |

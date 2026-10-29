@@ -14,6 +14,7 @@ Jinja2 テンプレートと関連フロントエンド部品（Bootstrap カス
 | [`docs/frontend/entity-select-modal.md`](../../docs/frontend/entity-select-modal.md) | エンティティ選択モーダル（複数選択、`MultiSelectModal`） |
 | [`docs/frontend/supplements.md`](../../docs/frontend/supplements.md) | 補足情報（テキスト/画像/URL+OGP/YouTube埋め込み） |
 | [`docs/frontend/ai-notes.md`](../../docs/frontend/ai-notes.md) | 作物・品種フォームの AI メモ下書き（ボタン・モーダル・`ai-notes.js`） |
+| [`docs/frontend/hermes-ask-panel.md`](../../docs/frontend/hermes-ask-panel.md) | 植え付け・作物・品種の詳細画面の「Hermes に聞く」パネル（`_hermes_ask_panel.html`、`hermes-ask.js`、offcanvas、SSE の受け方） |
 | [`docs/frontend/markdown-notes.md`](../../docs/frontend/markdown-notes.md) | メモ欄・補足テキストの Markdown 表示（`markdown` フィルター、`.markdown-body`、対象/対象外の箇所） |
 
 ## 編集の入口は `is_owner()` で囲む

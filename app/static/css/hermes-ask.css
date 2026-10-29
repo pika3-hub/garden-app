@@ -1,0 +1,51 @@
+/* Hermes に聞くパネル（_hermes_ask_panel.html / hermes-ask.js） */
+.hermes-ask-fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1030;
+  border-radius: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+}
+.hermes-ask-fab .icon-img { width: 22px; height: 22px; vertical-align: -5px; }
+
+.hermes-ask-panel { --bs-offcanvas-width: min(100vw, clamp(460px, 40vw, 720px)); border-left: 2px solid #2f6b3a; }
+.hermes-ask-panel .icon-img { width: 24px; height: 24px; vertical-align: -6px; }
+
+.hermes-ask-context {
+  display: inline-block;
+  background: #fff7d6;
+  border: 1px solid #f0d97a;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: .8rem;
+}
+.hermes-ask-context:empty { display: none; }
+
+.hermes-ask-messages { display: flex; flex-direction: column; gap: 4px; }
+.hermes-msg-day { text-align: center; color: #6c757d; font-size: .75rem; margin: 6px 0 2px; }
+.hermes-msg-user,
+.hermes-msg-bot {
+  border-radius: 12px;
+  padding: 6px 10px;
+  max-width: 92%;
+  overflow-wrap: anywhere;
+}
+.hermes-msg-user { background: #dcefdc; align-self: flex-end; white-space: pre-wrap; }
+.hermes-msg-bot { background: #f1f1f1; align-self: flex-start; }
+.hermes-msg-bot.streaming { white-space: pre-wrap; }
+.hermes-msg-bot > :last-child { margin-bottom: 0; }
+.hermes-tool { color: #888; font-size: .75rem; margin: 2px 0; }
+.hermes-failed { color: #dc3545; font-size: .85rem; }
+.hermes-approval {
+  border: 1px solid #f0d97a;
+  background: #fff7d6;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: .85rem;
+}
+.hermes-approval code { display: block; white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0 6px; }
+.hermes-links { font-size: .8rem; align-self: flex-start; }
+.hermes-links ul { margin: 2px 0 0; padding-left: 1.2rem; }
+
+.hermes-ask-foot { border-top: 1px solid #ddd; padding: 8px 12px; }

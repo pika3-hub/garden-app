@@ -78,6 +78,16 @@ def test_check_schema_missing_column(tmp_path):
     assert 'tool_calls' in str(e.value)
 
 
+def test_selects_matrix_and_api_server(tmp_path):
+    db = make_db(tmp_path)
+    add_session(db, 'm', source='matrix', started=1.0)
+    add_session(db, 'garden-planting-1-aa', source='api_server', started=2.0)
+    add_session(db, 'c', source='cli', started=3.0)
+    conn = hs.open_db(db)
+    got = [r['id'] for r in hs.select_sessions(conn, {'sessions': {}})]
+    assert got == ['m', 'garden-planting-1-aa']
+
+
 def test_selects_only_matrix_and_changed(tmp_path):
     db = make_db(tmp_path)
     add_session(db, 'a', started=1.0)

@@ -71,7 +71,10 @@
         <div data-filter-year="{{ c.ts[:4] }}" data-filter-month="{{ c.ts[5:7]|int }}">
             <a href="{{ url_for('conversations.detail', conversation_id=c.id) }}" class="conv-row">
                 <span class="conv-row-time">{{ c.ts[5:16] if c.ts else '日時なし' }}</span>
-                <span class="conv-row-title">{{ c.title or '（題名なし）' }}</span>
+                <span class="conv-row-title">{{ c.title or '（題名なし）' }}
+                    {% if c.source_label %}<span class="badge bg-light text-dark border ms-1">{{ c.source_label }}</span>{% endif %}
+                    {% if c.chat_target %}<span class="badge bg-light text-dark border ms-1">{% if c.chat_target.deleted %}（削除済み）{% else %}{{ c.chat_target.kind_label }}: {{ c.chat_target.label }}{% endif %}</span>{% endif %}
+                </span>
                 <span class="conv-row-meta">
                     <i class="bi bi-chat-left-text"></i> {{ c.message_count }}
                     {% if c.has_image_marker or c.image_count %}<i class="bi bi-image ms-2" title="写真あり"></i>{% endif %}
