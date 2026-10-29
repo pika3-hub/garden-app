@@ -105,6 +105,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 - `server.py` のログは、waitress が `serve()` のときにルートロガーへ `basicConfig()` するため、何もしないと Flask の既定ハンドラーと合わせて2重に出る。`server.py` ではアプリ生成より前に `logging.basicConfig()` している（これを消さない）
 - Bash ツールのヒアドキュメントで Python にファイルを書き換えさせると、書き込む文字列の中の `\\x00` が本物の NUL 文字としてファイルに入った（`SyntaxError: source code string cannot contain null bytes`。Markdown でも起き、git diff で `Bin` と表示される。2026-10-12 に3回）。バックスラッシュを含む文字列（`b'\x00'`、ログの引用など）の編集は Edit ツールで行う
 - Python スクリプトの日本語の出力は Git Bash で文字化けする。`PYTHONIOENCODING=utf-8 uv run python ...` で実行する。ただし `python -I`（隔離モード）では `PYTHON*` の環境変数が無視されて効かない。そのときはスクリプトで `open(..., encoding='utf-8')` のファイルに書き、Read で読む
+- ユーザーの PowerShell は **Windows PowerShell 5.1** で、`Out-File -Encoding utf8NoBOM` は使えない（7 以降だけ）。代わりの `>` は UTF-16 で書き出すので、`git diff --no-index` が「Bin」と出して比べられなかった（2026-10-29、サーバーの SKILL.md と main の版の比較）。ファイルの比較は、ユーザーには取ってくる（`scp`）ところまでを頼み、比べるのは Claude が Bash（`tr -d '\r'` してから `diff`）で行う
 
 ## ツール・環境
 
@@ -129,6 +130,7 @@ Codex（ChatGPT Plus の枠）の `codex review` で、Claude のレビューと
 - **過去のコミットを見せても、ファイルは今の作業ツリーを読む**。行番号やコードの引用が後の修正を含むことがあるので、指摘はそのコミットの時点か今かを確かめる
 - 指摘は鵜呑みにせず、コードで確かめてから直す（5620dcc の2件目は、413・415 で読み飛ばすのは設計どおりで、当たるのは一時的な失敗のときだけだった）
 - 進行の様子は標準エラーに出る（長い）。結論は標準出力の最後の `Full review comments:` 以下
+- 2026-10-29 は Claude Code の PowerShell から `review --base main` を呼んだら、Codex のサンドボックスが起動できず（`helper_unknown_error`）、リポジトリを読めないまま「レビューできない」と返ってきた。タスクごとのレビューと最終レビューが済んでいたので、その PR は Codex なしで進めた。原因は未調査（次に使うときに、ユーザーの PowerShell から直接実行して切り分ける）
 
 ## サーバー（Ubuntu、本番）の操作
 
@@ -151,4 +153,4 @@ Codex（ChatGPT Plus の枠）の `codex review` で、Claude のレビューと
 - サーバーの名前（`<サーバーのホスト名>.local`）は avahi で LAN に流している（2026-10-28〜）。**iPhone・iPad は「セキュリティ Wi-Fi」の SSID では `.local` を引けない**（2026-10-28 からどちらもふだんの接続先を 5G の SSID にした）（サーバーの mDNS の答えのマルチキャストが届かない）。名前が引けないときは `sudo tcpdump -ni any 'udp port 5353'` で、問い合わせが来ているか・答えが出ているか・端末が問い合わせを繰り返していないかを見ると切り分けられる
 - `/var/backups/garden/` は `pika3` から読めない。中を見るときは `sudo ls -l /var/backups/garden/`（バックアップ自体は `sudo -u garden sqlite3 ...` で取れている）
 - 再起動直後の `journalctl -u garden-app` に `Migration applied: ...` が出ないことがある（`print` の出力がバッファされる）。マイグレーションが入ったかは `sudo -u garden sqlite3 -readonly /opt/garden-app/instance/garden.db "SELECT name FROM sqlite_master WHERE ..."` で直接確かめる
-- **Hermes の内部のデータの形（`state.db` の列、ツールの結果の形、写真のキャッシュの期限など）は、サーバーと同じ版の Hermes のソースで確かめる**。`git -C ~/.hermes/hermes-agent log -1 --format=%h` で版を聞き、メイン PC のスクラッチ領域に `git clone --filter=blob:none --no-checkout https://github.com/NousResearch/hermes-agent.git` → `git checkout <版>`（Web サイトの文書の一部が「Filename too long」で失敗するが本体は読める）。貼ってもらう往復が減る。2026-10-26 は terminal ツールの結果が `{"output": "...", "exit_code": 0, ...}` で包まれていることを確かめずに設計し、最終レビューで初めて気づいた（`tools/terminal_tool_result.py`）。外から渡ってくるデータの形は、設計の段階で1件実物かソースを見る
+- **Hermes の内部のデータの形（`state.db` の列、ツールの結果の形、写真のキャッシュの期限など）は、サーバーと同じ版の Hermes のソースで確かめる**。`git -C ~/.hermes/hermes-agent log -1 --format=%h` で版を聞き、メイン PC のスクラッチ領域に `git clone --filter=blob:none --no-checkout https://github.com/NousResearch/hermes-agent.git` → `git checkout <版>`。Windows ではパスの長い Web サイトの文書で「Filename too long」になり、checkout 全体が止まることもある（2026-10-29）ので、clone した直後に `git -C <フォルダ> config core.longpaths true` をしてから checkout する。貼ってもらう往復が減る。2026-10-26 は terminal ツールの結果が `{"output": "...", "exit_code": 0, ...}` で包まれていることを確かめずに設計し、最終レビューで初めて気づいた（`tools/terminal_tool_result.py`）。外から渡ってくるデータの形は、設計の段階で1件実物かソースを見る
