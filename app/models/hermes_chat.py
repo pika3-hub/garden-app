@@ -80,6 +80,17 @@ class HermesChat:
         db.commit()
 
     @staticmethod
+    def touch(session_id):
+        """最終使用日時だけを更新する（last_run_id は変えない。終わった古い run が
+        後から始めた新しい run を上書きしないように）"""
+        db = get_db()
+        db.execute(
+            'UPDATE hermes_chats SET last_used_at = ? WHERE session_id = ?',
+            (get_jst_now(), session_id)
+        )
+        db.commit()
+
+    @staticmethod
     def find_by_run_id(run_id):
         """last_run_id が一致する行（active かどうかを問わない）。無ければ None"""
         if not run_id:

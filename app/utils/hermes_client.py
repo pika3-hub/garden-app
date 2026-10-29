@@ -17,6 +17,8 @@ EVENTS_TIMEOUT = 330
 
 TERMINAL_EVENTS = ('run.completed', 'run.failed', 'run.cancelled', 'run.interrupted')
 APPROVAL_CHOICES = ('once', 'deny')
+# iter_events がコメント行（keepalive）を受けたときに返す event 名（Hermes の event 名とは重ならない）
+KEEPALIVE_EVENT = '_keepalive'
 
 
 class HermesError(Exception):
@@ -97,13 +99,20 @@ def get_run(run_id: str) -> dict:
 
 
 def iter_events(run_id: str) -> Iterator[dict]:
-    """SSE の data: 行を JSON にして順に返す。終了イベントを返したら終わる"""
+    """SSE の data: 行を JSON にして順に返す。終了イベントを返したら終わる
+
+    コメント行（Hermes の `: keepalive`）は {'event': KEEPALIVE_EVENT} として返す。
+    呼び出し側がブラウザへ書き込むことで、ブラウザが去ったのに気づけるようにするため。
+    """
     resp = _request('GET', f'/v1/runs/{urllib.parse.quote(run_id, safe="")}/events',
                     headers={'Accept': 'text/event-stream'}, timeout=EVENTS_TIMEOUT)
     try:
         for raw in resp:
             line = raw.decode('utf-8', 'replace').strip()
-            if not line or line.startswith(':') or not line.startswith('data:'):
+            if line.startswith(':'):
+                yield {'event': KEEPALIVE_EVENT}
+                continue
+            if not line.startswith('data:'):
                 continue
             try:
                 event = json.loads(line[5:].strip())

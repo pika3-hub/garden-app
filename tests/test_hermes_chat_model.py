@@ -41,6 +41,14 @@ def test_set_last_run(app):
         assert HermesChat.get_active('variety', 5)['last_run_id'] == 'run_abc'
 
 
+def test_touch_keeps_last_run(app):
+    with app.app_context():
+        row = HermesChat.get_or_create_active('variety', 5)
+        HermesChat.set_last_run(row['session_id'], 'run_new')
+        HermesChat.touch(row['session_id'])
+        assert HermesChat.get_active('variety', 5)['last_run_id'] == 'run_new'
+
+
 def test_find_by_run_id(app):
     with app.app_context():
         row = HermesChat.get_or_create_active('variety', 5)

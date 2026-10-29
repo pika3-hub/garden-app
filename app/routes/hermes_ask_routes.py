@@ -6,7 +6,7 @@
 """
 import json
 
-from flask import Blueprint, Response, abort, jsonify, request, stream_with_context
+from flask import Blueprint, Response, abort, current_app, jsonify, request, stream_with_context
 
 from app.models.hermes_chat import ENTITY_TYPES, HermesChat
 from app.routes.conversation_routes import link_items
@@ -22,6 +22,8 @@ bp = Blueprint('hermes_ask', __name__, url_prefix='/hermes/ask')
 MAX_TEXT_LENGTH = 4000
 RUNNING_STATUSES = ('queued', 'running', 'waiting_for_approval')
 FAILED_EVENTS = ('run.failed', 'run.cancelled', 'run.interrupted')
+# approval.responded の choice のうち、ブラウザへそのまま伝えてよい値（Hermes が受け付ける4つ）
+APPROVAL_DONE_CHOICES = ('once', 'session', 'always', 'deny')
 
 NOT_CONFIGURED_MESSAGE = 'Hermes への接続が設定されていません'
 UNAVAILABLE_MESSAGE = 'Hermes に届きません'
@@ -73,10 +75,21 @@ def _this_run_messages(messages):
 
 
 def _links(session_id):
-    messages = hermes_client.get_session_messages(session_id)
-    items = link_items(links_for_messages(_this_run_messages(messages)))
-    return [{'label': i['label'], 'url': i['url'], 'kind_label': i['kind_label']}
-            for i in items if i.get('url')]
+    """今回の run で Hermes が作った・変えた・見たデータへのリンク。
+
+    取れなくても答えは出せるので、失敗は [] にする（想定外の例外もログに種類だけ残す。
+    キーや本文は出さない）
+    """
+    try:
+        messages = hermes_client.get_session_messages(session_id)
+        items = link_items(links_for_messages(_this_run_messages(messages)))
+        return [{'label': i['label'], 'url': i['url'], 'kind_label': i['kind_label']}
+                for i in items if i.get('url')]
+    except HermesError:
+        return []
+    except Exception as e:  # noqa: BLE001 答えを出すことを優先する
+        current_app.logger.warning('Hermes のリンクを作れませんでした: %s', type(e).__name__)
+        return []
 
 
 @bp.route('/<entity_type>/<int:entity_id>/history')
@@ -168,7 +181,11 @@ def events(run_id):
         try:
             for e in hermes_client.iter_events(run_id):
                 name = e.get('event')
-                if name == 'tool.started':
+                if name == hermes_client.KEEPALIVE_EVENT:
+                    # ブラウザへ書き込む（EventSource はコメント行を無視する）。ブラウザが
+                    # 去っていれば書き込みで失敗してジェネレーターが閉じ、Hermes への接続も閉じる
+                    yield ': keepalive\n\n'
+                elif name == 'tool.started':
                     yield _sse({'type': 'tool', 'label': friendly_tool_label(e)})
                 elif name == 'message.delta':
                     delta = e.get('delta')
@@ -177,13 +194,19 @@ def events(run_id):
                 elif name == 'approval.request':
                     yield _sse({'type': 'approval', 'request_id': e.get('request_id'),
                                 'command': e.get('command')})
+                elif name == 'approval.responded':
+                    # Hermes はつなぎ直した購読者に、それまでの event を最初から流し直す。
+                    # 返事を済ませた承認のボタンを出し直さないよう、済んだことも伝える
+                    request_id = e.get('request_id')
+                    choice = e.get('choice')
+                    yield _sse({'type': 'approval_done',
+                                'request_id': request_id if isinstance(request_id, str) else None,
+                                'choice': choice if choice in APPROVAL_DONE_CHOICES else None})
                 elif name == 'run.completed':
                     output = e.get('output')
-                    try:
-                        links = _links(session_id)
-                    except HermesError:
-                        links = []
-                    HermesChat.set_last_run(session_id, run_id)
+                    links = _links(session_id)
+                    # last_run_id は変えない（この間に始めた新しい run を古い run に戻さない）
+                    HermesChat.touch(session_id)
                     yield _sse({'type': 'done',
                                 'html': str(render_markdown(output if isinstance(output, str) else '')),
                                 'links': links})

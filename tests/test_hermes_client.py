@@ -53,14 +53,18 @@ def test_get_run_returns_json(app, fake_open):
     assert fake_open.calls[0].get_method() == 'GET'
 
 
-def test_iter_events_skips_keepalive_and_stops_at_terminal(app, fake_open):
+def test_iter_events_returns_keepalive_and_stops_at_terminal(app, fake_open):
     fake_open.stream([b': keepalive\n', b'\n',
                       b'data: {"event": "tool.started", "tool": "terminal"}\n', b'\n',
+                      b': keepalive\n', b'\n',
                       b'data: {"event": "run.completed", "output": "done"}\n', b'\n',
                       b'data: {"event": "never"}\n'])
     with app.app_context():
         events = list(hermes_client.iter_events('run_x'))
-    assert [e['event'] for e in events] == ['tool.started', 'run.completed']
+    # 空行は飛ばし、コメント行（keepalive）は _keepalive として返す
+    assert events[0] == {'event': '_keepalive'}
+    assert [e['event'] for e in events] == ['_keepalive', 'tool.started', '_keepalive',
+                                            'run.completed']
     assert fake_open.calls[0].full_url == 'http://127.0.0.1:8642/v1/runs/run_x/events'
     assert fake_open.timeouts[0] == 330
 

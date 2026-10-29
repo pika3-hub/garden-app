@@ -21,9 +21,12 @@ def _start(client, fake_open, planting_id, run_id='run_1', key='k1'):
     return json.loads(fake_open.calls[-1].data)['session_id']
 
 
-def _events(resp):
-    text = resp.get_data(as_text=True)
+def _events_text(text):
     return [json.loads(line[6:]) for line in text.splitlines() if line.startswith('data: ')]
+
+
+def _events(resp):
+    return _events_text(resp.get_data(as_text=True))
 
 
 def test_anonymous_rejected_and_nothing_sent(anon_client, fake_open, planting_id):
@@ -195,14 +198,80 @@ def test_events_approval_and_failed(client, fake_open, planting_id):
     fake_open.stream(_sse(
         {'event': 'approval.request', 'command': 'rm -rf /tmp/x', 'description': 'd',
          'request_id': 'req_1', 'choices': ['once', 'session', 'always', 'deny']},
-        {'event': 'approval.responded', 'choice': 'deny'},
+        {'event': 'approval.responded', 'choice': 'deny', 'request_id': 'req_1',
+         'resolved': 1, 'extra': 'SECRET123'},
         {'event': 'run.failed', 'error': 'SECRET123'},
     ))
     events = _events(client.get('/hermes/ask/runs/run_1/events'))
     assert events == [
         {'type': 'approval', 'request_id': 'req_1', 'command': 'rm -rf /tmp/x'},
+        {'type': 'approval_done', 'request_id': 'req_1', 'choice': 'deny'},
         {'type': 'failed', 'error': '答えを受け取れませんでした（failed）'},
     ]
+
+
+def test_events_approval_done_drops_raw_fields(client, fake_open, planting_id):
+    _start(client, fake_open, planting_id)
+    fake_open.stream(_sse(
+        {'event': 'approval.responded', 'choice': 'SECRET123', 'request_id': {'x': 'SECRET123'},
+         'resolved': 'SECRET123'},
+        {'event': 'approval.responded', 'choice': 'once'},
+        {'event': 'run.failed'},
+    ))
+    resp = client.get('/hermes/ask/runs/run_1/events')
+    assert 'SECRET123' not in resp.get_data(as_text=True)
+    assert _events(resp)[:2] == [
+        {'type': 'approval_done', 'request_id': None, 'choice': None},
+        {'type': 'approval_done', 'request_id': None, 'choice': 'once'},
+    ]
+
+
+def test_events_relay_keepalive_as_comment(client, fake_open, planting_id):
+    _start(client, fake_open, planting_id)
+    lines = _sse({'event': 'tool.started', 'tool': 'terminal'})
+    lines += [b': keepalive\n', b'\n']
+    lines += _sse({'event': 'message.delta', 'delta': 'あ'})
+    lines += _sse({'event': 'run.completed', 'output': 'あ'})
+    fake_open.stream(lines)
+    fake_open.reply(200, {'object': 'list', 'data': []})
+    text = client.get('/hermes/ask/runs/run_1/events').get_data(as_text=True)
+    # _sse() が先頭に付ける keepalive（3回）と途中の keepalive が、それぞれコメント行として流れる
+    assert text.count(': keepalive\n\n') == 4
+    assert text.startswith(': keepalive\n\n')
+    assert '_keepalive' not in text
+    assert [e['type'] for e in _events_text(text)] == ['tool', 'delta', 'done']
+
+
+def test_events_completed_does_not_rewind_last_run(client, app, fake_open, planting_id,
+                                                   monkeypatch):
+    from app.models.hermes_chat import HermesChat
+    from app.utils import hermes_client
+    session_id = _start(client, fake_open, planting_id, run_id='run_1', key='k1')
+
+    def fake_iter_events(run_id):
+        # run_1 の答えを待っている間に、別のタブなどから2つ目の run が始まった
+        yield {'event': 'message.delta', 'delta': 'a'}
+        HermesChat.set_last_run(session_id, 'run_2')
+        yield {'event': 'run.completed', 'output': 'ok'}
+    monkeypatch.setattr(hermes_client, 'iter_events', fake_iter_events)
+    fake_open.reply(200, {'object': 'list', 'data': []})
+    assert _events(client.get('/hermes/ask/runs/run_1/events'))[-1]['type'] == 'done'
+    with app.app_context():
+        assert HermesChat.find_by_run_id('run_2') is not None
+        assert HermesChat.find_by_run_id('run_1') is None
+
+
+def test_events_done_even_if_links_crash(client, fake_open, planting_id, monkeypatch):
+    from app.routes import hermes_ask_routes
+
+    def boom(messages):
+        raise RuntimeError('SECRET123')
+    monkeypatch.setattr(hermes_ask_routes, 'links_for_messages', boom)
+    _start(client, fake_open, planting_id)
+    fake_open.stream(_sse({'event': 'run.completed', 'output': '答え'}))
+    fake_open.reply(200, {'object': 'list', 'data': [{'id': 1, 'role': 'user', 'content': '質問'}]})
+    events = _events(client.get('/hermes/ask/runs/run_1/events'))
+    assert events[-1]['type'] == 'done' and events[-1]['links'] == []
 
 
 def test_events_connection_lost(client, fake_open, planting_id):
