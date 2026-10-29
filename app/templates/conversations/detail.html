@@ -14,6 +14,16 @@
             始まり: {{ conversation.started_at or '-' }}
             {% if conversation.last_activity_at %} / 最後: {{ conversation.last_activity_at }}{% endif %}
         </p>
+        <p class="mb-0">
+            {% if conversation.source_label %}<span class="badge bg-light text-dark border">{{ conversation.source_label }}</span>{% endif %}
+            {% if conversation.chat_target %}
+            {% if conversation.chat_target.deleted %}
+            <span class="text-muted">（削除済み）</span>
+            {% else %}
+            {{ conversation.chat_target.kind_label }}: <a href="{{ conversation.chat_target.url }}">{{ conversation.chat_target.label }}</a>
+            {% endif %}
+            {% endif %}
+        </p>
         {% if conversation.parent_hermes_id %}
         <p class="mb-0">
             前の会話:

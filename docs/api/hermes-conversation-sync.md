@@ -21,7 +21,7 @@ systemd ユーザータイマー（15分おき）
 ```
 
 - データの流れは Hermes → API だけ。アプリは `~/.hermes` を読まず、Hermes にも接続しない（サーバーの遮断を崩さない）
-- スクリプトは標準ライブラリだけの Python（サーバーの `python3`）。`state.db` は読み取り専用（`mode=ro`）で開く。取り込むのは `source = 'matrix'` の会話だけ
+- スクリプトは標準ライブラリだけの Python（サーバーの `python3`）。`state.db` は読み取り専用（`mode=ro`）で開く。取り込むのは `source` が `matrix`（Element X）と `api_server`（アプリの「Hermes に聞く」パネル）の会話だけ（`cli` などは取り込まない）。API Server の会話は圧縮でセッション ID が変わることがあるので、ID での絞り込みはしない。このスクリプトを変えたら、下の「配置」の手順でサーバーに送り直す
 - 接続先とトークンは `~/.config/garden-api.env`（`GARDEN_API_URL` と `GARDEN_API_TOKEN`）。Hermes の gateway と同じファイルで、ログにはトークンも発言の本文も出さない
 - 送った状態は `~/.local/state/garden-conversation-sync.json` に持つ（会話ごとの指紋と送り済みの写真名）。前回から変わっていない会話は送らない
 - 写真は 1 リクエスト 20 枚まで。残りがあれば次の回に続きを送る

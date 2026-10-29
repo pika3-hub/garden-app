@@ -4,7 +4,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.database import get_db
 from app.models.conversation import Conversation, KIND_LABELS, KIND_PRIORITY
 from app.models.photo_pool import PhotoPool, _labels
-from app.routes.photo_pool_routes import usage_url
+from app.models.hermes_chat import HermesChat
+from app.routes.photo_pool_routes import _DETAIL_ENDPOINTS, usage_url
+from app.utils.hermes_context import describe_target
 
 bp = Blueprint('conversations', __name__, url_prefix='/conversations')
 
@@ -62,11 +64,42 @@ def link_items(links):
     return items
 
 
+_SOURCE_LABELS = {'api_server': 'アプリ', 'matrix': 'Element X'}
+
+
+def attach_origin(conversations):
+    """各会話に source_label（経路）と chat_target（アプリのパネルの対象）を付ける。
+    対象は hermes_id、無ければ parent_hermes_id（圧縮で ID が変わった続き）で hermes_chats から探す。
+    対象が消えていれば {'deleted': True}、対象なしの会話や対応する行が無ければ None"""
+    ids = set()
+    for c in conversations:
+        ids.add(c['hermes_id'])
+        if c.get('parent_hermes_id'):
+            ids.add(c['parent_hermes_id'])
+    chats = HermesChat.get_by_session_ids(ids)
+    for c in conversations:
+        c['source_label'] = _SOURCE_LABELS.get(c.get('source'))
+        chat = chats.get(c['hermes_id']) or chats.get(c.get('parent_hermes_id'))
+        target = None
+        if chat and chat['entity_type']:
+            info = describe_target(chat['entity_type'], chat['entity_id'])
+            if info is None:
+                target = {'deleted': True, 'kind_label': None, 'label': None, 'url': None}
+            else:
+                endpoint, arg = _DETAIL_ENDPOINTS[chat['entity_type']]
+                target = {'deleted': False, 'kind_label': info['kind_label'],
+                          'label': info['label'],
+                          'url': url_for(endpoint, **{arg: chat['entity_id']})}
+        c['chat_target'] = target
+    return conversations
+
+
 @bp.route('/')
 def list():
     """会話一覧"""
     keyword = request.args.get('keyword', '')
     conversations = Conversation.search(keyword) if keyword else Conversation.get_all()
+    attach_origin(conversations)
     for c in conversations:
         c['ts'] = str(c.get('last_activity_at') or c.get('started_at') or '')
 
@@ -87,6 +120,7 @@ def detail(conversation_id):
         flash('会話が見つかりません', 'danger')
         return redirect(url_for('conversations.list'))
 
+    attach_origin([conversation])
     images = Conversation.get_images(conversation_id)
     messages = []
     for m in Conversation.get_messages(conversation_id):
