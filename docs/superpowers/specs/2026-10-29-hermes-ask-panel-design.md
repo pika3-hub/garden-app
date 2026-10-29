@@ -134,7 +134,17 @@ Hermes の API Server（127.0.0.1:8642、Hermes の実行ユーザー）
 | セッションの自動リセット（community プラグイン `hermes-session-reset-policy`、6時間・朝4時）が、この経路の `session_id` にも効くか（効くと「後日の続き」が途切れる） | 効くなら、続きを読めるように履歴を渡す方式か、プラグインの対象外にする設定を探す |
 | 危険なコマンドで承認待ちになり、`/approval` で再開できる | パネルでは承認を出さず「Element X で承認して」と表示する、等を相談 |
 
-- 確かめ終わったら、試しの `session_id` の会話が一覧に取り込まれる前に後片付けするか、そのまま残すかを決める（目安: 残してよい。題名で分かるようにする）
+### 確かめた結果（2026-10-29）
+
+- 版は `73162b00ee` のまま（ソースの読みがそのまま使える）
+- `~/.hermes/.env` に `API_SERVER_ENABLED=true` と `API_SERVER_KEY`（43文字）を足して gateway を再起動。`127.0.0.1:8642` だけで待ち受け、Element X も今までどおり返事が来た。控えは `~/.hermes/.env.bak-before-api-server`
+- garden ユーザーから `/health` は 200、キー無しの `POST /v1/runs` は 401（ufw の今のルールとぶつからない）
+- 同じ `session_id` の2回目で前の話が続いた。`state.db` の `sessions.source` は `api_server`、`parent_session_id` は空
+- events の形（`data: <JSON>` の行、`event` で種類）: `tool.started`（`tool`, `preview`）、`tool.completed`（`tool`, `duration`, `error`, `preview`）、`message.delta`（**本文は `delta`**）、`reasoning.available`（`text`）、`approval.request`、`approval.responded`、`run.completed`（`output`, `usage`, `runtime`）。`GET /v1/runs/{id}` は `status`, `output`, `session_id` など
+- `GET /api/sessions/{id}/messages?inline_images=false` は `{"object", "session_id", "data": [...], "pagination"}`。各発言は `id`, `role`, `content`, `tool_calls`, `tool_call_id`, `tool_name`, `timestamp`, `display_kind` など
+- 承認: `rm -rf` で `approval.request`（`command`, `description`, `request_id`, `choices`: once / session / always / deny）が来て、状態は `waiting_for_approval`。`{"choice": "deny", "request_id": …}` を返すと Hermes は実行せずに答えを返して終わった
+- 自動リセット: ソースでは `session_reset` は Matrix などの会話の管理（`SessionStore`）だけが扱い、API Server の run は `session_id` の履歴を `state.db` から直接読む（`_conversation_history_for_session`）ので効かない見込み。実物では、6時間以上あとに同じ `session_id` で続きを聞いて確かめる（確認用の `garden-check-<日付>` の会話を使う）
+- 確認で作った会話（`garden-check-…`）は一覧の取り込みを広げたあと一覧に出る。残してよい（題名で分かる）
 - `.env` を変える前に控えを取る（`cp ~/.hermes/.env ~/.hermes/.env.bak-before-api-server`）
 
 ## テスト
