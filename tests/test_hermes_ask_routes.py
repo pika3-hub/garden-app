@@ -136,6 +136,47 @@ def test_history_messages_and_finished_run(client, fake_open, planting_id):
     assert 'SECRET123' not in json.dumps(data, ensure_ascii=False)
 
 
+def _curl_call(call_id, path):
+    return [{'id': call_id, 'type': 'function', 'function': {'name': 'terminal', 'arguments': json.dumps(
+        {'command': f'curl -s -H "Authorization: Bearer $T" http://127.0.0.1:5001/api/v1/{path}'})}}]
+
+
+def test_history_links_on_last_assistant_of_each_turn(client, fake_open, planting_id):
+    _start(client, fake_open, planting_id)
+    fake_open.reply(200, {'object': 'list', 'data': [
+        {'id': 1, 'role': 'user', 'content': '質問1'},
+        {'id': 2, 'role': 'assistant', 'content': '', 'tool_calls': _curl_call('c1', f'plantings/{planting_id}')},
+        {'id': 3, 'role': 'tool', 'content': 'SECRET123', 'tool_call_id': 'c1'},
+        {'id': 4, 'role': 'assistant', 'content': '答え1'},
+        {'id': 5, 'role': 'user', 'content': '質問2'},
+        {'id': 6, 'role': 'assistant', 'content': '答え2'},
+    ]})
+    fake_open.reply(200, {'run_id': 'run_1', 'status': 'completed'})
+    data = client.get(f'/hermes/ask/planting/{planting_id}/history').json
+    msgs = data['messages']
+    assert [m['text'] for m in msgs] == ['質問1', '答え1', '質問2', '答え2']
+    assert [(l['url'], l['kind_label']) for l in msgs[1]['links']] == [(f'/plantings/{planting_id}', '見た')]
+    assert set(msgs[1]['links'][0]) == {'label', 'url', 'kind_label'}
+    assert msgs[0]['links'] == [] and msgs[2]['links'] == [] and msgs[3]['links'] == []
+    assert 'SECRET123' not in json.dumps(data, ensure_ascii=False)
+
+
+def test_history_links_crash_gives_empty(client, fake_open, planting_id, monkeypatch):
+    from app.routes import hermes_ask_routes
+
+    def boom(_):
+        raise RuntimeError('x')
+    monkeypatch.setattr(hermes_ask_routes, 'links_for_messages', boom)
+    _start(client, fake_open, planting_id)
+    fake_open.reply(200, {'object': 'list', 'data': [
+        {'id': 1, 'role': 'user', 'content': 'q'},
+        {'id': 2, 'role': 'assistant', 'content': 'a'},
+    ]})
+    fake_open.reply(200, {'run_id': 'run_1', 'status': 'completed'})
+    data = client.get(f'/hermes/ask/planting/{planting_id}/history').json
+    assert data['ok'] is True and data['messages'][1]['links'] == []
+
+
 def test_history_without_chat_does_not_call_hermes(client, fake_open, planting_id):
     data = client.get(f'/hermes/ask/planting/{planting_id}/history').json
     assert data['messages'] == [] and data['running_run_id'] is None

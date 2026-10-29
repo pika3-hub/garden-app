@@ -84,6 +84,7 @@
           var bot = el('div', 'hermes-msg-bot');
           if (m.html) bot.innerHTML = m.html; else bot.textContent = m.text;
           box.appendChild(bot);
+          if (m.links && m.links.length) box.appendChild(buildLinks(m.links));
         }
       });
       scrollDown();
@@ -180,7 +181,7 @@
 
     function buildLinks(links) {
       var wrap = el('div', 'hermes-links');
-      wrap.appendChild(el('div', null, 'Hermes が作った・変えたデータ'));
+      wrap.appendChild(el('div', null, 'Hermes が作った・変えた・見たデータ'));
       var ul = el('ul');
       links.forEach(function (l) {
         var li = el('li');

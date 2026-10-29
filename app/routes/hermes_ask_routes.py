@@ -65,31 +65,46 @@ def _chat_for_run_or_404(run_id):
     return chat
 
 
-def _this_run_messages(messages):
-    """最後の user の発言から後（今回の run の分）"""
-    last_user = None
-    for i, m in enumerate(messages):
-        if m.get('role') == 'user':
-            last_user = i
-    return messages[last_user:] if last_user is not None else messages
+def _turns(messages):
+    """発言を「回」ごとに分ける（user の発言から次の user の発言の前まで）。
+    最初の user より前の発言は、最初の回に入れる"""
+    turns = []
+    for m in messages:
+        if m.get('role') == 'user' or not turns:
+            turns.append([])
+        turns[-1].append(m)
+    return turns
 
 
-def _links(session_id):
-    """今回の run で Hermes が作った・変えた・見たデータへのリンク。
+def _turn_links(turn):
+    """1回分の発言（tool の呼び出し・結果を含む）から、作った・変えた・見たデータへのリンク。
 
-    取れなくても答えは出せるので、失敗は [] にする（想定外の例外もログに種類だけ残す。
+    取れなくても答えは出せるので、想定外の例外は [] にする（ログに種類だけ残す。
     キーや本文は出さない）
     """
     try:
-        messages = hermes_client.get_session_messages(session_id)
-        items = link_items(links_for_messages(_this_run_messages(messages)))
+        items = link_items(links_for_messages(turn))
         return [{'label': i['label'], 'url': i['url'], 'kind_label': i['kind_label']}
                 for i in items if i.get('url')]
-    except HermesError:
-        return []
     except Exception as e:  # noqa: BLE001 答えを出すことを優先する
         current_app.logger.warning('Hermes のリンクを作れませんでした: %s', type(e).__name__)
         return []
+
+
+def _links(session_id):
+    """今回の run（最後の回）のリンク。Hermes から取れなくても [] にする"""
+    try:
+        messages = hermes_client.get_session_messages(session_id)
+    except HermesError:
+        return []
+    turns = _turns(messages)
+    return _turn_links(turns[-1]) if turns else []
+
+
+def _is_shown(m):
+    content = m.get('content')
+    return (m.get('role') in ('user', 'assistant') and isinstance(content, str)
+            and bool(content.strip()))
 
 
 @bp.route('/<entity_type>/<int:entity_id>/history')
@@ -106,15 +121,18 @@ def history(entity_type, entity_id):
             raw = hermes_client.get_session_messages(chat['session_id'])
         except HermesError as e:
             return _hermes_error(e)
-        for m in raw:
-            role, content = m.get('role'), m.get('content')
-            if role not in ('user', 'assistant') or not isinstance(content, str) or not content.strip():
-                continue
-            messages.append({
-                'role': role, 'text': content,
-                'html': str(render_markdown(content)) if role == 'assistant' else None,
-                'timestamp': m.get('timestamp'),
-            })
+        for turn in _turns(raw):
+            shown = [m for m in turn if _is_shown(m)]
+            last_bot = max((i for i, m in enumerate(shown) if m['role'] == 'assistant'),
+                           default=None)
+            for i, m in enumerate(shown):
+                is_bot = m['role'] == 'assistant'
+                messages.append({
+                    'role': m['role'], 'text': m['content'],
+                    'html': str(render_markdown(m['content'])) if is_bot else None,
+                    'timestamp': m.get('timestamp'),
+                    'links': _turn_links(turn) if i == last_bot else [],
+                })
         if chat.get('last_run_id'):
             try:
                 status = hermes_client.get_run(chat['last_run_id']).get('status')
