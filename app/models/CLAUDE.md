@@ -29,6 +29,7 @@
 | supplements | 補足情報（作物/品種/場所/日記/タスク/収穫/料理に添付） | id |
 | app_settings | アプリ設定（キーバリュー形式。`region` = 地域・栽培環境、`passkey_registration_token_hash` / `passkey_registration_token_expires` = パスキー登録用トークン） | key |
 | passkeys | パスキー（WebAuthn 資格情報。credential_id・公開鍵は base64url、署名カウンタ、名前） | id |
+| hermes_chats | 「Hermes に聞く」パネルの会話（対象 `entity_type`=planting/crop/variety と `entity_id`、対象なしは NULL。アプリが作る `session_id` UNIQUE、`active`=1 が現在の会話、`last_run_id`）。索引 `(entity_type, entity_id, active)` | id |
 
 ### ビュー
 
