@@ -16,8 +16,9 @@
 
 ## 振る舞い
 
-- 初めて開いたときだけ `GET /hermes/ask/<type>/<id>/history` で吹き出しを並べる。`running_run_id` があれば events につなぐ
-- 送る: `POST .../runs`（`request_key` は `crypto.randomUUID()`）→ `EventSource` で `/hermes/ask/runs/<run_id>/events`。イベントは `tool`（灰色の1行、最後の1行だけ残す）・`delta`（答えの吹き出しに `textContent` で足す）・`approval`（「許可する」`once`／「しない」`deny` だけ。コマンドは `textContent`）・`done`（吹き出しをサーバーが作った `html` に置き換え、`links` を付ける）・`failed`（赤い文字）
+- 初めて開いたときだけ `GET /hermes/ask/<type>/<id>/history` で吹き出しを並べる。`running_run_id` があれば events につなぐ。履歴を読み込み終わるまで「送る」は押せない（先に送ると、後から届いた履歴が吹き出しを消すため）。履歴の取得に失敗したらエラーを出したうえで送れるようにする
+- 「― 今日 ―」の区切りは、最後の区切りが今日でないときだけ足す
+- 送る: `POST .../runs`（`request_key` は `crypto.randomUUID()`）→ `EventSource` で `/hermes/ask/runs/<run_id>/events`。イベントは `tool`（灰色の1行、最後の1行だけ残す）・`delta`（答えの吹き出しに `textContent` で足す）・`approval`（「許可する」`once`／「しない」`deny` だけ。コマンドは `textContent`。`request_id` ごとに1つの塊にし、同じものが流れ直しても二重に出さない）・`approval_done`（その `request_id` の塊のボタンを消して「返事済み」にする。Hermes はつなぎ直すと event を最初から流し直すため、画面を移って戻っても返事済みのボタンを出し直さない）・`done`（吹き出しをサーバーが作った `html` に置き換え、`links` を付ける）・`failed`（赤い文字）
 - 失敗（503 など）は入力欄の上に `error` を出し、入力した文は消さない
 - 「新しく始める」は確認なしで `POST .../new` し、吹き出しを空にする
 - `done` / `failed` のあとは必ず `EventSource` を閉じる（閉じないと自動で再接続して同じ run をもう一度流す）

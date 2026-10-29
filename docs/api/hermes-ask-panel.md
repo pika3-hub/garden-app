@@ -28,9 +28,11 @@
 
 ## 手順
 
+アプリ本体の反映（パネルの画面とマイグレーション 026）は、ほかの変更と同じく [`migration-to-ubuntu.md`](migration-to-ubuntu.md) の「9. 更新の手順」で行う。ここではそれに加える Hermes 側とキーの設定を書く。
+
 ### 1. Hermes の API Server を有効にする（<Hermes の実行ユーザー> で）
 
-2026-10-29 に実施済み。やり直すときの手順。`.env` を変える前に控えを取る。
+2026-10-29 に実施済み。やり直すときの手順。`.env` を変える前に控えを取る。やり直すときは、先に `~/.hermes/.env` の既存の `API_SERVER_ENABLED` と `API_SERVER_KEY` の行を消しておく（下のスクリプトは行を足すだけなので、そのままだと二重になる）。
 
 ```bash
 cp ~/.hermes/.env ~/.hermes/.env.bak-before-api-server
@@ -67,7 +69,7 @@ scp tools/hermes_conversation_sync.py <Hermes の実行ユーザー>@<サーバ�
 
 ### 4. SKILL.md を送り直す
 
-「アプリのパネルからの相談」の節を足したので、Hermes のスキルを入れ替える（手順は既存のスキルの更新と同じ）。
+「アプリのパネルからの相談」の節を足したので、Hermes のスキルを入れ替える。送る前にサーバーの版を取ってきて比べ、Hermes の追記を取り込んでから送る（手順は [`hermes-telegram.md`](hermes-telegram.md) の「Hermes の自己改善（SKILL.md と USER.md の書き換え）」。Telegram 時代の記録だが Matrix でも同じ）。送ったら Element X で `/new` してから試す（Hermes は SKILL.md をセッションの最初に読むので、続いている会話は古い内容のまま。[`hermes-local-chat.md`](hermes-local-chat.md) の「使い方」）。
 
 ## 確かめ方
 
@@ -89,6 +91,11 @@ sudo -u garden curl -sS -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.
 - キーが漏れた疑いがあるときは、`API_SERVER_KEY` と `HERMES_API_KEY` を作り直して gateway とアプリを再起動する
 - 同時に動く run は最大 10（超えると 429）
 - Hermes を更新（`hermes update`）したあとは、上の確かめ方と Element X の返事を確かめる
+
+## 取りやめるとき
+
+- **パネルだけ消す**: アプリの `/opt/garden-app/.env` から `HERMES_API_KEY` の行を消し、`sudo systemctl restart garden-app`。キーが無いとパネルのボタンは出ず、`/hermes/ask` も 503 を返す
+- **Hermes の API Server も止める**: 上に加えて、<Hermes の実行ユーザー> で `~/.hermes/.env` の `API_SERVER_ENABLED` を `false` にし（または `API_SERVER_ENABLED` と `API_SERVER_KEY` の行を消し）、`systemctl --user restart hermes-gateway.service`。`ss -ltnp | grep 8642` で何も出ないこと、Element X で返事が来ることを確かめる
 
 ## うまくいかないとき
 

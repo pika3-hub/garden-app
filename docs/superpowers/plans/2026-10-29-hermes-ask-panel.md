@@ -516,7 +516,7 @@ git commit -m "アプリのパネルでの会話も一覧に取り込み、経�
 
 - [ ] **Step 1: SKILL.md の節を書く**。内容: 指示（instructions）に「見ている画面」が書かれていたら、主語の省略はその対象のこととして扱う／答える前に API で中身を確かめる／アドバイスの保存は「相談・アドバイスの保存」と同じ決まり（同じパネルの会話の中の同じ話題は1件）／登録の依頼も Element X と同じ。具体的な日付などの毎回変わる値を例に入れない（`docs/dev-workflow-tips.md`）
 - [ ] **Step 2: 残りの文書を更新する**
-- [ ] **Step 3: 文書の固有値と改行を確かめる**: `git diff --name-only main...HEAD | xargs git ls-files --eol | grep crlf` で新しい CRLF が無いこと、`git diff main...HEAD | grep -nE '192\.168|pika3|/home/'` が空であること
+- [ ] **Step 3: 文書の固有値と改行を確かめる**: `git diff --name-only main...HEAD | xargs git ls-files --eol | grep crlf` で新しい CRLF が無いこと。`../garden-app-private/local-env.md` に書いた固有値（IP・ユーザー名・ホスト名・ローカルのパス）で `git diff main...HEAD` を grep し、何も出ないこと（grep のパターンはこの計画書やコミットに書かない）
 - [ ] **Step 4: コミット**
 
 ```bash
@@ -531,5 +531,5 @@ git commit -m "Hermes に聞くパネルの文書と SKILL.md を更新"
 - [ ] **Step 1: 全テスト**: `uv run python -m pytest -q` → PASS（HEIC の6件はスキップ）
 - [ ] **Step 2: もう一人のレビュー**: `codex review --base main`（`docs/dev-workflow-tips.md` の「Codex をもう一人のレビュー役にする」）。指摘はコードで確かめてから直す
 - [ ] **Step 3: push と PR**（`gh pr create`。本文の最後に `🤖 Generated with [Claude Code](https://claude.com/claude-code)`）
-- [ ] **Step 4: 本番で確かめる**（`docs/api/migration-to-ubuntu.md` の「9. 更新の手順」。DB のバックアップを取ってからブランチに切り替え、マイグレーション 026 が通ること）: `/opt/garden-app/.env` に `HERMES_API_KEY`（Task 0 で作ったキー）を足して再起動 → PC の Chrome で `https://<サーバーのホスト名>.local/` にログイン → 玉ねぎの植え付けの画面で「そろそろ植え付けですかね？」→ 対象を取り違えずに答える／同じ画面を開き直すと履歴が出る／別の植え付けでは別の会話／「タスクに登録しておいて」でタスクができ、答えの下にリンク／承認ボタン（Task 0 Step 8 と同じ方法で）／HTTP の入口（`http://<サーバーのIP>:5000`）と未ログインではパネルが出ない／SKILL.md をサーバーに送り、Element X で `/new` してからも今までどおり動く／15分後に `/conversations/` に「アプリ」のバッジ付きで出る
+- [ ] **Step 4: 本番で確かめる**（`docs/api/migration-to-ubuntu.md` の「9. 更新の手順」。DB のバックアップを取ってからブランチに切り替え、マイグレーション 026 が通ること）: `/opt/garden-app/.env` に `HERMES_API_KEY`（Task 0 で作ったキー）を足して再起動 → PC の Chrome で `https://<サーバーのホスト名>.local/` にログイン → 玉ねぎの植え付けの画面で「そろそろ植え付けですかね？」→ 対象を取り違えずに答える／同じ画面を開き直すと履歴が出る／別の植え付けでは別の会話／「タスクに登録しておいて」でタスクができ、答えの下にリンク／承認ボタン（Task 0 Step 8 と同じ方法で）／HTTP の入口（`http://<サーバーのIP>:5000`）と未ログインではパネルが出ない／SKILL.md をサーバーに送り、Element X で `/new` してからも今までどおり動く／15分後に `/conversations/` に「アプリ」のバッジ付きで出る／承認待ちのまま別の画面へ移って戻ると承認ボタンが出て、返事を済ませたボタンは出直さない（「返事済み」の表示になる）／答えの途中で別の画面へ移って戻ると、続きが出て完了する／「タスクに登録しておいて」の答えの下にリンクが出る（run.completed の時点で Hermes が発言を保存済みかの確認）／一覧の会話の詳細に `instructions` の文が出ていない
 - [ ] **Step 5: ユーザーがマージ → サーバーを main に戻す → 振り返りと worklog**（ルートの `CLAUDE.md` の「セッション終了時の振り返り」、`../garden-app-private/next.md` の更新）

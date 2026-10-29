@@ -257,7 +257,7 @@ Hermes との会話（`app/models/conversation.py`、マイグレーション 02
 |--------|-----|------|
 | id | INTEGER | 主キー |
 | hermes_id | TEXT | Hermes のセッションID（UNIQUE。上書きの鍵） |
-| source | TEXT | 会話の種類（現状は `matrix` のみ取り込む） |
+| source | TEXT | 会話の種類（`matrix`（Element X）と `api_server`（アプリの「Hermes に聞く」パネル）を取り込む） |
 | title | TEXT | 題名 |
 | started_at / ended_at / last_activity_at | TIMESTAMP | 開始・終了・最終発言（日本時間の文字列） |
 | end_reason | TEXT | 終了理由（`session_reset` など） |
