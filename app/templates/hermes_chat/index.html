@@ -11,6 +11,14 @@
 {% endblock %}
 
 {% block content %}
+{# 会話・アドバイスの一覧と同じ見出しの形にして、タブを切り替えてもタブの位置が変わらないようにする #}
+<div class="row mb-4">
+    <div class="col-md-7">
+        <h1><img src="{{ url_for('static', filename='images/icon_hermes.webp') }}" alt="" class="icon-img icon-img-lg"> Hermes とのチャット</h1>
+        <p class="text-muted mb-0">Hermes に相談・依頼できます。植え付けなどの画面のパネルで話した会話も続けられます。</p>
+    </div>
+</div>
+
 {% set hermes_tab = 'chat' %}
 {% include '_hermes_tabs.html' %}
 

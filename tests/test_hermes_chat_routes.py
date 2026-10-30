@@ -30,6 +30,13 @@ def test_owner_sees_chat_page_with_tabs(client, fake_open):
     assert 'data-history-url' not in html
 
 
+def test_chat_page_has_heading_above_tabs_like_other_tabs(client, fake_open):
+    # タブを切り替えてもタブの縦の位置が変わらないよう、会話・アドバイスと同じく見出しと説明文を上に置く
+    html = client.get('/hermes/chat/').get_data(as_text=True)
+    heading = html.index('Hermes とのチャット</h1>')
+    assert html.index('<p class="text-muted mb-0">', heading) < html.index('nav nav-tabs')
+
+
 def test_anonymous_redirected_to_login(anon_client, fake_open):
     r = anon_client.get('/hermes/chat/')
     assert r.status_code == 302 and '/auth/login' in r.headers['Location']
