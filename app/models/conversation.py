@@ -51,6 +51,13 @@ class Conversation:
         return row is not None
 
     @staticmethod
+    def mark_deleted(hermes_id):
+        """削除済みとして覚える（続きの会話が来ても登録させないため）"""
+        db = get_db()
+        db.execute('INSERT OR IGNORE INTO deleted_conversations (hermes_id) VALUES (?)', (hermes_id,))
+        db.commit()
+
+    @staticmethod
     def upsert(session):
         """hermes_id で探し、あれば更新・無ければ作成する。(id, 作ったか) を返す"""
         db = get_db()

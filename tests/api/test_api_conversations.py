@@ -147,3 +147,22 @@ def test_huge_number_timestamp_is_422_not_500(api):
     body['messages'][0]['timestamp'] = 10 ** 400
     assert api.post(URL, data=json.dumps(body),
                     content_type='application/json').status_code == 422
+
+
+def test_upload_ignores_deleted(api, sql):
+    sql("INSERT INTO deleted_conversations (hermes_id) VALUES ('20261025_165529_f52993ca')")
+    r = api.post(URL, json=payload())
+    assert r.status_code == 200
+    data = r.json['data']
+    assert data['ignored'] is True and data['id'] is None
+    assert sql('SELECT COUNT(*) AS n FROM conversations')[0]['n'] == 0
+
+
+def test_upload_ignores_descendant_of_deleted(api, sql):
+    sql("INSERT INTO deleted_conversations (hermes_id) VALUES ('garden-free-aaaa')")
+    r = api.post(URL, json=payload(id='c1', parent_session_id='garden-free-aaaa'))
+    assert r.status_code == 200 and r.json['data']['ignored'] is True
+    assert sql("SELECT 1 FROM deleted_conversations WHERE hermes_id = 'c1'")
+    r = api.post(URL, json=payload(id='c2', parent_session_id='c1'))
+    assert r.status_code == 200 and r.json['data']['ignored'] is True
+    assert sql('SELECT COUNT(*) AS n FROM conversations')[0]['n'] == 0
