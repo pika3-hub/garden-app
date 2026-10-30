@@ -389,6 +389,10 @@ def test_chat_create_hermes_down_leaves_no_chat(client, app, fake_open):
     r = client.post('/hermes/ask/chats/runs', json={'text': 'q', 'request_key': 'k'})
     assert r.status_code == 503
     assert _chat_count(app) == 0
+    # Hermes が受け付けていた場合に取り込みを止めないよう、削除済みとしては覚えない
+    from app.database import get_db
+    with app.app_context():
+        assert get_db().execute('SELECT COUNT(*) FROM deleted_conversations').fetchone()[0] == 0
 
 
 def test_chat_create_rejects_empty_text_without_creating(client, app, fake_open):
@@ -409,7 +413,8 @@ def test_chat_runs_continue_panel_chat_with_target(client, app, fake_open, plant
     assert body['session_id'] == session_id
     assert f'GET /plantings/{planting_id}' in body['instructions']
     with app.app_context():
-        assert HermesChat.get_by_id(chat['id'])['title'] == '続き'
+        # 題名はパネルで送った最初の質問のまま（続きでは変わらない）
+        assert HermesChat.get_by_id(chat['id'])['title'] == '質問'
 
 
 def test_chat_runs_for_deleted_target_uses_free_instructions(client, app, fake_open, crop_id):
@@ -468,3 +473,10 @@ def test_anonymous_rejected_for_chat_routes(anon_client, fake_open):
         resp = getattr(anon_client, method)(path, json={}, headers={'Accept': 'application/json'})
         assert resp.status_code in (400, 401, 302), path
     assert fake_open.calls == []
+
+
+def test_panel_start_sets_title_from_question(client, app, fake_open, planting_id):
+    _start(client, fake_open, planting_id)
+    from app.models.hermes_chat import HermesChat
+    with app.app_context():
+        assert HermesChat.get_active('planting', planting_id)['title'] == '質問'

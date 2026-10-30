@@ -4,7 +4,7 @@
 送る・履歴は hermes-ask.js が /hermes/ask/chats/... に話す（このファイルは画面と題名変更・削除だけ）。
 すべてログイン必須（GET は OWNER_ONLY_GET_ENDPOINTS、POST は app/auth.py の既定の拒否）。
 """
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 
 from app.models.hermes_chat import HermesChat
 from app.utils.hermes_context import describe_target
@@ -86,6 +86,10 @@ def delete(chat_id):
     if paths is None:
         abort(404)
     for path in paths:
-        delete_image(path)
+        # 会話は消し終えている（コミット済み）ので、写真が消せなくても成功として扱う
+        try:
+            delete_image(path)
+        except OSError:
+            current_app.logger.warning('会話の写真を消せませんでした: %s', path, exc_info=True)
     flash('会話を削除しました', 'success')
     return redirect(url_for('hermes_chat.index'))

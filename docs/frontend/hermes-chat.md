@@ -8,7 +8,7 @@
   - `GET /hermes/chat/` → `hermes_chat.index`: 右は新しい会話（`data-runs-url="/hermes/ask/chats/runs"`、`data-history-url` なし）
   - `GET /hermes/chat/<chat_id>` → `hermes_chat.show`: 右はその会話（`data-history-url` / `data-runs-url` は `/hermes/ask/chats/<id>/…`、`data-autoload`）。無い id は 404
   - `POST /hermes/chat/<chat_id>/rename`（`title`、前後の空白・改行を詰めて1〜200文字。外れたら flash でエラー）→ `show` へ戻る
-  - `POST /hermes/chat/<chat_id>/delete` → `HermesChat.delete` が返した写真を `delete_image` で消し、flash「会話を削除しました」→ `index`。無い id は 404
+  - `POST /hermes/chat/<chat_id>/delete` → `HermesChat.delete` が返した写真を `delete_image` で消し、flash「会話を削除しました」→ `index`。写真が消せなくても（`OSError`）警告のログだけで成功にする（会話はコミット済み）。無い id は 404
 - テンプレート: `app/templates/hermes_chat/index.html`（`index` と `show` で共用。`chat` が None なら新しい会話）
 - JS: 吹き出し・入力欄は `hermes-ask.js`（`[data-hermes-ask]`、data 属性は `docs/frontend/hermes-ask-panel.md`）。一覧への差し込みなど画面だけの動きは `app/static/js/hermes-chat.js`
 - CSS: 吹き出しは `hermes-ask.css`、画面の並びは `app/static/css/hermes-chat.css`

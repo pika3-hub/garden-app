@@ -32,8 +32,13 @@ def _like_escape(keyword):
 
 # ユーザーが変えた題名（hermes_chats.custom_title）があれば Hermes の題名より優先する
 _TITLE_SQL = '''COALESCE(
-    (SELECT custom_title FROM hermes_chats
-      WHERE session_id IN (:hermes_id, :parent_hermes_id) AND custom_title IS NOT NULL
+    (WITH RECURSIVE a(h) AS (
+         SELECT :hermes_id
+         UNION SELECT :parent_hermes_id
+         UNION SELECT c.parent_hermes_id FROM conversations c JOIN a ON c.hermes_id = a.h
+          WHERE c.parent_hermes_id IS NOT NULL)
+     SELECT custom_title FROM hermes_chats
+      WHERE session_id IN (SELECT h FROM a) AND custom_title IS NOT NULL
       ORDER BY id DESC LIMIT 1),
     :title)'''
 

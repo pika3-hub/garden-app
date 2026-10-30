@@ -70,7 +70,7 @@
 
 - `hermes_chats.session_id` と `conversations.hermes_id` は同じ値（`conversation_routes.attach_origin` がこれで突き合わせている）。削除はこの値で1件に絞れる。発言・写真・結び付きは `ON DELETE CASCADE` で消えるが、`uploads/conversations/` の縮小版のファイルは自分で消す
 - `advices` には会話への参照が無いので、会話を消してもアドバイスは残る
-- 圧縮で Hermes の会話 ID が変わった続き（`parent_hermes_id` でつながる子の行）も、削除・題名・「消したことを覚える」の対象に含める。取り込みでは `hermes_id` か `parent_hermes_id` が消した ID に当たれば登録しない
+- 圧縮で Hermes の会話 ID が変わった続き（`parent_hermes_id` でつながる子の行。圧縮が続いた孫以降も）も、削除・題名・「消したことを覚える」の対象に含める。取り込みでは `hermes_id` か `parent_hermes_id` が消した ID に当たれば登録しない
 - 今の `HermesChat.get_active(None, None)` は対象なしの active を1つにまとめる。自由な会話は複数持つので、行の id で扱う（active の仕組みはパネルの会話だけに使う）
 - 同期スクリプトは成功の返事しか見ないので、取り込みを断るときも 200 と同じ形で返す
 - 走っている途中の会話を消すと、`hermes_chats` の行が無いので events・approval は `find_by_run_id` で 404 になり、結果を捨てる動きになる（求めどおり）

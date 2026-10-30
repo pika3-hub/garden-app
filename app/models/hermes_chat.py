@@ -8,6 +8,12 @@ ENTITY_TYPES = ('planting', 'crop', 'variety')
 
 FREE_TITLE_LENGTH = 30
 
+# 会話の行の本人と、Hermes の圧縮で続いた子・孫…の hermes_id（:sid から parent_hermes_id をたどる）
+_DESCENDANTS_CTE = '''WITH RECURSIVE d(h) AS (
+    SELECT :sid
+    UNION
+    SELECT c.hermes_id FROM conversations c JOIN d ON c.parent_hermes_id = d.h)'''
+
 
 def make_title(text):
     """最初の質問から会話の題名を作る（改行は空白、30文字を超えたら29文字＋「…」）"""
@@ -168,7 +174,7 @@ class HermesChat:
 
     @staticmethod
     def rename(chat_id, title):
-        """ユーザーが題名を変える。会話の履歴（本人と子）の題名も揃える。行が無ければ False"""
+        """ユーザーが題名を変える。会話の履歴（本人と子・孫…）の題名も揃える。行が無ければ False"""
         db = get_db()
         chat = HermesChat.get_by_id(chat_id)
         if not chat:
@@ -176,15 +182,16 @@ class HermesChat:
         sid = chat['session_id']
         db.execute('UPDATE hermes_chats SET custom_title = ? WHERE id = ?', (title, chat_id))
         db.execute(
-            'UPDATE conversations SET title = ? WHERE hermes_id = ? OR parent_hermes_id = ?',
-            (title, sid, sid)
+            f'''{_DESCENDANTS_CTE}
+               UPDATE conversations SET title = :title WHERE hermes_id IN (SELECT h FROM d)''',
+            {'sid': sid, 'title': title}
         )
         db.commit()
         return True
 
     @staticmethod
     def delete(chat_id):
-        """会話を消す（履歴・発言・写真・結び付きごと）。消した縮小版の相対パスの一覧を返す。
+        """会話を消す（子・孫…の履歴・発言・写真・結び付きごと）。消した縮小版の相対パスの一覧を返す。
         取り込みで復活しないよう Hermes の ID を deleted_conversations に覚える。行が無ければ None"""
         db = get_db()
         chat = HermesChat.get_by_id(chat_id)
@@ -192,8 +199,9 @@ class HermesChat:
             return None
         sid = chat['session_id']
         convs = db.execute(
-            'SELECT id, hermes_id FROM conversations WHERE hermes_id = ? OR parent_hermes_id = ?',
-            (sid, sid)
+            f'''{_DESCENDANTS_CTE}
+               SELECT id, hermes_id FROM conversations WHERE hermes_id IN (SELECT h FROM d)''',
+            {'sid': sid}
         ).fetchall()
         conv_ids = [c['id'] for c in convs]
         paths = []
@@ -218,3 +226,13 @@ class HermesChat:
             db.rollback()
             raise
         return paths
+
+    @staticmethod
+    def discard(chat_id):
+        """会話の行だけを消す（会話の履歴と deleted_conversations には触れない）。
+
+        Hermes に送れなかったときに使う。Hermes が受け付けていた（読み取りの時間切れなど）
+        かもしれないので、削除済みとして覚えて取り込みを止めることはしない"""
+        db = get_db()
+        db.execute('DELETE FROM hermes_chats WHERE id = ?', (chat_id,))
+        db.commit()

@@ -213,6 +213,7 @@ def start(entity_type, entity_id):
     run_id, err = _start_run(chat, target, 'panel', text, request_key)
     if err:
         return err
+    HermesChat.set_title_if_empty(chat['id'], make_title(text))
     return jsonify({'ok': True, 'run_id': run_id})
 
 
@@ -258,8 +259,9 @@ def chat_create():
     chat = HermesChat.create_free(title)
     run_id, err = _start_run(chat, None, 'chat', text, request_key)
     if err:
-        # Hermes に届かなかった会話を一覧に残さない
-        HermesChat.delete(chat['id'])
+        # 一覧に残さない。Hermes が受け付けていたかもしれないので、行だけを消す
+        # （delete だと削除済みとして覚え、その会話が取り込まれなくなる）
+        HermesChat.discard(chat['id'])
         return err
     return jsonify({'ok': True, 'run_id': run_id, 'chat_id': chat['id'],
                     'chat_url': _chat_url(chat['id']), 'title': title})

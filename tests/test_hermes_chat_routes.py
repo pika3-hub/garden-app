@@ -152,3 +152,18 @@ def test_title_is_escaped(client, app, fake_open):
         HermesChat.create_free('<script>alert(1)</script>')
     html = client.get('/hermes/chat/').get_data(as_text=True)
     assert '<script>alert(1)</script>' not in html
+
+
+def test_delete_succeeds_even_if_photo_removal_fails(client, app, fake_open, monkeypatch):
+    with app.app_context():
+        chat = HermesChat.create_free('消す')
+    _conv_with_image(app, chat['session_id'], '消す')
+
+    def broken(path):
+        raise PermissionError('使用中')
+    monkeypatch.setattr('app.routes.hermes_chat_routes.delete_image', broken)
+    r = client.post(f"/hermes/chat/{chat['id']}/delete")
+    assert r.status_code == 302 and r.headers['Location'].endswith('/hermes/chat/')
+    assert '会話を削除しました' in client.get('/hermes/chat/').get_data(as_text=True)
+    with app.app_context():
+        assert HermesChat.get_by_id(chat['id']) is None

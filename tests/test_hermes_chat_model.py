@@ -175,3 +175,63 @@ def test_delete_removes_rows_and_remembers_ids(app):
 def test_delete_unknown_returns_none(app):
     with app.app_context():
         assert HermesChat.delete(999) is None
+
+
+def _three_generations(db, chat):
+    """本人 → 子 → 孫（Hermes の圧縮が続いた会話）の会話の履歴を作る"""
+    _conv(db, chat['session_id'])
+    _conv(db, 'child-1', parent=chat['session_id'])
+    _conv(db, 'grandchild-1', parent='child-1')
+    _conv(db, 'other')
+
+
+def test_rename_reaches_grandchild(app):
+    with app.app_context():
+        db = get_db()
+        chat = HermesChat.create_free('旧題')
+        _three_generations(db, chat)
+        HermesChat.rename(chat['id'], '新題名')
+        titles = {r['hermes_id']: r['title'] for r in db.execute('SELECT hermes_id, title FROM conversations')}
+        assert titles == {chat['session_id']: '新題名', 'child-1': '新題名',
+                          'grandchild-1': '新題名', 'other': 'Hermesの題名'}
+
+
+def test_delete_reaches_grandchild(app):
+    with app.app_context():
+        db = get_db()
+        chat = HermesChat.create_free('消す')
+        _three_generations(db, chat)
+        gid = db.execute("SELECT id FROM conversations WHERE hermes_id = 'grandchild-1'").fetchone()[0]
+        db.execute("INSERT INTO conversation_images (conversation_id, file_name, image_path) "
+                   "VALUES (?, 'a.jpg', 'conversations/g.jpg')", (gid,))
+        db.commit()
+        assert HermesChat.delete(chat['id']) == ['conversations/g.jpg']
+        assert [r[0] for r in db.execute('SELECT hermes_id FROM conversations')] == ['other']
+        remembered = {r[0] for r in db.execute('SELECT hermes_id FROM deleted_conversations')}
+        assert remembered == {chat['session_id'], 'child-1', 'grandchild-1'}
+
+
+def test_upsert_keeps_custom_title_for_grandchild(app):
+    with app.app_context():
+        db = get_db()
+        chat = HermesChat.create_free('旧題')
+        _conv(db, chat['session_id'])
+        _conv(db, 'child-1', parent=chat['session_id'])
+        HermesChat.rename(chat['id'], '変えた題名')
+        base = {'source': 'api_server', 'started_at': None, 'ended_at': None,
+                'last_activity_at': None, 'end_reason': None}
+        Conversation.upsert({**base, 'hermes_id': 'grandchild-1', 'parent_hermes_id': 'child-1',
+                             'title': 'Hermesの題名'})
+        assert db.execute("SELECT title FROM conversations WHERE hermes_id = 'grandchild-1'"
+                          ).fetchone()['title'] == '変えた題名'
+
+
+def test_discard_removes_only_chat_row(app):
+    with app.app_context():
+        db = get_db()
+        chat = HermesChat.create_free('捨てる')
+        _conv(db, chat['session_id'])
+        HermesChat.discard(chat['id'])
+        assert HermesChat.get_by_id(chat['id']) is None
+        assert db.execute('SELECT COUNT(*) FROM conversations').fetchone()[0] == 1
+        assert db.execute('SELECT COUNT(*) FROM deleted_conversations').fetchone()[0] == 0
