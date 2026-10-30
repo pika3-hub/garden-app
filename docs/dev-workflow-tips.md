@@ -39,6 +39,7 @@ create_app('copy').run(host='127.0.0.1', port=int(os.environ.get('PORT', '5055')
 - `debug=False` なので、コードを変えたら再起動が必要
 - 以前のセッションのサーバーが同じポートで動いたままだと、**新しいサーバーも起動に成功したように見えるが、リクエストは古いプロセスが受けて古いコードの画面が返る**（Windows では同じポートに複数のプロセスが LISTEN できる）。起動前に `netstat -ano | grep LISTEN | grep :5055` で空きを確認し、埋まっていれば `PORT` を変える。自分のサーバーのログにアクセスが記録されているかでも見分けられる
 - `load_dotenv()` を引数なしで呼ぶと、**呼び出し元スクリプトのディレクトリ** から `.env` を探す。リポジトリ外のスクリプトでは見つからないので、パスを明示する
+- **ログインが要る画面・Hermes を使う画面をコピー DB で見るとき**（2026-10-30、チャット画面）: パスキーの顔認証は自動操作できないので、上のスクリプトに確認用のログインを足す。`create_app` のあとに `@app.route('/_dev_login')` を足し、コピー DB の `passkeys` に名前 `dev-check` の行（`credential_id` / `public_key` は適当な文字列）を入れて `app.auth.login_owner(その id)` する。設定は `SESSION_COOKIE_SECURE = False`（`http://localhost`）と、ダミーの `HERMES_API_KEY`。手元には Hermes が無いので、`app.utils.hermes_client` の `start_run` / `get_run` / `iter_events` / `get_session_messages` を、決まった答えを流す偽物に差し替える（`iter_events` は `tool.started` → `message.delta` を数回 → `run.completed` の辞書を順に返す）。送った指示（instructions）を `print` しておくと、どの指示が Hermes に渡るかも確かめられる。このスクリプトはスクラッチ領域に置き、リポジトリに入れない
 
 ## 外部API の手動確認
 
@@ -110,6 +111,7 @@ CLAUDE.md や `docs/frontend/*.md` の記述がコードとずれていないか
 ## ツール・環境
 
 - `gh` CLI は winget でインストール済み（`C:\Program Files\GitHub CLI\gh.exe`、自分の GitHub アカウントでログイン済み）。インストール直後のセッションなど PATH に無いときはフルパスで呼ぶ。プルリクエストは `gh pr create` で作成できる。`gh pr merge` は auto mode の権限チェックで止められる（レビューなしのマージ扱い）ので、マージはユーザーに GitHub の画面でしてもらう
+- GitHub の画面のマージで「Merge error: The server is currently unable to perform this operation. Please try again later.」と出たら、GitHub 側の一時的な失敗。`gh pr view <番号> --json mergeable,mergeStateStatus` が `MERGEABLE` / `CLEAN` なら PR に問題は無いので、少し待って押し直す（2026-10-30 の PR #98 はそれで通った）
 - PowerShell で `gh pr view --json body -q .body` の結果は行ごとの配列になる。そのまま文字列として書き戻すと改行が消える（PR #48 の本文で発生）。`-join "`n"` してから書くか、本文の加工は Bash で行う。消えてしまったら GraphQL の `pullRequest.userContentEdits { editedAt diff }` に過去の本文が残っている
 - `node` は未インストール。JS の構文チェックはブラウザでの読み込み（コンソールエラー確認）で代用する
 - テストは `uv run pytest`。`tests/conftest.py` のフィクスチャが tmp_path 上の使い捨て DB を使う
@@ -146,6 +148,8 @@ Codex（ChatGPT Plus の枠）の `codex review` で、Claude のレビューと
 - Hermes の部品は仮想環境ではなく `hermes pm`（`~/.hermes/tools/` の専用 Python）で管理されている。`~/.local/bin/hermes` は sh のラッパーなので、1行目から Python の場所は分からない。部品の import を試すときは `find ~ -type d -name mautrix` で `~/.hermes/installs/.../venv` を探し、その `bin/python` を使う
 - **Hermes が古い値（移設前の IP など）を使ったら、Hermes 自身の記憶 `~/.hermes/memories/MEMORY.md` を疑う**。環境変数は正しく渡っていたのに、移設前に覚えた「API は <メインPCのIP>:5001」を信じていた（2026-10-24）。直したら Element X で `/new`。サーバーの構成を変えたときは、記憶に古い値が無いか `grep` する
 - iPhone のアプリから LAN 内のサーバーにつながらず Safari では開けるときは、iOS の「ローカルネットワーク」の許可を疑う
+- **Element X で Hermes の返事が来ないときは、まず `gateway.log` に `[Matrix] Sending response` と `sent event` があるかを見る**。2026-10-30 は `/new` に反応が無いように見えたが、Hermes は返事を送っていて、iPhone の Element X に表示されるのが遅れていただけだった（しばらくして2件届いた）。送っていればサーバー側は正常で、端末の表示の問題
+- **Hermes の答えがおかしい理由を推測で直さない。直す前に、Hermes に条件を付けた質問を1回送って切り分ける**。2026-10-30、パネルの会話で「前の質問はいつ？」に答えられなかったとき、「API を見に行くせい」と推測して SKILL.md とアプリの指示を2回直したが、どちらも効かなかった。「アプリは調べずに、この会話の履歴だけで答えて」と聞くと前の依頼は答えられ、「日時は表示されていません」と返ってきて、本当の原因（Hermes に渡る会話の履歴には日時が無い）が分かった。Hermes 本人に、何が見えていて何が見えていないかを聞くと速い（上の「Hermes が何を送って何で失敗したか」と同じ考え方）
 - サーバーに `pika3`（Hermes の実行ユーザー）でログインして `curl http://127.0.0.1:5000/...` すると `000` になる。遮断のルールどおりで、異常ではない。Web 画面の確認はメイン PC かスマホのブラウザで行う（2026-10-26）
 - **サーバーでの確認の `curl` は `sudo curl` にする**。ログイン用のユーザーは Hermes の実行ユーザーと同じなので、そのまま実行すると 5000 番・443 番の遮断のルールに当たって失敗する（最終レビューで、確認の手順がそのままでは失敗すると指摘された）
 - **Caddy で入口を足したら、Hermes の遮断は TCP と UDP（HTTP/3）の両方に入れる**。Caddy は既定で UDP の 443 番でも待ち受け、ループバックの UDP は `-o lo -j ACCEPT` で通る。また 443 番の遮断は `-o lo` を付けて自ホスト宛てだけにする（付けないと Hermes の外への HTTPS が全部止まる）。2026-10-28 は TCP だけの手順を書き、最終レビューで見つかった

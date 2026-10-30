@@ -15,7 +15,8 @@
 
 ## 画面
 
-- 上に `_hermes_tabs.html`（`hermes_tab = 'chat'`）。タブの先頭の「チャット」は `hermes_ask_enabled()`（ログイン中かつ `HERMES_API_KEY` 設定済み）のときだけ出す
+- いちばん上に、会話・アドバイスの一覧と同じ形の見出し（`row mb-4` の中に `h1` と `p.text-muted.mb-0`）を置く。形を揃えないと、タブを切り替えるたびにタブの縦の位置が動く（2026-10-30 の本番確認でユーザーが指摘。Hermes のタブの画面を足すときも同じ形にする）
+- その下に `_hermes_tabs.html`（`hermes_tab = 'chat'`）。タブの先頭の「チャット」は `hermes_ask_enabled()`（ログイン中かつ `HERMES_API_KEY` 設定済み）のときだけ出す
 - 左（`col-md-3`）: 「＋ 新しい会話」と `HermesChat.list_for_chat()` の行（最後に使った順）。1行に題名（`display_title`）・最後の時刻（`MM/DD HH:MM`）・パネルの会話なら対象の印（`植え付け: …`、対象が消えていれば「（削除済み）」）。選んでいる行は `active`
 - 右（`col-md-9`）: 見出しに題名、鉛筆のボタンで見出しの下に題名変更のフォーム（Bootstrap の collapse）、ごみ箱で削除（`confirm` で確かめる）。下はパネルと同じ吹き出しと入力欄
 - ナビの「Hermes」は `hermes_ask_enabled()` ならチャット画面、そうでなければ会話の一覧へ。`hermes_chat.` も active にする
