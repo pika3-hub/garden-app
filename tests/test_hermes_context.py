@@ -77,3 +77,16 @@ def test_links_for_messages_accepts_list_or_json_string(as_list):
     ]
     assert links_for_messages(messages) == [
         {'entity_type': 'task', 'entity_id': 7, 'kind': 'updated', 'hermes_message_id': 56}]
+
+
+def test_build_instructions_chat_place():
+    assert 'チャット画面' in build_instructions(None, place='chat')
+    assert build_instructions(None) == 'ユーザーはアプリ（家庭菜園管理アプリ）の画面のパネルから質問している。'
+
+
+def test_build_instructions_say_earlier_turns_come_from_history():
+    # 「前の質問はいつ？」に API（アドバイスの記録）を探しに行かず、会話の履歴で答えさせる（2026-10-30）
+    target = {'kind_label': '植え付け', 'label': 'えびす ビニールハウス', 'entity_id': 128,
+              'api_path': '/plantings/128'}
+    for text in (build_instructions(target), build_instructions(None, place='chat')):
+        assert 'この会話の履歴から答える' in text

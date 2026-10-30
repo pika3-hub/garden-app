@@ -288,7 +288,7 @@ curl -sS -X POST "$GARDEN_API_URL/advices" -H "Authorization: Bearer $GARDEN_API
 
 ### 会話の履歴（同期スクリプト専用）
 
-`POST /conversations` は、Hermes との会話を同期スクリプトがアプリへ送るための入口。Hermes 自身は使わない（Hermes の SKILL.md には書かない）。何度送っても結果が同じで（会話は `session.id`、発言は `messages[].id` で上書き。送られなかった発言は消さない）、削除はできない。
+`POST /conversations` は、Hermes との会話を同期スクリプトがアプリへ送るための入口。Hermes 自身は使わない（Hermes の SKILL.md には書かない）。何度送っても結果が同じで（会話は `session.id`、発言は `messages[].id` で上書き。送られなかった発言は消さない）、アプリで削除した会話（とその続き）は、送られても登録せず `ignored: true` で返す（200、`id` は null）。
 
 本文（JSON、または multipart の `data`）の最上位は `session` と `messages` だけ。
 

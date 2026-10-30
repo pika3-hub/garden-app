@@ -5,19 +5,19 @@
 
   var PREFIX = '/hermes/ask';
 
-  function init() {
-    var panel = document.getElementById('hermes-ask-panel');
-    if (!panel) return;
-
-    var type = panel.dataset.entityType;
-    var id = panel.dataset.entityId;
-    var base = PREFIX + '/' + type + '/' + id;
+  // 要素の data 属性: data-history-url（無ければ履歴を読まず、すぐ送れる＝新しい会話）、
+  // data-runs-url（送る先）、data-new-url（「新しく始める」。無ければボタンを探さない）、
+  // data-autoload（あればすぐ履歴を読む。無ければ offcanvas を開いたとき）
+  function setup(panel) {
+    var historyUrl = panel.dataset.historyUrl || null;
+    var runsUrl = panel.dataset.runsUrl;
+    var newUrl = panel.dataset.newUrl || null;
     var box = panel.querySelector('[data-hermes-messages]');
     var contextEl = panel.querySelector('[data-hermes-context]');
     var errorEl = panel.querySelector('[data-hermes-error]');
     var input = panel.querySelector('[data-hermes-input]');
     var sendBtn = panel.querySelector('[data-hermes-send]');
-    var newBtn = panel.querySelector('[data-hermes-new]');
+    var newBtn = newUrl ? panel.querySelector('[data-hermes-new]') : null;
 
     var loaded = false;
     var loading = false;
@@ -30,6 +30,10 @@
     // 同じ承認を二重に出さず、返事済みの知らせ（approval_done）でボタンを消すのに使う
     var approvals = {};
     sendBtn.disabled = true;
+
+    function fire(name, detail) {
+      panel.dispatchEvent(new CustomEvent(name, { bubbles: true, detail: detail }));
+    }
 
     function el(tag, cls, text) {
       var e = document.createElement(tag);
@@ -93,7 +97,7 @@
     function loadHistory() {
       if (loading) return;
       loading = true;
-      fetch(base + '/history', { headers: { Accept: 'application/json' } })
+      fetch(historyUrl, { headers: { Accept: 'application/json' } })
         .then(function (r) { return r.json(); })
         .then(function (data) {
           loading = false;
@@ -101,7 +105,12 @@
           if (!data.ok) { showError(data.error); setReady(); return; }
           loaded = true;
           showError('');
-          contextEl.textContent = 'この' + data.target.kind_label + ': ' + data.target.label;
+          if (contextEl) {
+            // 対象が消えたパネルの会話は kind_label が null（label は「（削除済み）」）
+            contextEl.textContent = !data.target ? ''
+              : data.target.kind_label ? 'この' + data.target.kind_label + ': ' + data.target.label
+                : data.target.label;
+          }
           renderHistory(data.messages);
           if (data.running_run_id) {
             setBusy(true);
@@ -139,6 +148,7 @@
         finished = true;
         if (source) { source.close(); source = null; }
         setBusy(false);
+        fire('hermes:run-finished');
       }
 
       source = new EventSource(PREFIX + '/runs/' + encodeURIComponent(runId) + '/events');
@@ -256,7 +266,7 @@
       if (busy || !ready || !text) return;
       showError('');
       setBusy(true);
-      fetch(base + '/runs', {
+      fetch(runsUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ text: text, request_key: crypto.randomUUID() })
@@ -265,6 +275,12 @@
       }).then(function (data) {
         if (!data.ok) { showError(data.error); setBusy(false); return; }
         input.value = '';
+        if (data.chat_id) {
+          // 新しい会話ができた: 以後は同じ会話に送り、URL もその会話のものにする
+          runsUrl = PREFIX + '/chats/' + encodeURIComponent(data.chat_id) + '/runs';
+          if (data.chat_url) history.replaceState(null, '', data.chat_url);
+          fire('hermes:chat-created', { chat_id: data.chat_id, chat_url: data.chat_url, title: data.title });
+        }
         // 履歴を読めずに送った場合も、あとで履歴を読み直してこの吹き出しを消さない
         loaded = true;
         if (lastDayLabel() !== '― 今日 ―') box.appendChild(el('div', 'hermes-msg-day', '― 今日 ―'));
@@ -278,7 +294,7 @@
       if (source) { source.close(); source = null; }
       approvals = {};
       setBusy(false);
-      fetch(base + '/new', { method: 'POST', headers: { Accept: 'application/json' } })
+      fetch(newUrl, { method: 'POST', headers: { Accept: 'application/json' } })
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.ok) { box.textContent = ''; showError(''); } else { showError(data.error); }
@@ -290,10 +306,20 @@
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send(); }
     });
-    newBtn.addEventListener('click', startNew);
-    panel.addEventListener('show.bs.offcanvas', function () {
-      if (!loaded) loadHistory();
-    });
+    if (newBtn) newBtn.addEventListener('click', startNew);
+    if (!historyUrl) {
+      setReady();
+    } else if ('autoload' in panel.dataset) {
+      loadHistory();
+    } else {
+      panel.addEventListener('show.bs.offcanvas', function () {
+        if (!loaded) loadHistory();
+      });
+    }
+  }
+
+  function init() {
+    document.querySelectorAll('[data-hermes-ask]').forEach(setup);
   }
 
   // Bootstrap の JS は body の最後で読まれるので、読み込み完了を待つ

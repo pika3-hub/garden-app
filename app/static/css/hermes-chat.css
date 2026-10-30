@@ -1,0 +1,35 @@
+/* Hermes とのチャット画面（hermes_chat/index.html）。吹き出し・入力欄の見た目は hermes-ask.css を使う */
+
+/* 一覧の行（題名・最後の時刻・パネルの会話の対象） */
+.hermes-chat-list { overflow-y: auto; }
+.hermes-chat-row { padding: 6px 10px; }
+.hermes-chat-row-title { display: block; font-size: .9rem; overflow-wrap: anywhere; }
+.hermes-chat-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: .75rem; color: #6c757d; }
+.hermes-chat-row-target { font-weight: normal; white-space: normal; text-align: left; overflow-wrap: anywhere; }
+.hermes-chat-row.active { background: #dcefdc; border-color: #2f6b3a; color: inherit; }
+.hermes-chat-row.active .hermes-chat-row-meta { color: #4b5a4e; }
+
+/* 右の会話の欄: 画面の高さに収め、吹き出しの欄だけスクロール */
+.hermes-chat-main {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 320px);
+  min-height: 360px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+}
+.hermes-chat-head { padding: 8px 12px; border-bottom: 1px solid #ddd; }
+.hermes-chat-title { overflow-wrap: anywhere; min-width: 0; }
+.hermes-chat-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.hermes-chat-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 8px 12px; }
+
+@media (min-width: 768px) {
+  .hermes-chat-list { max-height: calc(100vh - 360px); }
+}
+
+/* スマホ幅: 一覧を上（高さを抑えてスクロール）、会話を下に積む */
+@media (max-width: 767.98px) {
+  .hermes-chat-list { max-height: 30vh; }
+  .hermes-chat-main { height: calc(100vh - 140px); }
+}

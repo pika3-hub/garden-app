@@ -97,6 +97,10 @@ sudo -u garden curl -sS -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.
 - **パネルだけ消す**: アプリの `/opt/garden-app/.env` から `HERMES_API_KEY` の行を消し、`sudo systemctl restart garden-app`。キーが無いとパネルのボタンは出ず、`/hermes/ask` も 503 を返す
 - **Hermes の API Server も止める**: 上に加えて、<Hermes の実行ユーザー> で `~/.hermes/.env` の `API_SERVER_ENABLED` を `false` にし（または `API_SERVER_ENABLED` と `API_SERVER_KEY` の行を消し）、`systemctl --user restart hermes-gateway.service`。`ss -ltnp | grep 8642` で何も出ないこと、Element X で返事が来ることを確かめる
 
+## チャット画面（`/hermes/chat/`）
+
+チャット画面も同じ API Server と同じ `HERMES_API_URL` / `HERMES_API_KEY` を使う。本番の設定は増えず、変わりも無い（`.env` も ufw も Caddy もそのまま）。`HERMES_API_KEY` を消せばパネルと一緒にチャット画面も使えなくなる。画面の部品は `docs/frontend/hermes-chat.md`。
+
 ## うまくいかないとき
 
 | 症状 | 確認すること |

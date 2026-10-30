@@ -143,7 +143,7 @@ Hermes の API Server（127.0.0.1:8642、Hermes の実行ユーザー）
 - events の形（`data: <JSON>` の行、`event` で種類）: `tool.started`（`tool`, `preview`）、`tool.completed`（`tool`, `duration`, `error`, `preview`）、`message.delta`（**本文は `delta`**）、`reasoning.available`（`text`）、`approval.request`、`approval.responded`、`run.completed`（`output`, `usage`, `runtime`）。`GET /v1/runs/{id}` は `status`, `output`, `session_id` など
 - `GET /api/sessions/{id}/messages?inline_images=false` は `{"object", "session_id", "data": [...], "pagination"}`。各発言は `id`, `role`, `content`, `tool_calls`, `tool_call_id`, `tool_name`, `timestamp`, `display_kind` など
 - 承認: `rm -rf` で `approval.request`（`command`, `description`, `request_id`, `choices`: once / session / always / deny）が来て、状態は `waiting_for_approval`。`{"choice": "deny", "request_id": …}` を返すと Hermes は実行せずに答えを返して終わった
-- 自動リセット: ソースでは `session_reset` は Matrix などの会話の管理（`SessionStore`）だけが扱い、API Server の run は `session_id` の履歴を `state.db` から直接読む（`_conversation_history_for_session`）ので効かない見込み。実物では、6時間以上あとに同じ `session_id` で続きを聞いて確かめる（確認用の `garden-check-<日付>` の会話を使う）
+- 自動リセット: ソースでは `session_reset` は Matrix などの会話の管理（`SessionStore`）だけが扱い、API Server の run は `session_id` の履歴を `state.db` から直接読む（`_conversation_history_for_session`）ので効かない見込み。実物では、6時間以上あとに同じ `session_id` で続きを聞いて確かめる（確認用の `garden-check-<日付>` の会話を使う）→ **2026-10-30 に確認済み**: `garden-check-2026-10-29` で「昨日覚えた数字は？」に `7です。` と答えた（前日の話が続いた。自動リセットはこの経路に効かない）
 - 確認で作った会話（`garden-check-…`）は一覧の取り込みを広げたあと一覧に出る。残してよい（題名で分かる）
 - `.env` を変える前に控えを取る（`cp ~/.hermes/.env ~/.hermes/.env.bak-before-api-server`）
 

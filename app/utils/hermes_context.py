@@ -23,14 +23,29 @@ _RESOURCE_NAMES = {
 
 _DEFAULT_LABEL = '作業中…'
 
+# パネル・チャットの会話は日をまたいでも続く。「前の質問は？」に API（アドバイスの記録）を探しに
+# 行くと、保存されない作業の依頼が見つからず「無い」と答えてしまうので、履歴で答えさせる
+_EARLIER_TURNS = (
+    'この会話の中の前のやりとり（前の質問・さっき頼んだこと）を聞かれたら、API を調べずにこの会話の履歴から答える'
+    '（会話は日をまたいでも続いている。作業の依頼はアドバイスに保存されないので API には無い）。\n'
+)
+
 _INSTRUCTIONS_WITH_TARGET = (
     'ユーザーはアプリ（家庭菜園管理アプリ）の{kind_label}の画面を見ながら、画面の横のパネルから質問している。\n'
     '見ている{kind_label}: {label}（id={entity_id}）\n'
     '質問の主語や対象が省かれていたら、この{kind_label}のことと考える。\n'
     '答える前に、API の GET {api_path} で中身を確かめる（植え付けなら栽培記録も）。\n'
+    + _EARLIER_TURNS +
     '答えはパネルに表示されるので、Element X のときより少し短めにまとめる。'
 )
 _INSTRUCTIONS_NO_TARGET = 'ユーザーはアプリ（家庭菜園管理アプリ）の画面のパネルから質問している。'
+
+
+_INSTRUCTIONS_CHAT = (
+    'ユーザーはアプリ（家庭菜園管理アプリ）のチャット画面から相談している。見ているデータは無い。\n'
+    + _EARLIER_TURNS +
+    '答えは画面いっぱいに表示されるので、Element X と同じくらいの長さでよい。'
+)
 
 
 def describe_target(entity_type, entity_id):
@@ -46,9 +61,11 @@ def describe_target(entity_type, entity_id):
             'label': label, 'api_path': f'{base}/{entity_id}'}
 
 
-def build_instructions(target):
+def build_instructions(target, place='panel'):
+    """place は相談している画面（'panel' = 詳細画面のパネル、'chat' = チャット画面）。
+    対象があるときは place に関係なく同じ（対象の画面を見ながらの相談として扱う）"""
     if not target:
-        return _INSTRUCTIONS_NO_TARGET
+        return _INSTRUCTIONS_CHAT if place == 'chat' else _INSTRUCTIONS_NO_TARGET
     return _INSTRUCTIONS_WITH_TARGET.format(**target)
 
 

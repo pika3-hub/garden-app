@@ -6,6 +6,23 @@ from app.utils.timezone import get_jst_now
 ENTITY_TYPES = ('planting', 'crop', 'variety')
 
 
+FREE_TITLE_LENGTH = 30
+
+# 会話の行の本人と、Hermes の圧縮で続いた子・孫…の hermes_id（:sid から parent_hermes_id をたどる）
+_DESCENDANTS_CTE = '''WITH RECURSIVE d(h) AS (
+    SELECT :sid
+    UNION
+    SELECT c.hermes_id FROM conversations c JOIN d ON c.parent_hermes_id = d.h)'''
+
+
+def make_title(text):
+    """最初の質問から会話の題名を作る（改行は空白、30文字を超えたら29文字＋「…」）"""
+    text = ' '.join(text.split())
+    if len(text) > FREE_TITLE_LENGTH:
+        return text[:FREE_TITLE_LENGTH - 1] + '…'
+    return text
+
+
 def new_session_id(entity_type, entity_id):
     """Hermes のセッション ID を作る（対象なしは garden-free-...）"""
     suffix = secrets.token_hex(8)
@@ -112,3 +129,110 @@ class HermesChat:
             list(session_ids)
         ).fetchall()
         return {r['session_id']: dict(r) for r in rows}
+
+    @staticmethod
+    def create_free(title):
+        """対象なしの新しい会話を作る（active=0＝パネルの active の仕組みには乗せない）"""
+        db = get_db()
+        now = get_jst_now()
+        cursor = db.execute(
+            '''INSERT INTO hermes_chats
+               (entity_type, entity_id, session_id, active, title, created_at, last_used_at)
+               VALUES (NULL, NULL, ?, 0, ?, ?, ?)''',
+            (new_session_id(None, None), title, now, now)
+        )
+        db.commit()
+        return HermesChat.get_by_id(cursor.lastrowid)
+
+    @staticmethod
+    def get_by_id(chat_id):
+        row = get_db().execute(
+            'SELECT * FROM hermes_chats WHERE id = ?', (chat_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    @staticmethod
+    def set_title_if_empty(chat_id, title):
+        """題名がまだ無いときだけ（最初の質問から）付ける"""
+        db = get_db()
+        db.execute(
+            'UPDATE hermes_chats SET title = ? WHERE id = ? AND title IS NULL',
+            (title, chat_id)
+        )
+        db.commit()
+
+    @staticmethod
+    def list_for_chat():
+        """チャット画面の一覧用に全行を返す（display_title 付き、新しく使った順）"""
+        rows = get_db().execute(
+            '''SELECT h.*, COALESCE(h.custom_title, h.title, c.title) AS display_title
+                 FROM hermes_chats h
+                 LEFT JOIN conversations c ON c.hermes_id = h.session_id
+                ORDER BY h.last_used_at DESC, h.id DESC'''
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def rename(chat_id, title):
+        """ユーザーが題名を変える。会話の履歴（本人と子・孫…）の題名も揃える。行が無ければ False"""
+        db = get_db()
+        chat = HermesChat.get_by_id(chat_id)
+        if not chat:
+            return False
+        sid = chat['session_id']
+        db.execute('UPDATE hermes_chats SET custom_title = ? WHERE id = ?', (title, chat_id))
+        db.execute(
+            f'''{_DESCENDANTS_CTE}
+               UPDATE conversations SET title = :title WHERE hermes_id IN (SELECT h FROM d)''',
+            {'sid': sid, 'title': title}
+        )
+        db.commit()
+        return True
+
+    @staticmethod
+    def delete(chat_id):
+        """会話を消す（子・孫…の履歴・発言・写真・結び付きごと）。消した縮小版の相対パスの一覧を返す。
+        取り込みで復活しないよう Hermes の ID を deleted_conversations に覚える。行が無ければ None"""
+        db = get_db()
+        chat = HermesChat.get_by_id(chat_id)
+        if not chat:
+            return None
+        sid = chat['session_id']
+        convs = db.execute(
+            f'''{_DESCENDANTS_CTE}
+               SELECT id, hermes_id FROM conversations WHERE hermes_id IN (SELECT h FROM d)''',
+            {'sid': sid}
+        ).fetchall()
+        conv_ids = [c['id'] for c in convs]
+        paths = []
+        try:
+            if conv_ids:
+                marks = ','.join('?' * len(conv_ids))
+                paths = [r['image_path'] for r in db.execute(
+                    f'SELECT image_path FROM conversation_images WHERE conversation_id IN ({marks})',
+                    conv_ids).fetchall()]
+            db.execute('INSERT OR IGNORE INTO deleted_conversations (hermes_id) VALUES (?)', (sid,))
+            for c in convs:
+                db.execute('INSERT OR IGNORE INTO deleted_conversations (hermes_id) VALUES (?)',
+                           (c['hermes_id'],))
+            if conv_ids:
+                # 外部キー制約は有効にしていない（PRAGMA 無し）ので子の表も明示して消す
+                for table in ('conversation_messages', 'conversation_images', 'conversation_links'):
+                    db.execute(f'DELETE FROM {table} WHERE conversation_id IN ({marks})', conv_ids)
+                db.execute(f'DELETE FROM conversations WHERE id IN ({marks})', conv_ids)
+            db.execute('DELETE FROM hermes_chats WHERE id = ?', (chat_id,))
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        return paths
+
+    @staticmethod
+    def discard(chat_id):
+        """会話の行だけを消す（会話の履歴と deleted_conversations には触れない）。
+
+        Hermes に送れなかったときに使う。Hermes が受け付けていた（読み取りの時間切れなど）
+        かもしれないので、削除済みとして覚えて取り込みを止めることはしない"""
+        db = get_db()
+        db.execute('DELETE FROM hermes_chats WHERE id = ?', (chat_id,))
+        db.commit()

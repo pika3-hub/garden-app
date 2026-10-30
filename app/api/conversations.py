@@ -221,6 +221,12 @@ def upload_conversation():
     if errors:
         raise validation_error(errors)
 
+    if Conversation.is_deleted(session['hermes_id'], session['parent_hermes_id']):
+        # アプリで消した会話とその続きは登録しない（続きは自分の id も覚えて孫の代も止める）
+        Conversation.mark_deleted(session['hermes_id'])
+        return ok({'id': None, 'hermes_id': session['hermes_id'], 'message_count': 0,
+                   'image_count': 0, 'skipped_images': [], 'ignored': True})
+
     conversation_id, created = Conversation.upsert(session)
     Conversation.upsert_messages(conversation_id, messages)
     skipped = _store_images(conversation_id, uploads)

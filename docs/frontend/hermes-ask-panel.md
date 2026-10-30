@@ -14,6 +14,20 @@
 
 作物は `('crop', crop.id)`、品種は `('variety', variety.id)`。対象はパネルの `data-entity-type` / `data-entity-id` に出る。
 
+### data 属性（パネル以外でも使える）
+
+`hermes-ask.js` は `[data-hermes-ask]` の要素ごとに動く（中に `data-hermes-messages` / `-input` / `-send` / `-error` / `-context` / `-new` を持つこと）。URL は要素の data 属性で受け取る:
+
+- `data-history-url`: 履歴の取得先。無ければ履歴を読まず、すぐ送れる（新しい会話）。返る `target` が null のときは対象の行を空にする。`kind_label` が null（対象が消えたパネルの会話をチャット画面で開いた）なら `label`（「（削除済み）」）だけを出す
+- `data-runs-url`: 送る先
+- `data-new-url`: 「新しく始める」の送り先。無ければ `data-hermes-new` のボタンを探さない
+- `data-autoload`: あればすぐ履歴を読む。無ければ `show.bs.offcanvas`（パネルを開いたとき）に読む
+- 承認・events は常に `/hermes/ask/runs/<run_id>/…`
+- 送った応答に `chat_id` があれば（新しい会話）、以後の送り先を `/hermes/ask/chats/<chat_id>/runs` に変え、`history.replaceState` で URL を `chat_url` にし、要素に `hermes:chat-created`（`detail`: `chat_id` / `chat_url` / `title`、`bubbles`）を投げる
+- `done` / `failed` のあとに `hermes:run-finished`（`bubbles`）を投げる（一覧の時刻の更新用）
+
+パネルは `data-history-url` / `data-runs-url` / `data-new-url` を `/hermes/ask/<type>/<id>/…` で出す（`id="hermes-ask-panel"` と `data-entity-*` も残す）。
+
 ## 振る舞い
 
 - 初めて開いたときだけ `GET /hermes/ask/<type>/<id>/history` で吹き出しを並べる。`running_run_id` があれば events につなぐ。履歴を読み込み終わるまで「送る」は押せない（先に送ると、後から届いた履歴が吹き出しを消すため）。履歴の取得に失敗したらエラーを出したうえで送れるようにする
