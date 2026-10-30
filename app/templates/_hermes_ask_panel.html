@@ -12,7 +12,11 @@
 
 <div class="offcanvas offcanvas-end hermes-ask-panel" tabindex="-1" id="hermes-ask-panel"
      data-bs-scroll="true" data-bs-backdrop="false" aria-labelledby="hermes-ask-title"
-     data-entity-type="{{ hermes_ask_target[0] }}" data-entity-id="{{ hermes_ask_target[1] }}">
+     data-entity-type="{{ hermes_ask_target[0] }}" data-entity-id="{{ hermes_ask_target[1] }}"
+     data-hermes-ask
+     data-history-url="/hermes/ask/{{ hermes_ask_target[0] }}/{{ hermes_ask_target[1] }}/history"
+     data-runs-url="/hermes/ask/{{ hermes_ask_target[0] }}/{{ hermes_ask_target[1] }}/runs"
+     data-new-url="/hermes/ask/{{ hermes_ask_target[0] }}/{{ hermes_ask_target[1] }}/new">
     <div class="offcanvas-header py-2">
         <h5 class="offcanvas-title" id="hermes-ask-title">
             <img src="{{ url_for('static', filename='images/icon_hermes.webp') }}" alt="" class="icon-img"> Hermes に聞く

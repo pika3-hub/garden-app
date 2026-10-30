@@ -25,3 +25,11 @@ def test_panel_hidden_without_key(client, app, planting_id):
 
 def test_key_not_in_page(client, fake_open, planting_id):
     assert 'test-hermes-key' not in client.get(f'/plantings/{planting_id}').get_data(as_text=True)
+
+
+def test_panel_carries_urls(client, fake_open, planting_id):
+    html = client.get(f'/plantings/{planting_id}').get_data(as_text=True)
+    assert 'data-hermes-ask' in html
+    assert f'data-history-url="/hermes/ask/planting/{planting_id}/history"' in html
+    assert f'data-runs-url="/hermes/ask/planting/{planting_id}/runs"' in html
+    assert f'data-new-url="/hermes/ask/planting/{planting_id}/new"' in html
