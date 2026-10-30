@@ -30,8 +30,25 @@ def _like_escape(keyword):
     return keyword.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
 
 
+# ユーザーが変えた題名（hermes_chats.custom_title）があれば Hermes の題名より優先する
+_TITLE_SQL = '''COALESCE(
+    (SELECT custom_title FROM hermes_chats
+      WHERE session_id IN (:hermes_id, :parent_hermes_id) AND custom_title IS NOT NULL
+      ORDER BY id DESC LIMIT 1),
+    :title)'''
+
+
 class Conversation:
     """Hermes との会話モデル"""
+
+    @staticmethod
+    def is_deleted(hermes_id, parent_hermes_id):
+        """アプリから消した会話か（取り込みで復活させないための判定）"""
+        row = get_db().execute(
+            'SELECT 1 FROM deleted_conversations WHERE hermes_id IN (?, ?) LIMIT 1',
+            (hermes_id, parent_hermes_id)
+        ).fetchone()
+        return row is not None
 
     @staticmethod
     def upsert(session):
@@ -41,10 +58,10 @@ class Conversation:
             'SELECT id FROM conversations WHERE hermes_id = ?', (session['hermes_id'],)
         ).fetchone()
         db.execute(
-            '''INSERT INTO conversations
+            f'''INSERT INTO conversations
                    (hermes_id, source, title, started_at, ended_at, last_activity_at,
                     end_reason, parent_hermes_id)
-               VALUES (:hermes_id, :source, :title, :started_at, :ended_at, :last_activity_at,
+               VALUES (:hermes_id, :source, {_TITLE_SQL}, :started_at, :ended_at, :last_activity_at,
                        :end_reason, :parent_hermes_id)
                ON CONFLICT(hermes_id) DO UPDATE SET
                    source = excluded.source,

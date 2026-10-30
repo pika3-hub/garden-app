@@ -29,7 +29,8 @@
 | supplements | 補足情報（作物/品種/場所/日記/タスク/収穫/料理に添付） | id |
 | app_settings | アプリ設定（キーバリュー形式。`region` = 地域・栽培環境、`passkey_registration_token_hash` / `passkey_registration_token_expires` = パスキー登録用トークン） | key |
 | passkeys | パスキー（WebAuthn 資格情報。credential_id・公開鍵は base64url、署名カウンタ、名前） | id |
-| hermes_chats | 「Hermes に聞く」パネルの会話（対象 `entity_type`=planting/crop/variety と `entity_id`、対象なしは NULL。アプリが作る `session_id` UNIQUE、`active`=1 が現在の会話、`last_run_id`）。索引 `(entity_type, entity_id, active)` | id |
+| hermes_chats | 「Hermes に聞く」パネルの会話（対象 `entity_type`=planting/crop/variety と `entity_id`、対象なしは NULL。アプリが作る `session_id` UNIQUE、`active`=1 が現在の会話、`last_run_id`、`title` = 最初の質問から自動の題名、`custom_title` = ユーザーが変えた題名で NULL なら未変更。チャット画面の対象なしの会話は `active=0` の行を `create_free` で作る）。索引 `(entity_type, entity_id, active)` | id |
+| deleted_conversations | アプリから消した Hermes の会話の ID（`hermes_id` PK、`deleted_at`）。取り込みで復活させないための記録（`Conversation.is_deleted`）。`HermesChat.delete` が会話の履歴・発言・写真・結び付きも明示して消す（外部キー制約は無効） | hermes_id |
 
 ### ビュー
 
