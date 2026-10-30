@@ -132,7 +132,8 @@ Codex（ChatGPT Plus の枠）の `codex review` で、Claude のレビューと
 - **過去のコミットを見せても、ファイルは今の作業ツリーを読む**。行番号やコードの引用が後の修正を含むことがあるので、指摘はそのコミットの時点か今かを確かめる
 - 指摘は鵜呑みにせず、コードで確かめてから直す（5620dcc の2件目は、413・415 で読み飛ばすのは設計どおりで、当たるのは一時的な失敗のときだけだった）
 - 進行の様子は標準エラーに出る（長い）。結論は標準出力の最後の `Full review comments:` 以下
-- 2026-10-29 は Claude Code の PowerShell から `review --base main` を呼んだら、Codex のサンドボックスが起動できず（`helper_unknown_error`）、リポジトリを読めないまま「レビューできない」と返ってきた。タスクごとのレビューと最終レビューが済んでいたので、その PR は Codex なしで進めた。原因は未調査（次に使うときに、ユーザーの PowerShell から直接実行して切り分ける）
+- 2026-10-29 は Claude Code の PowerShell から `review --base main` を呼んだら、Codex のサンドボックスが起動できず（`helper_unknown_error`）、リポジトリを読めないまま「レビューできない」と返ってきた。タスクごとのレビューと最終レビューが済んでいたので、その PR は Codex なしで進めた。原因はサンドボックスの準備（`setup refresh had errors`）が、アプリの更新で消えかけの古い版の部品（`%LOCALAPPDATA%\OpenAI\Codex\runtimes\cua_node\<古いハッシュ>\bin\node_repl.exe`）を開けず「アクセスが拒否されました (os error 5)」で止まっていたこと（`~/.codex/.sandbox/sandbox.<日付>.log` で分かる）。Codex のアプリを終了しても VS Code の Codex 拡張の `codex.exe` などが残ってつかんでいたので、PC を再起動したら古い部品が消えて直った（2026-10-30）。同じ失敗は 10/5・10/6 にも起きていた。ログの `hide users: failed to hide ... C:\Users\Default` は害がない
+- **アプリの更新のたびに起こりうる**: 部品の場所は、アプリが起動時に `~/.codex/config.toml`（`[mcp_servers.node_repl]` など）へ書き込み、`codex review` もそれを読む。また起きたら、①サンドボックスのログで開けないファイルを確かめ、②`config.toml` がそのファイル（古い版のハッシュ）を指していれば Codex のアプリを起動し直す（設定を今の版に書き直す）、③だめなら PC を再起動する。公式の単体 CLI（`install.ps1`、npm 不要）も同じ `~/.codex`（`CODEX_HOME`）を使うので、乗り換えても避けられない。根本から避けるなら `CODEX_HOME` をアプリと分けて単体 CLI を入れる（ログインし直しが要る。2026-10-30 に検討して見送り）
 
 ## サーバー（Ubuntu、本番）の操作
 
