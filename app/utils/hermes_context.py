@@ -33,6 +33,12 @@ _INSTRUCTIONS_WITH_TARGET = (
 _INSTRUCTIONS_NO_TARGET = 'ユーザーはアプリ（家庭菜園管理アプリ）の画面のパネルから質問している。'
 
 
+_INSTRUCTIONS_CHAT = (
+    'ユーザーはアプリ（家庭菜園管理アプリ）のチャット画面から相談している。見ているデータは無い。\n'
+    '答えは画面いっぱいに表示されるので、Element X と同じくらいの長さでよい。'
+)
+
+
 def describe_target(entity_type, entity_id):
     """パネルを置く対象の説明。種類が違う・消えているなら None"""
     spec = _TARGETS.get(entity_type)
@@ -46,9 +52,11 @@ def describe_target(entity_type, entity_id):
             'label': label, 'api_path': f'{base}/{entity_id}'}
 
 
-def build_instructions(target):
+def build_instructions(target, place='panel'):
+    """place は相談している画面（'panel' = 詳細画面のパネル、'chat' = チャット画面）。
+    対象があるときは place に関係なく同じ（対象の画面を見ながらの相談として扱う）"""
     if not target:
-        return _INSTRUCTIONS_NO_TARGET
+        return _INSTRUCTIONS_CHAT if place == 'chat' else _INSTRUCTIONS_NO_TARGET
     return _INSTRUCTIONS_WITH_TARGET.format(**target)
 
 

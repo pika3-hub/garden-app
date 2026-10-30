@@ -77,3 +77,8 @@ def test_links_for_messages_accepts_list_or_json_string(as_list):
     ]
     assert links_for_messages(messages) == [
         {'entity_type': 'task', 'entity_id': 7, 'kind': 'updated', 'hermes_message_id': 56}]
+
+
+def test_build_instructions_chat_place():
+    assert 'チャット画面' in build_instructions(None, place='chat')
+    assert build_instructions(None) == 'ユーザーはアプリ（家庭菜園管理アプリ）の画面のパネルから質問している。'

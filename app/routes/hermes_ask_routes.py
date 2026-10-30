@@ -8,7 +8,7 @@ import json
 
 from flask import Blueprint, Response, abort, current_app, jsonify, request, stream_with_context
 
-from app.models.hermes_chat import ENTITY_TYPES, HermesChat
+from app.models.hermes_chat import ENTITY_TYPES, HermesChat, make_title
 from app.routes.conversation_routes import link_items
 from app.utils import hermes_client
 from app.utils.hermes_client import HermesError, HermesUnavailable
@@ -107,13 +107,9 @@ def _is_shown(m):
             and bool(content.strip()))
 
 
-@bp.route('/<entity_type>/<int:entity_id>/history')
-def history(entity_type, entity_id):
-    """パネルを開いたときの、今の会話の発言と実行中の run"""
-    target = _target_or_404(entity_type, entity_id)
-    if not hermes_client.is_configured():
-        return _error(NOT_CONFIGURED_MESSAGE, 503)
-    chat = HermesChat.get_active(entity_type, entity_id)
+def _history_payload(chat, target):
+    """会話の発言と実行中の run を JSON にする。chat は None もある（まだ会話が無いパネル）。
+    target は画面に出す対象（{'kind_label', 'label'}）か None"""
     messages = []
     running_run_id = None
     if chat:
@@ -142,10 +138,65 @@ def history(entity_type, entity_id):
                 running_run_id = chat['last_run_id']
     return jsonify({
         'ok': True,
-        'target': {'kind_label': target['kind_label'], 'label': target['label']},
+        'target': target,
         'messages': messages,
         'running_run_id': running_run_id,
     })
+
+
+def _parse_question():
+    """リクエストの質問と request_key を取り出す。(text, request_key, エラーの応答) を返す"""
+    data = request.get_json(silent=True) or {}
+    text = data.get('text')
+    if not isinstance(text, str) or not text.strip():
+        return None, None, _error('質問を入力してください', 400)
+    if len(text) > MAX_TEXT_LENGTH:
+        return None, None, _error(f'質問は {MAX_TEXT_LENGTH} 文字以内にしてください', 400)
+    request_key = str(data.get('request_key') or '')
+    if not request_key:
+        return None, None, _error('request_key がありません', 400)
+    return text, request_key, None
+
+
+def _start_run(chat, target, place, text, request_key):
+    """質問を Hermes に送って run を始める。(run_id, エラーの応答) を返す"""
+    session_id = chat['session_id']
+    try:
+        run_id = hermes_client.start_run(session_id, text, build_instructions(target, place),
+                                         f'{session_id}:{request_key}')
+    except HermesError as e:
+        return None, _hermes_error(e)
+    HermesChat.set_last_run(session_id, run_id)
+    return run_id, None
+
+
+def _chat_target(chat):
+    """会話の行の対象（植え付けなど）。対象なし・消えているときは None"""
+    if not chat['entity_type']:
+        return None
+    return describe_target(chat['entity_type'], chat['entity_id'])
+
+
+def _chat_or_404(chat_id):
+    chat = HermesChat.get_by_id(chat_id)
+    if chat is None:
+        abort(404)
+    return chat
+
+
+def _chat_url(chat_id):
+    # チャット画面の Blueprint ができたら url_for に切り替える
+    return f'/hermes/chat/{chat_id}'
+
+
+@bp.route('/<entity_type>/<int:entity_id>/history')
+def history(entity_type, entity_id):
+    """パネルを開いたときの、今の会話の発言と実行中の run"""
+    target = _target_or_404(entity_type, entity_id)
+    if not hermes_client.is_configured():
+        return _error(NOT_CONFIGURED_MESSAGE, 503)
+    chat = HermesChat.get_active(entity_type, entity_id)
+    return _history_payload(chat, {'kind_label': target['kind_label'], 'label': target['label']})
 
 
 @bp.route('/<entity_type>/<int:entity_id>/runs', methods=['POST'])
@@ -154,25 +205,63 @@ def start(entity_type, entity_id):
     target = _target_or_404(entity_type, entity_id)
     if not hermes_client.is_configured():
         return _error(NOT_CONFIGURED_MESSAGE, 503)
-    data = request.get_json(silent=True) or {}
-    text = data.get('text')
-    if not isinstance(text, str) or not text.strip():
-        return _error('質問を入力してください', 400)
-    if len(text) > MAX_TEXT_LENGTH:
-        return _error(f'質問は {MAX_TEXT_LENGTH} 文字以内にしてください', 400)
-    request_key = str(data.get('request_key') or '')
-    if not request_key:
-        return _error('request_key がありません', 400)
-
+    text, request_key, err = _parse_question()
+    if err:
+        return err
     chat = HermesChat.get_or_create_active(entity_type, entity_id)
-    session_id = chat['session_id']
-    try:
-        run_id = hermes_client.start_run(session_id, text, build_instructions(target),
-                                         f'{session_id}:{request_key}')
-    except HermesError as e:
-        return _hermes_error(e)
-    HermesChat.set_last_run(session_id, run_id)
+    run_id, err = _start_run(chat, target, 'panel', text, request_key)
+    if err:
+        return err
     return jsonify({'ok': True, 'run_id': run_id})
+
+
+@bp.route('/chats/<int:chat_id>/history')
+def chat_history(chat_id):
+    """チャット画面で会話を開いたときの、発言と実行中の run（会話の行の id で指す）"""
+    chat = _chat_or_404(chat_id)
+    if not hermes_client.is_configured():
+        return _error(NOT_CONFIGURED_MESSAGE, 503)
+    target = None
+    if chat['entity_type']:
+        found = _chat_target(chat)
+        target = ({'kind_label': found['kind_label'], 'label': found['label']} if found
+                  else {'kind_label': None, 'label': '（削除済み）'})
+    return _history_payload(chat, target)
+
+
+@bp.route('/chats/<int:chat_id>/runs', methods=['POST'])
+def chat_start(chat_id):
+    """チャット画面から、既にある会話に質問を送る"""
+    chat = _chat_or_404(chat_id)
+    if not hermes_client.is_configured():
+        return _error(NOT_CONFIGURED_MESSAGE, 503)
+    text, request_key, err = _parse_question()
+    if err:
+        return err
+    run_id, err = _start_run(chat, _chat_target(chat), 'chat', text, request_key)
+    if err:
+        return err
+    HermesChat.set_title_if_empty(chat_id, make_title(text))
+    return jsonify({'ok': True, 'run_id': run_id})
+
+
+@bp.route('/chats/runs', methods=['POST'])
+def chat_create():
+    """チャット画面で新しい会話（対象なし）を作って、最初の質問を送る"""
+    if not hermes_client.is_configured():
+        return _error(NOT_CONFIGURED_MESSAGE, 503)
+    text, request_key, err = _parse_question()
+    if err:
+        return err
+    title = make_title(text)
+    chat = HermesChat.create_free(title)
+    run_id, err = _start_run(chat, None, 'chat', text, request_key)
+    if err:
+        # Hermes に届かなかった会話を一覧に残さない
+        HermesChat.delete(chat['id'])
+        return err
+    return jsonify({'ok': True, 'run_id': run_id, 'chat_id': chat['id'],
+                    'chat_url': _chat_url(chat['id']), 'title': title})
 
 
 @bp.route('/<entity_type>/<int:entity_id>/new', methods=['POST'])

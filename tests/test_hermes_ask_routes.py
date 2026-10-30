@@ -365,3 +365,106 @@ def test_new_chat_changes_session(client, fake_open, planting_id):
     second = _start(client, fake_open, planting_id, run_id='run_2', key='k2')
     assert first != second
     assert second.startswith(f'garden-planting-{planting_id}-')
+
+
+# --- チャット画面用（会話の行の id で扱うルート） ---
+
+def _chat_count(app):
+    from app.database import get_db
+    with app.app_context():
+        return get_db().execute('SELECT COUNT(*) FROM hermes_chats').fetchone()[0]
+
+
+def test_chat_create_starts_free_run(client, fake_open):
+    fake_open.reply(202, {'run_id': 'run_1'})
+    r = client.post('/hermes/ask/chats/runs', json={'text': '来年オクラを作りたい', 'request_key': 'k'})
+    assert r.json['ok'] and r.json['run_id'] == 'run_1' and r.json['title'] == '来年オクラを作りたい'
+    assert r.json['chat_url'] == f"/hermes/chat/{r.json['chat_id']}"
+    body = json.loads(fake_open.calls[0].data)
+    assert body['session_id'].startswith('garden-free-') and 'チャット画面' in body['instructions']
+
+
+def test_chat_create_hermes_down_leaves_no_chat(client, app, fake_open):
+    fake_open.raise_(urllib.error.URLError('down'))
+    r = client.post('/hermes/ask/chats/runs', json={'text': 'q', 'request_key': 'k'})
+    assert r.status_code == 503
+    assert _chat_count(app) == 0
+
+
+def test_chat_create_rejects_empty_text_without_creating(client, app, fake_open):
+    r = client.post('/hermes/ask/chats/runs', json={'text': ' ', 'request_key': 'k'})
+    assert r.status_code == 400
+    assert _chat_count(app) == 0 and fake_open.calls == []
+
+
+def test_chat_runs_continue_panel_chat_with_target(client, app, fake_open, planting_id):
+    session_id = _start(client, fake_open, planting_id)
+    from app.models.hermes_chat import HermesChat
+    with app.app_context():
+        chat = HermesChat.get_active('planting', planting_id)
+    fake_open.reply(202, {'run_id': 'run_2'})
+    r = client.post(f"/hermes/ask/chats/{chat['id']}/runs", json={'text': '続き', 'request_key': 'k2'})
+    assert r.json == {'ok': True, 'run_id': 'run_2'}
+    body = json.loads(fake_open.calls[-1].data)
+    assert body['session_id'] == session_id
+    assert f'GET /plantings/{planting_id}' in body['instructions']
+    with app.app_context():
+        assert HermesChat.get_by_id(chat['id'])['title'] == '続き'
+
+
+def test_chat_runs_for_deleted_target_uses_free_instructions(client, app, fake_open, crop_id):
+    from app.models.crop import Crop
+    from app.models.hermes_chat import HermesChat
+    from app.utils.hermes_context import _INSTRUCTIONS_CHAT
+    fake_open.reply(202, {'run_id': 'run_1'})
+    client.post(f'/hermes/ask/crop/{crop_id}/runs', json={'text': 'q', 'request_key': 'k'})
+    with app.app_context():
+        chat = HermesChat.get_active('crop', crop_id)
+        Crop.delete(crop_id)
+    fake_open.reply(202, {'run_id': 'run_2'})
+    r = client.post(f"/hermes/ask/chats/{chat['id']}/runs", json={'text': 'q2', 'request_key': 'k2'})
+    assert r.status_code == 200
+    assert json.loads(fake_open.calls[-1].data)['instructions'] == _INSTRUCTIONS_CHAT
+
+
+def test_chat_history_free_and_unknown(client, app, fake_open):
+    from app.models.hermes_chat import HermesChat
+    with app.app_context():
+        chat = HermesChat.create_free('題')
+    fake_open.reply(200, {'object': 'list', 'data': []})
+    r = client.get(f"/hermes/ask/chats/{chat['id']}/history")
+    assert r.status_code == 200 and r.json['target'] is None and r.json['messages'] == []
+    n = len(fake_open.calls)
+    assert client.get('/hermes/ask/chats/9999/history').status_code == 404
+    assert client.post('/hermes/ask/chats/9999/runs', json={'text': 'q', 'request_key': 'k'}).status_code == 404
+    assert len(fake_open.calls) == n
+
+
+def test_chat_history_deleted_target(client, app, fake_open, crop_id):
+    from app.models.crop import Crop
+    from app.models.hermes_chat import HermesChat
+    with app.app_context():
+        chat = HermesChat.get_or_create_active('crop', crop_id)
+        Crop.delete(crop_id)
+    fake_open.reply(200, {'object': 'list', 'data': []})
+    r = client.get(f"/hermes/ask/chats/{chat['id']}/history")
+    assert r.json['target'] == {'kind_label': None, 'label': '（削除済み）'}
+
+
+def test_events_after_delete_is_404(client, app, fake_open):
+    from app.models.hermes_chat import HermesChat
+    fake_open.reply(202, {'run_id': 'run_1'})
+    r = client.post('/hermes/ask/chats/runs', json={'text': 'q', 'request_key': 'k'})
+    with app.app_context():
+        HermesChat.delete(r.json['chat_id'])
+    assert client.get('/hermes/ask/runs/run_1/events').status_code == 404
+    assert client.post('/hermes/ask/runs/run_1/approval', json={'choice': 'once'}).status_code == 404
+
+
+def test_anonymous_rejected_for_chat_routes(anon_client, fake_open):
+    for method, path in [('post', '/hermes/ask/chats/runs'),
+                         ('post', '/hermes/ask/chats/1/runs'),
+                         ('get', '/hermes/ask/chats/1/history')]:
+        resp = getattr(anon_client, method)(path, json={}, headers={'Accept': 'application/json'})
+        assert resp.status_code in (400, 401, 302), path
+    assert fake_open.calls == []
