@@ -6,7 +6,9 @@
 """
 import json
 
-from flask import Blueprint, Response, abort, current_app, jsonify, request, stream_with_context
+from flask import (
+    Blueprint, Response, abort, current_app, jsonify, request, stream_with_context, url_for,
+)
 
 from app.models.hermes_chat import ENTITY_TYPES, HermesChat, make_title
 from app.routes.conversation_routes import link_items
@@ -185,8 +187,7 @@ def _chat_or_404(chat_id):
 
 
 def _chat_url(chat_id):
-    # チャット画面の Blueprint ができたら url_for に切り替える
-    return f'/hermes/chat/{chat_id}'
+    return url_for('hermes_chat.show', chat_id=chat_id)
 
 
 @bp.route('/<entity_type>/<int:entity_id>/history')

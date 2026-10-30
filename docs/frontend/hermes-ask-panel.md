@@ -18,7 +18,7 @@
 
 `hermes-ask.js` は `[data-hermes-ask]` の要素ごとに動く（中に `data-hermes-messages` / `-input` / `-send` / `-error` / `-context` / `-new` を持つこと）。URL は要素の data 属性で受け取る:
 
-- `data-history-url`: 履歴の取得先。無ければ履歴を読まず、すぐ送れる（新しい会話）。返る `target` が null のときは対象の行を空にする
+- `data-history-url`: 履歴の取得先。無ければ履歴を読まず、すぐ送れる（新しい会話）。返る `target` が null のときは対象の行を空にする。`kind_label` が null（対象が消えたパネルの会話をチャット画面で開いた）なら `label`（「（削除済み）」）だけを出す
 - `data-runs-url`: 送る先
 - `data-new-url`: 「新しく始める」の送り先。無ければ `data-hermes-new` のボタンを探さない
 - `data-autoload`: あればすぐ履歴を読む。無ければ `show.bs.offcanvas`（パネルを開いたとき）に読む

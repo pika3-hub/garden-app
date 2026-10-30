@@ -1,5 +1,11 @@
-{# Hermes の会話とアドバイスの切り替えタブ。呼び出し側で hermes_tab（'conversations' / 'advices'）を set してから include する #}
+{# Hermes のチャット・会話・アドバイスの切り替えタブ。呼び出し側で hermes_tab（'chat' / 'conversations' / 'advices'）を set してから include する。
+   「チャット」はログイン中かつ HERMES_API_KEY が設定されているときだけ出す #}
 <ul class="nav nav-tabs mb-3">
+    {% if hermes_ask_enabled() %}
+    <li class="nav-item">
+        <a class="nav-link {% if hermes_tab == 'chat' %}active{% endif %}" href="{{ url_for('hermes_chat.index') }}">チャット</a>
+    </li>
+    {% endif %}
     <li class="nav-item">
         <a class="nav-link {% if hermes_tab == 'conversations' %}active{% endif %}" href="{{ url_for('conversations.list') }}">会話</a>
     </li>

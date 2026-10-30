@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{# Hermes とのチャット画面。chat が None なら新しい会話（対象なし）、あればその会話の続き。
+   吹き出し・入力欄は hermes-ask.js（data-hermes-ask）、一覧への差し込みは hermes-chat.js。
+   詳細は docs/frontend/hermes-chat.md #}
+
+{% block title %}Hermes とのチャット - 家庭菜園管理アプリ{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hermes-ask.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hermes-chat.css') }}">
+{% endblock %}
+
+{% block content %}
+{% set hermes_tab = 'chat' %}
+{% include '_hermes_tabs.html' %}
+
+<div class="row g-3 hermes-chat">
+    <div class="col-12 col-md-3">
+        <a href="{{ url_for('hermes_chat.index') }}" class="btn btn-success btn-sm w-100 mb-2">＋ 新しい会話</a>
+        <div class="list-group hermes-chat-list" data-hermes-chat-list>
+            {% for c in chats %}
+            <a href="{{ url_for('hermes_chat.show', chat_id=c.id) }}"
+               class="list-group-item list-group-item-action hermes-chat-row{% if chat and c.id == chat.id %} active{% endif %}"
+               {% if chat and c.id == chat.id %}aria-current="true"{% endif %}>
+                <span class="hermes-chat-row-title">{{ c.display_title or '（題名なし）' }}</span>
+                <span class="hermes-chat-row-meta">
+                    <span class="hermes-chat-row-time">{{ c.time_label }}</span>
+                    {% if c.target_label %}<span class="badge bg-light text-dark border hermes-chat-row-target">{{ c.target_label }}</span>{% endif %}
+                </span>
+            </a>
+            {% else %}
+            <div class="text-muted small p-2" data-hermes-chat-empty>まだ会話がありません</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-12 col-md-9">
+        <div class="hermes-chat-main">
+            <div class="hermes-chat-head">
+                <div class="d-flex align-items-center gap-2">
+                    <h1 class="h5 mb-0 hermes-chat-title" data-hermes-chat-title>{{ (chat.display_title or '（題名なし）') if chat else '新しい会話' }}</h1>
+                    <div class="ms-auto d-flex gap-1 flex-shrink-0{% if not chat %} d-none{% endif %}" data-hermes-chat-actions>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse"
+                                data-bs-target="#hermes-chat-rename" aria-expanded="false" aria-controls="hermes-chat-rename"
+                                title="題名を変える" aria-label="題名を変える">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <form method="post" action="{{ url_for('hermes_chat.delete', chat_id=chat.id) if chat else '' }}"
+                              data-hermes-chat-delete
+                              onsubmit="return confirm('この会話を削除しますか？会話の履歴からも消えます（Hermes の中の記録とアドバイスは残ります）');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="削除" aria-label="削除">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="collapse" id="hermes-chat-rename">
+                    <form method="post" action="{{ url_for('hermes_chat.rename', chat_id=chat.id) if chat else '' }}"
+                          class="d-flex gap-2 mt-2" data-hermes-chat-rename>
+                        <input type="text" name="title" class="form-control form-control-sm" maxlength="200" required
+                               value="{{ chat.display_title or '' if chat else '' }}" aria-label="題名" data-hermes-chat-rename-input>
+                        <button type="submit" class="btn btn-success btn-sm flex-shrink-0">変える</button>
+                    </form>
+                </div>
+            </div>
+
+            {% if hermes_ask_enabled() %}
+            <div class="hermes-chat-body" data-hermes-ask
+                 {% if chat %}data-history-url="/hermes/ask/chats/{{ chat.id }}/history"
+                 data-runs-url="/hermes/ask/chats/{{ chat.id }}/runs"
+                 data-autoload{% else %}data-runs-url="/hermes/ask/chats/runs"{% endif %}>
+                <div class="px-3 pt-2">
+                    <span class="hermes-ask-context" data-hermes-context></span>
+                </div>
+                <div class="hermes-ask-messages hermes-chat-messages" data-hermes-messages></div>
+                <div class="hermes-ask-foot">
+                    <div class="text-danger small mb-1 d-none" data-hermes-error></div>
+                    <div class="input-group input-group-sm">
+                        <textarea class="form-control" rows="2" maxlength="4000" placeholder="質問を入力（Ctrl+Enter で送る）" data-hermes-input></textarea>
+                        <button type="button" class="btn btn-success" data-hermes-send>送る</button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning m-3">Hermes への接続が設定されていません</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if hermes_ask_enabled() %}
+<script src="{{ url_for('static', filename='js/hermes-ask.js') }}"></script>
+<script src="{{ url_for('static', filename='js/hermes-chat.js') }}"></script>
+{% endif %}
+{% endblock %}

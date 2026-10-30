@@ -106,8 +106,10 @@
           loaded = true;
           showError('');
           if (contextEl) {
-            contextEl.textContent = data.target
-              ? 'この' + data.target.kind_label + ': ' + data.target.label : '';
+            // 対象が消えたパネルの会話は kind_label が null（label は「（削除済み）」）
+            contextEl.textContent = !data.target ? ''
+              : data.target.kind_label ? 'この' + data.target.kind_label + ': ' + data.target.label
+                : data.target.label;
           }
           renderHistory(data.messages);
           if (data.running_run_id) {

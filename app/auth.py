@@ -40,6 +40,7 @@ OWNER_ONLY_GET_ENDPOINTS = frozenset({
     'photo_pool.use', 'photo_sort.index',
     'hermes_ask.history', 'hermes_ask.events', 'hermes_ask.run_status',
     'hermes_ask.chat_history',
+    'hermes_chat.index', 'hermes_chat.show',
 })
 
 # ログインしていなくても受ける POST（ログイン・パスキー登録の処理。CSRF の照合は受ける）
