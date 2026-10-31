@@ -40,6 +40,7 @@ create_app('copy').run(host='127.0.0.1', port=int(os.environ.get('PORT', '5055')
 - 以前のセッションのサーバーが同じポートで動いたままだと、**新しいサーバーも起動に成功したように見えるが、リクエストは古いプロセスが受けて古いコードの画面が返る**（Windows では同じポートに複数のプロセスが LISTEN できる）。起動前に `netstat -ano | grep LISTEN | grep :5055` で空きを確認し、埋まっていれば `PORT` を変える。自分のサーバーのログにアクセスが記録されているかでも見分けられる
 - `load_dotenv()` を引数なしで呼ぶと、**呼び出し元スクリプトのディレクトリ** から `.env` を探す。リポジトリ外のスクリプトでは見つからないので、パスを明示する
 - **ログインが要る画面・Hermes を使う画面をコピー DB で見るとき**（2026-10-30、チャット画面）: パスキーの顔認証は自動操作できないので、上のスクリプトに確認用のログインを足す。`create_app` のあとに `@app.route('/_dev_login')` を足し、コピー DB の `passkeys` に名前 `dev-check` の行（`credential_id` / `public_key` は適当な文字列）を入れて `app.auth.login_owner(その id)` する。設定は `SESSION_COOKIE_SECURE = False`（`http://localhost`）と、ダミーの `HERMES_API_KEY`。手元には Hermes が無いので、`app.utils.hermes_client` の `start_run` / `get_run` / `iter_events` / `get_session_messages` を、決まった答えを流す偽物に差し替える（`iter_events` は `tool.started` → `message.delta` を数回 → `run.completed` の辞書を順に返す）。送った指示（instructions）を `print` しておくと、どの指示が Hermes に渡るかも確かめられる。このスクリプトはスクラッチ領域に置き、リポジトリに入れない
+- メイン PC の `instance/garden.db` は開発用で、植え付けが1件も無いことがある（2026-10-31 に確認）。植え付けの詳細画面のパネルはそのままでは開けないので、同じ部品を使うチャット画面（`/hermes/chat/`）で確かめるか、コピー DB に植え付けを足す。偽の `get_session_messages` は会話ごとに過去の日付の発言を最初から返すようにすると、日付の区切りや「これまでの質問」も確かめられる
 
 ## 外部API の手動確認
 
