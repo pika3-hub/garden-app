@@ -2,7 +2,7 @@
 
 既存のアイコンを見本として images/edits に渡し、マゼンタ単色の背景で描かせてから
 背景を透明にし、100×100 の WebP と見比べ用の一覧（compare.png）を出力先に作る。
-キーは環境変数 OPENAI_API_KEY から読む（表示しない）。手順とノウハウは docs/image-generation.md。
+キーは環境変数 OPENAI_API_KEY から読む（表示しない）。手順とノウハウは ../garden-app-private/docs/image-generation.md。
 
 使い方（メイン PC、出力先はリポジトリの外に）:
     uv run --no-project --with openai --with pillow --with numpy python tools/make_icon.py \\

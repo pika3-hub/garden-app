@@ -282,7 +282,7 @@ Windows 側のファイアウォールのルール（[`firewall-windows.md`](fir
 
 ## 10. ログイン（パスキー）の入口: avahi・Caddy・443番
 
-**2026-10-28 に追加**。閲覧は今までどおり `http://<サーバーのIP>:5000`（誰にとっても閲覧専用）、登録・編集・削除は `https://<サーバーのホスト名>.local/` でパスキーを使ってログインした自分だけ、という2つの入口にする。アプリ側の仕組みはルート `CLAUDE.md` の「ログイン（パスキー）」、設計は [`../superpowers/specs/2026-10-28-owner-login-passkey-design.md`](../superpowers/specs/2026-10-28-owner-login-passkey-design.md)。
+**2026-10-28 に追加**。閲覧は今までどおり `http://<サーバーのIP>:5000`（誰にとっても閲覧専用）、登録・編集・削除は `https://<サーバーのホスト名>.local/` でパスキーを使ってログインした自分だけ、という2つの入口にする。アプリ側の仕組みはルート `CLAUDE.md` の「ログイン（パスキー）」、設計は [`../superpowers/specs/2026-10-28-owner-login-passkey-design.md`](../../../garden-app-private/docs/superpowers/specs/2026-10-28-owner-login-passkey-design.md)。
 
 ```
 家族の端末 ──HTTP──▶ <サーバーのIP>:5000 ───────────▶ waitress（Web アプリ）  閲覧専用

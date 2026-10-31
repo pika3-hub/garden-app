@@ -1,6 +1,6 @@
 # Hermes とのチャット画面
 
-ログイン中の自分が、対象のない会話をいくつでも Hermes と続けられる画面（`/hermes/chat/`）。詳細画面の「Hermes に聞く」パネルでした会話も一覧に並び、ここから続けられる。設計は `docs/superpowers/specs/2026-10-30-hermes-chat-design.md`。
+ログイン中の自分が、対象のない会話をいくつでも Hermes と続けられる画面（`/hermes/chat/`）。詳細画面の「Hermes に聞く」パネルでした会話も一覧に並び、ここから続けられる。設計は `../garden-app-private/docs/superpowers/specs/2026-10-30-hermes-chat-design.md`。
 
 ## 部品
 

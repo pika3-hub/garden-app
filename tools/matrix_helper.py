@@ -5,7 +5,7 @@
 `MATRIX_ACCESS_TOKEN=...` の1行だけに出す（`>>` でファイルに足す想定）。
 
 使い方は `python3 matrix_helper.py --help`。手順は
-docs/superpowers/plans/2026-10-18-hermes-matrix.md と docs/api/hermes-local-chat.md。
+../garden-app-private/docs/superpowers/plans/2026-10-18-hermes-matrix.md と docs/api/hermes-local-chat.md。
 """
 import argparse
 import getpass

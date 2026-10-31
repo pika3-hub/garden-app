@@ -1,6 +1,6 @@
 # Hermes の会話をアプリに送る（会話の履歴）
 
-Hermes と Matrix（Element X）でした会話を、アプリの「Hermes との会話」画面（`/conversations/`）と各データの詳細画面で見られるようにするための、同期スクリプトの配置と運用の手順。設計は [`../superpowers/specs/2026-10-26-hermes-conversations-design.md`](../superpowers/specs/2026-10-26-hermes-conversations-design.md)、API の仕様は [`README.md`](README.md) の「会話の履歴（同期スクリプト専用）」。
+Hermes と Matrix（Element X）でした会話を、アプリの「Hermes との会話」画面（`/conversations/`）と各データの詳細画面で見られるようにするための、同期スクリプトの配置と運用の手順。設計は [`../superpowers/specs/2026-10-26-hermes-conversations-design.md`](../../../garden-app-private/docs/superpowers/specs/2026-10-26-hermes-conversations-design.md)、API の仕様は [`README.md`](README.md) の「会話の履歴（同期スクリプト専用）」。
 
 固有値は記号で書く（`<サーバーのIP>`、`<user>` = Hermes の実行ユーザー）。実際の値はリポジトリ外の `local-env.md`。サーバーの操作は、手順を示してユーザーが実行する。
 
@@ -125,7 +125,7 @@ python3 ~/hermes_conversation_sync.py --dry-run
 sudo -u garden -H bash -c 'cd /opt/garden-app && ~/.local/bin/uv run flask --app app relink-conversations'
 ```
 
-`<件数>件の会話から結び付けを<件数>件作り直しました` と出れば成功。開発 PC では `uv run flask --app app relink-conversations`。本番では事前に [`migration-to-ubuntu.md`](migration-to-ubuntu.md) の手でバックアップを取る（`sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`）。開発 PC では [`../db-validation-safety.md`](../db-validation-safety.md) に従う。
+`<件数>件の会話から結び付けを<件数>件作り直しました` と出れば成功。開発 PC では `uv run flask --app app relink-conversations`。本番では事前に [`migration-to-ubuntu.md`](migration-to-ubuntu.md) の手でバックアップを取る（`sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`）。開発 PC では [`../db-validation-safety.md`](../../../garden-app-private/docs/db-validation-safety.md) に従う。
 
 ## うまくいかないとき
 

@@ -10,8 +10,8 @@ AI エージェント（Hermes Agent など）から、菜園データを参照�
 - Ubuntu への移設: [`migration-to-ubuntu.md`](migration-to-ubuntu.md)
 - エージェント用スキル: [`hermes-skill/SKILL.md`](hermes-skill/SKILL.md)
 - スマホから Hermes に依頼する LAN 内のチャット（Matrix＋Element X、構成と手順）: [`hermes-local-chat.md`](hermes-local-chat.md)
-- Telegram との接続（2026-10-23 に停止。当時の記録と戻し方）: [`hermes-telegram.md`](hermes-telegram.md)
-- 設計書: `docs/superpowers/specs/2026-10-09-external-api-design.md`
+- Telegram との接続（2026-10-23 に停止。当時の記録と戻し方）: [`hermes-telegram.md`](../../../garden-app-private/docs/api/hermes-telegram.md)
+- 設計書: `../garden-app-private/docs/superpowers/specs/2026-10-09-external-api-design.md`
 
 リポジトリは公開なので、文書では IP アドレスやユーザー名を `<サーバーのIP>`・`<メインPCのIP>`・`<LANの範囲>`・`<user>`・`<リポジトリURL>`・`<転送用フォルダ>` などの記号で書く。実際の値はリポジトリの外のフォルダ（`../garden-app-private/local-env.md`）にある。
 

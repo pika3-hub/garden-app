@@ -1,6 +1,6 @@
 # LAN 内のチャット（Matrix＋Element X）で Hermes に依頼する
 
-スマホから Hermes への依頼を、Telegram 社のサーバーを通さず自宅の LAN の中だけで済ませるための構成と手順。**2026-10-18 に構築済み**。2026-10-23 からはこれだけを使っている（Telegram は停止。[`hermes-telegram.md`](hermes-telegram.md)）。2026-10-24 から、ふだんは**暗号化（E2EE）ありの部屋**を使う（下の「E2EE（暗号化ありの部屋）」）。設計の経緯は [`../superpowers/specs/2026-10-18-hermes-matrix-design.md`](../superpowers/specs/2026-10-18-hermes-matrix-design.md)、構築時の計画は [`../superpowers/plans/2026-10-18-hermes-matrix.md`](../superpowers/plans/2026-10-18-hermes-matrix.md)。
+スマホから Hermes への依頼を、Telegram 社のサーバーを通さず自宅の LAN の中だけで済ませるための構成と手順。**2026-10-18 に構築済み**。2026-10-23 からはこれだけを使っている（Telegram は停止。[`hermes-telegram.md`](../../../garden-app-private/docs/api/hermes-telegram.md)）。2026-10-24 から、ふだんは**暗号化（E2EE）ありの部屋**を使う（下の「E2EE（暗号化ありの部屋）」）。設計の経緯は [`../superpowers/specs/2026-10-18-hermes-matrix-design.md`](../../../garden-app-private/docs/superpowers/specs/2026-10-18-hermes-matrix-design.md)、構築時の計画は [`../superpowers/plans/2026-10-18-hermes-matrix.md`](../../../garden-app-private/docs/superpowers/plans/2026-10-18-hermes-matrix.md)。
 
 固有値は記号で書く（`<サーバーのIP>`・`<LANの範囲>`・`<user>` = Hermes の実行ユーザー）。実際の値はリポジトリ外の `local-env.md`。
 
@@ -43,7 +43,7 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 - 「Hermes（暗号化）」の部屋で文面・写真を送る。暗号化ありの部屋が返事をしなくなったら「Hermes」（暗号なし）の部屋で依頼でき、その間に下の「E2EE の鍵が壊れたとき」で直す
 - 写真（カメラロール）として送れば Element X が **JPEG に変換・縮小して送る**（例 1536×2048）ので、HEIC で断られない。「ファイル」として送ると HEIC のまま届き、受け取りで断られる見込み（Telegram と同じ。[`hermes-skill/SKILL.md`](hermes-skill/SKILL.md) の HEIC の注意）
 - `/new` を送ると確認が出る。Matrix にはボタンが無いので、**`!approve`（今回だけ）・`!always`（以後確認しない）・`!cancel`** を文字で返す
-- セッションは**毎朝4時以降の最初の依頼と、6時間あいた後の依頼で自動で新しくなる**（2026-10-24 から。下の「会話の自動リセット」）。SKILL.md をサーバーに送った後は、自動を待たずに `/new` する。自己改善（SKILL.md の書き換えは承認制。`/skills pending` で確認）の扱いは [`hermes-telegram.md`](hermes-telegram.md) の「Hermes の自己改善」（Telegram 時代の記録だが Matrix でも同じ）
+- セッションは**毎朝4時以降の最初の依頼と、6時間あいた後の依頼で自動で新しくなる**（2026-10-24 から。下の「会話の自動リセット」）。SKILL.md をサーバーに送った後は、自動を待たずに `/new` する。自己改善（SKILL.md の書き換えは承認制。`/skills pending` で確認）の扱いは [`hermes-telegram.md`](../../../garden-app-private/docs/api/hermes-telegram.md) の「Hermes の自己改善」（Telegram 時代の記録だが Matrix でも同じ）
 - ホームチャンネル（定期実行の結果や gateway の終了通知の送り先）は設定していない（Telegram の `/sethome` は停止とともに無効。定期実行のジョブも無い）。必要になったら Hermes の部屋で `/sethome` を送る
 - 一覧にある「garden.home.arpa Admin」は Tuwunel の管理用の部屋。書いた文が管理コマンドとして扱われるので、普段は開かない
 - サーバーを起動すれば Tuwunel・Caddy・gateway は自動で立ち上がる
@@ -346,7 +346,7 @@ systemctl --user restart hermes-gateway.service
 - Tuwunel の DB はバックアップしない（残すべき記録はアプリの DB に入る）。消えたら 3・4 と E2EE の手順をやり直す（相互署名の鍵も消えるので、`MATRIX_RECOVERY_KEY` を外して `MATRIX_RECOVERY_KEY_OUTPUT_FILE` から）
 - E2EE をやめる: `.env` を `MATRIX_E2EE_MODE=off` にして gateway を再起動し、「Hermes」（暗号なし）の部屋を使う。暗号化ありの部屋は暗号なしに戻せない
 - Caddy の発行元の鍵は `/root/caddy-pki-backup-YYYYMMDD.tgz`（root だけ）。無くなるとスマホに証明書を入れ直すことになる
-- Telegram に戻す: Bot は削除済みなので作り直す（[`hermes-telegram.md`](hermes-telegram.md) の冒頭）。`~/.hermes/.env.bak-before-matrix` などのバックアップの中の Telegram のトークンは使えない
+- Telegram に戻す: Bot は削除済みなので作り直す（[`hermes-telegram.md`](../../../garden-app-private/docs/api/hermes-telegram.md) の冒頭）。`~/.hermes/.env.bak-before-matrix` などのバックアップの中の Telegram のトークンは使えない
 - 全部やめる: `sudo systemctl disable --now tuwunel caddy`、`sudo ufw delete allow from <LANの範囲> to any port 8448 proto tcp`、`before.rules`／`before6.rules` の tuwunel の行を消して `sudo ufw reload`。`/var/lib/tuwunel` は purge でも消えないので手で消す
 
 ## 選ばなかった方法（2026-10-14 の調査）

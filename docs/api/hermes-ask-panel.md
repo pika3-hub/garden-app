@@ -1,6 +1,6 @@
 # Hermes に聞くパネル（本番の設定と運用）
 
-植え付け・作物・品種の詳細画面から Hermes に質問するパネルを、本番で動かすための設定と確かめ方。設計は [`../superpowers/specs/2026-10-29-hermes-ask-panel-design.md`](../superpowers/specs/2026-10-29-hermes-ask-panel-design.md)、画面の部品は [`../frontend/hermes-ask-panel.md`](../frontend/hermes-ask-panel.md)。
+植え付け・作物・品種の詳細画面から Hermes に質問するパネルを、本番で動かすための設定と確かめ方。設計は [`../superpowers/specs/2026-10-29-hermes-ask-panel-design.md`](../../../garden-app-private/docs/superpowers/specs/2026-10-29-hermes-ask-panel-design.md)、画面の部品は [`../frontend/hermes-ask-panel.md`](../frontend/hermes-ask-panel.md)。
 
 固有値は記号で書く（`<サーバーのIP>`、`<Hermes の実行ユーザー>`）。実際の値はリポジトリ外の `local-env.md`。サーバーの操作は、手順を示してユーザーが実行する。
 
@@ -69,7 +69,7 @@ scp tools/hermes_conversation_sync.py <Hermes の実行ユーザー>@<サーバ�
 
 ### 4. SKILL.md を送り直す
 
-「アプリのパネルからの相談」の節を足したので、Hermes のスキルを入れ替える。送る前にサーバーの版を取ってきて比べ、Hermes の追記を取り込んでから送る（手順は [`hermes-telegram.md`](hermes-telegram.md) の「Hermes の自己改善（SKILL.md と USER.md の書き換え）」。Telegram 時代の記録だが Matrix でも同じ）。送ったら Element X で `/new` してから試す（Hermes は SKILL.md をセッションの最初に読むので、続いている会話は古い内容のまま。[`hermes-local-chat.md`](hermes-local-chat.md) の「使い方」）。
+「アプリのパネルからの相談」の節を足したので、Hermes のスキルを入れ替える。送る前にサーバーの版を取ってきて比べ、Hermes の追記を取り込んでから送る（手順は [`hermes-telegram.md`](../../../garden-app-private/docs/api/hermes-telegram.md) の「Hermes の自己改善（SKILL.md と USER.md の書き換え）」。Telegram 時代の記録だが Matrix でも同じ）。送ったら Element X で `/new` してから試す（Hermes は SKILL.md をセッションの最初に読むので、続いている会話は古い内容のまま。[`hermes-local-chat.md`](hermes-local-chat.md) の「使い方」）。
 
 ## 確かめ方
 
