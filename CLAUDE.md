@@ -1,57 +1,52 @@
 # CLAUDE.md - 家庭菜園管理アプリ AI アシスタントガイド
 
-このドキュメントは、このコードベースで作業するAIアシスタント（Claudeなど）のための包括的なガイドです。アーキテクチャ、規約、ワークフロー、ベストプラクティスについて説明します。
+このコードベースで作業する AI アシスタント（Claude など）のためのガイド。ここには毎回必要なことだけを置き、機能ごとの詳細は `docs/features.md`、領域ごとの規約は下の目次のファイルに置く。
 
 ## プロジェクト概要
 
 **名称:** 家庭菜園管理アプリ
-**タイプ:** Flask ベースの Web アプリケーション
-**言語:** Python 3.12、日本語UI
-**データベース:** SQLite
+**タイプ:** Flask ベースの Web アプリケーション（Python 3.12、日本語UI、SQLite、パッケージ管理は uv）
 **目的:** ビジュアルキャンバスレイアウト、日記エントリ、作物と場所の関係を使用した家庭菜園の栽培管理
-**パッケージ管理:** uv
-**利用想定:** 自宅 LAN 内で動かし、PC と LAN 内のスマホから使う（閲覧は誰でも、登録・編集・削除はパスキーでログインした自分だけ。インターネット公開・複数人での編集は想定外。下の「ログイン（パスキー）」）。2026-10-11 から本番は Ubuntu サーバー（<サーバーのIP>、`garden-app.service`、`/opt/garden-app`）で動いており、メイン PC は開発用（`instance/garden.db` は本番データではない）。手順は `docs/api/migration-to-ubuntu.md`。**リポジトリは公開**なので、文書・コミットに実環境の固有値（IP アドレス、ユーザー名、ホスト名、ローカルのパス）を書かず `<サーバーのIP>` などの記号で書く。実際の値はリポジトリの外の `../garden-app-private/local-env.md`（後述）。待ち受けアドレスは `.env` の `HOST`（既定 `127.0.0.1`）。ネットワーク・セキュリティ関連の変更では、スマホからの利用（写真プールへのアップロード等）を壊さないか確認する
+**利用想定:** 自宅 LAN 内で動かし、PC と LAN 内のスマホから使う。閲覧は誰でも、登録・編集・削除はパスキーでログインした自分だけ。インターネット公開・複数人での編集は想定外。2026-10-11 から本番は Ubuntu サーバー（<サーバーのIP>、`garden-app.service`、`/opt/garden-app`）で動いており、メイン PC は開発用（`instance/garden.db` は本番データではない）。手順は `docs/api/migration-to-ubuntu.md`。待ち受けアドレスは `.env` の `HOST`（既定 `127.0.0.1`）
+
+### 守ること
+
+- **リポジトリは公開**。文書・コミットに実環境の固有値（IP アドレス、ユーザー名、ホスト名、ローカルのパス）を書かず `<サーバーのIP>` などの記号で書く。実際の値はリポジトリの外の `../garden-app-private/local-env.md`
+- ネットワーク・セキュリティ関連の変更では、スマホからの利用（写真プールへのアップロード等）を壊さないか確認する。画像まわりを変えるときは API 側（`app/api/images.py`）も確認する
+- **ログインの前提を崩さない**: パスキーの非常口（サーバーで出す1回限りの登録用 URL）が自分だけのものである根拠は、Hermes の実行ユーザーが sudo をパスワード無しで使えないことと、Hermes が 443 番に届かないこと。`NOPASSWD` を足す、Hermes の遮断を外す、Caddy の転送先を増やす、といった変更をしない（`docs/features.md` の「ログイン（パスキー）」）
+- **Hermes は API だけで完結させる**: サーバーの Hermes は Web 画面（5000番）と `/opt/garden-app`（`uploads/` を含む）に触れない（ufw と権限で遮断）。Hermes にさせる機能は `/api/v1/*` だけで完結させ、画像は `/image` エンドポイントで渡す。アプリがサーバーから外へ接続する処理（OGP 取得など）を API から使うときは遮断の抜け道にしない（例: `fetch_ogp(public_only=True)`）。Hermes の API Server（8642番）を LAN に開けない。サーバーに常駐するソフトを足すときは、Hermes の実行ユーザーがそれを経由して遮断をすり抜けられないかを確かめる（例: Caddy の管理用 API は `admin off`）
 
 ### 主な機能
-- **作物管理:** 作物（トマト、なすなど）のCRUD。種類・アイコン・イメージカラー・画像・Markdownメモを持つ
-- **AIメモ下書き:** 作物・品種フォームの「✨ AIで下書き」から Claude API でメモの下書き（設定画面の地域・栽培環境を基準にした時期、特性、栽培のコツ）を生成し、モーダルで確認して置き換え／追記できる。「Webで調べる」（品種は既定ON）で Web 検索を併用し参考URLを付与（`web_search_20260209` は本文に citations が付かないことが多いため、参考にしたページを AI に `## 参考URL` として書かせ、検索結果・citations に実在する URL だけを検索結果のタイトルで残す（架空の URL 対策）。AI が書かなかったときだけ citations の URL を使う。検索結果の上位をそのまま付けると読んでいないページが混ざるので付けない）。APIキーは `.env` の `ANTHROPIC_API_KEY`、モデルは `ANTHROPIC_MODEL`（`claude-opus-5-5` 既定 / `claude-sonnet-5-5` / `claude-haiku-5-5`。Haiku はサーバー側フォールバック非対応・`web_search_20260209` 非対応のため、`MODEL_INFO` の設定でフォールバックを付けず `web_search_20250305` を使う）。地域は設定画面（`/settings/`）で `app_settings` テーブルに保存。実装は `app/utils/ai_notes.py` + `settings_routes.py` + `_ai_notes_button.html` / `_ai_notes_modal.html` / `ai-notes.js`。Hermes から作物・品種を登録するときも、`hermes-skill/SKILL.md` の指示で同じ形式のメモを書かせている（地域は `GET /api/v1/meta` の `region`。参考URLは本文に残す。補足情報（`extra_urls` / `extra_youtube`）には写さず、地域を入れずに一般的な育て方で別に探した Web ページ・YouTube を付けさせる（2026-10-25 のユーザーの希望。メモは地域込み、補足情報は一般的な情報））
-- **品種管理:** 作物に紐づく品種（アイコ、桃太郎など）のCRUD。1作物：多品種の関係。アイコン・イメージカラー・画像は nullable で、未設定時は親作物から継承
-- **場所管理:** 畑やプランターの場所のCRUD、画像サポート付き
-- **キャンバスエディター:** バニラJSベースのビジュアル菜園レイアウトデザイナー（作物アイコンのドラッグ&ドロップ配置、背景画像選択）。植え付け登録時に見取り図配置ページへ自動遷移（スキップ可能）
-- **見取り図プレビュー:** 場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）、場所詳細ではフルスクリーン表示の日付ナビゲーション（前へ/次へ・左右キー）で過去の配置状態を再現可能
-- **栽培記録:** 作物と場所をリンクし、ステータス追跡（栽培中/栽培終了/削除済み）、タブフィルター付き一覧（`/plantings/`）、栽培観察記録の登録・管理。植え付け一覧の「栽培記録をまとめて登録」から複数の植え付けの栽培記録を一括登録も可能（`/plantings/bulk/new`）：複数の植え付けを選択→共通の記録日・既定画像を設定した上で、メモ・画像は植え付けごとに個別入力・上書き（写真プールからの選択も可）できる
-- **収穫記録:** 複数回の収穫を記録、収穫量・単位・メモ・画像対応、植え付けからの日数自動計算。収穫一覧・植え付け詳細の両方から「収穫を記録」可能で、新規フォームはモーダルから対象の植え付けを選択できる（種類・場所バッジフィルタ付き）。収穫一覧の「まとめて登録」から一括登録も可能（`/harvests/bulk/new`）：複数の植え付けを選択→共通の収穫日・既定画像を設定した上で、収穫量・単位・メモ・画像は植え付けごとに個別入力・上書き（写真プールからの選択も可）できる
-- **日記システム:** 複数エンティティ（作物、品種、場所、植え付け、収穫）との関連付けと画像添付を持つ栽培日記。関連付けはカード型モーダルで複数選択（`entity-select-modal.js`）
-- **画像サポート:** 作物・品種・場所・栽培記録・収穫・日記・料理・補足情報の画像アップロード・管理（PNG/JPG/GIF/WebP。HEIC/HEIF は中身で判定して JPEG に変換して保存（`pillow-heif`、EXIF・色プロファイルは残す）。撮影場所（GPS）は JPEG・HEIC から外して保存（`app/utils/strip_gps.py`）。1リクエスト合計最大256MB＝写真プールの一括アップロード対応）、一覧画面はサムネイル（800×600px JPEG）を使用して高速化
-- **スライドショー:** 栽培記録一覧（植え付け詳細内）・収穫記録一覧の画像をフルスクリーンで閲覧（`slideshow.js` + `slideshow.css`）、日付・日数・キャプション表示、キーボード操作対応
-- **メモの Markdown 表示:** 詳細画面のメモ・本文・補足テキスト・サイドバーの作物/品種/場所カードは、入力された Markdown をサーバー側で HTML に変換して表示（`markdown-it-py`、Jinja フィルター `markdown`、生 HTML はエスケープ、単独改行も維持）。一覧などの切り詰めプレビューはプレーンテキストのまま。詳細は `docs/frontend/markdown-notes.md`
-- **検索とフィルター:** 作物・品種・場所・植え付け・収穫・料理の一覧はクライアントサイドの種類バッジフィルター（`badge-filter.js`）、日記・タスクはクライアントサイドの年・季節・月バッジフィルター（`date-badge-filter.js`）。日記・タスク・料理はサーバーサイドのキーワード検索も持つ
-- **ダッシュボード:** 統計情報と最近のアクティビティ概要、画像カルーセル（全データ種別の最近の画像をランダム再生、Bootstrap 5 Carousel使用）
-- **カレンダービュー:** 月別カレンダーで作物・品種・場所・日記・植え付け・栽培記録・収穫・タスク・料理をアイコン表示、詳細ページへのリンク
-- **タスク管理:** 栽培作業タスクのCRUD、ステータス管理（未着手/進行中/完了）、期限日設定、作物・品種・場所・植え付けとの関連付け。関連付けはカード型モーダルで複数選択（`entity-select-modal.js`）
-- **詳細画面ナビゲーション:** 全詳細画面（作物・品種・場所・植え付け・栽培記録・収穫・日記・タスク・料理）で前後データへの移動ボタンを表示。共通部品 `_detail_nav.html` を使用し、各モデルの `get_adjacent()` メソッドで一覧の表示順に基づく前後を取得
-- **補足情報:** 作物・品種・場所・日記・タスク・収穫・料理の詳細画面に補足テキスト、追加画像、外部URL（OGP情報の自動取得付き）、YouTube動画埋め込みを複数添付可能。共通テンプレート `_supplements_section.html` + `supplements` テーブルで管理
-- **写真プール:** モバイルで撮影した複数写真を先に一括アップロードし、後から各写真を選んで作物・品種・場所・栽培記録・収穫・料理・日記・補足情報の登録/編集画面へ送り込める機能（`/photo_pool/`）。プール写真は `uploads/photo_pool/` に独立保存し、登録時に対象エンティティのフォルダへコピー（使い回し可）。使用回数は `photo_pool_usages` 中間テーブルで追跡。各登録/編集画面の画像フィールドからは「写真プールから選択」ボタンで共通モーダル（`_photo_pool_picker_modal.html`）を開いて選択可能（ローカルファイル選択と排他UI、使用状況フィルター付き）。一覧の各写真には使用先（登録したデータ）へのリンクを出す（`PhotoPool.get_usage_links()`。補足情報は親の詳細画面へ、削除済みは「削除済み」）
-- **写真の振り分け:** 写真プールで複数枚を選び「選んだ写真を振り分ける」→ 1枚ずつ大きく見ながら種類（栽培記録・収穫・料理・日記・植え付け＋栽培記録・作物・品種・場所）と対象を選んで登録し、「保存して次へ」で写真プールに戻らず続ける（`/photo_pool/sort/`、Blueprint `photo_sort`。状態は URL の `ids` / `pos` / `done` / `kind` だけで持つ）。「保存して、この写真で続けて登録」で同じ写真を別の行き先にも使える。栽培記録・収穫は植え付けを複数選べ（メモは共通、収穫量・単位は植え付けごと）、植え付けは最初の栽培記録に写真を付ける（見取り図の配置には移らない）。「✨ AIで下書き」（ボタンを押したときだけ）は写真のサムネイルを Claude API に送り、種類ごとの項目（メモ、料理のタイトル・カテゴリ、日記のタイトル・本文）を下書きする。栽培記録は「前回からの変化も書く」（既定オン）なら、植え付けごとに写真のある前回の栽培記録の写真とメモ（写真の補助）も送って変化を書かせる。アドバイスは書かせない（`app/utils/ai_photo_drafts.py`。`output_config.format` の JSON で受け取る。作物・品種は既存の AI メモ下書き）。補足情報（画像）への振り分けは未対応（`../garden-app-private/docs/wishlist.md`）
-- **料理記録:** 収穫した野菜を使った料理のCRUD（`/cooking/`）。タイトル・カテゴリ・調理日（必須）・メモ・画像を記録。作物・品種・植え付け・収穫との多対多関連付け（`cooking_relations` テーブル）。補足情報対応（`entity_type='cooking'`）。メニュー順は収穫の直後
-- **Hermes に聞くパネル:** 植え付け・作物・品種の詳細画面（ログイン中かつ `HERMES_API_KEY` 設定済みのときだけ）の右下の「Hermes に聞く」から開く右側のパネル（Bootstrap offcanvas）で Hermes に相談・依頼できる。開いている画面（種類・id・表示名・読む API）を Hermes への instructions に載せるので主語を省いた質問ができ、画面（データ）ごとに別の会話（`hermes_chats` 表の `session_id`、「新しく始める」で変わる）が後日も続く。ブラウザはアプリの中継 `/hermes/ask/...`（`hermes_ask_routes.py`、全てログイン必須・CSRF 照合）にだけ話し、アプリが Hermes の API Server（`HERMES_API_URL` 既定 `http://127.0.0.1:8642`、`HERMES_API_KEY`＝Hermes の `API_SERVER_KEY`）の events（SSE）を中継する。キーは HTML・JS・JSON に出さない。道具は Element X と同じ（絞らない）で、承認待ちはパネルで `once` / `deny` だけ返す。パスキーでログインした人は Hermes にできることを何でも頼めるので、8642 番を LAN に開けない。会話は同期で `/conversations/` にも並ぶ。実装は `app/utils/hermes_client.py` + `hermes_context.py` + `app/models/hermes_chat.py`（マイグレーション 026）+ `_hermes_ask_panel.html` + `hermes-ask.js`。画面の部品は `docs/frontend/hermes-ask-panel.md`、本番の設定は `docs/api/hermes-ask-panel.md`、設計は `../garden-app-private/docs/superpowers/specs/2026-10-29-hermes-ask-panel-design.md`。Hermes への指示は `hermes-skill/SKILL.md` の「アプリのパネルからの相談」
-- **Hermes とのチャット:** ログイン中かつ `HERMES_API_KEY` 設定済みのとき、ナビの「Hermes」が開く `/hermes/chat/`（Blueprint `hermes_chat`、Hermes の各ページの最初のタブ「チャット」）で、見ているデータの無い自由な会話を複数持てる（Element X のようなチャット）。パネルの会話も一覧に並び、続きを話せる。題名の変更と削除ができ、削除はアプリの中だけ（チャット一覧と `/conversations/` から消え、`deleted_conversations` 表に覚えて同期 API が削除済みの会話とその続きを無視する。Hermes の `state.db` の記録と保存済みのアドバイスは残る）。ログアウト中はナビが `/conversations/` に行き、チャットのタブは出ない。中継はパネルと同じ `/hermes/ask/...`（会話の行の id で扱うルートを追加）。実装は `app/routes/hermes_chat_routes.py` + `hermes_chat/index.html` + `hermes-chat.js` + `hermes-chat.css`、指示は `hermes_context.py` の `_INSTRUCTIONS_CHAT`。画面の部品は `docs/frontend/hermes-chat.md`、設計は `../garden-app-private/docs/superpowers/specs/2026-10-30-hermes-chat-design.md`。Hermes への指示は `hermes-skill/SKILL.md` の「チャット画面からの相談」
-- **Hermes との会話の履歴:** サーバーの Hermes と Matrix（Element X）またはアプリのパネルでした会話（経路は `conversations.source` の `matrix` / `api_server`。一覧・詳細に「アプリ」「Element X」の印と、パネルの会話は対象のデータを出す）を、アプリの `/conversations/`（新しい順、キーワード検索）と会話の詳細（ユーザーの発言と Hermes の返事の文章、縮小版の写真、Hermes が curl で作った・変えた・見たデータへのリンク）で見られる。作物・品種・場所・植え付け・栽培記録・収穫・日記・タスク・料理の詳細画面にも「このデータが出てきた Hermes との会話」の欄（`_hermes_conversations_section.html`、Jinja グローバル `hermes_conversations`）を出す。取り込みは `tools/hermes_conversation_sync.py`（サーバーの Hermes の実行ユーザーが systemd タイマーで15分おきに実行。`state.db` を読み取り専用で読み、`POST /api/v1/conversations` に送る。データの流れは Hermes → API だけで遮断を崩さない）。同じ会話は何度送っても上書きで二重にならず、アプリで始めた会話（チャット画面・パネル）はチャット画面から削除でき（`deleted_conversations` 表に覚え、同期 API は削除済みの会話とその続きを無視する）、Element X の会話は消せない。結び付けの解析（`app/utils/conversation_links.py`）を直したら `uv run flask --app app relink-conversations`。配置と運用は `docs/api/hermes-conversation-sync.md`、設計は `../garden-app-private/docs/superpowers/specs/2026-10-26-hermes-conversations-design.md`
-- **Hermes のアドバイス:** Hermes が相談・質問に答えたら、そのアドバイス（見出し・相談・答えの Markdown）を API（`/api/v1/advices`）で1件ずつ保存する（同じ会話の同じ話題は PATCH で更新、話題が変われば新規、別の会話では常に新規。作業の依頼は保存しない。保存前の確認なし）。作物・品種・植え付けとひも付き、`/advices/`（一覧・詳細・編集・削除。新規作成は Hermes のみ）と、植え付け・品種・作物の詳細画面の「Hermes のアドバイス」の欄（品種・作物は配下の分もまとめて表示）で振り返れる。実装は `app/models/advice.py` + `app/routes/advice_routes.py` + `_hermes_advice_section.html` + `app/api/advices.py`、指示は `hermes-skill/SKILL.md` の「相談・アドバイスの保存」、設計は `../garden-app-private/docs/superpowers/specs/2026-10-27-hermes-advice-design.md`
-- **ログイン（パスキー）:** 閲覧は誰でもでき（家族はログイン不要）、登録・編集・削除・アップロード・AI 下書き・見取り図の保存などは、パスキー（PC は Windows Hello、iPhone・iPad は Face ID）でログインした自分だけができる。入口は2つ: `http://<サーバーのIP>:5000` は誰にとっても閲覧専用（セッションの Cookie に `Secure` を付けるので HTTP にはログインが届かない）、`https://<サーバーのホスト名>.local/`（サーバーの avahi の名前＋Caddy の `tls internal`、443番）が編集の入口。実装は `app/auth.py`（`before_request` で **GET・HEAD・OPTIONS 以外はログインが無ければ既定で拒否**、編集用の GET は `OWNER_ONLY_GET_ENDPOINTS` に載せたものだけ `/auth/login` へ案内、CSRF 照合、Jinja グローバル `is_owner()` / `csrf_token()` / `owner_base_url`）+ `app/routes/auth_routes.py`（Blueprint `auth`、`/auth`）+ `app/models/passkey.py`（`passkeys` 表）+ `app/static/js/csrf.js`（フォームの隠し項目と `fetch` のヘッダーに CSRF トークンを自動で付ける）。ログインは 180 日保ち、セッションは「どのパスキーでログインしたか」を持つので、設定画面（`/settings/`）でそのパスキーを消せばその端末のログインはすぐ切れる。依存は `webauthn`（py_webauthn）。**非常口**（最初の1つ目・全部の端末をなくしたとき）はサーバーで `sudo -u garden -H bash -c 'cd /opt/garden-app && ~/.local/bin/uv run flask --app app passkey-register-link'`（開発では `uv run flask --app app passkey-register-link [--base-url URL]`）が出す1回限り・15分の登録用 URL。これが自分だけのものである根拠は、Hermes の実行ユーザーが sudo をパスワード無しで使えない（`NOPASSWD` を足さない、sudo の記憶は端末ごとのまま）ことと、Hermes が 443 番に届かないこと（ufw、`docs/api/migration-to-ubuntu.md` の手順 10）。**これらを崩す変更（`NOPASSWD`、Hermes の遮断を外す、Caddy の転送先を増やす）をしない**。`.env` は `PASSKEY_RP_ID`（開発の既定 `localhost`）、`PASSKEY_ORIGIN`（既定 `http://localhost:5000`）、`OWNER_BASE_URL`（既定は `PASSKEY_ORIGIN`。HTTP の入口からログインを押したときの移動先）、`SESSION_COOKIE_SECURE`（本番の既定は有効、`0` で外す）、固定の `SECRET_KEY`（無いと再起動のたびにログインが外れる）、`WEB_BASE_URL` は本番では HTTPS の URL。開発は `http://localhost:5000`（`127.0.0.1` ではパスキーの RP ID が合わない）で Windows Hello のまま登録・ログインできる。iPhone・iPad は「セキュリティ Wi-Fi」の SSID で `.local` を引けないので、編集は 5G の SSID で行う（2026-10-28 からふだんの接続先を 5G にした）（閲覧は IP の HTTP で今までどおり）。設計は `../garden-app-private/docs/superpowers/specs/2026-10-28-owner-login-passkey-design.md`
-- **外部API（エージェント連携）:** `/api/v1/*` の JSON API で作物・品種・場所・植え付け・栽培記録・収穫・料理・日記・タスク・アドバイス・写真プールを参照・作成・部分更新できる（削除なし）。補足情報は画像（`extra_images`）と URL（`extra_urls`、OGP はインターネット上のアドレスにだけ取りに行く）と YouTube（`extra_youtube`、保存前に oEmbed で動画の有無を確かめタイトルを取る＝架空の URL 対策）を追加できる（テキストは未対応）。Hermes は作物・品種の登録時と「参考になる情報を集めてきて」で Web ページ・YouTube を補足情報に付ける（`hermes-skill/SKILL.md` の「参考情報の集め方」）。本体画像・写真プールの写真は `GET /{種類}/{id}/image`（`?size=thumb`）でファイルとして取得でき、Hermes はこれで栽培記録の写真から生育状況を診断する。Bearer トークン（`.env` の `API_TOKEN`、32文字以上）必須。`server.py` が Web とは別ポート（`API_PORT`、既定5001）で API 専用アプリ `create_api_app()` を起動し、エージェントからは画面の URL に届かないようにしている（`run.py` では起動しない）。実装は `app/api/`（`Resource` 基底クラス＋リソースごとの定義）。仕様は `docs/api/README.md`、エージェント用スキルは `docs/api/hermes-skill/SKILL.md`、Ubuntu への移設手順は `docs/api/migration-to-ubuntu.md`。ネットワーク・画像まわりを変えるときは API 側（`app/api/images.py`）も確認する。サーバーの Hermes は Web 画面（5000番）と `/opt/garden-app`（`uploads/` を含む）に触れない（ufw と権限で遮断。`docs/api/migration-to-ubuntu.md`）ので、Hermes にさせる機能は API だけで完結させる（API が返す `image_url` も Hermes からは開けないので、画像は `/image` エンドポイントで渡す）。アプリがサーバーから外へ接続する処理（OGP 取得など）を API から使うときは、その遮断の抜け道にならないようにする（例: `fetch_ogp(public_only=True)`）。スマホから Hermes へは LAN 内の Matrix（Tuwunel＋Caddy＋Element X、2026-10-18 構築、2026-10-24 から暗号化（E2EE）ありの部屋。`docs/api/hermes-local-chat.md`）で依頼する（Telegram は 2026-10-23 に停止。`../garden-app-private/docs/api/hermes-telegram.md`）。Hermes のモデルは 2026-10-24 から ChatGPT Plus の枠（`openai-codex` の `gpt-6-luna`）で、失敗したときだけ OpenRouter の Haiku に切り替わる（`../garden-app-private/docs/api/hermes-model.md`）。サーバーに常駐するソフトを足すときは、Hermes の実行ユーザーがそれを経由して遮断をすり抜けられないかを確かめる（例: Caddy の管理用 API は `admin off`）
+
+詳細（実装の場所・設定・決めごと）は `docs/features.md` の同じ名前の節。
+
+- **作物・品種:** 作物（トマトなど）と品種（アイコ・桃太郎など）の CRUD。1作物：多品種、品種の外観は未設定なら作物から継承（下の「作物と品種のデータモデル」）
+- **場所・見取り図:** 畑・プランターの CRUD と、作物アイコンを並べる見取り図エディター・プレビュー（過去の配置の再現あり）→ `app/static/js/CLAUDE.md`
+- **植え付け・栽培記録・収穫記録:** 植え付けの状態（栽培中/栽培終了/削除済み）、観察記録、複数回の収穫。どちらもまとめて登録（`/plantings/bulk/new`、`/harvests/bulk/new`）がある
+- **日記・タスク・料理記録:** 作物・品種・場所・植え付けなどとの多対多の関連付け（カード型モーダル `entity-select-modal.js`）
+- **画像:** 各データへの画像添付、HEIC は JPEG に変換、GPS は外して保存、一覧はサムネイル。スライドショー → `docs/frontend/images-and-photo-pool.md`
+- **写真プール・写真の振り分け:** スマホの写真を先にまとめてアップロードし、後から各データに使う（`/photo_pool/`）。1枚ずつ続けて登録する振り分け画面（`/photo_pool/sort/`）と AI 下書き
+- **AIメモ下書き:** 作物・品種のメモを Claude API で下書き（地域は `/settings/`、Web 検索併用、架空の URL 対策あり）→ `docs/frontend/ai-notes.md`
+- **補足情報:** 詳細画面に補足テキスト・画像・URL（OGP）・YouTube を添付 → `docs/frontend/supplements.md`
+- **メモの Markdown 表示:** 詳細画面のメモをサーバー側で HTML に変換（Jinja フィルター `markdown`）→ `docs/frontend/markdown-notes.md`
+- **一覧・詳細の共通部品:** バッジフィルター（`badge-filter.js` / `date-badge-filter.js`）、詳細画面の前後ナビ（`_detail_nav.html` + `get_adjacent()`）→ `docs/frontend/list-filtering.md`、`docs/frontend/detail-pages.md`
+- **ダッシュボード・カレンダー:** 統計・最近の記録・画像カルーセル、月別カレンダー → `docs/frontend/dashboard.md`
+- **ログイン（パスキー）:** 閲覧は `http://<サーバーのIP>:5000`（誰でも閲覧専用）、編集は `https://<サーバーのホスト名>.local/`（Caddy）でパスキーでログイン。`app/auth.py` が GET・HEAD・OPTIONS 以外を既定で拒否し CSRF を照合。テンプレートの編集の入口は `is_owner()` で囲む（`app/templates/CLAUDE.md`）
+- **外部API（エージェント連携）:** `/api/v1/*` の JSON API（参照・作成・部分更新、削除なし、Bearer トークン）。`server.py` が別ポート（`API_PORT`、既定5001）で `create_api_app()` を起動 → `docs/api/README.md`、Hermes 用のスキルは `docs/api/hermes-skill/SKILL.md`
+- **Hermes との連携:** 詳細画面の「Hermes に聞く」パネル、`/hermes/chat/` のチャット、`/conversations/` の会話の履歴（Matrix・アプリの会話をサーバーのタイマーで取り込み）、`/advices/` のアドバイス → `docs/frontend/hermes-ask-panel.md`、`docs/frontend/hermes-chat.md`、`docs/api/hermes-*.md`。スマホから Hermes へは LAN 内の Matrix（Element X）→ `docs/api/hermes-local-chat.md`
 
 ---
 
 ## ディレクトリ別ガイドへの目次
 
-このルート CLAUDE.md にはコアの情報のみを載せている。機能単位の詳しい規約は以下のネストされた CLAUDE.md を参照（Claude Code は該当ディレクトリを触るときに自動で読み込む）。
+機能単位の詳しい規約は以下を参照（Claude Code は該当ディレクトリを触るときに自動で読み込む）。
 
 | ファイル | カバー範囲 |
 |---------|-----------|
-| `app/models/CLAUDE.md` | データベーススキーマ、テーブル/VIEW定義、モデル層の実装規約、SQLite Row の重複カラム名問題 |
+| `docs/features.md` | 機能ごとの実装の場所・設定・決めごと。作業する機能の節だけ読む |
+| `app/models/CLAUDE.md` | データベーススキーマ、テーブル/VIEW定義、`_CV_JOIN`、モデル層の実装規約、SQLite Row の重複カラム名問題 |
 | `app/routes/CLAUDE.md` | URL設計、Blueprint規約、新機能追加チェックリスト |
-| `app/templates/CLAUDE.md` | 編集の入口を `is_owner()` で囲む規約、トピック別ガイド（`docs/frontend/*.md`）へのインデックス。詳細は `app/templates/CLAUDE.md` のガイド一覧表を参照 |
+| `app/templates/CLAUDE.md` | 編集の入口を `is_owner()` で囲む規約、トピック別ガイド（`docs/frontend/*.md`）へのインデックス |
 | `app/static/js/CLAUDE.md` | 見取り図機能（エディター・プレビュー・フルスクリーン・800×800px座標系）、植え付け登録フロー |
 | `docs/api/README.md` | 外部API（`app/api/`）の仕様・項目・エラー形式。API を変えたら更新する |
 
@@ -59,52 +54,32 @@
 
 ## プロジェクト構造
 
-ファイル単位の網羅的な一覧はメンテナンスコストが高く陳腐化しやすいため、ここでは**ディレクトリ構成とファイル命名パターン**のみを示す。個々のファイルの正確な一覧・役割は各ディレクトリの一次情報（`app/models/CLAUDE.md` のテーブル一覧表、`app/routes/CLAUDE.md` のURL設計表、`app/templates/CLAUDE.md` のガイド一覧表）を参照すること。新機能を1つ追加すると、通常は次の5ファイルが1セットで増える: `app/models/{feature}.py`, `app/routes/{feature}_routes.py`, `app/templates/{feature}/{list,detail,form}.html`, （任意）`app/static/css/{feature}.css`, （任意）`app/static/js/{feature}.js`。
+個々のファイルの一覧は各ディレクトリの一次情報（`app/models/CLAUDE.md` のテーブル一覧表、`app/routes/CLAUDE.md` のURL設計表、`app/templates/CLAUDE.md` のガイド一覧表）を参照。新機能を1つ追加すると、通常は `app/models/{feature}.py`, `app/routes/{feature}_routes.py`, `app/templates/{feature}/{list,detail,form}.html`, （任意）`app/static/css/{feature}.css`, （任意）`app/static/js/{feature}.js` が1セットで増える。
 
 ```
 garden-app/
-├── app/                      # メインアプリケーションパッケージ
-│   ├── __init__.py          # Flaskファクトリパターン、ダッシュボード(index)ルート
-│   ├── config.py            # 環境ベース設定
-│   ├── database.py          # SQLite接続管理
-│   ├── schema.sql           # 初期データベーススキーマ
-│   ├── api/                  # 外部API（/api/v1/*、create_api_app 専用）。{resource}.py = リソース定義、resource.py = 共通処理
-│   ├── models/               # データモデル（静的メソッドパターン）。命名: {feature}.py = {feature}テーブルのCRUD
-│   │                         # → 正確なテーブル一覧・モデル一覧は app/models/CLAUDE.md 参照
-│   ├── routes/               # Flask ブループリント。命名: {feature}_routes.py、Blueprint名は原則複数形
-│   │                         # → 正確なURL設計・Blueprint一覧は app/routes/CLAUDE.md 参照
-│   ├── utils/                # ユーティリティ（アップロード、サムネイル生成、マイグレーション補助、OGP取得、AIメモ、Markdown表示等）
-│   ├── migrations/           # データベースマイグレーション（増分SQL、連番ファイル名）
-│   ├── templates/            # Jinja2 テンプレート
-│   │   ├── base.html         # ナビバー付きベースレイアウト
-│   │   ├── _macros.html      # Jinja2マクロ（crop_label等）
-│   │   ├── _*.html           # 共通include部品（詳細ナビ・サイドバーカード・選択モーダル・補足情報等）
-│   │   ├── index.html        # ダッシュボード
-│   │   └── {feature}/         # 機能別テンプレート、通常 list.html/detail.html/form.html の3点セット
-│   │                         # → 部品の役割・使い方は app/templates/CLAUDE.md（各 docs/frontend/*.md）参照
-│   └── static/               # 静的アセット
-│       ├── css/              # Bootstrap カスタマイズ（custom.css 中心、機能別CSSは任意）
-│       ├── js/               # バニラJS部品（見取り図・フィルター・モーダル等）→ app/static/js/CLAUDE.md
-│       ├── images/           # UIアイコン・静的画像（location_bg_images/, crop_icons/ 等）
-│       └── uploads/          # ユーザーアップロード画像。機能ごとのフォルダ＋各 thumbs/ サブフォルダ
-├── docs/                     # 開発ドキュメント（frontend/ のトピック別ガイド、開発ノウハウ、既知の課題等）
-├── tests/                    # pytest テスト（conftest.py のフィクスチャで使い捨て DB）
-├── instance/                 # Flask インスタンスフォルダ（garden.db）
-├── run.py                    # 開発サーバー起動スクリプト（Web のみ、debug）
-├── server.py                 # waitress 起動スクリプト（Web :5000 ＋ API :API_PORT）
-├── test_data.py              # テストデータ投入スクリプト
-└── pyproject.toml            # プロジェクトメタデータ（uvパッケージマネージャー）
+├── app/
+│   ├── __init__.py   # Flaskファクトリ、ダッシュボード(index)ルート
+│   ├── config.py / database.py / schema.sql / auth.py
+│   ├── api/          # 外部API（/api/v1/*、create_api_app 専用）
+│   ├── models/       # 静的メソッドパターンのモデル（{feature}.py）
+│   ├── routes/       # Blueprint（{feature}_routes.py、名前は原則複数形）
+│   ├── utils/        # アップロード、サムネイル、OGP、AI、Hermes の中継など
+│   ├── migrations/   # 増分SQL（連番ファイル名）
+│   ├── templates/    # base.html、_macros.html、_*.html（共通部品）、{feature}/
+│   └── static/       # css/、js/、images/、uploads/（機能ごとのフォルダ＋thumbs/）
+├── docs/             # features.md、frontend/（画面のトピック別ガイド）、api/（API の仕様・サーバーの手順）
+├── tests/            # pytest（conftest.py のフィクスチャで使い捨て DB）
+├── tools/            # 補助スクリプト（会話の同期、アイコン作成など）
+├── instance/         # garden.db
+├── run.py            # 開発サーバー（Web のみ、debug）
+└── server.py         # waitress（Web :5000 ＋ API :API_PORT）
 ```
 
-## 開発サーバー起動
+## 開発サーバー起動・テスト
 
 ```bash
 uv run python run.py
-```
-
-## テスト
-
-```bash
 uv run pytest
 ```
 
@@ -118,114 +93,14 @@ PR は**サーバーで動作を確かめてからマージする**（2026-10-26
 
 ## 作物と品種のデータモデル
 
-作物（`crops`）と品種（`varieties`）は 1:多 の別テーブルに分離されている。詳しいスキーマ定義は `app/models/CLAUDE.md` を参照。
+作物（`crops`）と品種（`varieties`）は 1:多 の別テーブル。アプリ全体のクエリ・継承・表記に影響するので概要をここに置く。VIEW の定義・`_CV_JOIN`・継承の実装箇所は `app/models/CLAUDE.md` の「crop_variety_view（VIEW）の使い方」。
 
-この関係はアプリ全体のクエリ・継承ロジック・表記ルールに影響するため、ルート CLAUDE.md で概要を維持する。
-
-### 責務分担
-
-| テーブル | カラム | 備考 |
-|---------|--------|------|
-| `crops` | `name`, `crop_type`, `notes`, `icon_path`, `image_color`, `image_path` | 作物マスタ。`notes` は Markdown 統合形式（植え付け時期・収穫時期・特性・メモ）|
-| `varieties` | `crop_id`, `name`, `notes`, `icon_path`, `image_color`, `image_path` | 品種マスタ。外観3カラムは **nullable** で、未設定時は親作物から継承 |
-| `plantings` | `crop_id`, `variety_id` | **排他関係**: 作物として植えた場合は `crop_id` のみ、品種として植えた場合は `variety_id` のみがセットされ、両方同時にセットされることはない（CHECK制約で強制） |
-
-### plantings の排他ルール（重要）
-
-- 「作物として植えた」→ `crop_id=X, variety_id=NULL`
-- 「品種として植えた」→ `crop_id=NULL, variety_id=Y`（作物情報は品種の親を辿って解決）
-- この排他性は DB 側の `CHECK` 制約 + `Planting._normalize_crop_variety()` で二重に保証
-- 理由: 二重管理を排除し、「品種の親作物を変更しても植え付け側の作物ID（古いキャッシュ）がズレない」を保証する
-
-### 品種削除時の挙動（重要）
-
-`varieties` に対する `BEFORE DELETE` トリガー `trg_promote_variety_plantings_before_delete` により、品種単独削除時には関連する植え付けが「親作物の植え付け（品種なし）」に**昇格**する。
-
-```sql
-CREATE TRIGGER trg_promote_variety_plantings_before_delete
-BEFORE DELETE ON varieties
-FOR EACH ROW
-BEGIN
-    UPDATE plantings
-       SET crop_id = OLD.crop_id, variety_id = NULL
-     WHERE variety_id = OLD.id;
-END;
-```
-
-- 品種単独削除 → 植え付けは親作物のものとして残る
-- 作物削除（`plantings.crop_id ON DELETE CASCADE`、`varieties.crop_id ON DELETE CASCADE`、`plantings.variety_id ON DELETE CASCADE`）→ 変化した植え付けも含め連鎖削除
-
-### VIEW `crop_variety_view`
-
-植え付け・収穫・カレンダーなど「作物と品種を合わせて表示したい」クエリ向けに、次の VIEW を提供する。plantings の排他形式 `(crop_id, variety_id) = (X, NULL)` または `(NULL, Y)` に対応するよう **品種行は `crop_id=NULL`**、**作物行は `variety_id=NULL`** を返す。
-
-```sql
-CREATE VIEW crop_variety_view AS
--- 品種行（plantings の variety-only 行とマッチ）
-SELECT NULL AS crop_id, v.id AS variety_id,
-       c.id AS effective_crop_id,            -- 常に作物ID（集計用）
-       c.name AS crop_name, c.crop_type, v.name AS variety,
-       COALESCE(v.notes, c.notes)             AS notes,
-       COALESCE(v.icon_path, c.icon_path)     AS icon_path,
-       COALESCE(v.image_color, c.image_color) AS image_color,
-       COALESCE(v.image_path, c.image_path)   AS image_path
-FROM varieties v JOIN crops c ON v.crop_id = c.id
-UNION ALL
--- 作物行（plantings の crop-only 行とマッチ）
-SELECT c.id AS crop_id, NULL AS variety_id,
-       c.id AS effective_crop_id,
-       c.name AS crop_name, c.crop_type, NULL AS variety,
-       c.notes, c.icon_path, c.image_color, c.image_path
-FROM crops c;
-```
-
-- **`effective_crop_id`**: 常に作物ID（品種行なら親作物ID、作物行なら自身）。「作物Xの植え付け一覧（品種経由も含む）」は `WHERE cv.effective_crop_id = ?` で書く。品種の親作物変更が自動反映されるのはこの列のおかげ。
-- **UNION ALL の理由**: 排他形式の plantings と NULL 同士でマッチさせるため、両辺を IFNULL 化した JOIN が必要。VIEW 側も正しい NULL パターンで列挙する必要がある。
-- **COALESCE** により品種の外観が未設定なら親作物の値にフォールバック（継承ロジックはVIEW内で完結）
-
-### JOIN パターン（`_CV_JOIN` 定数）
-
-植え付け（`plantings` エイリアス `lc`）や収穫（`h`）を VIEW と結合するときは以下の定数を使う。`_CV_JOIN` は `app/models/planting.py`, `harvest.py`, `calendar.py`, `planting_record.py` の4ファイルにそれぞれ同一内容がコピーされて定義されている（共有インポートではない）。修正時は4箇所すべての同期が必要（定数を使わず同じ JOIN 条件を直接書いている箇所も `app/models/diary.py`, `task.py`, `cooking.py`, `app/__init__.py` にあるため、あわせて確認する。外部API `app/api/` は `app.models.planting._CV_JOIN` を import して使う。5箇所目のコピーは作らない）：
-
-```python
-_CV_JOIN = (
-    'JOIN crop_variety_view cv ON '
-    'IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) '
-    'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
-)
-```
-
-- **両側 IFNULL 必須**: plantings 側は `crop_id` または `variety_id` の片側が NULL のため、VIEW 側の NULL と等価比較するには両辺を `IFNULL(..., -1)` で揃える必要がある（SQLite は `NULL = NULL` が false のため）
-- `cv.*` を使ってはならない（SQLite Row の重複カラム名問題。詳細は `app/models/CLAUDE.md`）。必要カラムは `cv.crop_name, cv.variety, cv.icon_path, cv.image_color, cv.effective_crop_id` のように明示する
-
-### 「作物Xの植え付け/収穫」を取得するクエリ
-
-品種経由の植え付けも含めて取得するには `cv.effective_crop_id` で絞り込む:
-
-```python
-# Good（品種経由も含む）
-f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
-
-# Bad（品種経由が漏れる）
-'SELECT ... FROM plantings lc WHERE lc.crop_id = ?'
-```
-
-既に `Planting.get_by_crop()` / `Harvest.get_by_crop()` / `Harvest.search()` は `effective_crop_id` 経由に移行済み。`DiaryEntry.get_by_crop()` は未移行で、`crop_variety_view` を使わず `diary_relations` を `crop_id`/`variety_id`/`location_crop_id` の手動 OR 条件で直接クエリしている（品種経由は同じクエリ内の `varieties` / `plantings` サブクエリで取得）。
-
-### 継承ロジックの実装箇所
-
-| 箇所 | 実装 |
-|------|------|
-| VIEW経由（植え付け・収穫・カレンダー等） | `crop_variety_view` の `COALESCE` で自動継承 |
-| 品種画面（一覧・詳細） | `app/models/variety.py` の `Variety.apply_inheritance(variety)` が `effective_icon_path` / `effective_image_color` / `effective_image_path` を付与（`variety_routes.py` のほか、植え付け・収穫・日記・タスク・料理の各ルートからも呼び出し） |
-| テンプレート側 | `effective_*` または VIEW 由来のカラムをそのまま表示 |
-
-### 補足情報（supplements）の紐付け
-
-- **作物のみの情報**（種類全体に関する補足） → `entity_type='crop', entity_id=crop.id`
-- **品種固有の情報**（品種ごとの補足） → `entity_type='variety', entity_id=variety.id`
-
-旧データ移行時は「旧 crops レコードに variety があったか否か」で自動振り分けされている。
+- **plantings の排他ルール**: 作物として植えたら `crop_id=X, variety_id=NULL`、品種として植えたら `crop_id=NULL, variety_id=Y`（作物は品種の親を辿る）。DB の `CHECK` 制約 + `Planting._normalize_crop_variety()` で二重に保証。品種の親作物を変えても植え付け側がズレないようにするため
+- **品種の外観**（`icon_path` / `image_color` / `image_path`）は nullable で、未設定なら親作物から継承（VIEW の `COALESCE`、品種画面は `Variety.apply_inheritance()`）
+- **品種を消す**と、トリガー `trg_promote_variety_plantings_before_delete` で植え付けは親作物の植え付けに昇格して残る。**作物を消す**と品種・植え付けは連鎖削除
+- **VIEW `crop_variety_view`**: 品種行（`crop_id=NULL`）と作物行（`variety_id=NULL`）を UNION ALL で返す。植え付け・収穫との JOIN は両側 `IFNULL(..., -1)` の `_CV_JOIN`（4ファイルにコピーあり、修正時は全部そろえる）。`cv.*` は使わず必要な列を明示する
+- **「作物Xの植え付け/収穫」**は品種経由も含めるため `WHERE cv.effective_crop_id = ?` で書く（`lc.crop_id = ?` は品種経由が漏れる）
+- **補足情報**: 作物全体の情報は `entity_type='crop'`、品種固有の情報は `entity_type='variety'`
 
 ---
 
@@ -237,7 +112,7 @@ f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
 
 ## 開発の文書（非公開側）
 
-開発の進め方・方針の文書は公開リポジトリに置かず、リポジトリの隣の非公開フォルダ `../garden-app-private/docs/` に置く（2026-10-31 から。git で管理し、コミットしたら push する。PR は不要）。公開側に置くのはアプリの使い方・動かし方・仕様（`docs/frontend/`、`docs/api/` の手順と仕様、各 CLAUDE.md、README）だけ。
+開発の進め方・方針の文書は公開リポジトリに置かず、リポジトリの隣の非公開フォルダ `../garden-app-private/docs/` に置く（2026-10-31 から。git で管理し、コミットしたら push する。PR は不要）。公開側に置くのはアプリの使い方・動かし方・仕様（`docs/features.md`、`docs/frontend/`、`docs/api/` の手順と仕様、各 CLAUDE.md、README）だけ。
 
 - `dev-workflow-tips.md`: 過去のセッションで得た実務ノウハウ（コピーDBでのブラウザ確認、外部 API の早期実確認、ブラウザ自動操作の注意、未インストールのツール、Codex をレビュー役にする方法など）。**作業を始める前に一読すること**
 - `image-generation.md`: 既存と同じ絵柄のアイコンを作る手順とノウハウ（Codex が既定、API の `gpt-image-2` は予備。どちらも `tools/make_icon.py`）。絵の一覧は `image-catalog.html`
@@ -268,10 +143,11 @@ f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
 
 ## ドキュメント更新チェックリスト
 
-モデルやスキーマを変更した際は必ず以下も更新すること：
+機能やモデル・スキーマを変更した際は必ず以下も更新すること：
 
+- **`docs/features.md`**: 該当機能の節（実装の場所・設定・決めごと）。新しい機能は節を足す
+- **`CLAUDE.md`（このファイル）**: 「主な機能」の1行（機能を足したとき・名前や入口が変わったとき）、「守ること」・データモデルの概要に関わる変更。詳細はここに書かず `docs/features.md` へ
 - **`app/models/CLAUDE.md`**: テーブル定義・カラム定義の追加・変更・削除を反映
-- **`CLAUDE.md`（このファイル）**: 機能概要・データモデル（作物/品種の責務分担やVIEW）など関連セクションを更新。プロジェクト構造はパターン記述のため、命名規則から外れる例外が生まれた場合のみ更新すればよい
 - **`app/routes/CLAUDE.md` / `app/static/js/CLAUDE.md`**: 該当領域の規約変更を反映
 - **`app/templates/CLAUDE.md` / `docs/frontend/*.md`**: 既存トピックへの追記で足りるものはそのトピックファイルを更新。新規の横断的トピックは新しいファイルを起こし、`app/templates/CLAUDE.md` のガイド一覧表に追記する（1トピック1ファイルの原則を崩さない）
 - **`README.md`**: ユーザー向けの機能説明・プロジェクト構造を更新

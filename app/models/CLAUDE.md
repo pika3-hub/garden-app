@@ -340,6 +340,67 @@ JOIN crop_variety_view cv
 
 `diary_relations.crop_id` や `task_relations.crop_id` は作物レベル参照なので、ビューではなく crops テーブルを直接 JOIN し、`variety` は `NULL as variety` として明示する。
 
+### VIEW の定義
+
+```sql
+CREATE VIEW crop_variety_view AS
+-- 品種行（plantings の variety-only 行とマッチ）
+SELECT NULL AS crop_id, v.id AS variety_id,
+       c.id AS effective_crop_id,            -- 常に作物ID（集計用）
+       c.name AS crop_name, c.crop_type, v.name AS variety,
+       COALESCE(v.notes, c.notes)             AS notes,
+       COALESCE(v.icon_path, c.icon_path)     AS icon_path,
+       COALESCE(v.image_color, c.image_color) AS image_color,
+       COALESCE(v.image_path, c.image_path)   AS image_path
+FROM varieties v JOIN crops c ON v.crop_id = c.id
+UNION ALL
+-- 作物行（plantings の crop-only 行とマッチ）
+SELECT c.id AS crop_id, NULL AS variety_id,
+       c.id AS effective_crop_id,
+       c.name AS crop_name, c.crop_type, NULL AS variety,
+       c.notes, c.icon_path, c.image_color, c.image_path
+FROM crops c;
+```
+
+- **UNION ALL の理由**: 排他形式の plantings と NULL 同士でマッチさせるため、両辺を IFNULL 化した JOIN が必要。VIEW 側も正しい NULL パターンで列挙する必要がある
+- 品種の親作物を変えると `effective_crop_id` に自動で反映される
+
+### `_CV_JOIN` 定数（4箇所のコピー）
+
+植え付け（`plantings` エイリアス `lc`）や収穫（`h`）を VIEW と結合するときは `_CV_JOIN` を使う。`app/models/planting.py`, `harvest.py`, `calendar.py`, `planting_record.py` の4ファイルにそれぞれ同一内容がコピーされて定義されている（共有インポートではない）。修正時は4箇所すべての同期が必要。定数を使わず同じ JOIN 条件を直接書いている箇所も `app/models/diary.py`, `task.py`, `cooking.py`, `app/__init__.py` にあるため、あわせて確認する。外部API `app/api/` は `app.models.planting._CV_JOIN` を import して使う。5箇所目のコピーは作らない。
+
+```python
+_CV_JOIN = (
+    'JOIN crop_variety_view cv ON '
+    'IFNULL(cv.crop_id, -1) = IFNULL(lc.crop_id, -1) '
+    'AND IFNULL(cv.variety_id, -1) = IFNULL(lc.variety_id, -1)'
+)
+```
+
+両側 IFNULL が必須なのは、SQLite では `NULL = NULL` が false のため。
+
+### 「作物Xの植え付け/収穫」を取得するクエリ
+
+品種経由の植え付けも含めて取得するには `cv.effective_crop_id` で絞り込む:
+
+```python
+# Good（品種経由も含む）
+f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
+
+# Bad（品種経由が漏れる）
+'SELECT ... FROM plantings lc WHERE lc.crop_id = ?'
+```
+
+`Planting.get_by_crop()` / `Harvest.get_by_crop()` / `Harvest.search()` は `effective_crop_id` 経由に移行済み。`DiaryEntry.get_by_crop()` は未移行で、`crop_variety_view` を使わず `diary_relations` を `crop_id`/`variety_id`/`location_crop_id` の手動 OR 条件で直接クエリしている（品種経由は同じクエリ内の `varieties` / `plantings` サブクエリで取得）。
+
+### 品種の外観の継承の実装箇所
+
+| 箇所 | 実装 |
+|------|------|
+| VIEW経由（植え付け・収穫・カレンダー等） | `crop_variety_view` の `COALESCE` で自動継承 |
+| 品種画面（一覧・詳細） | `Variety.apply_inheritance(variety)` が `effective_icon_path` / `effective_image_color` / `effective_image_path` を付与（`variety_routes.py` のほか、植え付け・収穫・日記・タスク・料理の各ルートからも呼び出し） |
+| テンプレート側 | `effective_*` または VIEW 由来のカラムをそのまま表示 |
+
 ## SQLite Row の重複カラム名に関する注意（重要）
 
 SQLiteの `Row` オブジェクトを dict として扱う場合、**同名カラムは最初に出現した値が優先される**（最後ではない）。これは `SELECT dr.*, lc.id as id` のようなクエリで、`dr.*` に含まれる `id`（リレーションテーブルのID）が `lc.id as id`（エンティティのID）を上書きする原因になる。
