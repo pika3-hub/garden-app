@@ -6,7 +6,7 @@ AI アシスタント（Claude Code など）がこのリポジトリで作業�
 
 - リポジトリのファイルは原則 **LF**（`core.autocrlf` は `false`）。ただし一部 **CRLF のまま登録されているファイル** がある（`server.py`、`app/routes/` の一部など。`git ls-files --eol | grep i/crlf` で確認）。スクリプトで編集するときは元の改行コードを判定して保ち、勝手に統一しない
 - Git Bash から `python` で文字列置換スクリプトを書く場合、`open(p, 'w')` のままだと Windows の Python が **CRLF で書き出し、ファイル全体が差分になる**。必ず `open(p, encoding='utf-8', newline='')` で読み書きする（または Edit ツールを使う）。`Path.write_text` も同じく CRLF になるので、`read_bytes().decode()` → `write_bytes(s.encode())` にする（2026-10-24 に `write_text` で `resource.py` 全体が差分になった。2026-10-25 にも `python - <<'EOF'` のヒアドキュメントで同じことをして、**新規ファイル4つが CRLF のままコミット**された。新規ファイルは `git diff --stat` に異常が出ないので気づきにくい。コミット前に `git diff --name-only main...HEAD | xargs git ls-files --eol | grep crlf` で確かめる）
-- 改行コードの確認は `grep -c $'\r' <file>`（0 なら LF）。`od -c | grep '\\r'` は誤判定するので使わない
+- 改行コードの確認は `git ls-files --eol <file>`（`i/crlf` なら CRLF）、まだ git に無いファイルは Python の `open(p, 'rb').read().count(b'\r')`。**Git Bash の `grep -c $'\r' <file>` は CRLF のファイルでも 0 を返すことがある**（2026-10-31、`app/models/location.py` で 0 と出て LF と思い込み、置換スクリプトが一致しなかった）。`od -c | grep '\\r'` も誤判定するので使わない
 - 編集後は `git diff --stat` で差分行数が想定どおりかを必ず見る。行数が異常に多ければ改行コードの変化を疑う
 - **サブエージェントに実装を任せるときは、指示に改行コードの注意を書く**（「`git ls-files --eol` で元の改行を確かめて保つ、新規は LF、Python のテキストモードで書かない、Edit ツールを使う」）。2026-10-26 は注意を書かなかった回で、修正のコミットがテンプレートとテストを CRLF に書き換えた。書いた回は起きなかった。2026-10-27 は注意を書いた回でも、LF のファイル2つに CR が1行ずつ混ざった（タスクレビューで発見）。レビューでは変更前後の CR の数を比べる: `git show <base>:<file> | tr -cd '\r' | wc -c` と `git show HEAD:<file> | ...`。**`git show ... | grep -c $'\r'` は Git Bash では混ざった CR を数えず 0 になった**ので使わない
 

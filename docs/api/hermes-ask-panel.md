@@ -82,6 +82,13 @@ sudo -u garden curl -sS -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.
 - Element X に話しかけて、今までどおり返事が来る
 - ログインして植え付けの詳細を開き、右下の「Hermes に聞く」から質問して答えが出る。キーを設定していない／未ログインではボタンが出ない
 - しばらくして `/conversations/` に「アプリ」の印付きで並ぶ（同期は15分おき）
+- 「新しく始める」で止まるか: 時間のかかる依頼を送り、**灰色の「⚙ …」の行が出ている間に**押す。答えの文字が流れ始めたころには、Hermes は登録などの作業を済ませて答えを書いているだけなので、止めても取り消せるものが無く、確かめにもならない（2026-10-31 は最初の2回とも答えが出始めてから押し、run は止める前に completed になっていた）。止まったかは `gateway.log` には出ない（stop の要求は INFO で記録されない）ので、run の状態を聞く（終わった run の状態は1時間で消える）:
+
+  ```bash
+  RUN=$(sudo -u garden sqlite3 -readonly /opt/garden-app/instance/garden.db "SELECT last_run_id FROM hermes_chats WHERE active = 0 AND entity_type IS NOT NULL ORDER BY id DESC LIMIT 1"); echo "$RUN"; KEY=$(grep '^API_SERVER_KEY=' ~/.hermes/.env | cut -d= -f2-); curl -s -H "Authorization: Bearer $KEY" "http://127.0.0.1:8642/v1/runs/$RUN" | grep -oE '"(status|interrupted|completed)": "?[a-z]+"?|"(created_at|updated_at)": [0-9.]+'
+  ```
+
+  `"status": "cancelled"` と `"interrupted": true` なら止まっている。`hermes_chats.last_used_at` は答えを受け取ったとき（`run.completed`）にも更新されるので、切り替えた時刻（次の会話の行の `created_at`）より前なら、止める前に終わっていた
 
 ## 注意
 
