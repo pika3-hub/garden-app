@@ -108,5 +108,5 @@ sudo -u garden curl -sS -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.
 | パネルのボタンが出ない | ログインしているか、`/opt/garden-app/.env` の `HERMES_API_KEY`、アプリの再起動 |
 | 「Hermes に届きません」 | `systemctl --user status hermes-gateway.service`、`ss -ltnp \| grep 8642`、`HERMES_API_URL` |
 | 401 が続く | 2 つの `.env` のキーが一致しているか（前後の空白・改行）、変えたあとに両方再起動したか |
-| 「前の質問はいつ？」に答えられない | Hermes に渡る会話の履歴には発言の日時が無い（2026-10-30 に確認。履歴そのものは届いていて、「最初に頼んだことは？」には答えられる）。日時を指示に添える案は `docs/wishlist.md` |
+| 「前の質問はいつ？」に答えられない | Hermes に渡る会話の履歴には発言の日時が無い（2026-10-30 に確認）ので、2回目以降の質問では、アプリが Hermes の記録（`get_session_messages`）から「これまでの質問」（新しい方から 10 件、書き出し 40 文字、日本時間）を取り出して指示の最後に添えている（`hermes_context.earlier_questions`）。記録を読めなかったときは添えずに送る。答えられないときは、送った指示に「この会話のこれまでの質問」が入っているかを見る |
 | 一覧に「アプリ」の会話が出ない | 同期スクリプトを送り直したか、`python3 ~/hermes_conversation_sync.py --dry-run` に `api_server` の会話が出るか |
