@@ -255,6 +255,7 @@ f'SELECT ... FROM plantings lc {_CV_JOIN} WHERE cv.effective_crop_id = ?'
    - 見送った不具合・改善候補 → `docs/known-issues.md`
    - 特定の領域の規約・落とし穴 → 該当する CLAUDE.md または `docs/frontend/*.md`（DB は `docs/db-validation-safety.md`）
    - 機能の仕様変更 → 「ドキュメント更新チェックリスト」に従って更新
+   - サーバー・端末・外部サービスの構成（常駐するソフト、ポート、ufw、つながり）が変わった・新しく分かった → リポジトリの外の `../garden-app-private/overview.html`（自分用の全体図。実際の値で書く）と `local-env.md`
 4. **作業記録を書く**: リポジトリの隣のフォルダ `../garden-app-private/worklog/` に、1作業1ファイル（`YYYY-MM-DD-作業名.md`）で、やったこと・決めたこと・つまずき・次にやることを書き、そのフォルダの git にコミットする（書き方は同フォルダの `README.md`）。このフォルダは公開しない。実環境の固有値は書いてよいが、トークンなどの秘密の値は書かない
 5. **ユーザーに報告する**: 振り返りの要点と、どのファイルに何を追記したかを伝える
 
