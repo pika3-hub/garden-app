@@ -1,6 +1,6 @@
 # OpenAI の画像モデルでアイコンを作る
 
-アプリのアイコン（`app/static/images/icon_*.webp`）と同じ絵柄の画像を、OpenAI の画像モデルで作る手順とノウハウ。2026-10-26 にナビの「Hermes」「設定」のアイコン（`icon_hermes.webp` / `icon_settings.webp`）を API の `gpt-image-2` で作った。
+アプリのアイコン（`app/static/images/icon_*.webp`）と同じ絵柄の画像を、OpenAI の画像モデルで作る手順とノウハウ。2026-10-26 にナビの「Hermes」「設定」のアイコン（`icon_hermes.webp` / `icon_settings.webp`）を API の `gpt-image-2` で作った。2026-10-31 にナビの「ログイン」「ログアウト」（`icon_login.webp` / `icon_logout.webp`、扉と矢印）と、作物のみかん・甘夏（下の「作物のアイコンを作る」）を Codex で作った。
 
 作り方は2つある。**既定は Codex**（2026-10-27 に検証して決めた）。
 
@@ -62,6 +62,24 @@ $cx = (Get-ChildItem "$env:LOCALAPPDATA\OpenAI\Codex\bin\*\codex.exe" | Sort-Obj
 - 右下の枠付きのマーク（作者の GitHub のアイコンと同じキャラクター）は Codex に描かせず、生成後に `tools/add_mark.py`（Pillow）で重ねた。Codex に渡すと描き直されて形が変わるため。マークの画像はリポジトリに置いていない
 - 2MB の PNG は WebP（品質 82）にして約 190KB にした（`tools/add_mark.py` が WebP で書き出す）
 - 「言葉なし」と頼むと、Codex が指示を自分で書き直して（`*.prompt.txt` に残る）文字を徹底して消した
+
+## 作物のアイコンを作る
+
+作物のアイコン（`app/static/images/crop_icons/icon_NNN.png`）は、メニューのアイコンとは**絵柄も形式も違う**。2026-10-31 にみかん（`icon_096.png`）と甘夏（`icon_097.png`）を Codex で作った。
+
+- 絵柄: 平らな塗りに軽い影と小さな白いハイライト、太めの濃い茶色の輪郭。メニューのようなつやのある立体感は無い
+- 形式: 84×84 の PNG、物は 72px 前後（余白 6px）
+- 指示の絵柄の文は、メニューの文の代わりに次を使う。見本はトマト・すいか・玉ねぎ・にんじん（`icon_001` / `008` / `066` / `071`）をそのまま `-i` で渡した（PNG なので変換不要）:
+  ```text
+  Generate ONE new crop icon in exactly the same art style as the reference icons (a set of vegetable and fruit icons for a home vegetable garden app): simple cute cartoon illustration, flat clean colors with soft cel shading and a small white highlight, thick dark-brown outline, no glossy 3D game-item look, no background scenery. The fruit alone, centered and fitting inside a square, no text, no letters, no shadow on the ground.
+  ```
+- 縮小は `--crop` を付ける（84×84 の PNG を `cut/` に、`compare.png` も 84px で並べる）:
+  ```powershell
+  uv run --no-project --with pillow --with numpy python tools/make_icon.py --out <出力先> --cut-only --transparent --crop
+  ```
+- ファイル名は続きの番号にする。選択肢（画面の `crop_routes.py` / `variety_routes.py`、API の `app/api/choices.py`）はフォルダの中身を名前順に並べるだけなので、置けば出る
+- 似た作物は色と形で描き分けを指示する（甘夏は「みかんより黄色く大きい、皮がでこぼこ」、みかんは「小さく少し平たい、濃いオレンジ」）
+- 2026-10-31 はメニュー4枚と作物4枚を、`codex exec` を2本並べて同時に作れた（約8分）。5時間枠の使用率は終わった時点で 20%
 
 ## 絵柄（既存アイコンの特徴）
 

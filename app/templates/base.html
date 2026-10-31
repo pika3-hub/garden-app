@@ -119,12 +119,12 @@
                         {% if is_owner() %}
                         <form method="POST" action="{{ url_for('auth.logout') }}" class="d-inline">
                             <button type="submit" class="nav-link btn btn-link">
-                                <i class="bi bi-box-arrow-right"></i> ログアウト
+                                <img src="{{ url_for('static', filename='images/icon_logout.webp') }}" alt="" class="icon-img icon-img-lg"> ログアウト
                             </button>
                         </form>
                         {% else %}
                         <a class="nav-link {% if request.endpoint == 'auth.login' %}active{% endif %}" href="{{ owner_base_url.rstrip('/') }}/auth/login">
-                            <i class="bi bi-box-arrow-in-right"></i> ログイン
+                            <img src="{{ url_for('static', filename='images/icon_login.webp') }}" alt="" class="icon-img icon-img-lg"> ログイン
                         </a>
                         {% endif %}
                     </li>
