@@ -1,6 +1,7 @@
 from app.database import get_db
 from datetime import datetime
 from app.utils.timezone import get_jst_now
+from app.utils.search_text import fold
 
 
 _CV_JOIN = (
@@ -320,8 +321,9 @@ class Harvest:
         params = []
 
         if keyword:
-            query += ' AND (cv.crop_name LIKE ? OR cv.variety LIKE ? OR l.name LIKE ? OR h.notes LIKE ?)'
-            params.extend([f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', f'%{keyword}%'])
+            query += (' AND (search_fold(cv.crop_name) LIKE ? OR search_fold(cv.variety) LIKE ?'
+                      ' OR search_fold(l.name) LIKE ? OR search_fold(h.notes) LIKE ?)')
+            params.extend([f'%{fold(keyword)}%'] * 4)
 
         if date_from:
             query += ' AND h.harvest_date >= ?'

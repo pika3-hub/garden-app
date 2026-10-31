@@ -1,5 +1,6 @@
 from app.database import get_db
 from app.utils.timezone import get_jst_now
+from app.utils.search_text import fold
 
 
 class Crop:
@@ -107,9 +108,9 @@ class Crop:
         db = get_db()
         crops = db.execute(
             '''SELECT * FROM crops
-               WHERE name LIKE ? OR crop_type LIKE ?
+               WHERE search_fold(name) LIKE ? OR search_fold(crop_type) LIKE ?
                ORDER BY created_at DESC''',
-            (f'%{keyword}%', f'%{keyword}%')
+            (f'%{fold(keyword)}%',) * 2
         ).fetchall()
         return [dict(crop) for crop in crops]
 

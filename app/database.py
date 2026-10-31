@@ -2,6 +2,8 @@ import sqlite3
 import os
 from flask import g, current_app
 
+from app.utils import search_text
+
 
 def get_db():
     """データベース接続を取得"""
@@ -11,6 +13,7 @@ def get_db():
             detect_types=sqlite3.PARSE_DECLTYPES
         )
         g.db.row_factory = sqlite3.Row
+        g.db.create_function(search_text.SQL_FUNCTION, 1, search_text.fold, deterministic=True)
     return g.db
 
 

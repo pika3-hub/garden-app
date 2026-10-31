@@ -1,5 +1,6 @@
 from app.database import get_db
 from app.utils.timezone import get_jst_now
+from app.utils.search_text import fold
 
 
 class DiaryEntry:
@@ -83,8 +84,8 @@ class DiaryEntry:
         params = []
 
         if keyword:
-            query += ' AND (title LIKE ? OR content LIKE ?)'
-            params.extend([f'%{keyword}%', f'%{keyword}%'])
+            query += ' AND (search_fold(title) LIKE ? OR search_fold(content) LIKE ?)'
+            params.extend([f'%{fold(keyword)}%'] * 2)
 
         if date_from:
             query += ' AND entry_date >= ?'

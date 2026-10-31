@@ -14,6 +14,7 @@ from app.api.serialize import image_url, plain, web_url
 from app.api.validation import SQLITE_MAX_INT, Field, check_value, validate_payload
 from app.database import get_db
 from app.models.supplement import Supplement, parse_youtube_content
+from app.utils.search_text import fold
 
 DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
@@ -22,7 +23,7 @@ LIKE_ESCAPE = "ESCAPE '\\'"
 
 def like_pattern(q):
     """部分一致用パターン。% と _ は文字として扱う（LIKE_ESCAPE と組で使う）"""
-    escaped = q.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+    escaped = fold(q).replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
     return f'%{escaped}%'
 
 
@@ -177,7 +178,7 @@ def list_items(res):
     where, params = [], []
     q = args.get('q', '').strip()
     if q and res.search_columns:
-        where.append('(' + ' OR '.join(f'{c} LIKE ? {LIKE_ESCAPE}' for c in res.search_columns) + ')')
+        where.append('(' + ' OR '.join(f'search_fold({c}) LIKE ? {LIKE_ESCAPE}' for c in res.search_columns) + ')')
         params += [like_pattern(q)] * len(res.search_columns)
     for key, (clause, field) in res.filters.items():
         if key in args:

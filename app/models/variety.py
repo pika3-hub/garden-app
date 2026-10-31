@@ -1,5 +1,6 @@
 from app.database import get_db
 from app.utils.timezone import get_jst_now
+from app.utils.search_text import fold
 
 
 class Variety:
@@ -127,9 +128,9 @@ class Variety:
                       c.icon_path AS crop_icon_path, c.image_color AS crop_image_color
                FROM varieties v
                JOIN crops c ON v.crop_id = c.id
-               WHERE v.name LIKE ? OR c.name LIKE ?
+               WHERE search_fold(v.name) LIKE ? OR search_fold(c.name) LIKE ?
                ORDER BY c.name, v.created_at DESC''',
-            (f'%{keyword}%', f'%{keyword}%')
+            (f'%{fold(keyword)}%',) * 2
         ).fetchall()
         return [dict(r) for r in rows]
 

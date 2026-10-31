@@ -3,6 +3,7 @@ import os
 from flask import current_app
 from app.database import get_db
 from app.utils.timezone import get_jst_now
+from app.utils.search_text import fold
 
 
 class Location:
@@ -107,9 +108,9 @@ class Location:
         db = get_db()
         locations = db.execute(
             '''SELECT * FROM locations
-               WHERE name LIKE ? OR location_type LIKE ?
+               WHERE search_fold(name) LIKE ? OR search_fold(location_type) LIKE ?
                ORDER BY created_at DESC''',
-            (f'%{keyword}%', f'%{keyword}%')
+            (f'%{fold(keyword)}%',) * 2
         ).fetchall()
         return [dict(location) for location in locations]
 

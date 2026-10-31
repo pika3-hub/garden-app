@@ -1,5 +1,6 @@
 from app.database import get_db
 from app.utils.conversation_links import extract_links
+from app.utils.search_text import fold
 
 KIND_PRIORITY = {'created': 3, 'updated': 2, 'viewed': 1}
 KIND_LABELS = {'created': '作った', 'updated': '変えた', 'viewed': '見た'}
@@ -227,12 +228,12 @@ class Conversation:
         """題名と user / assistant の本文の部分一致"""
         rows = get_db().execute(
             f'''{_LIST_SELECT}
-                WHERE c.title LIKE :p ESCAPE '\\'
+                WHERE search_fold(c.title) LIKE :p ESCAPE '\\'
                    OR EXISTS(SELECT 1 FROM conversation_messages m
                               WHERE m.conversation_id = c.id AND {_VISIBLE}
-                                AND m.content LIKE :p ESCAPE '\\')
+                                AND search_fold(m.content) LIKE :p ESCAPE '\\')
                 {_ORDER}''',
-            {'p': f'%{_like_escape(keyword)}%'}
+            {'p': f'%{_like_escape(fold(keyword))}%'}
         ).fetchall()
         return [dict(r) for r in rows]
 

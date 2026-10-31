@@ -1,6 +1,7 @@
 from app.database import get_db
 from app.models.planting import _CV_JOIN
 from app.utils.timezone import get_jst_now
+from app.utils.search_text import fold
 
 
 def _like_escape(keyword):
@@ -57,10 +58,10 @@ class Advice:
     def search(keyword):
         rows = get_db().execute(
             f'''SELECT * FROM advices
-                WHERE title LIKE :p ESCAPE '\\' OR question LIKE :p ESCAPE '\\'
-                   OR answer LIKE :p ESCAPE '\\'
+                WHERE search_fold(title) LIKE :p ESCAPE '\\' OR search_fold(question) LIKE :p ESCAPE '\\'
+                   OR search_fold(answer) LIKE :p ESCAPE '\\'
                 {Advice.ORDER}''',
-            {'p': f'%{_like_escape(keyword)}%'}
+            {'p': f'%{_like_escape(fold(keyword))}%'}
         ).fetchall()
         return [dict(r) for r in rows]
 

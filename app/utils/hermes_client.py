@@ -136,6 +136,19 @@ def send_approval(run_id: str, choice: str, request_id: str | None) -> dict:
     return _json('POST', f'/v1/runs/{urllib.parse.quote(run_id, safe="")}/approval', payload)
 
 
+def stop_run(run_id: str) -> None:
+    """run を止める（Hermes は作業の区切りで止める。実行中のコマンドは取り消せない）。
+
+    もう終わっている（200）・Hermes が知らない（404）・動いていない（409）run は、止める必要が
+    無いので成功として扱う
+    """
+    try:
+        _json('POST', f'/v1/runs/{urllib.parse.quote(run_id, safe="")}/stop')
+    except HermesError as e:
+        if e.status not in (404, 409):
+            raise
+
+
 def get_session_messages(session_id: str) -> list[dict]:
     try:
         data = _json('GET', f'/api/sessions/{urllib.parse.quote(session_id, safe="")}'

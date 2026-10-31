@@ -11,6 +11,7 @@ from app.api.resource import LIKE_ESCAPE, like_pattern, page_arg
 from app.api.serialize import display_name, web_url
 from app.database import get_db
 from app.models.app_settings import AppSettings
+from app.utils.search_text import fold
 
 RESOURCE_NAMES = ['crops', 'varieties', 'locations', 'plantings', 'planting_records', 'harvests',
                   'cooking_records', 'diary_entries', 'tasks', 'advices', 'photos']
@@ -51,7 +52,7 @@ def meta():
 
 
 def _rank(name, q):
-    n, k = name.casefold(), q.casefold()
+    n, k = fold(name).casefold(), fold(q).casefold()
     return 0 if n == k else 1 if n.startswith(k) else 2
 
 
@@ -76,19 +77,19 @@ def lookup():
     pattern = like_pattern(q)
     items = []
     if 'crop' in types:
-        for r in db.execute(f'SELECT id, name, crop_type FROM crops WHERE name LIKE ? {LIKE_ESCAPE}', (pattern,)):
+        for r in db.execute(f'SELECT id, name, crop_type FROM crops WHERE search_fold(name) LIKE ? {LIKE_ESCAPE}', (pattern,)):
             items.append({'type': 'crop', 'id': r['id'], 'name': r['name'], 'display_name': r['name'],
                           'crop_type': r['crop_type'], 'web_url': web_url(f'/crops/{r["id"]}')})
     if 'variety' in types:
         for r in db.execute(
                 f'''SELECT v.id, v.name, v.crop_id, c.name AS crop_name
                     FROM varieties v JOIN crops c ON v.crop_id = c.id
-                    WHERE v.name LIKE ? {LIKE_ESCAPE}''', (pattern,)):
+                    WHERE search_fold(v.name) LIKE ? {LIKE_ESCAPE}''', (pattern,)):
             items.append({'type': 'variety', 'id': r['id'], 'name': r['name'],
                           'display_name': display_name(r['crop_name'], r['name']),
                           'crop_id': r['crop_id'], 'web_url': web_url(f'/varieties/{r["id"]}')})
     if 'location' in types:
-        for r in db.execute(f'SELECT id, name, location_type FROM locations WHERE name LIKE ? {LIKE_ESCAPE}',
+        for r in db.execute(f'SELECT id, name, location_type FROM locations WHERE search_fold(name) LIKE ? {LIKE_ESCAPE}',
                             (pattern,)):
             items.append({'type': 'location', 'id': r['id'], 'name': r['name'], 'display_name': r['name'],
                           'location_type': r['location_type'], 'web_url': web_url(f'/locations/{r["id"]}')})
