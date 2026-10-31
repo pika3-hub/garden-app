@@ -1,5 +1,6 @@
 from app.database import get_db
 from app.utils.timezone import get_jst_now
+from app.utils.search_text import fold
 
 
 class Cooking:
@@ -93,8 +94,8 @@ class Cooking:
         params = []
 
         if keyword:
-            query += ' AND (title LIKE ? OR notes LIKE ?)'
-            params.extend([f'%{keyword}%', f'%{keyword}%'])
+            query += ' AND (search_fold(title) LIKE ? OR search_fold(notes) LIKE ?)'
+            params.extend([f'%{fold(keyword)}%'] * 2)
 
         if category:
             query += ' AND category = ?'

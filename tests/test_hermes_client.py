@@ -99,6 +99,30 @@ def test_send_approval_rejects_session_and_always(app):
         hermes_client.send_approval('run_x', 'session', None)
 
 
+def test_stop_run_posts(app, fake_open):
+    fake_open.reply(200, {'run_id': 'run_x', 'status': 'stopping'})
+    with app.app_context():
+        hermes_client.stop_run('run_x')
+    assert fake_open.calls[0].full_url == 'http://127.0.0.1:8642/v1/runs/run_x/stop'
+    assert fake_open.calls[0].get_method() == 'POST'
+
+
+@pytest.mark.parametrize('status', [404, 409])
+def test_stop_run_treats_not_running_as_done(app, fake_open, status):
+    fake_open.reply(status, {'error': {'message': 'not active'}})
+    with app.app_context():
+        hermes_client.stop_run('run_x')
+
+
+def test_stop_run_raises_on_other_errors(app, fake_open):
+    fake_open.reply(500, {'error': 'boom'})
+    with app.app_context(), pytest.raises(hermes_client.HermesError):
+        hermes_client.stop_run('run_x')
+    fake_open.raise_(urllib.error.URLError('down'))
+    with app.app_context(), pytest.raises(hermes_client.HermesUnavailable):
+        hermes_client.stop_run('run_x')
+
+
 def test_get_session_messages(app, fake_open):
     fake_open.reply(200, {'object': 'list', 'data': [{'role': 'user', 'content': 'hi'}]})
     with app.app_context():

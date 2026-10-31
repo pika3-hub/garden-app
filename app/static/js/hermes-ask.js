@@ -311,16 +311,23 @@
       }).catch(function () { showError('Hermes に届きません'); setBusy(false); });
     }
 
+    // 作業中なら、サーバーが Hermes の run を止めてから会話を切り替える。止められなければ
+    // 切り替わらないので、受信も吹き出しもそのまま残す
     function startNew() {
-      if (source) { source.close(); source = null; }
-      approvals = {};
-      setBusy(false);
+      if (busy && !window.confirm('Hermes が作業中です。止めて新しく始めますか？')) return;
+      newBtn.disabled = true;
       fetch(newUrl, { method: 'POST', headers: { Accept: 'application/json' } })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          if (data.ok) { box.textContent = ''; showError(''); } else { showError(data.error); }
+          newBtn.disabled = false;
+          if (!data.ok) { showError(data.error); return; }
+          if (source) { source.close(); source = null; }
+          approvals = {};
+          setBusy(false);
+          box.textContent = '';
+          showError('');
         })
-        .catch(function () { showError('Hermes に届きません'); });
+        .catch(function () { newBtn.disabled = false; showError('Hermes に届きません'); });
     }
 
     sendBtn.addEventListener('click', send);

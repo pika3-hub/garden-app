@@ -421,3 +421,15 @@ class Example:
         db.commit()
         return cursor.lastrowid
 ```
+
+## キーワード検索の書き方
+
+検索では、ひらがなとカタカナ、半角と全角を区別しない。列と検索語の両方を `app/utils/search_text.py` でそろえてから `LIKE` で比べる。列の側は SQLite の関数 `search_fold`（`get_db` で登録）、検索語の側は Python の `fold()` を使う。新しい検索もこの書き方にする（漢字とかなはそろわない）。
+
+```python
+from app.utils.search_text import fold
+
+db.execute('SELECT * FROM crops WHERE search_fold(name) LIKE ?', (f'%{fold(keyword)}%',))
+```
+
+`%` `_` をエスケープする箇所では、`fold()` を先にかけてからエスケープする（全角の `％` `＿` は `fold()` で `%` `_` になるため）。`get_db` を通らない接続（`sqlite3` コマンド、マイグレーションの `sqlite3.connect`）には `search_fold` が無い。

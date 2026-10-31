@@ -80,7 +80,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 
 | メソッド | パス | 用途 |
 |---|---|---|
-| GET | `/{res}` | 一覧・検索。`q`（部分一致、`%` `_` も文字として扱う）、`limit`（既定50・最大200）、`offset`、リソース別の条件 |
+| GET | `/{res}` | 一覧・検索。`q`（部分一致、ひらがな・カタカナと半角・全角は区別しない、`%` `_` も文字として扱う）、`limit`（既定50・最大200）、`offset`、リソース別の条件 |
 | GET | `/{res}/{id}` | 詳細 |
 | POST | `/{res}` | 作成 |
 | PATCH | `/{res}/{id}` | 部分更新（送った項目だけ変わる） |
@@ -280,7 +280,7 @@ curl -sS -X POST "$GARDEN_API_URL/advices" -H "Authorization: Bearer $GARDEN_API
 |---|---|---|
 | GET | `/health` | 疎通確認 |
 | GET | `/meta` | 選択肢の一覧（ステータス、天気、日当たり、既存の種類・単位・カテゴリ、アイコン、背景画像、関連キー、画像の制限、設定画面の地域・栽培環境 `region`（未設定は空文字。作物・品種のメモの時期の基準）） |
-| GET | `/lookup?q=名前&types=crop,variety,location&limit=20` | 名前の横断検索。完全一致 → 前方一致 → 部分一致の順。品種は `display_name` と `crop_id` 付き |
+| GET | `/lookup?q=名前&types=crop,variety,location&limit=20` | 名前の横断検索。完全一致 → 前方一致 → 部分一致の順（ひらがな・カタカナと半角・全角は区別しない）。品種は `display_name` と `crop_id` 付き |
 | POST | `/photos` | 写真プールへ一括アップロード（multipart `files` 複数、任意で `data` に `{"notes": "..."}`）。EXIF の撮影日時を取り込む |
 | GET | `/photos?unused=true` | 写真プールの一覧（`unused=true` で未使用のみ） |
 | GET | `/photos/{id}` | 詳細（`usages` 付き） |

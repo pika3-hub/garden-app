@@ -33,6 +33,7 @@ UNAVAILABLE_MESSAGE = 'Hermes に届きません'
 BAD_KEY_MESSAGE = 'Hermes のキーが合いません'
 ERROR_MESSAGE = 'Hermes でエラーが起きました'
 CONNECTION_LOST_MESSAGE = 'Hermes との接続が切れました'
+STOP_FAILED_MESSAGE = 'Hermes の作業を止められませんでした。もう一度押してください'
 
 
 def _error(message, status):
@@ -282,8 +283,18 @@ def chat_create():
 
 @bp.route('/<entity_type>/<int:entity_id>/new', methods=['POST'])
 def new_chat(entity_type, entity_id):
-    """新しい会話にする（古い会話は Hermes 側にも表にも残る）"""
+    """新しい会話にする（古い会話は Hermes 側にも表にも残る）。
+
+    前の会話の run がまだ動いていれば先に止める。止められなければ会話を切り替えない
+    （取りやめたつもりの依頼が裏で最後まで実行されないように）
+    """
     _target_or_404(entity_type, entity_id)
+    chat = HermesChat.get_active(entity_type, entity_id)
+    if chat and chat.get('last_run_id') and hermes_client.is_configured():
+        try:
+            hermes_client.stop_run(chat['last_run_id'])
+        except HermesError:
+            return _error(STOP_FAILED_MESSAGE, 502)
     HermesChat.start_new(entity_type, entity_id)
     return jsonify({'ok': True})
 

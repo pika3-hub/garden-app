@@ -361,10 +361,36 @@ def test_run_id_not_ours_404(client, fake_open):
 
 def test_new_chat_changes_session(client, fake_open, planting_id):
     first = _start(client, fake_open, planting_id, run_id='run_1', key='k1')
+    fake_open.reply(200, {'run_id': 'run_1', 'status': 'completed'})
     assert client.post(f'/hermes/ask/planting/{planting_id}/new').json == {'ok': True}
     second = _start(client, fake_open, planting_id, run_id='run_2', key='k2')
     assert first != second
     assert second.startswith(f'garden-planting-{planting_id}-')
+
+
+def test_new_chat_stops_running_run(client, fake_open, planting_id):
+    _start(client, fake_open, planting_id, run_id='run_1')
+    fake_open.reply(200, {'run_id': 'run_1', 'status': 'stopping'})
+    assert client.post(f'/hermes/ask/planting/{planting_id}/new').json == {'ok': True}
+    assert fake_open.calls[-1].full_url.endswith('/v1/runs/run_1/stop')
+    assert fake_open.calls[-1].get_method() == 'POST'
+
+
+def test_new_chat_without_run_does_not_call_hermes(client, fake_open, planting_id):
+    assert client.post(f'/hermes/ask/planting/{planting_id}/new').json == {'ok': True}
+    assert fake_open.calls == []
+
+
+def test_new_chat_keeps_session_when_stop_fails(client, fake_open, planting_id):
+    first = _start(client, fake_open, planting_id, run_id='run_1', key='k1')
+    fake_open.raise_(urllib.error.URLError('down'))
+    resp = client.post(f'/hermes/ask/planting/{planting_id}/new')
+    assert resp.status_code == 502
+    assert resp.json['ok'] is False
+    assert '止められませんでした' in resp.json['error']
+    from app.models.hermes_chat import HermesChat
+    with client.application.app_context():
+        assert HermesChat.get_active('planting', planting_id)['session_id'] == first
 
 
 # --- チャット画面用（会話の行の id で扱うルート） ---
