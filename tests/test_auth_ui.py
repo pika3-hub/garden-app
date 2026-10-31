@@ -105,3 +105,14 @@ def test_anonymous_keeps_viewing_controls(app, anon_client):
     body = anon_client.get(f"/crops/{seeded['crop']}").get_data(as_text=True)
     assert 'ログイン' in body
     assert 'ログアウト' not in body
+
+
+def test_nav_login_logout_icons(app, client, anon_client):
+    seeded = _seed(app)
+    url = f"/crops/{seeded['crop']}"
+    owner = client.get(url).get_data(as_text=True)
+    assert 'images/icon_logout.webp' in owner
+    assert 'images/icon_login.webp' not in owner
+    anon = anon_client.get(url).get_data(as_text=True)
+    assert 'images/icon_login.webp' in anon
+    assert 'images/icon_logout.webp' not in anon
