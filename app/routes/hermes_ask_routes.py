@@ -15,7 +15,8 @@ from app.routes.conversation_routes import link_items
 from app.utils import hermes_client
 from app.utils.hermes_client import HermesError, HermesUnavailable
 from app.utils.hermes_context import (
-    build_instructions, describe_target, friendly_tool_label, links_for_messages,
+    build_instructions, describe_target, earlier_questions, friendly_tool_label,
+    links_for_messages,
 )
 from app.utils.markdown_render import render_markdown
 
@@ -160,11 +161,23 @@ def _parse_question():
     return text, request_key, None
 
 
+def _earlier(chat):
+    """これまでの質問の日時と書き出し（指示に添える）。最初の質問（まだ run が無い）では
+    Hermes の記録を読まない。読めなくても質問は送るので '' にする"""
+    if not chat.get('last_run_id'):
+        return ''
+    try:
+        return earlier_questions(hermes_client.get_session_messages(chat['session_id']))
+    except HermesError:
+        return ''
+
+
 def _start_run(chat, target, place, text, request_key):
     """質問を Hermes に送って run を始める。(run_id, エラーの応答) を返す"""
     session_id = chat['session_id']
     try:
-        run_id = hermes_client.start_run(session_id, text, build_instructions(target, place),
+        run_id = hermes_client.start_run(session_id, text,
+                                         build_instructions(target, place, _earlier(chat)),
                                          f'{session_id}:{request_key}')
     except HermesError as e:
         return None, _hermes_error(e)

@@ -3,7 +3,8 @@ import json
 import pytest
 
 from app.utils.hermes_context import (
-    build_instructions, describe_target, friendly_tool_label, links_for_messages,
+    build_instructions, describe_target, earlier_questions, friendly_tool_label,
+    links_for_messages,
 )
 from tests.hermes_fakes import crop_id, planting_id, variety_id  # noqa: F401
 
@@ -90,3 +91,54 @@ def test_build_instructions_say_earlier_turns_come_from_history():
               'api_path': '/plantings/128'}
     for text in (build_instructions(target), build_instructions(None, place='chat')):
         assert 'この会話の履歴から答える' in text
+
+
+# 2026-10-29 23:38:00 JST（＝ 14:38:00 UTC）
+_TS = 1793284680.0
+
+
+def _user(content, ts):
+    return {'role': 'user', 'content': content, 'timestamp': ts}
+
+
+def test_earlier_questions_lists_user_messages_with_jst_time():
+    text = earlier_questions([
+        _user('葉が白っぽいのは\nなぜ？', _TS),
+        {'role': 'assistant', 'content': 'ANSWER_X', 'timestamp': _TS + 60},
+        {'role': 'tool', 'content': 'SECRET123', 'timestamp': _TS + 70},
+        _user('経過をまとめて', _TS + 86400 * 2),
+    ])
+    assert '10/29 23:38「葉が白っぽいのは なぜ？」' in text
+    assert '10/31 23:38「経過をまとめて」' in text
+    assert text.index('10/29') < text.index('10/31')
+    assert 'SECRET123' not in text and 'ANSWER_X' not in text
+
+
+def test_earlier_questions_limits_count_and_length():
+    msgs = [_user(f'質問{i:02d}', _TS + i * 60) for i in range(15)]
+    msgs.append(_user('あ' * 50, _TS + 3600))
+    text = earlier_questions(msgs)
+    lines = [l for l in text.splitlines() if l.startswith('- ')]
+    assert len(lines) == 10
+    assert '質問05' not in text and '質問06' in text
+    assert '「' + 'あ' * 40 + '…」' in text
+
+
+def test_earlier_questions_skips_bad_entries_and_empty():
+    assert earlier_questions([]) == ''
+    assert earlier_questions([{'role': 'assistant', 'content': 'x', 'timestamp': _TS}]) == ''
+    text = earlier_questions([
+        _user('時刻なし', None), _user('巨大', 10 ** 400), _user('  ', _TS),
+        {'role': 'user', 'content': [{'type': 'text'}], 'timestamp': _TS},
+    ])
+    assert '日時不明「時刻なし」' in text and '日時不明「巨大」' in text
+    assert len([l for l in text.splitlines() if l.startswith('- ')]) == 2
+
+
+def test_instructions_append_earlier_questions(app, planting_id):
+    with app.app_context():
+        target = describe_target('planting', planting_id)
+        text = build_instructions(target, earlier='これまでの質問XYZ')
+    assert text.endswith('これまでの質問XYZ')
+    assert build_instructions(None, 'chat', earlier='E').endswith('\nE')
+    assert build_instructions(None, 'chat') == build_instructions(None, 'chat', earlier='')

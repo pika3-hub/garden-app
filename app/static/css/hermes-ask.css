@@ -35,6 +35,9 @@
 .hermes-msg-bot { background: #f1f1f1; align-self: flex-start; }
 .hermes-msg-bot.streaming { white-space: pre-wrap; }
 .hermes-msg-bot > :last-child { margin-bottom: 0; }
+.hermes-msg-time { color: #6c757d; font-size: .7rem; margin-top: -2px; }
+.hermes-msg-time.is-user { align-self: flex-end; }
+.hermes-msg-time.is-bot { align-self: flex-start; }
 .hermes-tool { color: #888; font-size: .75rem; margin: 2px 0; }
 .hermes-failed { color: #dc3545; font-size: .85rem; }
 .hermes-approval {

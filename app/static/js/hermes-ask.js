@@ -65,12 +65,28 @@
       return days.length ? days[days.length - 1].textContent : null;
     }
 
-    function dayLabel(ts) {
+    function toDate(ts) {
       if (ts == null || ts === '') return null;
       var d = typeof ts === 'number' ? new Date(ts < 1e12 ? ts * 1000 : ts) : new Date(ts);
-      if (isNaN(d.getTime())) return null;
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function dayLabel(ts) {
+      var d = toDate(ts);
+      if (!d) return null;
       if (d.toDateString() === new Date().toDateString()) return '今日';
       return (d.getMonth() + 1) + '/' + d.getDate();
+    }
+
+    // 吹き出しの下の時刻（HH:MM）。日付は「― 10/29 ―」の区切りで出す
+    function timeLabel(d) {
+      return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    }
+
+    function addTime(role, d) {
+      if (!d) return;
+      box.appendChild(el('div', 'hermes-msg-time ' + (role === 'user' ? 'is-user' : 'is-bot'),
+        timeLabel(d)));
     }
 
     function renderHistory(messages) {
@@ -84,10 +100,12 @@
         }
         if (m.role === 'user') {
           box.appendChild(el('div', 'hermes-msg-user', m.text));
+          addTime('user', toDate(m.timestamp));
         } else {
           var bot = el('div', 'hermes-msg-bot');
           if (m.html) bot.innerHTML = m.html; else bot.textContent = m.text;
           box.appendChild(bot);
+          addTime('bot', toDate(m.timestamp));
           if (m.links && m.links.length) box.appendChild(buildLinks(m.links));
         }
       });
@@ -172,6 +190,8 @@
           b.innerHTML = d.html;
           dropTool();
           if (d.links && d.links.length) b.after(buildLinks(d.links));
+          // 届いた答えはブラウザの今の時刻（リンクより前、吹き出しのすぐ下）
+          b.after(el('div', 'hermes-msg-time is-bot', timeLabel(new Date())));
           finish();
         } else if (d.type === 'failed') {
           dropTool();
@@ -285,6 +305,7 @@
         loaded = true;
         if (lastDayLabel() !== '― 今日 ―') box.appendChild(el('div', 'hermes-msg-day', '― 今日 ―'));
         box.appendChild(el('div', 'hermes-msg-user', text));
+        addTime('user', new Date());
         scrollDown();
         followRun(data.run_id);
       }).catch(function () { showError('Hermes に届きません'); setBusy(false); });

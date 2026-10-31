@@ -1,11 +1,13 @@
 """Hermes に聞くパネル用: 対象の説明、Hermes への指示、途中経過の言い換え、リンクの取り出し。"""
 import json
+from datetime import datetime
 
 from app.database import get_db
 from app.models.photo_pool import _labels
 from app.utils.conversation_links import (
     _parse_curl, _segments, _tokenize, extract_links,
 )
+from app.utils.timezone import JST
 
 # パネルを置く画面の種類: entity_type -> (表示名, API のパス)
 _TARGETS = {
@@ -61,12 +63,52 @@ def describe_target(entity_type, entity_id):
             'label': label, 'api_path': f'{base}/{entity_id}'}
 
 
-def build_instructions(target, place='panel'):
+def build_instructions(target, place='panel', earlier=''):
     """place は相談している画面（'panel' = 詳細画面のパネル、'chat' = チャット画面）。
-    対象があるときは place に関係なく同じ（対象の画面を見ながらの相談として扱う）"""
+    対象があるときは place に関係なく同じ（対象の画面を見ながらの相談として扱う）。
+    earlier は earlier_questions() の結果（無ければ ''）で、指示の最後に添える"""
     if not target:
-        return _INSTRUCTIONS_CHAT if place == 'chat' else _INSTRUCTIONS_NO_TARGET
-    return _INSTRUCTIONS_WITH_TARGET.format(**target)
+        text = _INSTRUCTIONS_CHAT if place == 'chat' else _INSTRUCTIONS_NO_TARGET
+    else:
+        text = _INSTRUCTIONS_WITH_TARGET.format(**target)
+    return f'{text}\n{earlier}' if earlier else text
+
+
+# Hermes に渡る会話の履歴には日時が無いので、「前の質問はいつ？」に答えられるよう
+# これまでの質問の日時と書き出しを指示に添える。量は新しい方から件数・文字数で切る
+_EARLIER_MAX = 10
+_EARLIER_CHARS = 40
+
+
+def _jst_label(ts):
+    """UNIX 秒 → 日本時間の 'M/D HH:MM'。取れなければ None"""
+    if not isinstance(ts, (int, float)) or isinstance(ts, bool):
+        return None
+    try:
+        d = datetime.fromtimestamp(ts, JST)
+    except (OverflowError, OSError, ValueError):
+        return None
+    return f'{d.month}/{d.day} {d:%H:%M}'
+
+
+def earlier_questions(messages):
+    """会話の記録（get_session_messages の結果）から、これまでのユーザーの質問の一覧を作る。
+    質問が無ければ ''"""
+    lines = []
+    for m in messages:
+        content = m.get('content')
+        if m.get('role') != 'user' or not isinstance(content, str):
+            continue
+        head = ' '.join(content.split())
+        if not head:
+            continue
+        if len(head) > _EARLIER_CHARS:
+            head = head[:_EARLIER_CHARS] + '…'
+        lines.append(f'- {_jst_label(m.get("timestamp")) or "日時不明"}「{head}」')
+    if not lines:
+        return ''
+    return ('この会話のこれまでの質問（古い順、日本時間。前の質問の日時を聞かれたらこれで答える）:\n'
+            + '\n'.join(lines[-_EARLIER_MAX:]))
 
 
 def _terminal_label(preview):

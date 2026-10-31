@@ -406,6 +406,7 @@ def test_chat_runs_continue_panel_chat_with_target(client, app, fake_open, plant
     from app.models.hermes_chat import HermesChat
     with app.app_context():
         chat = HermesChat.get_active('planting', planting_id)
+    fake_open.reply(200, {'object': 'list', 'data': []})  # これまでの質問（get_session_messages）
     fake_open.reply(202, {'run_id': 'run_2'})
     r = client.post(f"/hermes/ask/chats/{chat['id']}/runs", json={'text': '続き', 'request_key': 'k2'})
     assert r.json == {'ok': True, 'run_id': 'run_2'}
@@ -426,6 +427,7 @@ def test_chat_runs_for_deleted_target_uses_free_instructions(client, app, fake_o
     with app.app_context():
         chat = HermesChat.get_active('crop', crop_id)
         Crop.delete(crop_id)
+    fake_open.reply(200, {'object': 'list', 'data': []})  # これまでの質問（get_session_messages）
     fake_open.reply(202, {'run_id': 'run_2'})
     r = client.post(f"/hermes/ask/chats/{chat['id']}/runs", json={'text': 'q2', 'request_key': 'k2'})
     assert r.status_code == 200
@@ -480,3 +482,35 @@ def test_panel_start_sets_title_from_question(client, app, fake_open, planting_i
     from app.models.hermes_chat import HermesChat
     with app.app_context():
         assert HermesChat.get_active('planting', planting_id)['title'] == '質問'
+
+
+def test_first_run_does_not_read_messages(client, fake_open, planting_id):
+    """会話の最初の質問では前の質問が無いので、Hermes の記録を読まない"""
+    _start(client, fake_open, planting_id)
+    assert len(fake_open.calls) == 1
+    assert 'これまでの質問' not in json.loads(fake_open.calls[0].data)['instructions']
+
+
+def test_next_run_adds_earlier_questions(client, fake_open, planting_id):
+    _start(client, fake_open, planting_id)
+    fake_open.reply(200, {'object': 'list', 'data': [
+        {'id': 1, 'role': 'user', 'content': '葉が白い', 'timestamp': 1793284680.0},
+        {'id': 2, 'role': 'assistant', 'content': '答え', 'timestamp': 1793284690.0},
+    ]})
+    fake_open.reply(202, {'run_id': 'run_2'})
+    resp = client.post(f'/hermes/ask/planting/{planting_id}/runs',
+                       json={'text': '前の質問はいつ？', 'request_key': 'k2'})
+    assert resp.json['run_id'] == 'run_2'
+    assert '/messages' in fake_open.calls[1].full_url
+    instructions = json.loads(fake_open.calls[2].data)['instructions']
+    assert '10/29 23:38「葉が白い」' in instructions
+
+
+def test_next_run_sent_even_if_messages_unreadable(client, fake_open, planting_id):
+    _start(client, fake_open, planting_id)
+    fake_open.reply(500, {'error': 'boom'})
+    fake_open.reply(202, {'run_id': 'run_2'})
+    resp = client.post(f'/hermes/ask/planting/{planting_id}/runs',
+                       json={'text': 'q', 'request_key': 'k2'})
+    assert resp.json == {'ok': True, 'run_id': 'run_2'}
+    assert 'これまでの質問' not in json.loads(fake_open.calls[2].data)['instructions']
