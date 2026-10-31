@@ -1,5 +1,14 @@
 {
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(uv run pytest -q)",
+      "Bash(uv run pytest)",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__read_console_messages",
+      "mcp__claude-in-chrome__find"
+    ]
   }
 }
