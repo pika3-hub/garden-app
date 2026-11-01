@@ -129,6 +129,7 @@ garden-app/
 ├── docs/                    # 開発者向けドキュメント（外部APIは docs/api/）
 ├── instance/                # データベース（garden.db）
 ├── tests/                   # テスト（uv run pytest）
+├── tools/                   # 補助スクリプト（会話の同期、アイコン作成など）
 ├── run.py                   # 開発サーバー起動
 ├── server.py                # 本番サーバー起動（waitress。Web ＋ 外部API）
 ├── test_data.py             # テストデータ投入

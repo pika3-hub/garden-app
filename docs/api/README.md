@@ -76,7 +76,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 
 ## 4. 共通エンドポイント
 
-写真プール以外の9リソースで共通:
+写真プール以外の10リソースで共通:
 
 | メソッド | パス | 用途 |
 |---|---|---|
