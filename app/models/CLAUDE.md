@@ -293,7 +293,7 @@ Hermes との会話（`app/models/conversation.py`、マイグレーション 02
 |--------|-----|------|
 | id | INTEGER | 主キー |
 | conversation_id | INTEGER | 会話ID（FK、ON DELETE CASCADE） |
-| entity_type | TEXT | crop/variety/location/planting/planting_record/harvest/diary/task/cooking/photo_pool |
+| entity_type | TEXT | crop/variety/location/planting/planting_record/harvest/diary/task/cooking/advice/photo_pool |
 | entity_id | INTEGER | 対象のID |
 | kind | TEXT | created / updated / viewed（CHECK） |
 | hermes_message_id | INTEGER | 根拠の発言ID |
