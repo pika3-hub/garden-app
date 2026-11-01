@@ -515,6 +515,22 @@ class Planting:
         return result
 
     @staticmethod
+    def get_relation_choices(selected_ids=()):
+        """関連付け（日記・タスク・料理・アドバイス）の植え付けの選択肢。
+        削除済み以外と、関連付け済みの植え付け（selected_ids、文字列でも可）を返す。
+        relation_date（栽培中は植え付け日、それ以外は終了日→植え付け日）の新しい順"""
+        selected = {str(i) for i in selected_ids}
+        result = []
+        for p in Planting.get_all_with_stats():
+            if p['status'] == 'removed' and str(p['id']) not in selected:
+                continue
+            d = p.get('planted_date') if p['status'] == 'active' else (p.get('end_date') or p.get('planted_date'))
+            p['relation_date'] = str(d) if d else ''
+            result.append(p)
+        result.sort(key=lambda p: (p['relation_date'], p['id']), reverse=True)
+        return result
+
+    @staticmethod
     def update_position(location_crop_id, position_x, position_y):
         """作物の配置位置を更新"""
         db = get_db()

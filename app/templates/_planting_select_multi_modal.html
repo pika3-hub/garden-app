@@ -8,8 +8,19 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                {% if active_plantings and (planting_filter_types or planting_filter_locations) %}
+                {#- 状態の絞り込みは、栽培終了なども選べる画面（関連付けの選択肢）でだけ出る -#}
+                {% set planting_status_labels = {'active': '栽培中', 'ended': '栽培終了', 'removed': '削除済み'} %}
+                {% set planting_statuses = (active_plantings or [])|map(attribute='status')|unique|list %}
+                {% if active_plantings and (planting_filter_types or planting_filter_locations or planting_statuses|length > 1) %}
                 <div class="badge-filter-multi mb-3">
+                    {% if planting_statuses|length > 1 %}
+                    <div class="badge-filter-group" data-filter-key="status">
+                        <span class="badge-filter-group-label">状態:</span>
+                        {% for st, label in planting_status_labels.items() if st in planting_statuses %}
+                        <span class="badge badge-filter badge-filter-inactive" data-type="{{ label }}">{{ label }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     {% if planting_filter_types %}
                     <div class="badge-filter-group" data-filter-key="cropType">
                         <span class="badge-filter-group-label">種類:</span>
@@ -45,7 +56,7 @@
                     </h3>
                     <div class="row">
                         {% for p in group_items %}
-                        <div class="col-6 col-md-4 col-lg-3 mb-3" data-ms-filter-card data-ms-filter-group-crop-type="{{ p.crop_type }}" data-ms-filter-group-location-name="{{ p.location_name }}">
+                        <div class="col-6 col-md-4 col-lg-3 mb-3" data-ms-filter-card data-ms-filter-group-crop-type="{{ p.crop_type }}" data-ms-filter-group-location-name="{{ p.location_name }}" data-ms-filter-group-status="{{ planting_status_labels.get(p.status, p.status) }}">
                             <div class="card h-100 card-photo card-bg-location-crop planting-ms-card {{ '' if p.latest_growth_image else 'card-no-image' }} {% if selected_location_crop_ids and p.id|string in selected_location_crop_ids %}ms-card-selected{% endif %}"
                                  role="button"
                                  data-planting-id="{{ p.id }}"
@@ -81,6 +92,9 @@
                                         <small>@ {{ p.location_name }}</small>
                                     </h5>
                                     <small>植え付け日: {{ p.planted_date or '未設定' }}</small>
+                                    {% if p.status != 'active' and p.end_date %}
+                                    <br><small>終了日: {{ p.end_date }}</small>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>

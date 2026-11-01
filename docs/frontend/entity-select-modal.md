@@ -46,7 +46,7 @@ new MultiSelectModal({
 | `_crop_select_multi_modal.html` | `cropMultiSelectModal` | 日記・タスク・料理（品種フォームの親作物選択でも使うが、単一選択の独自JSで `MultiSelectModal` は使わない） | `crops`, `crop_filter_types`, `crop_filter_type_icons`, `selected_crop_ids` |
 | `_variety_select_multi_modal.html` | `varietyMultiSelectModal` | 日記・タスク・料理 | `varieties`（`apply_inheritance` 適用済み）, `grouped_varieties`, `variety_filter_types`, `variety_filter_type_icons`, `selected_variety_ids` |
 | `_location_select_multi_modal.html` | `locationMultiSelectModal` | 日記・タスク | `locations`, `grouped_locations`（任意）, `location_filter_types`, `selected_location_ids` |
-| `_planting_select_multi_modal.html` | `plantingMultiSelectModal` | 日記・タスク・料理・収穫/栽培記録の一括登録・アドバイスの編集（アドバイスだけ栽培終了と選択済みの植え付けも渡す。カードの印は `status` どおり） | `active_plantings`, `grouped_plantings`, `planting_filter_types`, `planting_filter_type_icons`, `planting_filter_locations`, `selected_location_crop_ids` |
+| `_planting_select_multi_modal.html` | `plantingMultiSelectModal` | 日記・タスク・料理・アドバイス（関連付け。栽培終了と選択済みの植え付けも渡す）・収穫/栽培記録の一括登録・写真の振り分け（栽培中だけ）。カードの印は `status` どおり。渡した植え付けの `status` が2種類以上なら「状態」の絞り込みが出て、栽培中以外のカードには終了日も出す | `active_plantings`, `grouped_plantings`, `planting_filter_types`, `planting_filter_type_icons`, `planting_filter_locations`, `selected_location_crop_ids` |
 | `_harvest_select_multi_modal.html` | `harvestMultiSelectModal` | 日記・料理 | `harvests`, `grouped_harvests`, `harvest_filter_types`, `harvest_filter_type_icons`, `harvest_filter_locations`, `selected_harvest_ids` |
 
 `cooking/form.html` は作物・品種・植え付け・収穫の4モーダルすべてを使用する（料理と各エンティティの多対多関連付けのため）。
@@ -56,10 +56,12 @@ new MultiSelectModal({
 各ルートでフィルターデータを計算して `render_template` に渡す。`diary_routes.py`・`task_routes.py`・`cooking_routes.py` にそれぞれ `_build_filter_data()` ヘルパーがある（引数は画面で使うモーダルに合わせて異なる）。
 
 ```python
-active_plantings = Planting.get_all_with_stats(status='active')
+active_plantings = Planting.get_relation_choices()  # 編集時は選択済みの植え付けの id を渡す
 filter_data = _build_filter_data(crops, varieties, locations, active_plantings, harvests)  # diary_routes.py の例
 render_template('diary/form.html', ..., **filter_data)
 ```
+
+関連付け（日記・タスク・料理・アドバイス）の植え付けの選択肢は `Planting.get_relation_choices(selected_ids)`。削除済み以外と、関連付け済みの植え付けを返す（栽培を終えた作物のまとめを日記に書けるように。関連付け済みを渡さないと、カードが無いのでチップが出ず外せない）。並びと月の見出しは `relation_date`（栽培中は植え付け日、それ以外は終了日→植え付け日）の新しい順で、`_build_filter_data()` の `grouped_plantings` もこれで分ける。
 
 編集時は `selected_crop_ids`, `selected_variety_ids`, `selected_location_ids`, `selected_location_crop_ids`, `selected_harvest_ids`（文字列IDのリスト）も追加で渡す。
 
