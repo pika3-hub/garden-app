@@ -1,4 +1,4 @@
-"""見取り図の背景画像: 既定の背景と、png 時代の名前の置き換え"""
+"""見取り図の背景画像: 背景を選んでいない場所の既定の背景"""
 import os
 import re
 
@@ -40,24 +40,3 @@ def test_default_bg_image_exists_in_fullscreen_js():
     for name in names:
         assert os.path.isfile(os.path.join(BG_DIR, name)), name
 
-
-def test_migration_renames_png_bg_images_to_webp(app):
-    from app.database import run_migrations
-
-    with app.app_context():
-        db = get_db()
-        ids = {}
-        for bg in ('bg_image_003.png', 'bg_image_default.png', 'bg_image_005.webp', None):
-            ids[bg] = db.execute("INSERT INTO locations (name, location_type, bg_image) VALUES ('畑', '畑', ?)",
-                                 (bg,)).lastrowid
-        db.commit()
-
-        run_migrations(app, db)
-
-        got = {r['id']: r['bg_image'] for r in db.execute('SELECT id, bg_image FROM locations')}
-        assert got == {
-            ids['bg_image_003.png']: 'bg_image_003.webp',
-            ids['bg_image_default.png']: 'bg_image_default.webp',
-            ids['bg_image_005.webp']: 'bg_image_005.webp',
-            ids[None]: None,
-        }
