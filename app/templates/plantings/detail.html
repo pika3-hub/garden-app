@@ -20,7 +20,7 @@ if (fullscreenBtn) {
         openCanvasFullscreen({
             locationId: {{ location.id }},
             locationName: {{ location.name | tojson }},
-            bgImage: '{{ location.bg_image or "bg_image_default.png" }}',
+            bgImage: '{{ location.bg_image or "bg_image_default.webp" }}',
             highlightId: {{ location_crop.id }},
             canvasData: {% if canvas_snapshot %}{{ canvas_snapshot | tojson }}{% else %}null{% endif %},
             dates: null,

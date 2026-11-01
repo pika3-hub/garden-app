@@ -30,7 +30,7 @@
         openCanvasFullscreen({
             locationId: {{ location.id }},
             locationName: {{ location.name | tojson }},
-            bgImage: '{{ location.bg_image or "bg_image_default.png" }}',
+            bgImage: '{{ location.bg_image or "bg_image_default.webp" }}',
             highlightId: null,
             canvasData: null,
             dates: dates,
@@ -151,7 +151,7 @@
                 <div class="d-flex justify-content-center">
                     <div class="canvas-preview-container" id="history-canvas"
                          data-location-id="{{ location.id }}"
-                         data-bg-image="{{ location.bg_image or 'bg_image_default.png' }}">
+                         data-bg-image="{{ location.bg_image or 'bg_image_default.webp' }}">
                         <div class="canvas-preview-area"></div>
                     </div>
                 </div>
