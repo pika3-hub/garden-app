@@ -22,7 +22,7 @@
 - **追加方法**: 画像ファイルを直接このフォルダに配置する（`bg_image_001.webp` などの連番命名）
 - **対応形式**: `.png`, `.jpg`, `.jpeg`, `.webp`
 - **選択UI**: `Location.get_bg_images()` でファイル一覧を取得し、場所の登録・編集フォーム（`locations/form.html`）で選択
-- **デフォルト**: `bg_image_default.png`
+- **デフォルト**: `bg_image_default.webp`
 
 ### 作物アイコン
 
