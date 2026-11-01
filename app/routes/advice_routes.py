@@ -77,8 +77,7 @@ def edit(advice_id):
     selected_location_crop_ids = [str(r['location_crop_id']) for r in relations['location_crops']]
 
     # 栽培終了の植え付けに付いたアドバイスも直せるよう、削除済み以外と選択済みを渡す
-    plantings = [p for p in Planting.get_all_with_stats()
-                 if p['status'] != 'removed' or str(p['id']) in selected_location_crop_ids]
+    plantings = Planting.get_relation_choices(selected_location_crop_ids)
 
     filter_data = _build_filter_data(crops, varieties, [], plantings)
     sorted_crops = filter_data.pop('modal_sorted_crops')

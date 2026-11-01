@@ -92,7 +92,7 @@ def new():
     varieties = Variety.get_all()
     for v in varieties:
         Variety.apply_inheritance(v)
-    active_plantings = Planting.get_all_with_stats(status='active')
+    active_plantings = Planting.get_relation_choices()
     harvests = Harvest.get_all()
 
     today = date.today().isoformat()
@@ -175,7 +175,6 @@ def edit(cooking_id):
     varieties = Variety.get_all()
     for v in varieties:
         Variety.apply_inheritance(v)
-    active_plantings = Planting.get_all_with_stats(status='active')
     harvests = Harvest.get_all()
     relations = Cooking.get_relations(cooking_id)
     categories = Cooking.get_categories()
@@ -186,6 +185,7 @@ def edit(cooking_id):
         'location_crop_ids': [str(r['location_crop_id']) for r in relations['location_crops']],
         'harvest_ids': [str(r['harvest_id']) for r in relations['harvests']]
     }
+    active_plantings = Planting.get_relation_choices(selected_relations['location_crop_ids'])
 
     filter_data = _build_filter_data(crops, varieties, active_plantings, harvests)
     sorted_crops = filter_data.pop('modal_sorted_crops')
@@ -339,7 +339,7 @@ def _build_filter_data(crops, varieties, active_plantings, harvests):
     grouped_varieties.sort(key=lambda kv: len(kv[1]), reverse=True)
 
     def _ym_p(p):
-        d = p.get('planted_date')
+        d = p.get('relation_date')
         return str(d)[:7] if d else ''
     grouped_plantings = [(k, [item for item in g]) for k, g in groupby(active_plantings, key=_ym_p)]
 

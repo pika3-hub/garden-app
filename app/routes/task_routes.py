@@ -76,7 +76,7 @@ def new():
     for v in varieties:
         Variety.apply_inheritance(v)
     locations = Location.get_all()
-    active_plantings = Planting.get_all_with_stats(status='active')
+    active_plantings = Planting.get_relation_choices()
 
     today = date.today().isoformat()
 
@@ -143,7 +143,6 @@ def edit(task_id):
     for v in varieties:
         Variety.apply_inheritance(v)
     locations = Location.get_all()
-    active_plantings = Planting.get_all_with_stats(status='active')
     relations = Task.get_relations(task_id)
 
     # 選択済みのIDを抽出
@@ -153,6 +152,7 @@ def edit(task_id):
         'location_ids': [str(r['location_id']) for r in relations['locations']],
         'location_crop_ids': [str(r['location_crop_id']) for r in relations['location_crops']]
     }
+    active_plantings = Planting.get_relation_choices(selected_relations['location_crop_ids'])
 
     filter_data = _build_filter_data(crops, varieties, locations, active_plantings)
     sorted_crops = filter_data.pop('modal_sorted_crops')
@@ -288,7 +288,7 @@ def _build_filter_data(crops, varieties, locations, active_plantings):
     grouped_locations = _multi
 
     def _ym_p(p):
-        d = p.get('planted_date')
+        d = p.get('relation_date')
         return str(d)[:7] if d else ''
     grouped_plantings = [(k, [item for item in g]) for k, g in groupby(active_plantings, key=_ym_p)]
 
