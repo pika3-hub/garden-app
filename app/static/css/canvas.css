@@ -61,16 +61,6 @@
     overflow: hidden;
 }
 
-#canvas-area::before,
-.canvas-preview-area::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(255, 255, 255, 0.4);
-    z-index: 0;
-    pointer-events: none;
-}
-
 /* Placed crop icon */
 .placed-crop {
     position: absolute;

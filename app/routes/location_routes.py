@@ -1,7 +1,7 @@
 from datetime import date
 from itertools import groupby
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from app.models.location import Location
+from app.models.location import DEFAULT_BG_IMAGE, Location
 from app.models.planting import Planting
 from app.models.crop import Crop
 from app.models.diary import DiaryEntry
@@ -105,6 +105,7 @@ def new():
     photo_pool_id = request.args.get('photo_pool_id', type=int)
     preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
     return render_template('locations/form.html', location=None, action='create', bg_images=bg_images,
+                           selected_bg_image=DEFAULT_BG_IMAGE,
                            preselected_photo=preselected_photo,
                            photo_pool_photos=PhotoPool.get_all())
 
@@ -157,6 +158,7 @@ def edit(location_id):
         return redirect(url_for('locations.list'))
     bg_images = Location.get_bg_images()
     return render_template('locations/form.html', location=location, action='update', bg_images=bg_images,
+                           selected_bg_image=location['bg_image'] or DEFAULT_BG_IMAGE,
                            photo_pool_photos=PhotoPool.get_all())
 
 

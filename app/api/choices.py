@@ -2,6 +2,7 @@
 import os
 
 from app.database import get_db
+from app.models.location import order_bg_images
 
 _STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 
@@ -28,8 +29,8 @@ def bg_images():
     path = os.path.join(_STATIC_DIR, 'images', 'location_bg_images')
     if not os.path.isdir(path):
         return []
-    return sorted(f for f in os.listdir(path)
-                  if os.path.splitext(f)[1].lower() in {'.png', '.jpg', '.jpeg', '.webp'})
+    return order_bg_images([f for f in os.listdir(path)
+                            if os.path.splitext(f)[1].lower() in {'.png', '.jpg', '.jpeg', '.webp'}])
 
 
 def distinct_values(table, column):
