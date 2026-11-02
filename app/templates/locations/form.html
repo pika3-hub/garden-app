@@ -80,14 +80,12 @@
                             <div class="bg-image-option {% if img == selected_bg_image %}selected{% endif %}"
                                  data-value="{{ img }}" onclick="selectBgImage(this)">
                                 <img src="{{ url_for('static', filename='images/location_bg_images/' + img) }}"
-                                     alt="{{ img }}" style="width:100px;height:75px;object-fit:cover;border:2px solid #ccc;border-radius:6px;">
+                                     alt="{{ img }}" style="width:100px;height:100px;object-fit:cover;border:2px solid #ccc;border-radius:6px;">
                             </div>
                             {% endfor %}
                         </div>
                         <style>
-                            .bg-image-option { cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
-                            .bg-image-option:hover { opacity: 1; }
-                            .bg-image-option.selected { opacity: 1; }
+                            .bg-image-option { cursor: pointer; }
                             .bg-image-option.selected img { border-color: #4CAF50 !important; box-shadow: 0 0 0 2px #4CAF50; }
                         </style>
                     </div>

@@ -158,3 +158,10 @@ def test_migration_keeps_new_names(app):
         run_migrations(app, db)
         run_migrations(app, db)
     assert {i: _bg_of(app, i) for i in ids} == ids
+
+
+def test_form_thumbnails_are_square_and_not_dimmed(client):
+    html = client.get('/locations/new').get_data(as_text=True)
+    assert 'width:100px;height:100px;' in html
+    assert 'height:75px' not in html
+    assert 'opacity' not in html.split('bg-image-option {', 1)[1].split('}', 1)[0]
