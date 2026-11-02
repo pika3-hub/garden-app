@@ -2,10 +2,12 @@
 import os
 import re
 
+import pytest
+
 from PIL import Image
 
 from app.api.choices import bg_images
-from app.database import get_db
+from app.database import get_db, run_migrations
 from app.models.location import Location, order_bg_images
 
 APP_DIR = os.path.join(os.path.dirname(__file__), '..', 'app')
@@ -125,3 +127,34 @@ def test_photo_sort_location_gets_soil(app, client):
     with app.app_context():
         row = get_db().execute("SELECT bg_image FROM locations WHERE name = '北のプランター'").fetchone()
     assert row['bg_image'] == 'soil.webp'
+
+
+def _location_with_bg(db, bg_image):
+    return db.execute("INSERT INTO locations (name, location_type, bg_image) VALUES ('畑', '畑', ?)",
+                      (bg_image,)).lastrowid
+
+
+@pytest.mark.parametrize('old, new', [
+    ('bg_image_005.webp', 'soil.webp'), ('bg_image_012.webp', 'ridges_3.webp'), ('bg_image_008.webp', 'ridges_6.webp'),
+    ('bg_image_015.webp', 'weeds.webp'), ('bg_image_014.webp', 'grass_edge.webp'), ('bg_image_010.webp', 'brick_bed.webp'),
+    ('bg_image_011.webp', 'greenhouse.webp'), ('bg_image_018.webp', 'planter_long.webp'),
+    ('bg_image_019.webp', 'planter_round.webp'), ('bg_image_020.webp', 'seedling_tray.webp'),
+    ('bg_image_001.webp', 'soil.webp'), ('bg_image_default.webp', 'soil.webp'), (None, 'soil.webp'),
+])
+def test_migration_renames_bg_image(app, old, new):
+    with app.app_context():
+        db = get_db()
+        location_id = _location_with_bg(db, old)
+        db.commit()
+        run_migrations(app, db)
+    assert _bg_of(app, location_id) == new
+
+
+def test_migration_keeps_new_names(app):
+    with app.app_context():
+        db = get_db()
+        ids = {_location_with_bg(db, name): name for name in ('weeds.webp', 'custom_field.webp')}
+        db.commit()
+        run_migrations(app, db)
+        run_migrations(app, db)
+    assert {i: _bg_of(app, i) for i in ids} == ids
