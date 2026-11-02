@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Set background image
-        const bgImage = config.bgImage || 'bg_image_default.webp';
+        const bgImage = config.bgImage || 'soil.webp';
         previewContainer.dataset.bgImage = bgImage;
         previewArea.style.backgroundImage = `url('/static/images/location_bg_images/${bgImage}')`;
 

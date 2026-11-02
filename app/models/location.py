@@ -5,6 +5,15 @@ from app.database import get_db
 from app.utils.timezone import get_jst_now
 from app.utils.search_text import fold
 
+# 背景を選んでいない場所の見取り図の背景（一覧の先頭）
+DEFAULT_BG_IMAGE = 'soil.webp'
+
+
+def order_bg_images(names):
+    """背景画像の一覧の並び: 既定の背景を先頭、残りは名前順"""
+    rest = sorted(n for n in names if n != DEFAULT_BG_IMAGE)
+    return [DEFAULT_BG_IMAGE] + rest if DEFAULT_BG_IMAGE in names else rest
+
 
 class Location:
     """場所モデル"""
@@ -121,11 +130,8 @@ class Location:
         if not os.path.isdir(bg_dir):
             return []
         allowed_ext = {'.png', '.jpg', '.jpeg', '.webp'}
-        files = []
-        for f in sorted(os.listdir(bg_dir)):
-            if os.path.splitext(f)[1].lower() in allowed_ext:
-                files.append(f)
-        return files
+        return order_bg_images([f for f in os.listdir(bg_dir)
+                                if os.path.splitext(f)[1].lower() in allowed_ext])
 
     @staticmethod
     def get_canvas_data(location_id):
