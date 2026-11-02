@@ -122,7 +122,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | area_size | 数値 ≥0 | ㎡ |
 | sun_exposure | 選択肢 | 全日 / 半日 / 日陰 |
 | notes | 文字列 | |
-| bg_image | 選択肢 | `/meta` の `bg_images` |
+| bg_image | 選択肢 | `/meta` の `bg_images`。省略・空・null は `soil.webp`（背景を消すことはできない） |
 
 `canvas_data`（見取り図）は読み取り専用。検索条件: `location_type`。詳細に `active_plantings`。
 

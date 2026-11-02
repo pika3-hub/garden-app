@@ -47,7 +47,7 @@ class Location:
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['name'], data['location_type'], data.get('area_size'),
              data.get('sun_exposure'), data.get('notes'), data.get('image_path'),
-             data.get('bg_image'), now, now)
+             data.get('bg_image') or DEFAULT_BG_IMAGE, now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -62,7 +62,7 @@ class Location:
                WHERE id = ?''',
             (data['name'], data['location_type'], data.get('area_size'),
              data.get('sun_exposure'), data.get('notes'), data.get('image_path'),
-             data.get('bg_image'), get_jst_now(), location_id)
+             data.get('bg_image') or DEFAULT_BG_IMAGE, get_jst_now(), location_id)
         )
         db.commit()
 

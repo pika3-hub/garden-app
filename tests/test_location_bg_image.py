@@ -1,5 +1,6 @@
 """見取り図の背景画像: 画像のそろい方、既定の背景（soil.webp）、一覧の並び"""
 import os
+import re
 
 from PIL import Image
 
@@ -69,3 +70,58 @@ def test_no_old_default_name_in_app():
                 continue
             with open(os.path.join(root, name), encoding='utf-8') as f:
                 assert 'bg_image_default' not in f.read(), os.path.join(root, name)
+
+
+def _bg_of(app, location_id):
+    with app.app_context():
+        return get_db().execute('SELECT bg_image FROM locations WHERE id = ?', (location_id,)).fetchone()['bg_image']
+
+
+def test_create_without_bg_image_becomes_soil(app):
+    with app.app_context():
+        location_id = Location.create({'name': '畑', 'location_type': '畑'})
+    assert _bg_of(app, location_id) == 'soil.webp'
+
+
+def test_update_with_empty_bg_image_becomes_soil(app):
+    with app.app_context():
+        location_id = Location.create({'name': '畑', 'location_type': '畑', 'bg_image': 'weeds.webp'})
+        Location.update(location_id, {'name': '畑', 'location_type': '畑', 'bg_image': ''})
+    assert _bg_of(app, location_id) == 'soil.webp'
+
+
+def _selected_options(html):
+    return re.findall(r'class="bg-image-option selected"\s+data-value="([^"]*)"', html)
+
+
+def test_form_new_preselects_soil_and_has_no_none(client):
+    html = client.get('/locations/new').get_data(as_text=True)
+    assert 'data-value=""' not in html
+    assert 'name="bg_image" id="bg_image" value="soil.webp"' in html
+    assert _selected_options(html) == ['soil.webp']
+
+
+def test_form_edit_preselects_current_bg(app, client):
+    with app.app_context():
+        location_id = Location.create({'name': '畑', 'location_type': '畑', 'bg_image': 'weeds.webp'})
+    html = client.get(f'/locations/{location_id}/edit').get_data(as_text=True)
+    assert 'name="bg_image" id="bg_image" value="weeds.webp"' in html
+    assert _selected_options(html) == ['weeds.webp']
+
+
+def test_photo_sort_location_gets_soil(app, client):
+    folder = os.path.join(app.config['UPLOAD_FOLDER'], 'photo_pool')
+    os.makedirs(folder, exist_ok=True)
+    Image.new('RGB', (40, 30), 'green').save(os.path.join(folder, 'p.jpg'))
+    with app.app_context():
+        db = get_db()
+        photo_id = db.execute("INSERT INTO photo_pool (image_path, taken_at) VALUES "
+                              "('photo_pool/p.jpg', '2026-10-24 09:00:00')").lastrowid
+        db.commit()
+    client.post('/photo_pool/sort/save', data={
+        'ids': str(photo_id), 'pos': '0', 'done': '', 'photo_id': str(photo_id), 'kind': 'location',
+        'action': 'next', 'name': '北のプランター', 'location_type': 'プランター', 'area_size': '',
+        'sun_exposure': '半日', 'notes': ''})
+    with app.app_context():
+        row = get_db().execute("SELECT bg_image FROM locations WHERE name = '北のプランター'").fetchone()
+    assert row['bg_image'] == 'soil.webp'

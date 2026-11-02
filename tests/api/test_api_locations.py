@@ -50,3 +50,20 @@ def test_list_locations(api):
     _create(api, name='ベランダ', location_type='プランター')
     names = [l['name'] for l in api.get('/api/v1/locations?location_type=プランター').get_json()['data']]
     assert names == ['ベランダ']
+
+
+def test_create_without_bg_image_is_soil(api):
+    assert _create(api)['bg_image'] == 'soil.webp'
+
+
+def test_patch_null_bg_image_is_soil(api):
+    location = _create(api, bg_image='weeds.webp')
+    res = api.patch(f'/api/v1/locations/{location["id"]}', json={'bg_image': None})
+    assert res.status_code == 200, res.get_json()
+    assert res.get_json()['data']['bg_image'] == 'soil.webp'
+
+
+def test_patch_bg_image(api):
+    location = _create(api)
+    res = api.patch(f'/api/v1/locations/{location["id"]}', json={'bg_image': 'weeds.webp'})
+    assert res.get_json()['data']['bg_image'] == 'weeds.webp'
