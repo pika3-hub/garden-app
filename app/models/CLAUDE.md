@@ -77,7 +77,7 @@
 | notes | TEXT | メモ |
 | image_path | VARCHAR(255) | 画像パス |
 | canvas_data | TEXT | 見取り図データ（version 2.0 JSON形式、旧Fabric.js形式は無視） |
-| bg_image | TEXT | 見取り図の背景画像ファイル名（`location_bg_images/` 内のファイル名） |
+| bg_image | TEXT | 見取り図の背景画像ファイル名（`location_bg_images/` 内のファイル名）。未指定は `soil.webp`（`Location.create` / `update` が入れる。NULL にしない） |
 | created_at | TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 更新日時 |
 

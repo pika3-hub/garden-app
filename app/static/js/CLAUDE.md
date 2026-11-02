@@ -19,10 +19,11 @@
 ### 背景画像
 
 - **保存場所**: `app/static/images/location_bg_images/`（静的ファイル、アップロード不可）
-- **追加方法**: 画像ファイルを直接このフォルダに配置する（`bg_image_001.webp` などの連番命名）
+- **追加方法**: 画像ファイルを直接このフォルダに配置する。名前は中身が分かる英語（`ridges_4.webp`、`brick_bed.webp` など。`bg_image_NNN` の連番はやめた）。1024×1024 の WebP・色鉛筆の絵本風にそろえる（作り方は非公開側の `image-generation.md`）
 - **対応形式**: `.png`, `.jpg`, `.jpeg`, `.webp`
-- **選択UI**: `Location.get_bg_images()` でファイル一覧を取得し、場所の登録・編集フォーム（`locations/form.html`）で選択
-- **デフォルト**: `bg_image_default.webp`
+- **選択UI**: `Location.get_bg_images()` でファイル一覧を取得し、場所の登録・編集フォーム（`locations/form.html`）で選択。「なし」の選択肢は無く、新規登録では既定が選ばれている
+- **デフォルト**: `soil.webp`（`app/models/location.py` の `DEFAULT_BG_IMAGE`、一覧の先頭）。空で保存すると `Location.create` / `update` が `soil.webp` にする（画面・写真の振り分け・API のどれも）。テンプレート・JS の `or 'soil.webp'` は念のための予備
+- **白い幕は無い**: 以前は `canvas.css` の `#canvas-area::before, .canvas-preview-area::before` で背景に 40% の白を重ねていたが、今の背景は淡く作ってあるので外した。濃さを調整するときはこの規則を `background: rgba(255, 255, 255, <濃さ>)`（`position: absolute; inset: 0; z-index: 0; pointer-events: none;`）で戻す
 
 ### 作物アイコン
 
