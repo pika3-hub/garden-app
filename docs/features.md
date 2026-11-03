@@ -7,7 +7,7 @@
 
 作物（トマト、なすなど）のCRUD。種類・アイコン・イメージカラー・画像・Markdownメモを持つ
 
-アイコンは `app/static/images/crop_icons/` の `大分類_中身.png`（例: `fruitveg_tomato.png`）から選ぶ。作物・品種・写真の振り分けの画面では大分類（実の野菜・豆・葉の野菜など）の見出しごとに並ぶ。一覧と大分類の表は `app/utils/crop_icons.py`、名前の決め方は `app/static/js/CLAUDE.md` の「作物アイコン」
+アイコンは `app/static/images/crop_icons/` の `大分類_中身.png`（例: `fruitveg_tomato.png`）から選ぶ。作物・品種・写真の振り分けの画面では大分類（実の野菜・豆・葉の野菜など）の見出しごとに並ぶ。一覧と大分類の表は `app/utils/crop_icons.py`、名前の決め方は `app/static/js/CLAUDE.md` の「作物アイコン」。Hermes が作物・品種を登録するときも、`hermes-skill/SKILL.md` の「アイコンとイメージカラーの選び方」でファイル名から選ばせ、イメージカラー（食べる部分の色）も付けさせる（品種は親作物と見た目が明らかに違うときだけ。2026-11-03 のユーザーの希望。アイコンとイメージカラーは目印なので、付いていないと手で付け直していた）
 
 ## AIメモ下書き
 
