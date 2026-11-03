@@ -9,6 +9,7 @@ from app.models.task import Task
 from app.models.supplement import Supplement
 from app.models.cooking import Cooking
 from app.models.photo_pool import PhotoPool
+from app.utils.crop_icons import list_crop_icons
 from app.utils.upload import save_image, delete_image, copy_image
 
 bp = Blueprint('crops', __name__, url_prefix='/crops')
@@ -77,8 +78,7 @@ def detail(crop_id):
 
 
 def _get_crop_icon_list():
-    icon_dir = os.path.join(current_app.static_folder, 'images', 'crop_icons')
-    return sorted(os.listdir(icon_dir))
+    return list_crop_icons()
 
 
 @bp.route('/new')

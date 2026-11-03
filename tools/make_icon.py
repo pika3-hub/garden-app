@@ -31,7 +31,7 @@ T0, T1 = 60.0, 150.0  # キー色からの距離: T0 未満は完全に透明、
 SIZE = 100
 MARGIN = 4  # 既存アイコンと同じくらいの余白（100px 中）
 # 作物のアイコン（crop_icons/）は 84×84 の PNG で、物は 72px 前後に描かれている
-CROP_SAMPLES = ['crop_icons/icon_001.png', 'crop_icons/icon_008.png', 'crop_icons/icon_066.png', 'crop_icons/icon_071.png']
+CROP_SAMPLES = ['crop_icons/fruitveg_tomato.png', 'crop_icons/fruit_watermelon.png', 'crop_icons/onion_onion.png', 'crop_icons/root_carrot.png']
 CROP_SIZE = 84
 CROP_MARGIN = 6
 OPAQUE = 240  # --transparent: この不透明度以上は完全に不透明にする

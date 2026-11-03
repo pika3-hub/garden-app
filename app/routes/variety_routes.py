@@ -1,6 +1,5 @@
-import os
 from itertools import groupby
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.crop import Crop
 from app.models.variety import Variety
 from app.models.planting import Planting
@@ -10,14 +9,10 @@ from app.models.task import Task
 from app.models.supplement import Supplement
 from app.models.cooking import Cooking
 from app.models.photo_pool import PhotoPool
+from app.utils.crop_icons import list_crop_icons
 from app.utils.upload import save_image, delete_image, copy_image
 
 bp = Blueprint('varieties', __name__, url_prefix='/varieties')
-
-
-def _get_crop_icon_list():
-    icon_dir = os.path.join(current_app.static_folder, 'images', 'crop_icons')
-    return sorted(os.listdir(icon_dir))
 
 
 @bp.route('/')
@@ -118,7 +113,7 @@ def new():
     return render_template('varieties/form.html', variety=None, action='create',
                            crops=crops,
                            preselected_crop=preselected_crop,
-                           crop_icon_list=_get_crop_icon_list(),
+                           crop_icon_list=list_crop_icons(),
                            preselected_photo=preselected_photo,
                            photo_pool_photos=photo_pool_photos,
                            crop_filter_types=crop_filter_types,
@@ -181,7 +176,7 @@ def edit(variety_id):
     return render_template('varieties/form.html', variety=variety, action='update',
                            crops=crops,
                            preselected_crop=None,
-                           crop_icon_list=_get_crop_icon_list(),
+                           crop_icon_list=list_crop_icons(),
                            photo_pool_photos=photo_pool_photos,
                            crop_filter_types=crop_filter_types,
                            crop_filter_type_icons=crop_filter_type_icons,
