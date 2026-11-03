@@ -9,10 +9,15 @@
         </button>
     </div>
     <div class="border rounded p-2 sort-icon-grid">
-        {% for icon in crop_icon_list %}
-        <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon) }}"
-             class="sort-icon-item{% if fv.get('icon_path') == icon %} selected{% endif %}"
-             data-icon="{{ icon }}" title="{{ icon }}" width="40" height="40" loading="lazy" alt="">
+        {% for label, icons in crop_icon_groups %}
+        <div class="icon-group-label small text-muted mb-1">{{ label }}</div>
+        <div class="sort-icon-group">
+            {% for icon in icons %}
+            <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon) }}"
+                 class="sort-icon-item{% if fv.get('icon_path') == icon %} selected{% endif %}"
+                 data-icon="{{ icon }}" title="{{ icon }}" width="40" height="40" loading="lazy" alt="">
+            {% endfor %}
+        </div>
         {% endfor %}
     </div>
 </div>

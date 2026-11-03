@@ -18,6 +18,7 @@ from app.models.variety import Variety
 from app.routes.photo_pool_routes import usage_url
 from app.utils.ai_notes import NO_API_KEY_MESSAGE, AiNotesError, is_available
 from app.utils.ai_photo_drafts import DRAFT_FIELDS, generate_photo_draft
+from app.utils.crop_icons import group_crop_icons
 from app.utils.upload import THUMBNAIL_SIZE, copy_image, delete_image
 
 bp = Blueprint('photo_sort', __name__, url_prefix='/photo_pool/sort')
@@ -80,11 +81,10 @@ def _finish(done_count):
 
 def _kind_context(kind, form_values=None):
     """種類ごとの入力欄に要るデータ"""
-    from app.routes.crop_routes import _get_crop_icon_list
     if kind == 'crop':
-        return {'crop_icon_list': _get_crop_icon_list()}
+        return {'crop_icon_groups': group_crop_icons()}
     if kind == 'variety':
-        return {'crop_icon_list': _get_crop_icon_list(),
+        return {'crop_icon_groups': group_crop_icons(),
                 'crops': sorted(Crop.get_all(), key=lambda c: c.get('name') or '')}
     if kind in ('cooking', 'diary'):
         return _relation_context(include_locations=(kind == 'diary'))

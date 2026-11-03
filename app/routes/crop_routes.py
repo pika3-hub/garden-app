@@ -1,5 +1,4 @@
-import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.crop import Crop
 from app.models.variety import Variety
 from app.models.planting import Planting
@@ -9,7 +8,7 @@ from app.models.task import Task
 from app.models.supplement import Supplement
 from app.models.cooking import Cooking
 from app.models.photo_pool import PhotoPool
-from app.utils.crop_icons import list_crop_icons
+from app.utils.crop_icons import group_crop_icons
 from app.utils.upload import save_image, delete_image, copy_image
 
 bp = Blueprint('crops', __name__, url_prefix='/crops')
@@ -77,10 +76,6 @@ def detail(crop_id):
                           photo_pool_photos=photo_pool_photos)
 
 
-def _get_crop_icon_list():
-    return list_crop_icons()
-
-
 @bp.route('/new')
 def new():
     """作物登録フォーム"""
@@ -88,7 +83,7 @@ def new():
     preselected_photo = PhotoPool.get_by_id(photo_pool_id) if photo_pool_id else None
     photo_pool_photos = PhotoPool.get_all()
     return render_template('crops/form.html', crop=None, action='create',
-                           crop_icon_list=_get_crop_icon_list(),
+                           crop_icon_groups=group_crop_icons(),
                            preselected_photo=preselected_photo,
                            photo_pool_photos=photo_pool_photos)
 
@@ -138,7 +133,7 @@ def edit(crop_id):
         return redirect(url_for('crops.list'))
     photo_pool_photos = PhotoPool.get_all()
     return render_template('crops/form.html', crop=crop, action='update',
-                           crop_icon_list=_get_crop_icon_list(),
+                           crop_icon_groups=group_crop_icons(),
                            photo_pool_photos=photo_pool_photos)
 
 

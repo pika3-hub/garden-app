@@ -114,14 +114,19 @@
                             </button>
                         </div>
                         <div class="border rounded p-2" style="max-height: 300px; overflow-y: auto;">
-                            <div class="d-flex flex-wrap gap-1" id="iconGrid">
-                                {% for icon in crop_icon_list %}
-                                <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon) }}"
-                                     class="icon-picker-item {% if variety and variety.icon_path == icon %}selected{% endif %}"
-                                     data-icon="{{ icon }}"
-                                     title="{{ icon }}"
-                                     width="48" height="48"
-                                     style="cursor: pointer; border-radius: 50%; object-fit: cover; border: 3px solid transparent;">
+                            <div id="iconGrid">
+                                {% for label, icons in crop_icon_groups %}
+                                <div class="icon-group-label small text-muted mb-1">{{ label }}</div>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    {% for icon in icons %}
+                                    <img src="{{ url_for('static', filename='images/crop_icons/' ~ icon) }}"
+                                         class="icon-picker-item {% if variety and variety.icon_path == icon %}selected{% endif %}"
+                                         data-icon="{{ icon }}"
+                                         title="{{ icon }}"
+                                         width="48" height="48"
+                                         style="cursor: pointer; border-radius: 50%; object-fit: cover; border: 3px solid transparent;">
+                                    {% endfor %}
+                                </div>
                                 {% endfor %}
                             </div>
                         </div>

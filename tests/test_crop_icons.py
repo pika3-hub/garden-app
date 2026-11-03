@@ -80,3 +80,42 @@ def test_no_old_icon_names_outside_migrations():
                     if old.search(f.read()):
                         found.append(os.path.relpath(path, ROOT))
     assert found == []
+
+
+def _photo(app):
+    from app.database import get_db
+    with app.app_context():
+        db = get_db()
+        photo_id = db.execute("INSERT INTO photo_pool (image_path, taken_at) VALUES "
+                              "('photo_pool/p.jpg', '2026-10-24 09:00:00')").lastrowid
+        db.commit()
+    return photo_id
+
+
+def _picker_urls(app):
+    photo_id = _photo(app)
+    return ['/crops/new', '/varieties/new',
+            f'/photo_pool/sort/?ids={photo_id}&kind=crop', f'/photo_pool/sort/?ids={photo_id}&kind=variety']
+
+
+def test_icon_picker_has_group_labels_in_order(app, client):
+    for url in _picker_urls(app):
+        html = client.get(url).get_data(as_text=True)
+        labels = re.findall(r'class="icon-group-label[^"]*">\s*([^<]+?)\s*<', html)
+        assert labels == LABELS, url
+        assert html.index('data-icon="fruitveg_tomato.png"') < html.index('data-icon="bean_peanut.png"'), url
+
+
+def test_edit_form_marks_current_icon(app, client):
+    from app.database import get_db
+    with app.app_context():
+        db = get_db()
+        crop_id = db.execute("INSERT INTO crops (name, crop_type, icon_path) VALUES "
+                             "('バジル', 'ハーブ', 'herb_basil.png')").lastrowid
+        variety_id = db.execute("INSERT INTO varieties (crop_id, name, icon_path) VALUES "
+                                "(?, 'スイートバジル', 'herb_basil.png')", (crop_id,)).lastrowid
+        db.commit()
+    for url in (f'/crops/{crop_id}/edit', f'/varieties/{variety_id}/edit'):
+        html = client.get(url).get_data(as_text=True)
+        selected = re.findall(r'<img[^>]*class="icon-picker-item selected[^>]*data-icon="([^"]+)"', html)
+        assert selected == ['herb_basil.png'], url
