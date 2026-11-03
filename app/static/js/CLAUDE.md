@@ -28,7 +28,9 @@
 ### 作物アイコン
 
 - **保存場所**: `app/static/images/crop_icons/`
-- **命名規則**: `icon_{NNN}.png`（3桁連番、例: `icon_001.png`）、現在約95アイコン
+- **命名規則**: `大分類_中身.png`（英語の小文字と `_`、例: `fruitveg_tomato.png`、`fruitveg_tomato_mini.png`）、現在84アイコン。大分類は最初の `_` より前で、並び順と見出しは `app/utils/crop_icons.py` の `CATEGORIES`（実の野菜・豆・葉の野菜・茎・花の野菜・ねぎ類・根の野菜・いも・ハーブ・きのこ・果物）。表に無い大分類は選ぶ画面の最後の「その他」に出る。境目のものは料理や売り場で思い浮かべる分け方に寄せる（ブロッコリーは茎・花、しょうがは根、みょうがはハーブ）
+- **一覧**: `list_crop_icons()` / `group_crop_icons()`（`app/utils/crop_icons.py`）。作物・品種・写真の振り分けの画面と API の選択肢（`/meta` の `crop_icons`）はどちらもこれを使う
+- **名前を変える・消すとき**: `crops.icon_path` / `varieties.icon_path` に加え、見取り図の保存データ（`locations.canvas_data` と `plantings.canvas_snapshot` の JSON の `iconPath`）にもファイル名が入っている。今の見取り図はこの `iconPath` をそのまま表示に使うので、マイグレーションで全部付け替える（例: `029_rename_crop_icons.sql`）
 
 ### データ形式（version 2.0 JSON）
 
@@ -41,7 +43,7 @@
       "cropId": 5,
       "x": 350,
       "y": 420,
-      "iconPath": "icon_003.png",
+      "iconPath": "fruitveg_green_pepper.png",
       "imageColor": "#4CAF50",
       "cropName": "トマト",
       "variety": "ミニトマト"

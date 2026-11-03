@@ -3,6 +3,7 @@ import os
 
 from app.database import get_db
 from app.models.location import order_bg_images
+from app.utils.crop_icons import list_crop_icons
 
 _STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 
@@ -19,9 +20,8 @@ ADVICE_RELATION_KEYS = ('crop_ids', 'variety_ids', 'planting_ids')
 
 
 def crop_icons():
-    """作物アイコンのファイル名一覧（crop_routes._get_crop_icon_list と同じ）"""
-    path = os.path.join(_STATIC_DIR, 'images', 'crop_icons')
-    return sorted(os.listdir(path)) if os.path.isdir(path) else []
+    """作物アイコンのファイル名一覧（画面と同じ並び）"""
+    return list_crop_icons()
 
 
 def bg_images():

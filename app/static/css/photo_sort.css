@@ -50,11 +50,15 @@
 }
 
 .sort-icon-grid {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.sort-icon-group {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    max-height: 200px;
-    overflow-y: auto;
+    margin-bottom: 0.5rem;
 }
 
 .sort-icon-item {
