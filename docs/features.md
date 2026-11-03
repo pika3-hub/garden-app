@@ -7,6 +7,8 @@
 
 作物（トマト、なすなど）のCRUD。種類・アイコン・イメージカラー・画像・Markdownメモを持つ
 
+アイコンは `app/static/images/crop_icons/` の `大分類_中身.png`（例: `fruitveg_tomato.png`）から選ぶ。作物・品種・写真の振り分けの画面では大分類（実の野菜・豆・葉の野菜など）の見出しごとに並ぶ。一覧と大分類の表は `app/utils/crop_icons.py`、名前の決め方は `app/static/js/CLAUDE.md` の「作物アイコン」
+
 ## AIメモ下書き
 
 作物・品種フォームの「✨ AIで下書き」から Claude API でメモの下書き（設定画面の地域・栽培環境を基準にした時期、特性、栽培のコツ）を生成し、モーダルで確認して置き換え／追記できる。「Webで調べる」（品種は既定ON）で Web 検索を併用し参考URLを付与（`web_search_20260209` は本文に citations が付かないことが多いため、参考にしたページを AI に `## 参考URL` として書かせ、検索結果・citations に実在する URL だけを検索結果のタイトルで残す（架空の URL 対策）。AI が書かなかったときだけ citations の URL を使う。検索結果の上位をそのまま付けると読んでいないページが混ざるので付けない）。APIキーは `.env` の `ANTHROPIC_API_KEY`、モデルは `ANTHROPIC_MODEL`（`claude-opus-5-5` 既定 / `claude-sonnet-5-5` / `claude-haiku-5-5`。Haiku はサーバー側フォールバック非対応・`web_search_20260209` 非対応のため、`MODEL_INFO` の設定でフォールバックを付けず `web_search_20250305` を使う）。地域は設定画面（`/settings/`）で `app_settings` テーブルに保存。実装は `app/utils/ai_notes.py` + `settings_routes.py` + `_ai_notes_button.html` / `_ai_notes_modal.html` / `ai-notes.js`。Hermes から作物・品種を登録するときも、`hermes-skill/SKILL.md` の指示で同じ形式のメモを書かせている（地域は `GET /api/v1/meta` の `region`。参考URLは本文に残す。補足情報（`extra_urls` / `extra_youtube`）には写さず、地域を入れずに一般的な育て方で別に探した Web ページ・YouTube を付けさせる（2026-10-25 のユーザーの希望。メモは地域込み、補足情報は一般的な情報））
