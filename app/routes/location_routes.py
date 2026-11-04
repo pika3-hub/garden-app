@@ -119,7 +119,8 @@ def create():
         'area_size': request.form.get('area_size'),
         'sun_exposure': request.form.get('sun_exposure'),
         'notes': request.form.get('notes'),
-        'bg_image': request.form.get('bg_image') or None
+        'bg_image': request.form.get('bg_image') or None,
+        'canvas_top_direction': request.form.get('canvas_top_direction')
     }
 
     # バリデーション
@@ -177,7 +178,8 @@ def update(location_id):
         'sun_exposure': request.form.get('sun_exposure'),
         'notes': request.form.get('notes'),
         'image_path': location.get('image_path'),  # 既存の画像パスを保持
-        'bg_image': request.form.get('bg_image') or None
+        'bg_image': request.form.get('bg_image') or None,
+        'canvas_top_direction': request.form.get('canvas_top_direction')
     }
 
     # バリデーション

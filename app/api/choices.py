@@ -3,6 +3,7 @@ import os
 
 from app.database import get_db
 from app.models.location import order_bg_images
+from app.utils.canvas_areas import TOP_DIRECTIONS
 from app.utils.crop_icons import list_crop_icons
 
 _STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
@@ -10,6 +11,7 @@ _STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')
 PLANTING_STATUSES = ['active', 'ended', 'removed']
 TASK_STATUSES = ['pending', 'in_progress', 'completed']
 SUN_EXPOSURES = ['全日', '半日', '日陰']                       # locations/form.html と同じ
+CANVAS_TOP_DIRECTIONS = list(TOP_DIRECTIONS)                    # locations/form.html と同じ
 WEATHERS = ['晴れ', '曇り', '雨', '雪', '晴れ時々曇り', '曇り時々雨']  # diary/form.html と同じ
 
 # 日記・料理・タスクで使える関連のキー（各テーブルの列に合わせる）

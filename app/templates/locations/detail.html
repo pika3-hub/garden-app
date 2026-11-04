@@ -98,6 +98,12 @@
                         <span class="detail-field-value">{{ location.sun_exposure }}</span>
                     </div>
                     {% endif %}
+                    {% if location.canvas_top_direction %}
+                    <div class="detail-field">
+                        <span class="detail-field-label">見取り図の上:</span>
+                        <span class="detail-field-value">{{ location.canvas_top_direction }}</span>
+                    </div>
+                    {% endif %}
                 </div>
                 {% if location.notes %}
                 <div class="detail-notes markdown-body">{{ location.notes|markdown }}</div>

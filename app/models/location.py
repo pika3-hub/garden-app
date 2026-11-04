@@ -4,9 +4,16 @@ from flask import current_app
 from app.database import get_db
 from app.utils.timezone import get_jst_now
 from app.utils.search_text import fold
+from app.utils.canvas_areas import TOP_DIRECTIONS
 
 # 背景を選んでいない場所の見取り図の背景（一覧の先頭）
 DEFAULT_BG_IMAGE = 'soil.webp'
+
+
+def _top_direction(data):
+    """見取り図の上の方角。北・東・南・西以外（空を含む）は NULL にする"""
+    value = data.get('canvas_top_direction')
+    return value if value in TOP_DIRECTIONS else None
 
 
 def order_bg_images(names):
@@ -43,11 +50,12 @@ class Location:
         db = get_db()
         now = get_jst_now()
         cursor = db.execute(
-            '''INSERT INTO locations (name, location_type, area_size, sun_exposure, notes, image_path, bg_image, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            '''INSERT INTO locations (name, location_type, area_size, sun_exposure, notes, image_path, bg_image,
+                                      canvas_top_direction, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['name'], data['location_type'], data.get('area_size'),
              data.get('sun_exposure'), data.get('notes'), data.get('image_path'),
-             data.get('bg_image') or DEFAULT_BG_IMAGE, now, now)
+             data.get('bg_image') or DEFAULT_BG_IMAGE, _top_direction(data), now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -58,11 +66,12 @@ class Location:
         db = get_db()
         db.execute(
             '''UPDATE locations SET name = ?, location_type = ?, area_size = ?,
-               sun_exposure = ?, notes = ?, image_path = ?, bg_image = ?, updated_at = ?
+               sun_exposure = ?, notes = ?, image_path = ?, bg_image = ?,
+               canvas_top_direction = ?, updated_at = ?
                WHERE id = ?''',
             (data['name'], data['location_type'], data.get('area_size'),
              data.get('sun_exposure'), data.get('notes'), data.get('image_path'),
-             data.get('bg_image') or DEFAULT_BG_IMAGE, get_jst_now(), location_id)
+             data.get('bg_image') or DEFAULT_BG_IMAGE, _top_direction(data), get_jst_now(), location_id)
         )
         db.commit()
 

@@ -1,6 +1,6 @@
 """場所 API（/api/v1/locations）"""
 from app.api import bp
-from app.api.choices import SUN_EXPOSURES, bg_images
+from app.api.choices import CANVAS_TOP_DIRECTIONS, SUN_EXPOSURES, bg_images
 from app.api.resource import Resource, register
 from app.api.serialize import planting_label
 from app.api.validation import Field
@@ -24,6 +24,7 @@ class LocationResource(Resource):
         'sun_exposure': Field('enum', choices=SUN_EXPOSURES),
         'notes': Field('str'),
         'bg_image': Field('enum', choices=bg_images),
+        'canvas_top_direction': Field('enum', choices=CANVAS_TOP_DIRECTIONS),
     }
     read_only = ('canvas_data',)  # 見取り図は画面専用
     list_from = 'locations l'

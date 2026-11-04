@@ -54,6 +54,17 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="canvas_top_direction" class="form-label">見取り図の上の方角</label>
+                        <select class="form-select" id="canvas_top_direction" name="canvas_top_direction">
+                            <option value="">設定しない（上・下・左・右で呼ぶ）</option>
+                            {% for d in ['北', '東', '南', '西'] %}
+                            <option value="{{ d }}" {% if location and location.canvas_top_direction == d %}selected{% endif %}>{{ d }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">見取り図の上がどの方角かを選ぶと、エリアを北・南東などで呼べます</div>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="notes" class="form-label">メモ</label>
                         <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="自由にメモを記入できます">{{ (location.notes or '') if location else '' }}</textarea>
                     </div>
