@@ -105,3 +105,15 @@ def test_place_in_area_retries_and_keeps_both(app, loc, monkeypatch):
         assert [p['locationCropId'] for p in placements] == [999, planting]
         row = db.execute('SELECT position_x, position_y FROM plantings WHERE id = ?', (planting,)).fetchone()
         assert (row['position_x'], row['position_y']) == (spot.x, spot.y)
+
+
+def test_data_revision_matches_returned_body(client, app, loc, monkeypatch):
+    """読み込みの途中で配置が変わっても、返すリビジョンは返した配置のもの（その配置での保存は 409）"""
+    _interfere_once(monkeypatch, app, loc, _canvas(99))
+    res = client.get(f'/locations/{loc}/canvas/data')
+    assert res.get_json()['placements'] == []   # 割り込む前の配置
+    res = client.post(f'/locations/{loc}/canvas/save', json=_canvas(10),
+                      headers={'X-Canvas-Revision': res.headers['X-Canvas-Revision']})
+    assert res.status_code == 409
+    monkeypatch.undo()
+    assert client.get(f'/locations/{loc}/canvas/data').get_json()['placements'][0]['x'] == 99

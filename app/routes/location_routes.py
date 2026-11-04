@@ -307,10 +307,12 @@ def canvas(location_id):
 @bp.route('/<int:location_id>/canvas/data', methods=['GET'])
 def get_canvas_data(location_id):
     """キャンバスデータ取得API"""
-    canvas_data = Location.get_canvas_data(location_id)
+    # 配置とリビジョンは同じ1回の読み込みから作る（間に API の保存が入っても食い違わない）
+    stored = Location.canvas_text(location_id)
+    canvas_data = Location.parse_canvas(stored)
     response = jsonify(canvas_data if canvas_data else {'version': '2.0', 'placements': []})
     # エディターが保存時に送り返す。開いたあとに配置が変わったかを見分ける
-    response.headers['X-Canvas-Revision'] = Location.canvas_revision(location_id)
+    response.headers['X-Canvas-Revision'] = Location.revision_of(stored)
     return response
 
 

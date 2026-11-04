@@ -176,11 +176,6 @@ class Location:
         return hashlib.sha256((canvas_text or '').encode('utf-8')).hexdigest()[:16]
 
     @staticmethod
-    def canvas_revision(location_id):
-        """今の canvas_data のリビジョン。エディターが開いたあとの変化を見つけるのに使う"""
-        return Location.revision_of(Location.canvas_text(location_id))
-
-    @staticmethod
     def remove_from_canvas(location_id, location_crop_id):
         """見取り図から指定の植え付けを削除"""
         canvas_data = Location.get_canvas_data(location_id)
