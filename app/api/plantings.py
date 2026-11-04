@@ -12,7 +12,9 @@ from app.api.payload import parse_request
 from app.api.resource import Resource, load_or_404, register
 from app.api.serialize import display_name
 from app.api.validation import REF_CROP, REF_LOCATION, REF_VARIETY, Field, validate_payload
+from app.models.location import Location
 from app.models.planting import _CV_JOIN, Planting
+from app.utils.canvas_areas import AreaError, area_name, parse_area
 
 
 class PlantingResource(Resource):
@@ -39,7 +41,7 @@ class PlantingResource(Resource):
         'variety_id': ('lc.variety_id = ?', Field('int', min_value=1)),
         'location_id': ('lc.location_id = ?', Field('int', min_value=1)),
     }
-    extra_list_args = ('status',)
+    extra_list_args = ('status', 'area')
 
     def insert(self, model_data):
         return Planting.plant(model_data)
@@ -83,6 +85,27 @@ class PlantingResource(Resource):
         where.append('lc.status = ?')
         params.append(status)
 
+    def list_keep(self, args, errors):
+        """area（見取り図のエリア）で絞る。配置は DB の列でないので Python 側で残す"""
+        if 'area' not in args:
+            return None
+        location_id = args.get('location_id', '')
+        if not location_id:
+            errors.append(detail('area', 'area で絞るときは location_id も指定してください', args['area']))
+            return None
+        try:
+            location = Location.get_by_id(int(location_id)) if location_id.isdigit() else None
+        except OverflowError:
+            location = None
+        top = location['canvas_top_direction'] if location else None
+        try:
+            wanted = area_name(parse_area(args['area'], top), top)
+        except AreaError as e:
+            errors.append(detail('area', str(e), args['area']))
+            return None
+        areas = Planting.area_map(location['id']) if location else {}
+        return lambda row: wanted in areas.get(row['id'], [])
+
     def describe(self, row):
         return {
             'status': row['status'],
@@ -91,6 +114,7 @@ class PlantingResource(Resource):
             'variety': {'id': row['variety_id'], 'name': row['variety']} if row['variety_id'] else None,
             'location': {'id': row['location_id'], 'name': row['location_name']},
             'days_from_planting': row.get('days_from_planting'),
+            'areas': Planting.area_map(row['location_id']).get(row['id'], []),
         }
 
 
