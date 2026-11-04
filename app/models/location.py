@@ -23,6 +23,10 @@ def order_bg_images(names):
     return [DEFAULT_BG_IMAGE] + rest if DEFAULT_BG_IMAGE in names else rest
 
 
+class CanvasConflictError(Exception):
+    """見取り図を読んでから書くまでに、ほかの保存が何度も入って書けなかった"""
+
+
 class Location:
     """場所モデル"""
 
@@ -146,18 +150,25 @@ class Location:
     @staticmethod
     def get_canvas_data(location_id):
         """キャンバスデータをJSON形式で取得"""
-        db = get_db()
-        result = db.execute(
-            'SELECT canvas_data FROM locations WHERE id = ?',
-            (location_id,)
-        ).fetchone()
+        return Location.parse_canvas(Location.canvas_text(location_id))
 
-        if result and result['canvas_data']:
-            try:
-                return json.loads(result['canvas_data'])
-            except json.JSONDecodeError:
-                return None
-        return None
+    @staticmethod
+    def canvas_text(location_id):
+        """保存されている canvas_data の文字列そのもの（NULL・場所なしは空文字）"""
+        row = get_db().execute(
+            'SELECT canvas_data FROM locations WHERE id = ?', (location_id,)
+        ).fetchone()
+        return (row['canvas_data'] if row else None) or ''
+
+    @staticmethod
+    def parse_canvas(canvas_text):
+        """canvas_data の文字列を dict などにする。空・壊れているときは None"""
+        if not canvas_text:
+            return None
+        try:
+            return json.loads(canvas_text)
+        except json.JSONDecodeError:
+            return None
 
     @staticmethod
     def revision_of(canvas_text):
@@ -167,10 +178,7 @@ class Location:
     @staticmethod
     def canvas_revision(location_id):
         """今の canvas_data のリビジョン。エディターが開いたあとの変化を見つけるのに使う"""
-        row = get_db().execute(
-            'SELECT canvas_data FROM locations WHERE id = ?', (location_id,)
-        ).fetchone()
-        return Location.revision_of(row['canvas_data'] if row else None)
+        return Location.revision_of(Location.canvas_text(location_id))
 
     @staticmethod
     def remove_from_canvas(location_id, location_crop_id):
@@ -190,18 +198,24 @@ class Location:
         db.commit()
 
     @staticmethod
-    def save_canvas_data(location_id, canvas_dict):
-        """キャンバスデータをJSON形式で保存し、保存した文字列のリビジョンを返す"""
+    def save_canvas_data(location_id, canvas_dict, *, expected_text):
+        """キャンバスデータをJSON形式で保存し、保存した文字列のリビジョンを返す
+
+        保存されている文字列が expected_text（読んだときの canvas_text）のままのときだけ書く。
+        読んでから書くまでにほかの保存（エディター・API）が入っていたら何もせず None を返す
+        """
         from app.models.planting import Planting
 
         db = get_db()
         canvas_json = json.dumps(canvas_dict, ensure_ascii=False)
-        db.execute(
+        updated = db.execute(
             '''UPDATE locations SET canvas_data = ?, updated_at = ?
-               WHERE id = ?''',
-            (canvas_json, get_jst_now(), location_id)
-        )
+               WHERE id = ? AND IFNULL(canvas_data, '') = ?''',
+            (canvas_json, get_jst_now(), location_id, expected_text)
+        ).rowcount
         db.commit()
+        if updated == 0:
+            return None
 
         # キャンバス上に存在する作物のIDを抽出
         location_crop_ids = set()

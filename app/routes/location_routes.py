@@ -336,13 +336,18 @@ def canvas_history(location_id):
 @bp.route('/<int:location_id>/canvas/save', methods=['POST'])
 def save_canvas_data(location_id):
     """キャンバスデータ保存API"""
-    # 開いたあとに配置が変わっていたら（API での追加など）、上書きせず止める
-    if request.headers.get('X-Canvas-Revision') != Location.canvas_revision(location_id):
-        return jsonify({'status': 'conflict',
+    conflict = jsonify({'status': 'conflict',
                         'message': '開いたあとに配置が変わっています。読み込み直してください'}), 409
+    # 開いたあとに配置が変わっていたら（API での追加など）、上書きせず止める
+    stored = Location.canvas_text(location_id)
+    if request.headers.get('X-Canvas-Revision') != Location.revision_of(stored):
+        return conflict
     try:
         canvas_data = request.get_json()
-        revision = Location.save_canvas_data(location_id, canvas_data)
+        # 確かめてから書くまでに変わったときも止める（読んだ文字列のままのときだけ書く）
+        revision = Location.save_canvas_data(location_id, canvas_data, expected_text=stored)
+        if revision is None:
+            return conflict
 
         # placements から各作物の位置を更新
         if canvas_data and 'placements' in canvas_data:

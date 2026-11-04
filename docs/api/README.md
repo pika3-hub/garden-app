@@ -68,6 +68,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | 404 | `not_found` | パスの ID が存在しない、未定義の URL |
 | 405 | `method_not_allowed` | DELETE / PUT など |
 | 413 | `too_large` | 画像が大きすぎる・画素数が多すぎる・リクエスト合計100MB超 |
+| 409 | `conflict` | 見取り図にアイコンを置く間にほかの保存が重なった（植え付けの `area`・`place`） |
 | 415 | `unsupported_image` | 画像として読めない、JPEG/PNG/GIF/WebP/HEIC 以外 |
 | 422 | `validation_error` | 項目の誤り（`details` に全件） |
 | 500 | `internal_error` | 想定外のエラー（詳細はサーバーログのみ） |
@@ -140,12 +141,13 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 
 - `status` / `position_x` / `position_y` / `canvas_snapshot` は読み取り専用
 - PATCH で `variety_id` を送ると `crop_id` は自動で外れる（逆も同じ）
-- 検索条件: `status`（active / ended / removed / all、**既定 active**）、`crop_id`（品種経由の植え付けも含む）、`variety_id`、`location_id`、`q`（作物名・品種名・場所名）、`area`（見取り図のエリアで絞る。**`location_id` も必須**。指定できる名前は下の「見取り図のエリア」）
-- 詳細に `status`、`display_name`、`crop`、`variety`、`location`、`days_from_planting`、`areas`（見取り図でアイコンがあるエリア名の配列。配置なしは空配列。一覧の各件にも付く）
+- 検索条件: `status`（active / ended / removed / all、**既定 active**）、`crop_id`（品種経由の植え付けも含む）、`variety_id`、`location_id`、`q`（作物名・品種名・場所名）、`area`（見取り図のエリアで絞る。**`location_id` も必須**。指定できる名前は下の「見取り図のエリア」。栽培終了（ended）の植え付けは終了時のスナップショット `canvas_snapshot` の配置で判定する）
+- 詳細に `status`、`display_name`、`crop`、`variety`、`location`、`days_from_planting`、`areas`（見取り図でアイコンがあるエリア名の配列。配置なしは空配列。栽培終了（ended）の植え付けは終了時のスナップショット `canvas_snapshot` の配置から求める。一覧の各件にも付く）
 - **栽培終了**: `POST /plantings/{id}/end`（本文 `{"end_date": "YYYY-MM-DD"}`、省略時は今日）。見取り図に配置されていればスナップショットを残して配置を外す（画面の「栽培終了」と同じ処理）。active 以外は 422
 - **見取り図のエリア**: 見取り図を 3×3 に分けたマスで、アイコンの中心があるマスがその植え付けのエリア（保存はせず、配置から毎回計算する）。名前は、場所に `canvas_top_direction` があれば方角（`北`・`北東`・`東`・`南東`・`南`・`南西`・`西`・`北西`・`中央`。上が北なら上の辺が北、右上が北東）、無ければ見た目（`左上`・`上`・`右上`・`左`・`中央`・`右`・`左下`・`下`・`右下`）。見た目の名前は方角が設定されていても使える。末尾の「エリア」は付けても付けなくてもよい。方角が未設定の場所に方角の名前を指定すると 422（`area`、上・左下などで指定するよう案内する）
 - **作成時の `area`**: `POST /plantings` の本文に `area` を足すと、登録と同時にそのエリアにアイコンを1つ置く。応答の `placement` に `area`・`x`・`y`・`warning` が入る。登録済みの植え付けへの PATCH に `area` を入れると 422（下の `place` を使う）
-- **アイコンを置く**: `POST /plantings/{id}/place`（本文 `{"area": "北"}`）。栽培中（active）の植え付けだけ。見取り図に**1つ足す**（既存のアイコンは動かさず、消さない。複数エリアに置くには繰り返し呼ぶ）。置き場所はそのエリアの中でほかのアイコンから最も離れた所。応答は植え付けの詳細に `placement` を足したもの。active 以外は 422
+- **アイコンを置く**: `POST /plantings/{id}/place`（本文 `{"area": "北"}`）。栽培中（active）の植え付けだけ。見取り図に**1つ足す**（既存のアイコンは動かさず、消さない。複数エリアに置くには繰り返し呼ぶ）。置き場所はそのエリアの中でほかのアイコンから最も離れた所。応答は植え付けの詳細に `placement` を足したもの。`position_x`・`position_y` は、その植え付けのアイコンがまだ見取り図に無かったとき（最初の1つ）だけ置いた座標になる。active 以外は 422
+- **置けなかったとき（409 `conflict`）**: 見取り図を読んでから書くまでにほかの保存（画面のエディター・ほかの API 呼び出し）が入ると、読み直して置き直す。3回続けて入られたら何も書かずに 409。`place` の message は「見取り図がほかの操作と同時に変更されたため、アイコンを置けませんでした。もう一度試してください」。作成時の `area` で起きたときは植え付けは登録済みで、message は「植え付け（ID n）は登録しましたが、見取り図がほかの操作と同時に変更されたため、アイコンを置けませんでした。POST /api/v1/plantings/n/place で置き直してください」
 - **`placement`**: `area`（置いたエリア名）、`x`・`y`（保存した左上座標、800×800px の座標系）、`warning`（ほかのアイコンの中心まで 50px 未満に置いたときだけ文字列「○○エリアは混んでいて、ほかのアイコンと重なっています。画面で確かめてください」、それ以外は null）。置いた応答にだけ付く
 - 画面の見取り図エディターは、開いたあとに配置が変わっていると保存を止める（API で足したアイコンを画面が上書きしないため）
 

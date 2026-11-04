@@ -18,6 +18,8 @@ _CV_JOIN = (
 class Planting:
     """場所-作物関連モデル（plantings テーブル）"""
 
+    PLACE_RETRIES = 3  # place_in_area がほかの保存と重なったときに読み直す回数
+
     @staticmethod
     def _calculate_days(planted_date, target_date):
         """植え付け日から対象日までの日数を計算"""
@@ -545,34 +547,39 @@ class Planting:
     def place_in_area(planting_id, cell):
         """植え付けのアイコンを見取り図のマスに1つ足して保存する（API 用）。置いた場所（Spot）を返す。
         既存の配置はそのまま残す。canvas_data が無い・壊れている・version 2.0 でないときは空から始める。
-        その植え付けの最初の配置のときだけ position_x / position_y を入れる"""
-        from app.models.location import Location
+        その植え付けの最初の配置のときだけ position_x / position_y を入れる。
+        読んでから書くまでにほかの保存が入ったら読み直して置き直し、
+        PLACE_RETRIES 回とも入られたら CanvasConflictError"""
+        from app.models.location import CanvasConflictError, Location
         from app.utils.canvas_areas import choose_spot, placements_of
 
         planting = Planting.get_by_id(planting_id)
         location_id = planting['location_id']
-        canvas = Location.get_canvas_data(location_id)
-        if (not isinstance(canvas, dict) or canvas.get('version') != '2.0'
-                or not isinstance(canvas.get('placements'), list)):
-            canvas = {'version': '2.0', 'placements': []}
-        spot = choose_spot(placements_of(canvas), cell)
-        first = not any(isinstance(p, dict) and p.get('locationCropId') == planting_id
-                        for p in canvas['placements'])
-        # エディターでアイコンを置いたときに保存される項目と同じ
-        canvas['placements'].append({
-            'locationCropId': planting_id,
-            'cropId': planting['effective_crop_id'],
-            'x': spot.x,
-            'y': spot.y,
-            'iconPath': planting['icon_path'] or '',
-            'imageColor': planting['image_color'] or '#4CAF50',
-            'cropName': planting['crop_name'],
-            'variety': planting['variety'] or '',
-        })
-        Location.save_canvas_data(location_id, canvas)
-        if first:
-            Planting.update_position(planting_id, spot.x, spot.y)
-        return spot
+        for _ in range(Planting.PLACE_RETRIES):
+            stored = Location.canvas_text(location_id)
+            canvas = Location.parse_canvas(stored)
+            if (not isinstance(canvas, dict) or canvas.get('version') != '2.0'
+                    or not isinstance(canvas.get('placements'), list)):
+                canvas = {'version': '2.0', 'placements': []}
+            spot = choose_spot(placements_of(canvas), cell)
+            first = not any(isinstance(p, dict) and p.get('locationCropId') == planting_id
+                            for p in canvas['placements'])
+            # エディターでアイコンを置いたときに保存される項目と同じ
+            canvas['placements'].append({
+                'locationCropId': planting_id,
+                'cropId': planting['effective_crop_id'],
+                'x': spot.x,
+                'y': spot.y,
+                'iconPath': planting['icon_path'] or '',
+                'imageColor': planting['image_color'] or '#4CAF50',
+                'cropName': planting['crop_name'],
+                'variety': planting['variety'] or '',
+            })
+            if Location.save_canvas_data(location_id, canvas, expected_text=stored) is not None:
+                if first:
+                    Planting.update_position(planting_id, spot.x, spot.y)
+                return spot
+        raise CanvasConflictError(location_id)
 
     @staticmethod
     def clear_positions_except(location_id, location_crop_ids):

@@ -150,3 +150,61 @@ def test_patch_with_area_points_to_place(api, field):
     res = api.patch(f'/api/v1/plantings/{data["id"]}', json={'area': '北'})
     assert res.status_code == 422
     assert '/place' in res.get_json()['error']['details'][0]['reason']
+
+
+@pytest.mark.parametrize('location_id', ['²', 'abc'])
+def test_filter_area_with_bad_location_id(api, field, location_id):
+    res = api.get(f'/api/v1/plantings?location_id={location_id}&area=左')
+    assert res.status_code == 422
+    assert res.get_json()['error']['details'][0]['field'] == 'location_id'
+
+
+@pytest.mark.parametrize('as_text', [True, False])
+def test_create_with_location_id_not_int_places_icon(api, sql, field, as_text):
+    location = str(field['north']) if as_text else float(field['north'])
+    data = _plant(api, location, field['crop'], area='北')
+    assert data['placement']['area'] == '北'
+    assert len(_canvas(sql, field['north'])) == 1
+
+
+def test_create_with_string_location_id_and_bad_area_creates_nothing(api, sql, field):
+    res = api.post('/api/v1/plantings', json={'location_id': str(field['north']), 'crop_id': field['crop'],
+                                              'area': '北北東'})
+    assert res.status_code == 422
+    assert res.get_json()['error']['details'][0]['field'] == 'area'
+    assert sql('SELECT COUNT(*) AS n FROM plantings')[0]['n'] == 0
+
+
+def _always_changed(monkeypatch):
+    """見取り図を読むたびに、ほかの保存が割り込んだことにする"""
+    from app.database import get_db
+    from app.models.location import Location
+    original = Location.canvas_text
+
+    def reading(location_id):
+        text = original(location_id)
+        db = get_db()
+        db.execute("UPDATE locations SET canvas_data = ? WHERE id = ?",
+                   (json.dumps({'version': '2.0', 'placements': [], 'n': len(text)}), location_id))
+        db.commit()
+        return text
+    monkeypatch.setattr(Location, 'canvas_text', staticmethod(reading))
+
+
+def test_place_conflict_returns_409(api, sql, field, monkeypatch):
+    data = _plant(api, field['north'], field['crop'])
+    _always_changed(monkeypatch)
+    res = api.post(f'/api/v1/plantings/{data["id"]}/place', json={'area': '北'})
+    assert res.status_code == 409
+    error = res.get_json()['error']
+    assert error['code'] == 'conflict'
+    assert error['message'] == '見取り図がほかの操作と同時に変更されたため、アイコンを置けませんでした。もう一度試してください'
+    assert _canvas(sql, field['north']) == []
+
+
+def test_create_with_area_conflict_returns_409_with_id(api, sql, field, monkeypatch):
+    _always_changed(monkeypatch)
+    res = api.post('/api/v1/plantings', json={'location_id': field['north'], 'crop_id': field['crop'], 'area': '北'})
+    assert res.status_code == 409
+    [row] = sql('SELECT id FROM plantings')
+    assert f'POST /api/v1/plantings/{row["id"]}/place' in res.get_json()['error']['message']

@@ -27,7 +27,7 @@
 
 背景画像は `app/static/images/location_bg_images/` の 13 枚（色鉛筆の絵本風・1024×1024 の WebP、中身が分かる名前）。既定は平らな土の `soil.webp`（`DEFAULT_BG_IMAGE`）で、「なし」は選べず、未指定で保存すると `soil.webp` になる。2026-11 の作り直しで、旧 `bg_image_NNN.webp` はマイグレーション 028 で付け替えた。背景に重ねていた白い幕は外した（詳細は `app/static/js/CLAUDE.md` の「背景画像」）
 
-エディターの保存は、開いたときの配置のリビジョン（`canvas_data` の SHA-256 先頭16文字、ヘッダー `X-Canvas-Revision`）を送り、開いたあとに配置が変わっていた（API でアイコンを足したなど）とき 409 で止める。見取り図は 3×3 の「エリア」に分かれ、アイコンの中心があるマスがその植え付けのエリア。エリアは保存せず、配置から毎回計算する（`app/utils/canvas_areas.py`）。縁の方角の札と格子の重ね表示は `canvas-areas.js`（「格子」ボタンで出し入れ）
+エディターの保存は、開いたときの配置のリビジョン（`canvas_data` の SHA-256 先頭16文字、ヘッダー `X-Canvas-Revision`）を送り、開いたあとに配置が変わっていた（API でアイコンを足したなど）とき 409 で止める。`canvas_data` への書き込み（エディターの保存・API でアイコンを置く `Planting.place_in_area`）は、読んだときの文字列のままのときだけ書く条件付きの UPDATE（`Location.save_canvas_data(..., expected_text=...)`）で、同時に動いても片方の変更を黙って消さない（API は3回まで読み直し、だめなら 409）。見取り図は 3×3 の「エリア」に分かれ、アイコンの中心があるマスがその植え付けのエリア。エリアは保存せず、配置から毎回計算する（`app/utils/canvas_areas.py`）。縁の方角の札と格子の重ね表示は `canvas-areas.js`（「格子」ボタンで出し入れ）
 
 ## 見取り図プレビュー
 

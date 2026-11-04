@@ -7,13 +7,13 @@ from flask import g
 
 from app.api import bp
 from app.api.choices import PLANTING_STATUSES
-from app.api.errors import detail, ok, validation_error
+from app.api.errors import ApiError, detail, ok, validation_error
 from app.api.payload import parse_request
 from app.api.resource import Resource, load_or_404, register
 from app.api.serialize import display_name
 from app.api.validation import (REF_CROP, REF_LOCATION, REF_VARIETY, SQLITE_MAX_INT, Field,
-                                validate_payload)
-from app.models.location import Location
+                                check_value, validate_payload)
+from app.models.location import CanvasConflictError, Location
 from app.models.planting import _CV_JOIN, Planting
 from app.utils.canvas_areas import (CROWDED_DISTANCE, AreaError, area_name, crowded_warning,
                                     parse_area)
@@ -62,14 +62,15 @@ class PlantingResource(Resource):
             errors.append(detail('area', '登録済みの植え付けには POST /api/v1/plantings/{id}/place で置いてください',
                                  payload['area']))
             return None
-        location_id = payload.get('location_id')
-        if not isinstance(location_id, int) or isinstance(location_id, bool):
+        # 項目の検証と同じく "1" や 1.0 も ID として扱う
+        location_id, reason = check_value(self.fields['location_id'], payload.get('location_id'))
+        if reason or location_id is None:
             return None  # location_id の誤りは項目の検証が報告する
         return _parse_area_for(location_id, payload['area'], errors)
 
     def after_write(self, obj_id, reserved):
         if reserved is not None:
-            _place(obj_id, reserved)
+            _place(obj_id, reserved, created=True)
 
     def check(self, values, merged, row, errors):
         if values.get('crop_id') and values.get('variety_id'):
@@ -113,10 +114,9 @@ class PlantingResource(Resource):
         if not location_id:
             errors.append(detail('area', 'area で絞るときは location_id も指定してください', args['area']))
             return None
-        try:
-            location = Location.get_by_id(int(location_id)) if location_id.isdigit() else None
-        except OverflowError:
-            location = None
+        location_id, reason = check_value(self.filters['location_id'][1], location_id)
+        # location_id の誤りは絞り込みの検証が報告する
+        location = Location.get_by_id(location_id) if location_id is not None and not reason else None
         top = location['canvas_top_direction'] if location else None
         try:
             wanted = area_name(parse_area(args['area'], top), top)
@@ -157,10 +157,22 @@ def _parse_area_for(location_id, area, errors):
         return None
 
 
-def _place(planting_id, cell):
-    """見取り図に置き、結果を g.api_placement（植え付け ID 付き）に入れる"""
+PLACE_CONFLICT = '見取り図がほかの操作と同時に変更されたため、アイコンを置けませんでした。'
+
+
+def _place(planting_id, cell, created=False):
+    """見取り図に置き、結果を g.api_placement（植え付け ID 付き）に入れる
+
+    ほかの保存と重なって置けなければ 409。作成時は植え付けは登録済みなので、置き直し方を案内する
+    """
     top = Location.get_by_id(Planting.get_by_id(planting_id)['location_id'])['canvas_top_direction']
-    spot = Planting.place_in_area(planting_id, cell)
+    try:
+        spot = Planting.place_in_area(planting_id, cell)
+    except CanvasConflictError:
+        if created:
+            raise ApiError(409, 'conflict', f'植え付け（ID {planting_id}）は登録しましたが、{PLACE_CONFLICT}'
+                                            f'POST /api/v1/plantings/{planting_id}/place で置き直してください')
+        raise ApiError(409, 'conflict', f'{PLACE_CONFLICT}もう一度試してください')
     area = area_name(cell, top)
     crowded = spot.nearest is not None and spot.nearest < CROWDED_DISTANCE
     g.api_placement = (planting_id, {'area': area, 'x': spot.x, 'y': spot.y,
