@@ -19,7 +19,7 @@
 
 ## 場所管理
 
-畑やプランターの場所のCRUD、画像サポート付き
+畑やプランターの場所のCRUD、画像サポート付き。場所に「見取り図の上の方角」（`locations.canvas_top_direction`、北・東・南・西、未設定可）を設定でき、見取り図のエリアを方角で呼べる
 
 ## キャンバスエディター
 
@@ -27,9 +27,11 @@
 
 背景画像は `app/static/images/location_bg_images/` の 13 枚（色鉛筆の絵本風・1024×1024 の WebP、中身が分かる名前）。既定は平らな土の `soil.webp`（`DEFAULT_BG_IMAGE`）で、「なし」は選べず、未指定で保存すると `soil.webp` になる。2026-11 の作り直しで、旧 `bg_image_NNN.webp` はマイグレーション 028 で付け替えた。背景に重ねていた白い幕は外した（詳細は `app/static/js/CLAUDE.md` の「背景画像」）
 
+エディターの保存は、開いたときの配置のリビジョン（`canvas_data` の SHA-256 先頭16文字、ヘッダー `X-Canvas-Revision`）を送り、開いたあとに配置が変わっていた（API でアイコンを足したなど）とき 409 で止める。見取り図は 3×3 の「エリア」に分かれ、アイコンの中心があるマスがその植え付けのエリア。エリアは保存せず、配置から毎回計算する（`app/utils/canvas_areas.py`）。縁の方角の札と格子の重ね表示は `canvas-areas.js`（「格子」ボタンで出し入れ）
+
 ## 見取り図プレビュー
 
-場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）、場所詳細ではフルスクリーン表示の日付ナビゲーション（前へ/次へ・左右キー）で過去の配置状態を再現可能
+場所詳細・植え付け詳細に読み取り専用の見取り図を表示（植え付けのハイライト・ディム対応）、場所詳細ではフルスクリーン表示の日付ナビゲーション（前へ/次へ・左右キー）で過去の配置状態を再現可能。プレビューにも縁の方角と「格子」ボタンを重ねられ、植え付けの一覧・詳細・関連・選ぶ画面にはエリアの札（`planting_area_badge`）が出る
 
 ## 栽培記録
 
@@ -113,4 +115,4 @@ Hermes が相談・質問に答えたら、そのアドバイス（見出し・�
 
 ## 外部API（エージェント連携）
 
-`/api/v1/*` の JSON API で作物・品種・場所・植え付け・栽培記録・収穫・料理・日記・タスク・アドバイス・写真プールを参照・作成・部分更新できる（削除なし）。補足情報は画像（`extra_images`）と URL（`extra_urls`、OGP はインターネット上のアドレスにだけ取りに行く）と YouTube（`extra_youtube`、保存前に oEmbed で動画の有無を確かめタイトルを取る＝架空の URL 対策）を追加できる（テキストは未対応）。Hermes は作物・品種の登録時と「参考になる情報を集めてきて」で Web ページ・YouTube を補足情報に付ける（`hermes-skill/SKILL.md` の「参考情報の集め方」）。本体画像・写真プールの写真は `GET /{種類}/{id}/image`（`?size=thumb`）でファイルとして取得でき、Hermes はこれで栽培記録の写真から生育状況を診断する。Bearer トークン（`.env` の `API_TOKEN`、32文字以上）必須。`server.py` が Web とは別ポート（`API_PORT`、既定5001）で API 専用アプリ `create_api_app()` を起動し、エージェントからは画面の URL に届かないようにしている（`run.py` では起動しない）。実装は `app/api/`（`Resource` 基底クラス＋リソースごとの定義）。仕様は `docs/api/README.md`、エージェント用スキルは `docs/api/hermes-skill/SKILL.md`、Ubuntu への移設手順は `docs/api/migration-to-ubuntu.md`。ネットワーク・画像まわりを変えるときは API 側（`app/api/images.py`）も確認する。サーバーの Hermes は Web 画面（5000番）と `/opt/garden-app`（`uploads/` を含む）に触れない（ufw と権限で遮断。`docs/api/migration-to-ubuntu.md`）ので、Hermes にさせる機能は API だけで完結させる（API が返す `image_url` も Hermes からは開けないので、画像は `/image` エンドポイントで渡す）。アプリがサーバーから外へ接続する処理（OGP 取得など）を API から使うときは、その遮断の抜け道にならないようにする（例: `fetch_ogp(public_only=True)`）。スマホから Hermes へは LAN 内の Matrix（Tuwunel＋Caddy＋Element X、2026-10-18 構築、2026-10-24 から暗号化（E2EE）ありの部屋。`docs/api/hermes-local-chat.md`）で依頼する（Telegram は 2026-10-23 に停止。`../garden-app-private/docs/api/hermes-telegram.md`）。Hermes のモデルは 2026-10-24 から ChatGPT Plus の枠（`openai-codex` の `gpt-6-luna`）で、失敗したときだけ OpenRouter の Haiku に切り替わる（`../garden-app-private/docs/api/hermes-model.md`）。サーバーに常駐するソフトを足すときは、Hermes の実行ユーザーがそれを経由して遮断をすり抜けられないかを確かめる（例: Caddy の管理用 API は `admin off`）
+`/api/v1/*` の JSON API で作物・品種・場所・植え付け・栽培記録・収穫・料理・日記・タスク・アドバイス・写真プールを参照・作成・部分更新できる（削除なし）。補足情報は画像（`extra_images`）と URL（`extra_urls`、OGP はインターネット上のアドレスにだけ取りに行く）と YouTube（`extra_youtube`、保存前に oEmbed で動画の有無を確かめタイトルを取る＝架空の URL 対策）を追加できる（テキストは未対応）。Hermes は作物・品種の登録時と「参考になる情報を集めてきて」で Web ページ・YouTube を補足情報に付ける（`hermes-skill/SKILL.md` の「参考情報の集め方」）。本体画像・写真プールの写真は `GET /{種類}/{id}/image`（`?size=thumb`）でファイルとして取得でき、Hermes はこれで栽培記録の写真から生育状況を診断する。Bearer トークン（`.env` の `API_TOKEN`、32文字以上）必須。`server.py` が Web とは別ポート（`API_PORT`、既定5001）で API 専用アプリ `create_api_app()` を起動し、エージェントからは画面の URL に届かないようにしている（`run.py` では起動しない）。実装は `app/api/`（`Resource` 基底クラス＋リソースごとの定義）。仕様は `docs/api/README.md`、エージェント用スキルは `docs/api/hermes-skill/SKILL.md`、Ubuntu への移設手順は `docs/api/migration-to-ubuntu.md`。植え付けは `area` で絞り込め、登録時の `area` と `POST /plantings/{id}/place` で見取り図のエリアにアイコンを置ける（`Planting.place_in_area`。既存のアイコンは動かさず1つ足す。混んだら `placement.warning`。Hermes は「見取り図のエリア」の節で使う）。ネットワーク・画像まわりを変えるときは API 側（`app/api/images.py`）も確認する。サーバーの Hermes は Web 画面（5000番）と `/opt/garden-app`（`uploads/` を含む）に触れない（ufw と権限で遮断。`docs/api/migration-to-ubuntu.md`）ので、Hermes にさせる機能は API だけで完結させる（API が返す `image_url` も Hermes からは開けないので、画像は `/image` エンドポイントで渡す）。アプリがサーバーから外へ接続する処理（OGP 取得など）を API から使うときは、その遮断の抜け道にならないようにする（例: `fetch_ogp(public_only=True)`）。スマホから Hermes へは LAN 内の Matrix（Tuwunel＋Caddy＋Element X、2026-10-18 構築、2026-10-24 から暗号化（E2EE）ありの部屋。`docs/api/hermes-local-chat.md`）で依頼する（Telegram は 2026-10-23 に停止。`../garden-app-private/docs/api/hermes-telegram.md`）。Hermes のモデルは 2026-10-24 から ChatGPT Plus の枠（`openai-codex` の `gpt-6-luna`）で、失敗したときだけ OpenRouter の Haiku に切り替わる（`../garden-app-private/docs/api/hermes-model.md`）。サーバーに常駐するソフトを足すときは、Hermes の実行ユーザーがそれを経由して遮断をすり抜けられないかを確かめる（例: Caddy の管理用 API は `admin off`）

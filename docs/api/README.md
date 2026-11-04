@@ -123,6 +123,7 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 | sun_exposure | 選択肢 | 全日 / 半日 / 日陰 |
 | notes | 文字列 | |
 | bg_image | 選択肢 | `/meta` の `bg_images`。省略・空・null は `soil.webp`（背景を消すことはできない） |
+| canvas_top_direction | 選択肢 | 見取り図の上の方角。`/meta` の `canvas_top_directions`（北 / 東 / 南 / 西）。未設定は null（PATCH で null を送ると解除） |
 
 `canvas_data`（見取り図）は読み取り専用。検索条件: `location_type`。詳細に `active_plantings`。
 
@@ -139,9 +140,14 @@ uv run python -c "import secrets;print(secrets.token_urlsafe(32))"
 
 - `status` / `position_x` / `position_y` / `canvas_snapshot` は読み取り専用
 - PATCH で `variety_id` を送ると `crop_id` は自動で外れる（逆も同じ）
-- 検索条件: `status`（active / ended / removed / all、**既定 active**）、`crop_id`（品種経由の植え付けも含む）、`variety_id`、`location_id`、`q`（作物名・品種名・場所名）
-- 詳細に `status`、`display_name`、`crop`、`variety`、`location`、`days_from_planting`
+- 検索条件: `status`（active / ended / removed / all、**既定 active**）、`crop_id`（品種経由の植え付けも含む）、`variety_id`、`location_id`、`q`（作物名・品種名・場所名）、`area`（見取り図のエリアで絞る。**`location_id` も必須**。指定できる名前は下の「見取り図のエリア」）
+- 詳細に `status`、`display_name`、`crop`、`variety`、`location`、`days_from_planting`、`areas`（見取り図でアイコンがあるエリア名の配列。配置なしは空配列。一覧の各件にも付く）
 - **栽培終了**: `POST /plantings/{id}/end`（本文 `{"end_date": "YYYY-MM-DD"}`、省略時は今日）。見取り図に配置されていればスナップショットを残して配置を外す（画面の「栽培終了」と同じ処理）。active 以外は 422
+- **見取り図のエリア**: 見取り図を 3×3 に分けたマスで、アイコンの中心があるマスがその植え付けのエリア（保存はせず、配置から毎回計算する）。名前は、場所に `canvas_top_direction` があれば方角（`北`・`北東`・`東`・`南東`・`南`・`南西`・`西`・`北西`・`中央`。上が北なら上の辺が北、右上が北東）、無ければ見た目（`左上`・`上`・`右上`・`左`・`中央`・`右`・`左下`・`下`・`右下`）。見た目の名前は方角が設定されていても使える。末尾の「エリア」は付けても付けなくてもよい。方角が未設定の場所に方角の名前を指定すると 422（`area`、上・左下などで指定するよう案内する）
+- **作成時の `area`**: `POST /plantings` の本文に `area` を足すと、登録と同時にそのエリアにアイコンを1つ置く。応答の `placement` に `area`・`x`・`y`・`warning` が入る。登録済みの植え付けへの PATCH に `area` を入れると 422（下の `place` を使う）
+- **アイコンを置く**: `POST /plantings/{id}/place`（本文 `{"area": "北"}`）。栽培中（active）の植え付けだけ。見取り図に**1つ足す**（既存のアイコンは動かさず、消さない。複数エリアに置くには繰り返し呼ぶ）。置き場所はそのエリアの中でほかのアイコンから最も離れた所。応答は植え付けの詳細に `placement` を足したもの。active 以外は 422
+- **`placement`**: `area`（置いたエリア名）、`x`・`y`（保存した左上座標、800×800px の座標系）、`warning`（ほかのアイコンの中心まで 50px 未満に置いたときだけ文字列「○○エリアは混んでいて、ほかのアイコンと重なっています。画面で確かめてください」、それ以外は null）。置いた応答にだけ付く
+- 画面の見取り図エディターは、開いたあとに配置が変わっていると保存を止める（API で足したアイコンを画面が上書きしないため）
 
 ### 栽培記録 `/planting_records`
 | 項目 | 型 | 備考 |
@@ -279,7 +285,7 @@ curl -sS -X POST "$GARDEN_API_URL/advices" -H "Authorization: Bearer $GARDEN_API
 | メソッド | パス | 用途 |
 |---|---|---|
 | GET | `/health` | 疎通確認 |
-| GET | `/meta` | 選択肢の一覧（ステータス、天気、日当たり、既存の種類・単位・カテゴリ、アイコン、背景画像、関連キー、画像の制限、設定画面の地域・栽培環境 `region`（未設定は空文字。作物・品種のメモの時期の基準）） |
+| GET | `/meta` | 選択肢の一覧（ステータス、天気、日当たり、見取り図の上の方角 `canvas_top_directions`、既存の種類・単位・カテゴリ、アイコン、背景画像、関連キー、画像の制限、設定画面の地域・栽培環境 `region`（未設定は空文字。作物・品種のメモの時期の基準）） |
 | GET | `/lookup?q=名前&types=crop,variety,location&limit=20` | 名前の横断検索。完全一致 → 前方一致 → 部分一致の順（ひらがな・カタカナと半角・全角は区別しない）。品種は `display_name` と `crop_id` 付き |
 | POST | `/photos` | 写真プールへ一括アップロード（multipart `files` 複数、任意で `data` に `{"notes": "..."}`）。EXIF の撮影日時を取り込む |
 | GET | `/photos?unused=true` | 写真プールの一覧（`unused=true` で未使用のみ） |
