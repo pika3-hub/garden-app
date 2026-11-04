@@ -46,3 +46,17 @@ def test_save_after_change_is_rejected(client, app, loc):
 
 def test_save_without_revision_is_rejected(client, loc):
     assert client.post(f'/locations/{loc}/canvas/save', json=_canvas(10)).status_code == 409
+
+
+def test_api_placement_changes_revision(client, app, loc):
+    from app.models.planting import Planting
+    with app.app_context():
+        db = get_db()
+        crop = db.execute("INSERT INTO crops (name, crop_type) VALUES ('ニンニク', 'ねぎ類')").lastrowid
+        planting = db.execute("INSERT INTO plantings (location_id, crop_id, status) VALUES (?, ?, 'active')", (loc, crop)).lastrowid
+        db.commit()
+    rev = client.get(f'/locations/{loc}/canvas/data').headers['X-Canvas-Revision']
+    with app.app_context():
+        Planting.place_in_area(planting, (1, 1))
+    res = client.post(f'/locations/{loc}/canvas/save', json=_canvas(10), headers={'X-Canvas-Revision': rev})
+    assert res.status_code == 409

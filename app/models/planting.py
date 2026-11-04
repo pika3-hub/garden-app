@@ -542,6 +542,39 @@ class Planting:
         db.commit()
 
     @staticmethod
+    def place_in_area(planting_id, cell):
+        """植え付けのアイコンを見取り図のマスに1つ足して保存する（API 用）。置いた場所（Spot）を返す。
+        既存の配置はそのまま残す。canvas_data が無い・壊れている・version 2.0 でないときは空から始める。
+        その植え付けの最初の配置のときだけ position_x / position_y を入れる"""
+        from app.models.location import Location
+        from app.utils.canvas_areas import choose_spot, placements_of
+
+        planting = Planting.get_by_id(planting_id)
+        location_id = planting['location_id']
+        canvas = Location.get_canvas_data(location_id)
+        if (not isinstance(canvas, dict) or canvas.get('version') != '2.0'
+                or not isinstance(canvas.get('placements'), list)):
+            canvas = {'version': '2.0', 'placements': []}
+        spot = choose_spot(placements_of(canvas), cell)
+        first = not any(isinstance(p, dict) and p.get('locationCropId') == planting_id
+                        for p in canvas['placements'])
+        # エディターでアイコンを置いたときに保存される項目と同じ
+        canvas['placements'].append({
+            'locationCropId': planting_id,
+            'cropId': planting['effective_crop_id'],
+            'x': spot.x,
+            'y': spot.y,
+            'iconPath': planting['icon_path'] or '',
+            'imageColor': planting['image_color'] or '#4CAF50',
+            'cropName': planting['crop_name'],
+            'variety': planting['variety'] or '',
+        })
+        Location.save_canvas_data(location_id, canvas)
+        if first:
+            Planting.update_position(planting_id, spot.x, spot.y)
+        return spot
+
+    @staticmethod
     def clear_positions_except(location_id, location_crop_ids):
         """指定されたID以外の作物の位置情報をクリア"""
         db = get_db()
