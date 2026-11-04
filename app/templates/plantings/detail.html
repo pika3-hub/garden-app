@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from '_macros.html' import crop_label %}
+{% from '_macros.html' import crop_label, planting_area_badge %}
 
 {% block title %}植え付け詳細 - {{ location_crop.crop_name }} - 家庭菜園管理アプリ{% endblock %}
 
@@ -82,6 +82,7 @@ if (fullscreenBtn) {
                 <h4 class="card-photo-detail-title">
                     {{ crop_label(location_crop.crop_name, location_crop.variety, location_crop.icon_path, location_crop.image_color) }}
                     <small>@ {{ location_crop.location_name }}</small>
+                    {{ planting_area_badge(location_crop.id) }}
                 </h4>
                 <div class="detail-fields">
                     <div class="detail-field">

@@ -611,6 +611,35 @@ class Planting:
         return record['earliest'] if record else None
 
     @staticmethod
+    def area_map(location_id=None):
+        """植え付け ID → 見取り図のエリア名のリスト。
+        栽培終了は canvas_snapshot、それ以外は場所の canvas_data から求める。配置なしはキーが無いか空。
+        場所の canvas_data は1場所につき1回だけ解析する。"""
+        from app.utils.canvas_areas import placements_of, area_names
+        query = (
+            'SELECT lc.id, lc.status, lc.canvas_snapshot, lc.location_id, '
+            'l.canvas_data, l.canvas_top_direction '
+            'FROM plantings lc JOIN locations l ON lc.location_id = l.id'
+        )
+        params = ()
+        if location_id is not None:
+            query += ' WHERE lc.location_id = ?'
+            params = (location_id,)
+        placements_by_location = {}
+        areas = {}
+        for row in get_db().execute(query, params).fetchall():
+            if row['status'] == 'ended':
+                placements = placements_of(row['canvas_snapshot'])
+            else:
+                if row['location_id'] not in placements_by_location:
+                    placements_by_location[row['location_id']] = placements_of(row['canvas_data'])
+                placements = placements_by_location[row['location_id']]
+            names = area_names(placements, row['id'], row['canvas_top_direction'])
+            if names:
+                areas[row['id']] = names
+        return areas
+
+    @staticmethod
     def _get_canvas_placement_map(location_id):
         """locations.canvas_data から locationCropId → [配置情報] のマップを構築"""
         from app.models.location import Location

@@ -3,7 +3,7 @@ import os
 import random
 import secrets
 import click
-from flask import Flask, render_template, url_for
+from flask import Flask, g, render_template, url_for
 from app.config import config, DEV_SECRET_KEY
 from app.database import init_db, get_db
 from app.utils.markdown_render import render_markdown
@@ -23,6 +23,14 @@ def _thumb_path_filter(image_path):
     folder, filename = parts
     basename = os.path.splitext(filename)[0]
     return f"{folder}/thumbs/{basename}.jpg"
+
+
+def _planting_areas(planting_id):
+    """植え付けの見取り図のエリア名（画面用）。リクエストごとに1回だけ全件分を作る。"""
+    from app.models.planting import Planting
+    if not hasattr(g, 'planting_area_map'):
+        g.planting_area_map = Planting.area_map()
+    return g.planting_area_map.get(planting_id, [])
 
 
 def _crop_display_name(name, variety=None):
@@ -85,6 +93,7 @@ def create_app(config_name='default'):
 
     # Jinja2 グローバル関数登録
     app.jinja_env.globals['crop_display_name'] = _crop_display_name
+    app.jinja_env.globals['planting_areas'] = _planting_areas
     app.jinja_env.globals['hermes_conversations'] = _hermes_conversations
     app.jinja_env.globals['hermes_advice'] = _hermes_advice
     app.jinja_env.globals['hermes_ask_enabled'] = _hermes_ask_enabled

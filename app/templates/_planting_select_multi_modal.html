@@ -1,4 +1,4 @@
-{% from '_macros.html' import crop_label %}
+{% from '_macros.html' import crop_label, planting_area_badge %}
 <!-- 植え付け選択モーダル（複数選択） -->
 <div class="modal fade" id="plantingMultiSelectModal" tabindex="-1" aria-labelledby="plantingMultiSelectModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -90,6 +90,7 @@
                                     <h5 class="card-title">
                                         {{ crop_label(p.crop_name, p.variety, p.icon_path, p.image_color) }}
                                         <small>@ {{ p.location_name }}</small>
+                                        {{ planting_area_badge(p.id) }}
                                     </h5>
                                     <small>植え付け日: {{ p.planted_date or '未設定' }}</small>
                                     {% if p.status != 'active' and p.end_date %}
