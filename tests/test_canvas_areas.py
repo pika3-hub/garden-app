@@ -1,5 +1,4 @@
 import json
-import math
 
 import pytest
 
@@ -70,6 +69,19 @@ def test_placements_of_ignores_broken_data():
     data = {'version': '2.0', 'placements': [good, {'locationCropId': 2}, {'x': 'a', 'y': 1}]}
     assert placements_of(data) == [good]
     assert placements_of(json.dumps(data)) == [good]
+
+
+def test_placements_of_requires_version_2():
+    good = {'locationCropId': 1, 'x': 10, 'y': 20}
+    assert placements_of({'version': '1.0', 'placements': [good]}) == []
+    assert placements_of({'placements': [good]}) == []
+
+
+def test_placements_of_drops_non_finite_numbers():
+    good = {'locationCropId': 1, 'x': 10, 'y': 20}
+    text = '{"version": "2.0", "placements": [{"x": NaN, "y": 1}, {"x": 1, "y": Infinity}, '
+    text += json.dumps(good) + ']}'
+    assert placements_of(text) == [good]
 
 
 def test_planting_cells_unique_and_ordered():

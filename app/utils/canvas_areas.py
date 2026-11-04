@@ -115,14 +115,14 @@ def placements_of(canvas: dict | str | None) -> list[dict]:
             canvas = json.loads(canvas)
         except ValueError:
             return []
-    if not isinstance(canvas, dict):
+    if not isinstance(canvas, dict) or canvas.get('version') != '2.0':
         return []
     items = canvas.get('placements')
     if not isinstance(items, list):
         return []
 
     def is_num(v):
-        return isinstance(v, (int, float)) and not isinstance(v, bool)
+        return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
 
     return [p for p in items if isinstance(p, dict) and is_num(p.get('x')) and is_num(p.get('y'))]
 
