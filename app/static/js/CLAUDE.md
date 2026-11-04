@@ -60,8 +60,8 @@
 | エンドポイント | メソッド | 説明 |
 |-------------|--------|------|
 | `/locations/<id>/canvas` | GET | エディター画面 |
-| `/locations/<id>/canvas/data` | GET | 配置データ取得（JSON） |
-| `/locations/<id>/canvas/save` | POST | 配置データ保存 |
+| `/locations/<id>/canvas/data` | GET | 配置データ取得（JSON）。応答ヘッダー `X-Canvas-Revision` に保存データのリビジョン |
+| `/locations/<id>/canvas/save` | POST | 配置データ保存。要求ヘッダー `X-Canvas-Revision` が今と違う（無い場合も）と 409。保存はエディターの `requestSave()` を通す（`canvas-placement.js` も） |
 | `/locations/<id>/canvas/history/range` | GET | 見取り図に変化がある日付一覧（`{dates: [...]}` 形式） |
 | `/locations/<id>/canvas/history?date=YYYY-MM-DD` | GET | 指定日付の配置データ（version 2.0 JSON） |
 

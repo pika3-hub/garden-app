@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from flask import current_app
@@ -159,6 +160,19 @@ class Location:
         return None
 
     @staticmethod
+    def revision_of(canvas_text):
+        """保存されている canvas_data の文字列（NULL は空文字）のリビジョン（SHA-256 の先頭16文字）"""
+        return hashlib.sha256((canvas_text or '').encode('utf-8')).hexdigest()[:16]
+
+    @staticmethod
+    def canvas_revision(location_id):
+        """今の canvas_data のリビジョン。エディターが開いたあとの変化を見つけるのに使う"""
+        row = get_db().execute(
+            'SELECT canvas_data FROM locations WHERE id = ?', (location_id,)
+        ).fetchone()
+        return Location.revision_of(row['canvas_data'] if row else None)
+
+    @staticmethod
     def remove_from_canvas(location_id, location_crop_id):
         """見取り図から指定の植え付けを削除"""
         canvas_data = Location.get_canvas_data(location_id)
@@ -177,7 +191,7 @@ class Location:
 
     @staticmethod
     def save_canvas_data(location_id, canvas_dict):
-        """キャンバスデータをJSON形式で保存"""
+        """キャンバスデータをJSON形式で保存し、保存した文字列のリビジョンを返す"""
         from app.models.planting import Planting
 
         db = get_db()
@@ -204,3 +218,5 @@ class Location:
 
         # キャンバス上にない作物の位置情報をクリア
         Planting.clear_positions_except(location_id, location_crop_ids)
+
+        return Location.revision_of(canvas_json)
