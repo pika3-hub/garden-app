@@ -10,7 +10,16 @@ class CanvasPreview {
         this.highlightId = container.dataset.highlightId ? parseInt(container.dataset.highlightId) : null;
         this.area = container.querySelector('.canvas-preview-area');
 
+        // 縁の方角・格子の重ね表示（canvas-areas.js）
+        const areasConfig = window.CanvasAreas ? CanvasAreas.readConfig(container) : null;
+        if (areasConfig) CanvasAreas.attach(this.area, areasConfig);
+
         this._init();
+    }
+
+    /** area の中身が消された後に、重ね表示を戻す */
+    _reattachAreas() {
+        if (this.area._canvasAreas) this.area._canvasAreas.reattach();
     }
 
     async _init() {
@@ -140,6 +149,7 @@ class CanvasPreview {
 
     updateData(data) {
         this.area.innerHTML = '';
+        this._reattachAreas();
         if (data && data.version === '2.0' && data.placements && data.placements.length > 0) {
             this._render(data.placements);
         } else {

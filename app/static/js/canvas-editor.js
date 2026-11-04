@@ -20,6 +20,7 @@ class CanvasEditor {
 
     init() {
         this.setupBackground();
+        this.setupAreas();
         this.setupScale();
         this.setupSidebarDragDrop();
         this.setupCanvasEvents();
@@ -31,6 +32,13 @@ class CanvasEditor {
     setupBackground() {
         const bgImage = document.getElementById('bg-image').value;
         this.canvasArea.style.backgroundImage = `url('/static/images/location_bg_images/${bgImage}')`;
+    }
+
+    /** 縁の方角と格子の重ね表示（canvas-areas.js） */
+    setupAreas() {
+        if (!window.CanvasAreas) return;
+        const config = CanvasAreas.readConfig(this.canvasArea);
+        if (config) CanvasAreas.attach(this.canvasArea, config);
     }
 
     /** モバイル時: 800px キャンバスを wrapper 幅に合わせて縮小表示 */

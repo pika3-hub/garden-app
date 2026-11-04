@@ -16,6 +16,9 @@
         </a>
         <h4>{{ location.name }} - 見取り図編集</h4>
         <div class="header-controls">
+            <button type="button" class="btn btn-outline-secondary" data-canvas-grid-toggle="canvas-area" aria-pressed="false">
+                <i class="bi bi-grid-3x3"></i> 格子
+            </button>
             <button id="save-btn" class="btn btn-success">
                 <i class="bi bi-save"></i> 見取り図を保存
             </button>
@@ -27,7 +30,7 @@
     <div class="canvas-main">
         <!-- キャンバスエリア -->
         <div class="canvas-area-wrapper">
-            <div id="canvas-area"></div>
+            <div id="canvas-area" data-canvas-areas="{{ canvas_area_config(location.canvas_top_direction) | tojson | forceescape }}"></div>
         </div>
 
         <!-- 作物サイドバー -->
@@ -81,5 +84,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/canvas-areas.js') }}"></script>
 <script src="{{ url_for('static', filename='js/canvas-editor.js') }}"></script>
 {% endblock %}

@@ -33,6 +33,12 @@ def _planting_areas(planting_id):
     return g.planting_area_map.get(planting_id, [])
 
 
+def _canvas_area_config(top):
+    """見取り図の重ね表示（格子のエリア名と縁の方角）に渡す設定。data 属性に JSON で入れる。"""
+    from app.utils.canvas_areas import area_grid, edge_labels
+    return {'names': area_grid(top), 'edges': edge_labels(top)}
+
+
 def _crop_display_name(name, variety=None):
     """作物名表記ルール: 品種あり→品種名（作物名）、品種なし→作物名"""
     if variety:
@@ -94,6 +100,7 @@ def create_app(config_name='default'):
     # Jinja2 グローバル関数登録
     app.jinja_env.globals['crop_display_name'] = _crop_display_name
     app.jinja_env.globals['planting_areas'] = _planting_areas
+    app.jinja_env.globals['canvas_area_config'] = _canvas_area_config
     app.jinja_env.globals['hermes_conversations'] = _hermes_conversations
     app.jinja_env.globals['hermes_advice'] = _hermes_advice
     app.jinja_env.globals['hermes_ask_enabled'] = _hermes_ask_enabled

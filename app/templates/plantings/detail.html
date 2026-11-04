@@ -10,6 +10,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/canvas-areas.js') }}"></script>
 <script src="{{ url_for('static', filename='js/canvas-preview.js') }}"></script>
 <script src="{{ url_for('static', filename='js/slideshow.js') }}"></script>
 <script src="{{ url_for('static', filename='js/canvas-fullscreen.js') }}"></script>
@@ -21,6 +22,7 @@ if (fullscreenBtn) {
             locationId: {{ location.id }},
             locationName: {{ location.name | tojson }},
             bgImage: '{{ location.bg_image or "soil.webp" }}',
+            canvasAreas: {{ canvas_area_config(location.canvas_top_direction) | tojson }},
             highlightId: {{ location_crop.id }},
             canvasData: {% if canvas_snapshot %}{{ canvas_snapshot | tojson }}{% else %}null{% endif %},
             dates: null,
@@ -181,15 +183,22 @@ if (fullscreenBtn) {
                             見取り図での配置位置
                         {% endif %}
                     </h5>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="fullscreen-btn">
-                        <i class="bi bi-arrows-fullscreen"></i> 拡大
-                    </button>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-canvas-grid-toggle="planting-canvas" aria-pressed="false">
+                            <i class="bi bi-grid-3x3"></i> 格子
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="fullscreen-btn">
+                            <i class="bi bi-arrows-fullscreen"></i> 拡大
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body d-flex justify-content-center">
                     {% if location_crop.status == 'ended' %}
                         {% with preview_location_id=location.id,
                                 preview_bg_image=location.bg_image,
                                 preview_highlight_id=location_crop.id,
+                                preview_id='planting-canvas',
+                                preview_canvas_areas=canvas_area_config(location.canvas_top_direction),
                                 preview_canvas_json=canvas_snapshot %}
                         {% include 'locations/_canvas_preview.html' %}
                         {% endwith %}
@@ -197,7 +206,9 @@ if (fullscreenBtn) {
                         {% if location %}
                             {% with preview_location_id=location.id,
                                     preview_bg_image=location.bg_image,
-                                    preview_highlight_id=location_crop.id %}
+                                    preview_highlight_id=location_crop.id,
+                                    preview_id='planting-canvas',
+                                    preview_canvas_areas=canvas_area_config(location.canvas_top_direction) %}
                             {% include 'locations/_canvas_preview.html' %}
                             {% endwith %}
                         {% endif %}

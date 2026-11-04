@@ -14,6 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtn.title = '閉じる';
     overlay.appendChild(closeBtn);
 
+    // 格子のボタン（閉じるボタンの横）。開くたびにふだんの表示から始める
+    const gridBtn = document.createElement('button');
+    gridBtn.className = 'canvas-fullscreen-close canvas-fullscreen-grid';
+    gridBtn.type = 'button';
+    gridBtn.innerHTML = '<i class="bi bi-grid-3x3"></i>';
+    gridBtn.title = '格子';
+    gridBtn.setAttribute('aria-pressed', 'false');
+    overlay.appendChild(gridBtn);
+
     // Location name label (top)
     const nameLabel = document.createElement('div');
     nameLabel.className = 'canvas-fullscreen-name';
@@ -63,6 +72,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CanvasPreview instance for the overlay ---
     let preview = null;
+
+    function setGridButton(on) {
+        gridBtn.classList.toggle('active', on);
+        gridBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+
+    gridBtn.addEventListener('click', () => {
+        if (!previewArea._canvasAreas) return;
+        setGridButton(previewArea._canvasAreas.toggle());
+    });
 
     // --- State ---
     let currentConfig = null;
@@ -148,6 +167,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const bgImage = config.bgImage || 'soil.webp';
         previewContainer.dataset.bgImage = bgImage;
         previewArea.style.backgroundImage = `url('/static/images/location_bg_images/${bgImage}')`;
+
+        // 縁の方角・格子の重ね表示（開くたびに格子なしから）
+        if (window.CanvasAreas && config.canvasAreas) {
+            const controller = CanvasAreas.attach(previewArea, config.canvasAreas);
+            controller.showGrid = false;
+            controller.reattach();
+            gridBtn.classList.remove('hidden');
+        } else {
+            gridBtn.classList.add('hidden');
+        }
+        setGridButton(false);
 
         // Set highlight
         if (config.highlightId) {
