@@ -3,6 +3,7 @@
 拡張子は信用せず Pillow で開いて実形式を判定し、保存する拡張子も実形式に合わせる。
 HEIC/HEIF は保存時に JPEG へ変換する（app.utils.upload.save_image）。
 """
+import hashlib
 import os
 import warnings
 from dataclasses import dataclass, field
@@ -156,6 +157,26 @@ def check_files(inputs):
     if inputs.main_file is not None:
         inputs.main_file = check_image(inputs.main_file, 'image')
     inputs.extra_files = [check_image(f, 'extra_images') for f in inputs.extra_files]
+    _reject_duplicates([inputs.main_file, *inputs.extra_files])
+
+
+def _reject_duplicates(checked_files):
+    """同じ中身の画像が1回のリクエストに2回あれば 422（エージェントがパスを書き写し間違えたとき）"""
+    seen = {}
+    errors = []
+    for checked in checked_files:
+        if checked is None:
+            continue
+        stream = checked.file.stream
+        digest = hashlib.sha256(stream.read()).hexdigest()
+        stream.seek(0)
+        if digest in seen:
+            errors.append(detail('extra_images', f'{checked.original_name} は {seen[digest]} と同じ画像です。'
+                                                 '同じ写真を2回送らないでください'))
+        else:
+            seen[digest] = checked.original_name
+    if errors:
+        raise validation_error(errors)
 
 
 class SavedFiles:
