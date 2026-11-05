@@ -18,6 +18,8 @@ _CV_JOIN = (
 class Planting:
     """場所-作物関連モデル（plantings テーブル）"""
 
+    PLACE_RETRIES = 3  # place_in_area がほかの保存と重なったときに読み直す回数
+
     @staticmethod
     def _calculate_days(planted_date, target_date):
         """植え付け日から対象日までの日数を計算"""
@@ -542,6 +544,44 @@ class Planting:
         db.commit()
 
     @staticmethod
+    def place_in_area(planting_id, cell):
+        """植え付けのアイコンを見取り図のマスに1つ足して保存する（API 用）。置いた場所（Spot）を返す。
+        既存の配置はそのまま残す。canvas_data が無い・壊れている・version 2.0 でないときは空から始める。
+        その植え付けの最初の配置のときだけ position_x / position_y を入れる。
+        読んでから書くまでにほかの保存が入ったら読み直して置き直し、
+        PLACE_RETRIES 回とも入られたら CanvasConflictError"""
+        from app.models.location import CanvasConflictError, Location
+        from app.utils.canvas_areas import choose_spot, placements_of
+
+        planting = Planting.get_by_id(planting_id)
+        location_id = planting['location_id']
+        for _ in range(Planting.PLACE_RETRIES):
+            stored = Location.canvas_text(location_id)
+            canvas = Location.parse_canvas(stored)
+            if (not isinstance(canvas, dict) or canvas.get('version') != '2.0'
+                    or not isinstance(canvas.get('placements'), list)):
+                canvas = {'version': '2.0', 'placements': []}
+            spot = choose_spot(placements_of(canvas), cell)
+            first = not any(isinstance(p, dict) and p.get('locationCropId') == planting_id
+                            for p in canvas['placements'])
+            # エディターでアイコンを置いたときに保存される項目と同じ
+            canvas['placements'].append({
+                'locationCropId': planting_id,
+                'cropId': planting['effective_crop_id'],
+                'x': spot.x,
+                'y': spot.y,
+                'iconPath': planting['icon_path'] or '',
+                'imageColor': planting['image_color'] or '#4CAF50',
+                'cropName': planting['crop_name'],
+                'variety': planting['variety'] or '',
+            })
+            if Location.save_canvas_data(location_id, canvas, expected_text=stored) is not None:
+                if first:
+                    Planting.update_position(planting_id, spot.x, spot.y)
+                return spot
+        raise CanvasConflictError(location_id)
+
+    @staticmethod
     def clear_positions_except(location_id, location_crop_ids):
         """指定されたID以外の作物の位置情報をクリア"""
         db = get_db()
@@ -609,6 +649,35 @@ class Planting:
             (location_crop_id, location_crop_id)
         ).fetchone()
         return record['earliest'] if record else None
+
+    @staticmethod
+    def area_map(location_id=None):
+        """植え付け ID → 見取り図のエリア名のリスト。
+        栽培終了は canvas_snapshot、それ以外は場所の canvas_data から求める。配置なしはキーが無いか空。
+        場所の canvas_data は1場所につき1回だけ解析する。"""
+        from app.utils.canvas_areas import placements_of, area_names
+        query = (
+            'SELECT lc.id, lc.status, lc.canvas_snapshot, lc.location_id, '
+            'l.canvas_data, l.canvas_top_direction '
+            'FROM plantings lc JOIN locations l ON lc.location_id = l.id'
+        )
+        params = ()
+        if location_id is not None:
+            query += ' WHERE lc.location_id = ?'
+            params = (location_id,)
+        placements_by_location = {}
+        areas = {}
+        for row in get_db().execute(query, params).fetchall():
+            if row['status'] == 'ended':
+                placements = placements_of(row['canvas_snapshot'])
+            else:
+                if row['location_id'] not in placements_by_location:
+                    placements_by_location[row['location_id']] = placements_of(row['canvas_data'])
+                placements = placements_by_location[row['location_id']]
+            names = area_names(placements, row['id'], row['canvas_top_direction'])
+            if names:
+                areas[row['id']] = names
+        return areas
 
     @staticmethod
     def _get_canvas_placement_map(location_id):

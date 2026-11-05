@@ -67,3 +67,22 @@ def test_patch_bg_image(api):
     location = _create(api)
     res = api.patch(f'/api/v1/locations/{location["id"]}', json={'bg_image': 'weeds.webp'})
     assert res.get_json()['data']['bg_image'] == 'weeds.webp'
+
+
+def test_canvas_top_direction_read_write(api):
+    res = api.post('/api/v1/locations', json={'name': '東の畑', 'location_type': '畑', 'canvas_top_direction': '東'})
+    assert res.status_code == 201
+    data = res.get_json()['data']
+    assert data['canvas_top_direction'] == '東'
+    data = api.patch(f'/api/v1/locations/{data["id"]}', json={'canvas_top_direction': None}).get_json()['data']
+    assert data['canvas_top_direction'] is None
+
+
+def test_canvas_top_direction_rejects_unknown(api):
+    res = api.post('/api/v1/locations', json={'name': 'x', 'location_type': '畑', 'canvas_top_direction': '北東'})
+    assert res.status_code == 422
+    assert res.get_json()['error']['details'][0]['field'] == 'canvas_top_direction'
+
+
+def test_meta_lists_top_directions(api):
+    assert api.get('/api/v1/meta').get_json()['data']['canvas_top_directions'] == ['北', '東', '南', '西']

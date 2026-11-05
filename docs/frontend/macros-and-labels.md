@@ -68,6 +68,10 @@
 | 品種一覧（カードタイトル） | `crop_label` マクロ | アイコン＋テキスト、`effective_icon_path` / `effective_image_color` で継承反映 |
 | 作物エンティティ画面（登録・編集） | アイコン表示なし | `crop_display_name` のみ使用 |
 
+### 植え付けのエリアの札
+
+`planting_area_badge(planting_id)`（`_macros.html`）は、見取り図でアイコンがあるエリア名（`北・東` のように「・」でつなぐ）を札で出す。配置が無ければ何も出さない。エリア名は Jinja グローバル `planting_areas()`（`Planting.area_map()` をリクエストごとに1回だけ作る）から引く。使う画面: 植え付け一覧（`plantings/list.html`）、植え付け詳細（`plantings/detail.html`）、関連の植え付けカード（`_related_plantings_card.html`）、植え付けを選ぶモーダル（`_planting_select_multi_modal.html`）。新しい植え付けの一覧を足すときは同じ札を付ける。
+
 ### クエリ要件
 
 `crop_label` マクロは `icon_path` / `image_color` を引数に取るので、モデルのクエリで該当カラムを SELECT する必要がある。ソースは画面によって異なる：

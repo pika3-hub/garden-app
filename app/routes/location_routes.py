@@ -119,7 +119,8 @@ def create():
         'area_size': request.form.get('area_size'),
         'sun_exposure': request.form.get('sun_exposure'),
         'notes': request.form.get('notes'),
-        'bg_image': request.form.get('bg_image') or None
+        'bg_image': request.form.get('bg_image') or None,
+        'canvas_top_direction': request.form.get('canvas_top_direction')
     }
 
     # バリデーション
@@ -177,7 +178,8 @@ def update(location_id):
         'sun_exposure': request.form.get('sun_exposure'),
         'notes': request.form.get('notes'),
         'image_path': location.get('image_path'),  # 既存の画像パスを保持
-        'bg_image': request.form.get('bg_image') or None
+        'bg_image': request.form.get('bg_image') or None,
+        'canvas_top_direction': request.form.get('canvas_top_direction')
     }
 
     # バリデーション
@@ -280,6 +282,7 @@ def plant(location_id):
 def remove_crop(location_id, location_crop_id):
     """作物を削除（取り除く）"""
     try:
+        Location.remove_from_canvas(location_id, location_crop_id)
         Planting.delete(location_crop_id)
         flash('作物を削除しました', 'success')
     except Exception as e:
@@ -305,11 +308,13 @@ def canvas(location_id):
 @bp.route('/<int:location_id>/canvas/data', methods=['GET'])
 def get_canvas_data(location_id):
     """キャンバスデータ取得API"""
-    canvas_data = Location.get_canvas_data(location_id)
-    if canvas_data:
-        return jsonify(canvas_data)
-    else:
-        return jsonify({'version': '2.0', 'placements': []})
+    # 配置とリビジョンは同じ1回の読み込みから作る（間に API の保存が入っても食い違わない）
+    stored = Location.canvas_text(location_id)
+    canvas_data = Location.parse_canvas(stored)
+    response = jsonify(canvas_data if canvas_data else {'version': '2.0', 'placements': []})
+    # エディターが保存時に送り返す。開いたあとに配置が変わったかを見分ける
+    response.headers['X-Canvas-Revision'] = Location.revision_of(stored)
+    return response
 
 
 @bp.route('/<int:location_id>/canvas/history/range', methods=['GET'])
@@ -334,9 +339,18 @@ def canvas_history(location_id):
 @bp.route('/<int:location_id>/canvas/save', methods=['POST'])
 def save_canvas_data(location_id):
     """キャンバスデータ保存API"""
+    conflict = jsonify({'status': 'conflict',
+                        'message': '開いたあとに配置が変わっています。読み込み直してください'}), 409
+    # 開いたあとに配置が変わっていたら（API での追加など）、上書きせず止める
+    stored = Location.canvas_text(location_id)
+    if request.headers.get('X-Canvas-Revision') != Location.revision_of(stored):
+        return conflict
     try:
         canvas_data = request.get_json()
-        Location.save_canvas_data(location_id, canvas_data)
+        # 確かめてから書くまでに変わったときも止める（読んだ文字列のままのときだけ書く）
+        revision = Location.save_canvas_data(location_id, canvas_data, expected_text=stored)
+        if revision is None:
+            return conflict
 
         # placements から各作物の位置を更新
         if canvas_data and 'placements' in canvas_data:
@@ -348,6 +362,6 @@ def save_canvas_data(location_id):
                     seen.add(lc_id)
                     Planting.update_position(lc_id, p.get('x', 0), p.get('y', 0))
 
-        return jsonify({'status': 'success'})
+        return jsonify({'status': 'success', 'revision': revision})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400

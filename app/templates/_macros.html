@@ -6,3 +6,6 @@
 {%- endif -%}
 {{ crop_display_name(name, variety) }}
 {%- endmacro %}
+
+{# 植え付けの見取り図のエリアの札。エリアが無ければ何も出さない #}
+{% macro planting_area_badge(planting_id) %}{% set names = planting_areas(planting_id) %}{% if names %}<span class="badge rounded-pill planting-area-badge">{{ names | join('・') }}</span>{% endif %}{% endmacro %}

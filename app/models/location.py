@@ -1,18 +1,30 @@
+import hashlib
 import json
 import os
 from flask import current_app
 from app.database import get_db
 from app.utils.timezone import get_jst_now
 from app.utils.search_text import fold
+from app.utils.canvas_areas import TOP_DIRECTIONS
 
 # 背景を選んでいない場所の見取り図の背景（一覧の先頭）
 DEFAULT_BG_IMAGE = 'soil.webp'
+
+
+def _top_direction(data):
+    """見取り図の上の方角。北・東・南・西以外（空を含む）は NULL にする"""
+    value = data.get('canvas_top_direction')
+    return value if value in TOP_DIRECTIONS else None
 
 
 def order_bg_images(names):
     """背景画像の一覧の並び: 既定の背景を先頭、残りは名前順"""
     rest = sorted(n for n in names if n != DEFAULT_BG_IMAGE)
     return [DEFAULT_BG_IMAGE] + rest if DEFAULT_BG_IMAGE in names else rest
+
+
+class CanvasConflictError(Exception):
+    """見取り図を読んでから書くまでに、ほかの保存が何度も入って書けなかった"""
 
 
 class Location:
@@ -43,11 +55,12 @@ class Location:
         db = get_db()
         now = get_jst_now()
         cursor = db.execute(
-            '''INSERT INTO locations (name, location_type, area_size, sun_exposure, notes, image_path, bg_image, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            '''INSERT INTO locations (name, location_type, area_size, sun_exposure, notes, image_path, bg_image,
+                                      canvas_top_direction, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (data['name'], data['location_type'], data.get('area_size'),
              data.get('sun_exposure'), data.get('notes'), data.get('image_path'),
-             data.get('bg_image') or DEFAULT_BG_IMAGE, now, now)
+             data.get('bg_image') or DEFAULT_BG_IMAGE, _top_direction(data), now, now)
         )
         db.commit()
         return cursor.lastrowid
@@ -58,11 +71,12 @@ class Location:
         db = get_db()
         db.execute(
             '''UPDATE locations SET name = ?, location_type = ?, area_size = ?,
-               sun_exposure = ?, notes = ?, image_path = ?, bg_image = ?, updated_at = ?
+               sun_exposure = ?, notes = ?, image_path = ?, bg_image = ?,
+               canvas_top_direction = ?, updated_at = ?
                WHERE id = ?''',
             (data['name'], data['location_type'], data.get('area_size'),
              data.get('sun_exposure'), data.get('notes'), data.get('image_path'),
-             data.get('bg_image') or DEFAULT_BG_IMAGE, get_jst_now(), location_id)
+             data.get('bg_image') or DEFAULT_BG_IMAGE, _top_direction(data), get_jst_now(), location_id)
         )
         db.commit()
 
@@ -136,18 +150,30 @@ class Location:
     @staticmethod
     def get_canvas_data(location_id):
         """キャンバスデータをJSON形式で取得"""
-        db = get_db()
-        result = db.execute(
-            'SELECT canvas_data FROM locations WHERE id = ?',
-            (location_id,)
-        ).fetchone()
+        return Location.parse_canvas(Location.canvas_text(location_id))
 
-        if result and result['canvas_data']:
-            try:
-                return json.loads(result['canvas_data'])
-            except json.JSONDecodeError:
-                return None
-        return None
+    @staticmethod
+    def canvas_text(location_id):
+        """保存されている canvas_data の文字列そのもの（NULL・場所なしは空文字）"""
+        row = get_db().execute(
+            'SELECT canvas_data FROM locations WHERE id = ?', (location_id,)
+        ).fetchone()
+        return (row['canvas_data'] if row else None) or ''
+
+    @staticmethod
+    def parse_canvas(canvas_text):
+        """canvas_data の文字列を dict などにする。空・壊れているときは None"""
+        if not canvas_text:
+            return None
+        try:
+            return json.loads(canvas_text)
+        except json.JSONDecodeError:
+            return None
+
+    @staticmethod
+    def revision_of(canvas_text):
+        """保存されている canvas_data の文字列（NULL は空文字）のリビジョン（SHA-256 の先頭16文字）"""
+        return hashlib.sha256((canvas_text or '').encode('utf-8')).hexdigest()[:16]
 
     @staticmethod
     def remove_from_canvas(location_id, location_crop_id):
@@ -167,18 +193,24 @@ class Location:
         db.commit()
 
     @staticmethod
-    def save_canvas_data(location_id, canvas_dict):
-        """キャンバスデータをJSON形式で保存"""
+    def save_canvas_data(location_id, canvas_dict, *, expected_text):
+        """キャンバスデータをJSON形式で保存し、保存した文字列のリビジョンを返す
+
+        保存されている文字列が expected_text（読んだときの canvas_text）のままのときだけ書く。
+        読んでから書くまでにほかの保存（エディター・API）が入っていたら何もせず None を返す
+        """
         from app.models.planting import Planting
 
         db = get_db()
         canvas_json = json.dumps(canvas_dict, ensure_ascii=False)
-        db.execute(
+        updated = db.execute(
             '''UPDATE locations SET canvas_data = ?, updated_at = ?
-               WHERE id = ?''',
-            (canvas_json, get_jst_now(), location_id)
-        )
+               WHERE id = ? AND IFNULL(canvas_data, '') = ?''',
+            (canvas_json, get_jst_now(), location_id, expected_text)
+        ).rowcount
         db.commit()
+        if updated == 0:
+            return None
 
         # キャンバス上に存在する作物のIDを抽出
         location_crop_ids = set()
@@ -195,3 +227,5 @@ class Location:
 
         # キャンバス上にない作物の位置情報をクリア
         Planting.clear_positions_except(location_id, location_crop_ids)
+
+        return Location.revision_of(canvas_json)

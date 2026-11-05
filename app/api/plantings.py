@@ -7,12 +7,16 @@ from flask import g
 
 from app.api import bp
 from app.api.choices import PLANTING_STATUSES
-from app.api.errors import detail, ok, validation_error
+from app.api.errors import ApiError, detail, ok, validation_error
 from app.api.payload import parse_request
 from app.api.resource import Resource, load_or_404, register
 from app.api.serialize import display_name
-from app.api.validation import REF_CROP, REF_LOCATION, REF_VARIETY, Field, validate_payload
+from app.api.validation import (REF_CROP, REF_LOCATION, REF_VARIETY, SQLITE_MAX_INT, Field,
+                                check_value, validate_payload)
+from app.models.location import CanvasConflictError, Location
 from app.models.planting import _CV_JOIN, Planting
+from app.utils.canvas_areas import (CROWDED_DISTANCE, AreaError, area_name, crowded_warning,
+                                    parse_area)
 
 
 class PlantingResource(Resource):
@@ -39,7 +43,8 @@ class PlantingResource(Resource):
         'variety_id': ('lc.variety_id = ?', Field('int', min_value=1)),
         'location_id': ('lc.location_id = ?', Field('int', min_value=1)),
     }
-    extra_list_args = ('status',)
+    extra_list_args = ('status', 'area')
+    reserved_keys = ('area',)
 
     def insert(self, model_data):
         return Planting.plant(model_data)
@@ -48,6 +53,24 @@ class PlantingResource(Resource):
         Planting.update_all(obj_id, model_data)
         if row['status'] == 'ended':
             Planting.update_end_date_notes(obj_id, model_data['end_date'], model_data['notes'])
+
+    def parse_reserved(self, payload, row, errors):
+        """作成時の area を、場所の上の方角に合わせて検証してマスにする"""
+        if 'area' not in payload:
+            return None
+        if row is not None:
+            errors.append(detail('area', '登録済みの植え付けには POST /api/v1/plantings/{id}/place で置いてください',
+                                 payload['area']))
+            return None
+        # 項目の検証と同じく "1" や 1.0 も ID として扱う
+        location_id, reason = check_value(self.fields['location_id'], payload.get('location_id'))
+        if reason or location_id is None:
+            return None  # location_id の誤りは項目の検証が報告する
+        return _parse_area_for(location_id, payload['area'], errors)
+
+    def after_write(self, obj_id, reserved):
+        if reserved is not None:
+            _place(obj_id, reserved, created=True)
 
     def check(self, values, merged, row, errors):
         if values.get('crop_id') and values.get('variety_id'):
@@ -83,6 +106,33 @@ class PlantingResource(Resource):
         where.append('lc.status = ?')
         params.append(status)
 
+    def list_keep(self, args, errors):
+        """area（見取り図のエリア）で絞る。配置は DB の列でないので Python 側で残す"""
+        if 'area' not in args:
+            return None
+        location_id = args.get('location_id', '')
+        if not location_id:
+            errors.append(detail('area', 'area で絞るときは location_id も指定してください', args['area']))
+            return None
+        location_id, reason = check_value(self.filters['location_id'][1], location_id)
+        # location_id の誤りは絞り込みの検証が報告する
+        location = Location.get_by_id(location_id) if location_id is not None and not reason else None
+        top = location['canvas_top_direction'] if location else None
+        try:
+            wanted = area_name(parse_area(args['area'], top), top)
+        except AreaError as e:
+            errors.append(detail('area', str(e), args['area']))
+            return None
+        areas = Planting.area_map(location['id']) if location else {}
+        return lambda row: wanted in areas.get(row['id'], [])
+
+    def serialize(self, row):
+        data = super().serialize(row)
+        placed = g.get('api_placement')
+        if placed and placed[0] == row['id']:  # 置いた植え付けの応答にだけ付ける
+            data['placement'] = placed[1]
+        return data
+
     def describe(self, row):
         return {
             'status': row['status'],
@@ -91,7 +141,42 @@ class PlantingResource(Resource):
             'variety': {'id': row['variety_id'], 'name': row['variety']} if row['variety_id'] else None,
             'location': {'id': row['location_id'], 'name': row['location_name']},
             'days_from_planting': row.get('days_from_planting'),
+            'areas': Planting.area_map(row['location_id']).get(row['id'], []),
         }
+
+
+def _parse_area_for(location_id, area, errors):
+    """area を場所の上の方角に合わせて (row, col) にする。誤りは errors に足して None"""
+    location = Location.get_by_id(location_id) if 0 < location_id <= SQLITE_MAX_INT else None
+    if location is None:
+        return None  # 場所が無い誤りは項目の検証が報告する
+    try:
+        return parse_area(area if isinstance(area, str) else '', location['canvas_top_direction'])
+    except AreaError as e:
+        errors.append(detail('area', str(e), area))
+        return None
+
+
+PLACE_CONFLICT = '見取り図がほかの操作と同時に変更されたため、アイコンを置けませんでした。'
+
+
+def _place(planting_id, cell, created=False):
+    """見取り図に置き、結果を g.api_placement（植え付け ID 付き）に入れる
+
+    ほかの保存と重なって置けなければ 409。作成時は植え付けは登録済みなので、置き直し方を案内する
+    """
+    top = Location.get_by_id(Planting.get_by_id(planting_id)['location_id'])['canvas_top_direction']
+    try:
+        spot = Planting.place_in_area(planting_id, cell)
+    except CanvasConflictError:
+        if created:
+            raise ApiError(409, 'conflict', f'植え付け（ID {planting_id}）は登録しましたが、{PLACE_CONFLICT}'
+                                            f'POST /api/v1/plantings/{planting_id}/place で置き直してください')
+        raise ApiError(409, 'conflict', f'{PLACE_CONFLICT}もう一度試してください')
+    area = area_name(cell, top)
+    crowded = spot.nearest is not None and spot.nearest < CROWDED_DISTANCE
+    g.api_placement = (planting_id, {'area': area, 'x': spot.x, 'y': spot.y,
+                                     'warning': crowded_warning(area) if crowded else None})
 
 
 PLANTINGS = PlantingResource()
@@ -110,4 +195,22 @@ def end_planting(obj_id):
     if errors:
         raise validation_error(errors)
     Planting.end_cultivation(obj_id, row['location_id'], values.get('end_date'))
+    return ok(PLANTINGS.serialize(PLANTINGS.fetch(obj_id)))
+
+
+@bp.post('/plantings/<int:obj_id>/place')
+def place_planting(obj_id):
+    """登録済みの栽培中の植え付けのアイコンを、見取り図のエリアに1つ足して置く"""
+    row = load_or_404(PLANTINGS, obj_id)
+    g.api_target_id = obj_id
+    payload, _ = parse_request()
+    values, errors = validate_payload({'area': Field('str', required=True)}, payload, creating=True)
+    if row['status'] != 'active':
+        errors.append(detail('status', f'栽培中（active）の植え付けだけ置けます（現在: {row["status"]}）'))
+    cell = None
+    if not errors:
+        cell = _parse_area_for(row['location_id'], values['area'], errors)
+    if errors:
+        raise validation_error(errors)
+    _place(obj_id, cell)
     return ok(PLANTINGS.serialize(PLANTINGS.fetch(obj_id)))

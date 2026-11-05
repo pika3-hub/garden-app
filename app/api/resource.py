@@ -104,6 +104,11 @@ class Resource:
     def list_where(self, args, where, params, errors):
         """filters で表せない絞り込み（extra_list_args 用）"""
 
+    def list_keep(self, args, errors):
+        """SQL で表せない絞り込み。行（fetch の結果）を受けて残すなら True を返す関数を返す。
+        None なら何もしない。関数を返したときは、全件を取って関数で残してから limit / offset を当てる"""
+        return None
+
     # --- 共通 ---
     def serialize(self, row):
         data = {'id': row['id'], **self.to_api(row)}
@@ -198,11 +203,18 @@ def list_items(res):
                     where.append(f'DATE({res.date_column}) {op} ?')
                     params.append(value)
     res.list_where(args, where, params, errors)
+    keep = res.list_keep(args, errors)
     if errors:
         raise validation_error(errors)
 
     where_sql = (' WHERE ' + ' AND '.join(where)) if where else ''
     db = get_db()
+    if keep:
+        ids = [r[0] for r in db.execute(
+            f'SELECT {res.list_id} FROM {res.list_from}{where_sql} ORDER BY {res.list_order}', params)]
+        rows = [row for row in (res.fetch(i) for i in ids) if keep(row)]
+        items = [res.serialize(row) for row in rows[offset:offset + limit]]
+        return ok(items, meta={'total': len(rows), 'limit': limit, 'offset': offset})
     total = db.execute(f'SELECT COUNT(*) FROM {res.list_from}{where_sql}', params).fetchone()[0]
     ids = [r[0] for r in db.execute(
         f'SELECT {res.list_id} FROM {res.list_from}{where_sql} ORDER BY {res.list_order} LIMIT ? OFFSET ?',

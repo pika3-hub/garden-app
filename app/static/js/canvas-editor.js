@@ -11,6 +11,7 @@ class CanvasEditor {
         this.selectedId = null;
         this.nextId = 1;
         this.scale = 1;
+        this.revision = null; // 開いたときの配置のリビジョン（loadData で入れ、保存のたびに送る）
 
         // Drag state
         this.dragState = null; // { id, offsetX, offsetY }
@@ -20,6 +21,7 @@ class CanvasEditor {
 
     init() {
         this.setupBackground();
+        this.setupAreas();
         this.setupScale();
         this.setupSidebarDragDrop();
         this.setupCanvasEvents();
@@ -31,6 +33,13 @@ class CanvasEditor {
     setupBackground() {
         const bgImage = document.getElementById('bg-image').value;
         this.canvasArea.style.backgroundImage = `url('/static/images/location_bg_images/${bgImage}')`;
+    }
+
+    /** 縁の方角と格子の重ね表示（canvas-areas.js） */
+    setupAreas() {
+        if (!window.CanvasAreas) return;
+        const config = CanvasAreas.readConfig(this.canvasArea);
+        if (config) CanvasAreas.attach(this.canvasArea, config);
     }
 
     /** モバイル時: 800px キャンバスを wrapper 幅に合わせて縮小表示 */
@@ -277,37 +286,65 @@ class CanvasEditor {
         };
     }
 
+    /**
+     * 配置を保存する。開いたときのリビジョンを送り、成功したら返ってきた新しいものに更新する。
+     * 開いたあとに配置が変わっていたら 409 で止まる（conflict）。その message は保存表示に赤で出す。
+     * @returns {Promise<{status: 'success'|'conflict'|'error', message?: string}>}
+     */
+    async requestSave() {
+        const indicator = document.getElementById('save-indicator');
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.revision) headers['X-Canvas-Revision'] = this.revision;
+
+        try {
+            const response = await fetch(`/locations/${this.locationId}/canvas/save`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(this.buildSaveData())
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                this.revision = result.revision;
+                return { status: 'success' };
+            }
+            if (response.status === 409) {
+                const result = await response.json();
+                if (indicator) {
+                    indicator.textContent = result.message;
+                    indicator.className = 'ms-2 text-danger';
+                }
+                return { status: 'conflict', message: result.message };
+            }
+            return { status: 'error', message: '保存に失敗しました' };
+        } catch (error) {
+            console.error('Error saving:', error);
+            return { status: 'error', message: '通信エラー' };
+        }
+    }
+
     async save() {
         const indicator = document.getElementById('save-indicator');
         indicator.textContent = '保存中...';
         indicator.className = 'ms-2 text-warning';
 
-        const data = this.buildSaveData();
+        const result = await this.requestSave();
 
-        try {
-            const response = await fetch(`/locations/${this.locationId}/canvas/save`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            if (response.ok) {
-                indicator.textContent = '保存完了';
-                indicator.className = 'ms-2 text-success';
-                setTimeout(() => { indicator.textContent = ''; }, 2000);
-            } else {
-                throw new Error('Save failed');
-            }
-        } catch (error) {
-            console.error('Error saving:', error);
+        if (result.status === 'success') {
+            indicator.textContent = '保存完了';
+            indicator.className = 'ms-2 text-success';
+            setTimeout(() => { indicator.textContent = ''; }, 2000);
+        } else if (result.status === 'error') {
             indicator.textContent = '保存失敗';
             indicator.className = 'ms-2 text-danger';
         }
+        // conflict は requestSave が赤字の案内を出している
     }
 
     async loadData() {
         try {
             const response = await fetch(`/locations/${this.locationId}/canvas/data`);
+            this.revision = response.headers.get('X-Canvas-Revision');
             const data = await response.json();
 
             // Only load version 2.0 data; ignore old Fabric.js format

@@ -1492,3 +1492,11 @@ footer .text-muted { color: rgba(240, 235, 224, 0.55) !important; }
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 0;
 }
+
+/* 植え付けの見取り図のエリアの札 */
+.planting-area-badge {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+    font-weight: normal;
+}

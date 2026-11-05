@@ -18,36 +18,21 @@ document.addEventListener('DOMContentLoaded', function() {
             saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
 
             newSaveBtn.addEventListener('click', async function() {
-                const locationId = editor.locationId;
-                const data = editor.buildSaveData();
                 const indicator = document.getElementById('save-indicator');
+                const result = await editor.requestSave();
 
-                try {
-                    const resp = await fetch(`/locations/${locationId}/canvas/save`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-
-                    if (resp.ok) {
-                        if (indicator) {
-                            indicator.textContent = '保存しました！リダイレクト中...';
-                            indicator.style.color = '#198754';
-                        }
-                        setTimeout(function() {
-                            window.location.href = detailUrl;
-                        }, 500);
-                    } else {
-                        if (indicator) {
-                            indicator.textContent = '保存に失敗しました';
-                            indicator.style.color = '#dc3545';
-                        }
-                    }
-                } catch (e) {
+                if (result.status === 'success') {
                     if (indicator) {
-                        indicator.textContent = '通信エラー';
-                        indicator.style.color = '#dc3545';
+                        indicator.textContent = '保存しました！リダイレクト中...';
+                        indicator.style.color = '#198754';
                     }
+                    setTimeout(function() {
+                        window.location.href = detailUrl;
+                    }, 500);
+                } else if (indicator) {
+                    // conflict の案内は requestSave が出している（赤字）。ここでも色を揃える
+                    indicator.textContent = result.message;
+                    indicator.style.color = '#dc3545';
                 }
             });
         }

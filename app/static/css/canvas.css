@@ -450,3 +450,45 @@
         font-size: 1rem;
     }
 }
+
+/* 見取り図の重ね表示（canvas-areas.js）: アイコン（z-index:1 以上）より下、操作は素通し */
+.canvas-areas-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.canvas-areas-grid {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+}
+
+.canvas-areas-grid > div {
+    border: 1px dashed rgba(255, 255, 255, 0.75);
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.canvas-areas-grid > div > span {
+    color: #fff;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 1px 0.4em;
+    margin: 3px;
+    border-radius: 3px;
+    line-height: 1.3;
+}
+
+.canvas-areas-compass {
+    position: absolute;
+    font-weight: bold;
+    color: #fff;
+    background: #2e7d32;
+    padding: 1px 0.5em;
+    border-radius: 3px;
+    line-height: 1.3;
+}

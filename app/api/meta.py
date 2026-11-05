@@ -3,7 +3,7 @@ from flask import current_app, request
 
 from app.api import bp
 from app.api.choices import (
-    ADVICE_RELATION_KEYS, COOKING_RELATION_KEYS, DIARY_RELATION_KEYS, PLANTING_STATUSES, SUN_EXPOSURES,
+    ADVICE_RELATION_KEYS, CANVAS_TOP_DIRECTIONS, COOKING_RELATION_KEYS, DIARY_RELATION_KEYS, PLANTING_STATUSES, SUN_EXPOSURES,
     TASK_RELATION_KEYS, TASK_STATUSES, WEATHERS, bg_images, crop_icons, distinct_values,
 )
 from app.api.errors import detail, ok, validation_error
@@ -32,6 +32,7 @@ def meta():
         'planting_statuses': PLANTING_STATUSES,
         'task_statuses': TASK_STATUSES,
         'sun_exposures': SUN_EXPOSURES,
+        'canvas_top_directions': CANVAS_TOP_DIRECTIONS,
         'weathers': WEATHERS,
         'crop_types': distinct_values('crops', 'crop_type'),
         'location_types': distinct_values('locations', 'location_type'),

@@ -14,6 +14,7 @@
 | 植え付け配置ページ | `plantings/place.html` + `canvas-placement.js` | 植え付け登録後の見取り図配置（エディターを再利用） |
 | プレビューコンポーネント | `locations/_canvas_preview.html` + `canvas-preview.js` | 読み取り専用の表示（400×400px） |
 | フルスクリーン表示 | `canvas-fullscreen.js` + `canvas-fullscreen.css` | 「拡大」ボタン（`#fullscreen-btn`）で拡大表示（日付ナビ付き） |
+| エリアの重ね表示 | `canvas-areas.js` | 縁の方角の札と、`data-canvas-grid-toggle` のボタンで出し入れする 3×3 の格子・エリア名（`CanvasAreas.readConfig` / `attach`）。エディター・プレビュー・フルスクリーンで使う |
 | CSSスタイル | `static/css/canvas.css` | エディター・プレビュー共通スタイル |
 
 ### 背景画像
@@ -60,8 +61,8 @@
 | エンドポイント | メソッド | 説明 |
 |-------------|--------|------|
 | `/locations/<id>/canvas` | GET | エディター画面 |
-| `/locations/<id>/canvas/data` | GET | 配置データ取得（JSON） |
-| `/locations/<id>/canvas/save` | POST | 配置データ保存 |
+| `/locations/<id>/canvas/data` | GET | 配置データ取得（JSON）。応答ヘッダー `X-Canvas-Revision` に保存データのリビジョン |
+| `/locations/<id>/canvas/save` | POST | 配置データ保存。要求ヘッダー `X-Canvas-Revision` が今と違う（無い場合も）と 409。保存はエディターの `requestSave()` を通す（`canvas-placement.js` も） |
 | `/locations/<id>/canvas/history/range` | GET | 見取り図に変化がある日付一覧（`{dates: [...]}` 形式） |
 | `/locations/<id>/canvas/history?date=YYYY-MM-DD` | GET | 指定日付の配置データ（version 2.0 JSON） |
 
@@ -76,6 +77,8 @@
 - `preview_bg_image` — 背景画像ファイル名
 - `preview_highlight_id`（任意）— ハイライトする `location_crop_id`
 - `preview_canvas_json`（任意）— 配置データ JSON（栽培終了した植え付けのスナップショット表示用）
+- `preview_canvas_areas`（任意）— エリアの重ね表示の設定。`canvas_area_config(location.canvas_top_direction)` を渡す
+- `preview_id`（任意）— プレビューの要素の `id`（格子ボタンの `data-canvas-grid-toggle` が指す）
 
 `CanvasPreview` クラスのAPI:
 - `updateData(data)` — 表示内容をクリアして新しいデータで再描画（フルスクリーン表示等で使用）

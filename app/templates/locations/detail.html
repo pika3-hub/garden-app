@@ -10,6 +10,7 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/badge-filter.js') }}"></script>
+<script src="{{ url_for('static', filename='js/canvas-areas.js') }}"></script>
 <script src="{{ url_for('static', filename='js/canvas-preview.js') }}"></script>
 <script src="{{ url_for('static', filename='js/canvas-fullscreen.js') }}"></script>
 <script>
@@ -31,6 +32,7 @@
             locationId: {{ location.id }},
             locationName: {{ location.name | tojson }},
             bgImage: '{{ location.bg_image or "soil.webp" }}',
+            canvasAreas: {{ canvas_area_config(location.canvas_top_direction) | tojson }},
             highlightId: null,
             canvasData: null,
             dates: dates,
@@ -98,6 +100,12 @@
                         <span class="detail-field-value">{{ location.sun_exposure }}</span>
                     </div>
                     {% endif %}
+                    {% if location.canvas_top_direction %}
+                    <div class="detail-field">
+                        <span class="detail-field-label">見取り図の上:</span>
+                        <span class="detail-field-value">{{ location.canvas_top_direction }}</span>
+                    </div>
+                    {% endif %}
                 </div>
                 {% if location.notes %}
                 <div class="detail-notes markdown-body">{{ location.notes|markdown }}</div>
@@ -137,6 +145,9 @@
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-map"></i> 見取り図</h5>
                 <div>
+                    <button type="button" class="btn btn-sm btn-outline-light" data-canvas-grid-toggle="history-canvas" aria-pressed="false">
+                        <i class="bi bi-grid-3x3"></i> 格子
+                    </button>
                     <button type="button" class="btn btn-sm btn-outline-light" id="fullscreen-btn">
                         <i class="bi bi-arrows-fullscreen"></i> 拡大
                     </button>
@@ -151,7 +162,8 @@
                 <div class="d-flex justify-content-center">
                     <div class="canvas-preview-container" id="history-canvas"
                          data-location-id="{{ location.id }}"
-                         data-bg-image="{{ location.bg_image or 'soil.webp' }}">
+                         data-bg-image="{{ location.bg_image or 'soil.webp' }}"
+                         data-canvas-areas="{{ canvas_area_config(location.canvas_top_direction) | tojson | forceescape }}">
                         <div class="canvas-preview-area"></div>
                     </div>
                 </div>
