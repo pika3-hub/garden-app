@@ -1,4 +1,5 @@
 import json
+import math
 
 import pytest
 
@@ -105,19 +106,33 @@ def test_choose_spot_empty_is_cell_center():
     assert (spot.x, spot.y, spot.nearest) == (375, 108, None)
 
 
-def test_choose_spot_stays_inside_cell_and_far_from_icon():
+def test_choose_spot_stays_inside_cell_with_margin_and_away_from_icon():
     placements = [{'locationCropId': 1, 'x': 375, 'y': 375}]   # 中央マスの真ん中
     spot = choose_spot(placements, (1, 1))
     assert cell_of(spot.x, spot.y) == (1, 1)
     lo, hi = 800 / 3, 1600 / 3
-    assert lo <= spot.x and spot.x + 50 <= hi and lo <= spot.y and spot.y + 50 <= hi
-    assert spot.nearest >= 140     # 角まで約 152px（候補の刻み方で数 px 変わる）
+    # 名前の文字がはみ出さないよう、マスの境目から 20px 内側
+    assert lo + 20 <= spot.x and spot.x + 50 + 20 <= hi
+    assert lo + 20 <= spot.y and spot.y + 50 + 20 <= hi
+    assert spot.nearest >= 80
+
+
+def test_choose_spot_prefers_cell_middle_once_far_enough():
+    # 東の畑（2026-11-05）: 混んだ見取り図で、一番離れた点を選ぶとマスの隅に寄り、隣のマスにあるように見えた
+    placements = [{'locationCropId': 1, 'x': 100, 'y': 100}]   # 左上のマス
+    spot = choose_spot(placements, (1, 1))
+    assert _center(spot) == (400, 400)
 
 
 def test_choose_spot_counts_icons_in_neighbor_cells():
-    placements = [{'locationCropId': 1, 'x': 515, 'y': 375}]   # 右のマスの境目近く
-    spot = choose_spot(placements, (1, 1))
-    assert _center(spot)[0] < 400
+    # 中央マスの真ん中より少し左のアイコンだけなら、右寄り（中心 x=470 付近）が選ばれる
+    alone = choose_spot([{'locationCropId': 1, 'x': 365, 'y': 375}], (1, 1))
+    assert _center(alone)[0] > 450
+    # 右のマスの境目近く（中心 x=540）にもアイコンがあると、そこからも離れる
+    placements = [{'locationCropId': 1, 'x': 365, 'y': 375},
+                  {'locationCropId': 2, 'x': 515, 'y': 375}]
+    cx, cy = _center(choose_spot(placements, (1, 1)))
+    assert math.hypot(cx - 540, cy - 400) >= 80
 
 
 def test_choose_spot_crowded_reports_distance():

@@ -14,6 +14,12 @@ TOP_DIRECTIONS = ('北', '東', '南', '西')
 # 配置のしかたが混んでいると判断する、最も近いアイコン中心までの距離（px）
 CROWDED_DISTANCE = 50
 
+# ほかのアイコン中心からこれだけ離れていれば十分とみなし、マスの中央に近い点を選ぶ（px）
+COMFORT_DISTANCE = 80
+
+# マスの境目からアイコンまでの余白（px）。アイコンの下の名前は最大 90px 幅で、左右に 20px はみ出す
+CELL_MARGIN = 20
+
 # 候補の点を並べる刻み（px）
 _STEP = 4
 
@@ -138,7 +144,10 @@ def area_names(placements: list[dict], planting_id: int, top: str | None) -> lis
 
 
 def choose_spot(placements: list[dict], cell: Cell) -> Spot:
-    """マスの中でほかのアイコンから最も離れた置き場所を選ぶ。"""
+    """マスの中でほかのアイコンから離れた置き場所を選ぶ。
+
+    COMFORT_DISTANCE 以上離れた点があれば、その中でマスの中央に最も近い点。無ければ最も離れた点。
+    境目から CELL_MARGIN 内側に置き、隣のマスにあるように見えないようにする。"""
     row, col = cell
     half = ICON_SIZE / 2
     size = CANVAS_SIZE / 3
@@ -155,11 +164,12 @@ def choose_spot(placements: list[dict], cell: Cell) -> Spot:
             v += _STEP
 
     best = None
-    for cy in candidates(row * size + half, (row + 1) * size - half):
-        for cx in candidates(col * size + half, (col + 1) * size - half):
+    inset = half + CELL_MARGIN
+    for cy in candidates(row * size + inset, (row + 1) * size - inset):
+        for cx in candidates(col * size + inset, (col + 1) * size - inset):
             nearest = min(math.hypot(cx - ox, cy - oy) for ox, oy in centers)
             to_mid = math.hypot(cx - mid_x, cy - mid_y)
-            key = (-nearest, to_mid)
+            key = (-min(nearest, COMFORT_DISTANCE), to_mid)
             if best is None or key < best[0]:
                 best = (key, cx, cy, nearest)
     _, cx, cy, nearest = best
