@@ -282,6 +282,7 @@ def plant(location_id):
 def remove_crop(location_id, location_crop_id):
     """作物を削除（取り除く）"""
     try:
+        Location.remove_from_canvas(location_id, location_crop_id)
         Planting.delete(location_crop_id)
         flash('作物を削除しました', 'success')
     except Exception as e:
