@@ -42,6 +42,7 @@ Tuwunel（Matrix サーバー）  ←──  Hermes の gateway（Bot @hermes。
 
 - 「Hermes（暗号化）」の部屋で文面・写真を送る。暗号化ありの部屋が返事をしなくなったら「Hermes」（暗号なし）の部屋で依頼でき、その間に下の「E2EE の鍵が壊れたとき」で直す
 - 写真（カメラロール）として送れば Element X が **JPEG に変換・縮小して送る**（例 1536×2048）ので、HEIC で断られない。「ファイル」として送ると HEIC のまま届き、受け取りで断られる見込み（Telegram と同じ。[`hermes-skill/SKILL.md`](hermes-skill/SKILL.md) の HEIC の注意）
+- 写真を複数枚まとめて送っても、Element X は1枚ずつ別のメッセージで送る（文は1枚目に付く）。Hermes の Matrix の受け取り口は写真をまとめて待たず（Telegram の受け取り口にはある）、既定の `busy_input_mode: interrupt` では、処理中に届いた写真が前の処理を打ち切る（「Your request was not processed」）。残りの写真は次の処理にまとめて渡り、その文は「What do you see in this image?」になる。前の処理の文と写真は会話の履歴に残るので、[`hermes-skill/SKILL.md`](hermes-skill/SKILL.md) の「守ること」で、続けて届いた写真をまとめて1つの依頼として扱わせている（2026-11-04 に3枚のうち1枚が日記に付かなかった。Hermes v`73162b00ee` のソースで確認）
 - `/new` を送ると確認が出る。Matrix にはボタンが無いので、**`!approve`（今回だけ）・`!always`（以後確認しない）・`!cancel`** を文字で返す
 - セッションは**毎朝4時以降の最初の依頼と、6時間あいた後の依頼で自動で新しくなる**（2026-10-24 から。下の「会話の自動リセット」）。SKILL.md をサーバーに送った後は、自動を待たずに `/new` する。自己改善（SKILL.md の書き換えは承認制。`/skills pending` で確認）の扱いは [`hermes-telegram.md`](../../../garden-app-private/docs/api/hermes-telegram.md) の「Hermes の自己改善」（Telegram 時代の記録だが Matrix でも同じ）
 - ホームチャンネル（定期実行の結果や gateway の終了通知の送り先）は設定していない（Telegram の `/sethome` は停止とともに無効。定期実行のジョブも無い）。必要になったら Hermes の部屋で `/sethome` を送る
