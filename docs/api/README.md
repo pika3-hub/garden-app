@@ -242,6 +242,7 @@ curl -sS -X POST "$GARDEN_API_URL/advices" -H "Authorization: Bearer $GARDEN_API
 - HEIC/HEIF は JPEG（品質90）に変換して保存する。向きは画素に反映し、撮影日時などの EXIF と色プロファイルは残す（`pillow-heif` を読み込めない環境では 415）
 - 撮影場所（GPS）は保存しない（JPEG・HEIC の EXIF から外す。画質は変えない）
 - 1枚 `API_MAX_IMAGE_MB`（既定20MB）まで、5000万画素まで、1リクエスト20枚まで、合計100MBまで
+- 1回のリクエストの `image` と `extra_images` に同じ中身の画像が2回あれば 422（`extra_images`、「○○ は △△ と同じ画像です」）。ファイル名ではなく中身（SHA-256）で比べる。エージェントがパスを書き写すときに重複させたことがある（2026-11-05）
 - 写真プールから使った場合は使用履歴（`photo_pool_usages`）に記録される
 
 ### 画像の取得

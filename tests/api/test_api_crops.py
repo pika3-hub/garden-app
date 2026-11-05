@@ -43,7 +43,7 @@ def test_create_accepts_existing_icon(api):
 def test_create_with_image_and_extra_images(api, api_app):
     form = multipart({'name': 'トマト', 'crop_type': 'ナス科'},
                      image=file_part(image_bytes('JPEG'), 'main.jpg'),
-                     extra_images=[file_part(image_bytes(), 'a.png'), file_part(image_bytes(), 'b.png')])
+                     extra_images=[file_part(image_bytes(), 'a.png'), file_part(image_bytes(color=(50, 50, 200)), 'b.png')])
     res = api.post('/api/v1/crops', data=form, content_type='multipart/form-data')
     assert res.status_code == 201, res.get_json()
     data = res.get_json()['data']
@@ -143,6 +143,22 @@ def test_list_rejects_bad_args(api):
     assert res.status_code == 422
     fields = {d['field'] for d in res.get_json()['error']['details']}
     assert fields == {'limit', 'type'}
+
+
+def test_create_rejects_same_image_twice(api):
+    """1回のリクエストに同じ中身の画像が2回あれば 422（Hermes がパスを書き写し間違えて重複させた）"""
+    red, blue = image_bytes(), image_bytes(color=(50, 50, 200))
+    form = multipart({'name': 'トマト', 'crop_type': 'ナス科'},
+                     image=file_part(red, 'img_a.png'),
+                     extra_images=[file_part(blue, 'img_b.png'), file_part(red, 'img_c.png'),
+                                   file_part(blue, 'img_d.png')])
+    res = api.post('/api/v1/crops', data=form, content_type='multipart/form-data')
+    assert res.status_code == 422, res.get_json()
+    details = res.get_json()['error']['details']
+    assert [d['field'] for d in details] == ['extra_images', 'extra_images']
+    assert 'img_c.png' in details[0]['reason'] and 'img_a.png' in details[0]['reason']
+    assert 'img_d.png' in details[1]['reason'] and 'img_b.png' in details[1]['reason']
+    assert api.get('/api/v1/crops').get_json()['meta']['total'] == 0
 
 
 def test_add_extra_images(api):

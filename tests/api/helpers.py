@@ -13,10 +13,10 @@ requires_heif = pytest.mark.skipif(not heif_supported(), reason='pillow_heif を
 TOKEN = 'test-token-' + 'x' * 32
 
 
-def image_bytes(fmt='PNG', size=(8, 8)):
-    """テスト用の小さな画像（バイト列）"""
+def image_bytes(fmt='PNG', size=(8, 8), color=(200, 50, 50)):
+    """テスト用の小さな画像（バイト列）。1回のリクエストに複数枚入れるときは color を変える（同じ中身は 422）"""
     buf = io.BytesIO()
-    Image.new('RGB', size, (200, 50, 50)).save(buf, fmt)
+    Image.new('RGB', size, color).save(buf, fmt)
     return buf.getvalue()
 
 
