@@ -178,21 +178,43 @@ Hermes を後で専用ユーザーへ移すときは、`~/.hermes`（`.env` を�
 
 ## 7. バックアップ
 
-systemd のタイマーで毎日 3:15 に、DB を曜日ごとのファイル（7世代）に、uploads を `/var/backups/garden/uploads/` にコピーする（同じディスクの中だけ）。`Persistent=true` なので、3:15 にサーバーが止まっていた日は、次に起動した直後に1回実行する（2026-10-23 に cron から置き換え。cron は止まっていた日の分を実行せず、10/18 から5日分抜けていた）。
+systemd のタイマーで毎日 3:15 に取る。置き場所は2つ（2026-11-07 から。それまでは SSD の中だけ）:
+
+| 置き場所 | ディスク | 中身 |
+|---|---|---|
+| `/var/backups/garden/` | アプリと同じ SSD | DB の曜日ごとのファイル（7世代）だけ |
+| `/srv/backup/garden/` | 増設した HDD | DB の曜日ごとのファイル（7世代）、uploads（`uploads/`）、手で取った DB（9章） |
+
+- DB は小さいので両方に置き、どちらのディスクが壊れても残るようにする。uploads は元のファイルが SSD にあるので、HDD にだけ写す
+- `/srv/backup` は HDD の論理ボリュームを `nofail` でマウントしたもの（`/etc/fstab`）。HDD が外れていても起動は止まらない。`/srv/backup/garden` はマウントした中に作ってあるので、外れていると存在しない
+- スクリプトは DB を SSD に取ってから `mountpoint -q /srv/backup` で確かめ、マウントされていなければ失敗で終わる（HDD が外れているときに、SSD 上の空の `/srv/backup` へ uploads を書かない）。service に `RequiresMountsFor=` を付けないのは、HDD が外れたときに SSD の DB まで取れなくなるため。`After=srv-backup.mount` は起動直後の追いつきの実行をマウントの後にするため（順番だけ）
+- `Persistent=true` なので、3:15 にサーバーが止まっていた日は、次に起動した直後に1回実行する（2026-10-23 に cron から置き換え。cron は止まっていた日の分を実行せず、10/18 から5日分抜けていた）
+
+HDD の置き場所（`/srv/backup` のマウントと、garden:garden 0700 の `/srv/backup/garden`）を作ってから:
 
 ```bash
 sudo mkdir -p /var/backups/garden && sudo chown garden:garden /var/backups/garden && sudo chmod 700 /var/backups/garden
 sudo tee /usr/local/bin/garden-backup >/dev/null <<'EOF'
 #!/bin/sh
 # garden-app のバックアップ（garden-backup.service から garden ユーザーで実行）
+# DB は SSD と HDD の両方に曜日ごとの7世代、uploads は HDD だけ。
+# HDD がマウントされていなければ、DB を SSD に取ったところで失敗で終わる（uploads を SSD に書かない）
 set -eu
-sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-$(date +%a).db'"
-rsync -a --delete /opt/garden-app/app/static/uploads/ /var/backups/garden/uploads/
+db="garden-$(date +%a).db"
+sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/$db'"
+if ! mountpoint -q /srv/backup; then
+  echo "/srv/backup is not mounted; skipped the HDD copy" >&2
+  exit 1
+fi
+cp -p "/var/backups/garden/$db" "/srv/backup/garden/$db.tmp"
+mv -f "/srv/backup/garden/$db.tmp" "/srv/backup/garden/$db"
+rsync -a --delete /opt/garden-app/app/static/uploads/ /srv/backup/garden/uploads/
 EOF
 sudo chmod 755 /usr/local/bin/garden-backup
 sudo tee /etc/systemd/system/garden-backup.service >/dev/null <<'EOF'
 [Unit]
 Description=garden-app backup (DB and uploads)
+After=srv-backup.mount
 
 [Service]
 Type=oneshot
@@ -221,7 +243,8 @@ sudo touch /var/lib/systemd/timers/stamp-garden-backup.timer && sudo systemctl d
 ```
 
 - **最後の `touch` を省かない**。`Persistent=true` は前回の実行時刻（`/var/lib/systemd/timers/stamp-garden-backup.timer`）と比べて追いつくか決める。手で `start` した分は記録されず、記録が無いと「起動後の 3:15」を次の予定にするため、3:15 前に止める使い方では一度も実行されない。`systemctl list-timers garden-backup.timer` の LAST が `-` でなければよい
-- 確認: `systemctl list-timers garden-backup.timer`（LAST・NEXT）、`journalctl -u garden-backup.service`（`Finished` が出れば成功）、`sudo ls -l --time-style=long-iso /var/backups/garden/`。失敗しても通知はない
+- 確認: `systemctl list-timers garden-backup.timer`（LAST・NEXT）、`journalctl -u garden-backup.service`（`Finished` が出れば成功。HDD が外れていると `/srv/backup is not mounted` と `Failed`）、`sudo ls -l --time-style=long-iso /var/backups/garden/ /srv/backup/garden/`。失敗しても通知はない
+- 中身の確かめ方: `D=$(date +%a) && sudo -u garden sqlite3 -readonly /srv/backup/garden/garden-$D.db "PRAGMA integrity_check;" && sudo -u garden cmp /var/backups/garden/garden-$D.db /srv/backup/garden/garden-$D.db && sudo -u garden diff -rq /opt/garden-app/app/static/uploads /srv/backup/garden/uploads && echo OK`（実行した日の曜日で）
 - サーバーをたまにしか起動しないと、曜日によっては古いファイルが残る（7世代＝直近7日分とは限らない）
 
 ## 8. 動作確認と Hermes 側の切り替え
@@ -276,7 +299,7 @@ Windows 側のファイアウォールのルール（[`firewall-windows.md`](fir
 
 起動時にマイグレーションが自動で走るので、切り替える前に必ずバックアップを取る（下の別名の DB。uploads も取り直すなら `sudo systemctl start garden-backup.service` だが、DB は曜日のファイルを上書きする）。
 
-- 手で取るバックアップは、曜日ごとのファイルを上書きしないよう別名にする: `sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`
+- 手で取るバックアップは、曜日ごとのファイルを上書きしないよう別名にし、HDD に置く（HDD が外れていると置き場所が無いので失敗する）: `sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/srv/backup/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`
 - 再起動の直後（1秒ほど）は接続できない。`curl` で確かめるときは少し待つ（`journalctl -u garden-app` の `Serving on` が出ていれば起動済み）
 - 停止のたびに `status=143` / `Failed with result 'exit-code'` が記録されるが、SIGTERM で終わったという意味で、異常ではない
 
