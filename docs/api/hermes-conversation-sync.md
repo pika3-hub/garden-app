@@ -125,7 +125,7 @@ python3 ~/hermes_conversation_sync.py --dry-run
 sudo -u garden -H bash -c 'cd /opt/garden-app && ~/.local/bin/uv run flask --app app relink-conversations'
 ```
 
-`<件数>件の会話から結び付けを<件数>件作り直しました` と出れば成功。開発 PC では `uv run flask --app app relink-conversations`。本番では事前に [`migration-to-ubuntu.md`](migration-to-ubuntu.md) の手でバックアップを取る（`sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/var/backups/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`）。開発 PC では [`../db-validation-safety.md`](../../../garden-app-private/docs/db-validation-safety.md) に従う。
+`<件数>件の会話から結び付けを<件数>件作り直しました` と出れば成功。開発 PC では `uv run flask --app app relink-conversations`。本番では事前に [`migration-to-ubuntu.md`](migration-to-ubuntu.md) の手でバックアップを取る（`sudo -u garden sqlite3 /opt/garden-app/instance/garden.db ".backup '/srv/backup/garden/garden-before-update-$(date +%Y%m%d-%H%M).db'"`）。開発 PC では [`../db-validation-safety.md`](../../../garden-app-private/docs/db-validation-safety.md) に従う。
 
 ## うまくいかないとき
 
